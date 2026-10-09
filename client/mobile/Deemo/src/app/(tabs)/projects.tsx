@@ -1,5 +1,5 @@
-import { Screen } from "@/components/screen";
+import { Projects } from "@/screens/projects";
 
-export default function Projects() {
-  return <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." />;
+export default function ProjectsRoute() {
+  return <Projects />;
 }

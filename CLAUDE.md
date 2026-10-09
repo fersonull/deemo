@@ -30,6 +30,8 @@ Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatica
 
 Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp:3000 tcp:3000` (the app defaults to `http://localhost:3000`; set `EXPO_PUBLIC_API_URL` to use Wi-Fi instead). `EXPO_PUBLIC_LIVE_ENGINE=mock` swaps in the scripted panel for UI work without the server.
 
+Projects (manuscript upload + analysis) live in `server/data/projects.json` (gitignored; one shared list until sign-in exists). Analysis: `server/src/analysis.ts` (Flash model constant, PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`.
+
 ## Workflow rules
 
 - **Never commit on `main`.** Work happens on `dev`, so commit there. If the current branch is `main`, leave the changes uncommitted and tell the user; they commit on `main` themselves.

@@ -1,6 +1,8 @@
 import express from "express";
 
-import { LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
+import { DOCX, MAX_BYTES, PDF, analyzeManuscript } from "./analysis";
+import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
+import { type Analysis, store } from "./store";
 
 const app = express();
 app.use(express.json());
@@ -9,12 +11,86 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+// Upload a manuscript (plan F1). Answers right away; the analysis runs in the background and the app polls.
+// The file only lives in memory for the analysis call; only the analysis is stored.
+app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTES + 1_000_000 }), async (req, res) => {
+  const form = await new Response(req.body, { headers: { "content-type": req.headers["content-type"] ?? "" } })
+    .formData()
+    .catch(() => null);
+  const file = form?.get("file");
+  if (!(file instanceof File)) return void res.status(400).json({ error: "Choose a PDF or DOCX." });
+  const lower = file.name.toLowerCase();
+  const type = file.type === PDF || lower.endsWith(".pdf") ? PDF : file.type === DOCX || lower.endsWith(".docx") ? DOCX : null;
+  if (!type) return void res.status(415).json({ error: "Only PDF or DOCX files." });
+  if (file.size > MAX_BYTES) return void res.status(413).json({ error: "The file is over 20 MB." });
+  const domain = String(form?.get("domain") ?? "");
+  if (!DOMAINS.includes(domain as (typeof DOMAINS)[number])) return void res.status(400).json({ error: "Pick a domain." });
+  const name = String(form?.get("name") ?? "").trim().slice(0, 80) || file.name.replace(/\.(pdf|docx)$/i, "");
+
+  const project = await store.put({
+    id: crypto.randomUUID(),
+    name,
+    domain,
+    fileName: file.name,
+    sizeBytes: file.size,
+    createdAt: new Date().toISOString(),
+    status: "analyzing",
+  });
+  res.status(202).json(project);
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  analyzeManuscript({ bytes, type }).then(
+    (analysis) => store.put({ ...project, status: "ready", analysis }),
+    (err) => {
+      console.error("analysis", project.id, err);
+      return store.put({ ...project, status: "failed", error: "We couldn't read this file. Try a text-based PDF or a DOCX." });
+    },
+  );
+});
+
+// ponytail: everyone sees every project until sign-in exists (single-user dev setup).
+app.get("/projects", async (_req, res) => {
+  res.json(await store.list());
+});
+
+app.get("/projects/:id", async (req, res) => {
+  const project = await store.get(req.params.id);
+  if (!project) return void res.status(404).json({ error: "not found" });
+  res.json(project);
+});
+
+const TEXT_FIELDS = ["title", "problem", "objectives", "method", "scope", "features", "limits", "results"] as const;
+
+// The student's corrections to the summary, and "Looks right" (confirm).
+app.patch("/projects/:id/analysis", async (req, res) => {
+  const project = await store.get(req.params.id);
+  if (!project?.analysis) return void res.status(404).json({ error: "not found" });
+  const body = (req.body ?? {}) as { analysis?: Partial<Record<keyof Analysis, unknown>>; confirm?: unknown };
+  const edits = body.analysis ?? {};
+  const next: Analysis = { ...project.analysis };
+  for (const f of TEXT_FIELDS) {
+    if (edits[f] === undefined) continue;
+    if (typeof edits[f] !== "string") return void res.status(400).json({ error: `${f} must be text` });
+    next[f] = (edits[f] as string).slice(0, 2000);
+    next.unsure = next.unsure.filter((u) => u !== f); // the student vouched for it
+  }
+  if (edits.facts !== undefined) {
+    if (!Array.isArray(edits.facts) || !edits.facts.every((x) => typeof x === "string"))
+      return void res.status(400).json({ error: "facts must be a list of text" });
+    next.facts = (edits.facts as string[]).map((x) => x.trim().slice(0, 300)).filter(Boolean).slice(0, 40);
+  }
+  res.json(
+    await store.put({ ...project, analysis: next, ...(body.confirm === true && { confirmedAt: new Date().toISOString() }) }),
+  );
+});
+
 // Mints a single-use Gemini Live token with the panel setup locked in (addendum B1).
 // The app calls this before every connect, including reconnects (the resumption handle carries the session).
 // ponytail: no auth or quota yet; add requireFirebaseAuth + tier checks when sign-in lands.
 app.post("/live/token", async (req, res) => {
   const setup = parseSetup(req.body);
   if (!setup) return void res.status(400).json({ error: "invalid setup" });
+  const analysis = setup.projectId ? (await store.get(setup.projectId))?.analysis : undefined; // else the sample
 
   const now = Date.now();
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
@@ -24,7 +100,7 @@ app.post("/live/token", async (req, res) => {
       uses: 1,
       newSessionExpireTime: new Date(now + 60_000).toISOString(),
       expireTime: new Date(now + (setup.minutes + 30) * 60_000).toISOString(), // session plus pauses
-      bidiGenerateContentSetup: liveSetup(setup),
+      bidiGenerateContentSetup: liveSetup(setup, analysis),
       fieldMask: LOCKED_FIELDS,
     }),
   });

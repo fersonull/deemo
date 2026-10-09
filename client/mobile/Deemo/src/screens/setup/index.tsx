@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
@@ -7,6 +7,7 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, radius, type } from "@/theme";
 
@@ -30,9 +31,32 @@ export function Setup() {
   const { premium } = useSession();
   const [sheet, setSheet] = useState<"domain" | "upsell" | null>(null);
   const upsell = () => setSheet("upsell");
+  const list = useProjects();
+  const manuscript = list.projects.find((p) => p.id === setup.projectId);
+
+  useEffect(() => {
+    if (!list.loaded) void projects.refresh();
+  }, [list.loaded]);
 
   return (
     <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
+        onPress={() => router.push("/projects")}
+        style={styles.manuscript}
+      >
+        <Icon name="description" size={20} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={type.label}>MANUSCRIPT</Text>
+          <Text style={styles.manuscriptName} numberOfLines={1}>
+            {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
+          </Text>
+        </View>
+        <View style={styles.change}>
+          <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
+        </View>
+      </Pressable>
       <Pressable accessibilityRole="button" accessibilityHint="Change domain" onPress={() => setSheet("domain")} style={styles.domain}>
         <Icon name="category" size={16} color={colors.duskIcon} />
         <Text style={styles.domainText}>
@@ -131,7 +155,19 @@ export function Setup() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
+  manuscript: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+    paddingLeft: 14,
+    paddingRight: 8,
+    borderRadius: radius.lg,
+    backgroundColor: colors.sand,
+  },
+  manuscriptName: { ...type.bodyStrong, marginTop: 2 },
   domain: {
     alignSelf: "flex-start",
     marginTop: 12,

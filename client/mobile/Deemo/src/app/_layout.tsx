@@ -20,6 +20,7 @@ export default function RootLayout() {
         </Stack.Protected>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="analysis" />
           <Stack.Screen name="practice" />
           <Stack.Screen name="mic-check" />
           <Stack.Screen name="session" options={{ gestureEnabled: false }} />

@@ -21,7 +21,7 @@ const QUIET_TURN_MS = 5000; // a turn that ended without a voice: wait this long
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
 const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
 
-export type SessionSetup = { mode: Mode; domain: string; panelists: number; minutes: number };
+export type SessionSetup = { mode: Mode; domain: string; panelists: number; minutes: number; projectId?: string };
 
 type FunctionCall = { id: string; name: string; args?: Record<string, unknown> };
 type ServerMessage = {

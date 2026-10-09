@@ -9,6 +9,7 @@ const store = createStore({
   panelists: 1,
   minutes: 10,
   coach: true, // Coach mode marks contradictions; Panel mode shows nothing (addendum Q3)
+  projectId: null as string | null, // the manuscript the panel reads; null uses the built-in sample
 });
 
 export const practiceSetup = { get: store.get, set: store.set };
