@@ -28,6 +28,8 @@ bunx tsc --noEmit
 
 Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatically).
 
+Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp:3000 tcp:3000` (the app defaults to `http://localhost:3000`; set `EXPO_PUBLIC_API_URL` to use Wi-Fi instead). `EXPO_PUBLIC_LIVE_ENGINE=mock` swaps in the scripted panel for UI work without the server.
+
 ## Workflow rules
 
 - **Never commit on `main`.** Work happens on `dev`, so commit there. If the current branch is `main`, leave the changes uncommitted and tell the user; they commit on `main` themselves.
@@ -39,7 +41,7 @@ Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatica
 - `src/components/` — reusable UI, kebab-case files, one named export each; a big component becomes a folder with `index.tsx`.
 - `src/screens/<name>/` — screen bodies that route files render; private sub-components stay in that folder.
 - `src/hooks/`, `src/utils/` (tests next to the file: `x.test.ts`), `src/theme.ts`, `src/constants.ts`.
-- `src/live/`: the live-session engine. The pure `reducer.ts` consumes events shaped like Gemini Live messages and tool calls (`types.ts`). `MockEngine` plays a scripted defense through the `LiveEngine` interface, and the real Gemini engine will implement the same interface. Tests: `bun test src`.
+- `src/live/`: the live-session engine. The pure `reducer.ts` consumes events shaped like Gemini Live messages and tool calls (`types.ts`). `GeminiEngine` talks to Gemini Live over the token-locked WebSocket (manual turns: the student taps done), and `MockEngine` plays a scripted defense through the same `LiveEngine` interface. The panel prompt, tools and model constant live in `server/src/panel.ts`. Tests: `bun test src`.
 - `StyleSheet.create` at the bottom of the component file. Import via `@/*` (→ `src/*`).
 - Platform splits: `.android.tsx` / `.web.tsx` with a default file always present.
 - Never hand-edit `android/` / `ios/`; configure via `app.json` and config plugins.

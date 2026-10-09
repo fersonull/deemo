@@ -11,5 +11,5 @@ const store = createStore({
   coach: true, // Coach mode marks contradictions; Panel mode shows nothing (addendum Q3)
 });
 
-export const practiceSetup = { set: store.set };
+export const practiceSetup = { get: store.get, set: store.set };
 export const usePracticeSetup = store.use;

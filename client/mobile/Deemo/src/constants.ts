@@ -24,3 +24,6 @@ export const PANEL = [
   { name: "Santos", role: "Tech" },
   { name: "Cruz", role: "Methods" },
 ] as const;
+
+// DEEMO server. Default works over USB with `adb reverse tcp:3000 tcp:3000`; set EXPO_PUBLIC_API_URL for Wi-Fi.
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";

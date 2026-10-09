@@ -58,3 +58,29 @@ test("a flag marks the student's line it refers to", () => {
   expect(done.lines.at(-1)?.flagged).toBe(true);
   expect(done.flags).toHaveLength(1);
 });
+
+test("Gemini flow: mic marks latency, the transcript lands after the tap", () => {
+  const s = run([
+    { type: "connected" },
+    { type: "ask", question: main },
+    { type: "panelDone" },
+    { type: "tick", ms: 1500 },
+    { type: "youSpeaking" },
+    { type: "tick", ms: 4000 },
+    { type: "youDone" },
+    { type: "youText", text: "Because it syncs in real time." },
+  ]);
+  expect(s.turns[0]).toMatchObject({ latencyMs: 1500, answerMs: 4000, answer: "Because it syncs in real time." });
+  expect(s.partial).toEqual({ who: "you", text: "Because it syncs in real time." });
+  const next = liveReducer(s, { type: "ask", question: { ...main, topicId: "t2" } });
+  expect(next.lines.at(-1)).toEqual({ who: "you", text: "Because it syncs in real time." }); // kept, not dropped
+});
+
+test("panel speech without ask_question still counts toward the follow-up limit", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }, { type: "panelDone" }]);
+  for (let i = 0; i < FOLLOW_UP_LIMIT; i++) {
+    s = run([{ type: "youDone" }, { type: "panelText", text: "Let me rephrase." }, { type: "panelDone" }], s);
+  }
+  expect(s.question).toMatchObject({ topicId: "t1", isFollowUp: true, followUp: FOLLOW_UP_LIMIT, number: 1 });
+  expect(canAsk(s, follow)).toBe(false);
+});
