@@ -1,7 +1,7 @@
 import { AudioContext, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
 import { API_URL, type Mode } from "@/constants";
-import { isSpeech, levelOf, nextFloor } from "@/utils/mic-level";
+import { createNoiseGate } from "@/utils/noise-gate";
 import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
 import { getRecorder } from "@/utils/recorder";
 
@@ -48,7 +48,7 @@ export class GeminiEngine implements LiveEngine {
   private studentFloor = false; // presenting or answering
   private activity = false; // activityStart sent, activityEnd not yet
   private spoke = false;
-  private noise = 1;
+  private gate = createNoiseGate();
   private ctx: AudioContext | null = null;
   private voice: AudioBufferQueueSourceNode | null = null;
   private queued = 0; // panel audio buffers not yet played
@@ -82,6 +82,8 @@ export class GeminiEngine implements LiveEngine {
   finishTurn() {
     if (!this.studentFloor) return;
     this.endStudentTurn();
+    const last = this.gate.flush();
+    if (last && this.activity) this.sendAudio(last);
     if (this.activity) this.send({ realtimeInput: { activityEnd: {} } });
     else this.sendTurn("(no answer)");
     this.activity = false;
@@ -91,6 +93,7 @@ export class GeminiEngine implements LiveEngine {
   sendText(text: string) {
     if (!this.studentFloor || !text.trim()) return;
     this.emit({ type: "youText", text: ` ${text.trim()}` });
+    this.gate.flush();
     this.endStudentTurn();
     this.sendTurn(text.trim());
   }
@@ -337,10 +340,9 @@ export class GeminiEngine implements LiveEngine {
 
   private onMic(samples: Float32Array) {
     if (!this.studentFloor || this.paused || !this.ready) return;
-    const level = levelOf(samples);
-    this.noise = nextFloor(this.noise, level);
+    const { level, speech, out } = this.gate.push(samples); // non-voice chunks come back as silence
     this.emit({ type: "level", value: level });
-    if (!this.spoke && isSpeech(level, this.noise)) {
+    if (!this.spoke && speech) {
       this.spoke = true;
       this.emit({ type: "youSpeaking" });
     }
@@ -348,6 +350,10 @@ export class GeminiEngine implements LiveEngine {
       this.send({ realtimeInput: { activityStart: {} } });
       this.activity = true;
     }
+    if (out) this.sendAudio(out);
+  }
+
+  private sendAudio(samples: Float32Array) {
     this.send({ realtimeInput: { audio: { data: encodePcm16(samples), mimeType: `audio/pcm;rate=${MIC_RATE}` } } });
   }
 

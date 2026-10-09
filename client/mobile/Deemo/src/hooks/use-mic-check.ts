@@ -4,6 +4,7 @@ import { AppState } from "react-native";
 import { AudioManager } from "react-native-audio-api";
 
 import { isSpeech, levelOf, nextFloor } from "@/utils/mic-level";
+import { rememberRoomFloor } from "@/utils/noise-gate";
 import { getRecorder } from "@/utils/recorder";
 
 const BARS = 22;
@@ -35,6 +36,7 @@ export function useMicCheck() {
       r.onAudioReady({ sampleRate: SAMPLE_RATE, bufferLength: SAMPLE_RATE / 10, channelCount: 1 }, ({ buffer, numFrames }) => {
         const level = levelOf(buffer.getChannelData(0));
         floor = nextFloor(floor, level);
+        rememberRoomFloor(floor); // the session's noise gate starts from this room's level
         setLevels((l) => [...l.slice(1), level]);
         if (isSpeech(level, floor)) setVoicedMs((ms) => ms + (numFrames / buffer.sampleRate) * 1000);
       });
