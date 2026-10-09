@@ -59,4 +59,7 @@ Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatica
 
 ## Design
 
-`docs/DEEMO_DESIGN_SYSTEM.md` points to a claude.ai/design prototype (`DEEMO Prototype.dc.html` + `support.js`). Importing it requires the `claude_design` MCP and `/design-login`.
+- Source of truth: claude.ai/design project `2fedfea1-9f17-429d-a735-c7b644e092d9` (via the `claude_design` MCP). It also holds `DEEMO Branding.dc.html` and `uploads/DEEMO - UI UX Design Brief.md`, which covers screen specs, live-session states, and accessibility rules.
+- Local copy: `docs/design/DEEMO Prototype.dc.html` + `support.js` (open the HTML in a browser). It is reference only; never ship it.
+- Tokens: `client/mobile/Deemo/src/theme.ts`. Use these values; don't hardcode colors. The palette is light only so far, with a warm paper background and a "dusk" indigo primary. Amber marks contradictions. Never use red during a session.
+- Fonts: Bricolage Grotesque, DM Sans, DM Mono. Icons: Material Symbols Rounded (ligatures, regular + filled). They are embedded at build time through the `expo-font` plugin in `app.json` (Android font families), so use `fonts.*` from `theme.ts` together with `fontWeight`. Adding a weight means adding it to `app.json` and rebuilding.
