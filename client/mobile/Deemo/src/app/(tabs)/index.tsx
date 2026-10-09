@@ -14,7 +14,7 @@ function greeting(hour: number) {
 
 export default function Home() {
   return (
-    <Screen scroll title={greeting(new Date().getHours())} subtitle="Up for a round with the panel?">
+    <Screen scroll tabBar title={greeting(new Date().getHours())} subtitle="Up for a round with the panel?">
       <Pressable
         accessibilityRole="button"
         onPress={() => router.push("/practice")}

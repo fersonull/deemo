@@ -6,7 +6,7 @@ import { colors, type } from "@/theme";
 
 export default function Profile() {
   return (
-    <Screen scroll title="Profile">
+    <Screen scroll tabBar title="Profile">
       <Pressable accessibilityRole="button" onPress={session.signOut} style={styles.row}>
         <Text style={type.bodyStrong}>Sign out</Text>
       </Pressable>

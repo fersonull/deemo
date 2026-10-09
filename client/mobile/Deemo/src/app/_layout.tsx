@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="practice" />
+          <Stack.Screen name="mic-check" />
         </Stack.Protected>
       </Stack>
     </>
