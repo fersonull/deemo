@@ -20,6 +20,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="practice" />
           <Stack.Screen name="mic-check" />
+          <Stack.Screen name="session" />
         </Stack.Protected>
       </Stack>
     </>

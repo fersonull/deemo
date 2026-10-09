@@ -115,6 +115,19 @@
             ]
           }
         }
+      ],
+      [
+        "react-native-audio-api",
+        {
+          "androidPermissions": [
+            "android.permission.RECORD_AUDIO",
+            "android.permission.MODIFY_AUDIO_SETTINGS"
+          ],
+          "androidForegroundService": false,
+          "iosBackgroundMode": false,
+          "iosMicrophonePermission": "DEEMO uses the microphone so the AI panel can hear your answers.",
+          "disableFFmpeg": true
+        }
       ]
     ],
     "experiments": {
