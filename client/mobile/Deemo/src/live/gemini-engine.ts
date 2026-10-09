@@ -17,9 +17,9 @@ const MIC_RATE = 16000; // Live API input
 const VOICE_RATE = 24000; // Live API output
 const ROLES = ["Chair", "Technical", "Methodology"]; // the tool's `panelist` values, in PANEL order
 const RETRY_MS = 2000;
-const QUIET_TURN_MS = 3000; // a turn that ended without a voice: nudge once, then give the floor back
+const QUIET_TURN_MS = 5000; // a turn that ended without a voice: wait this long for late audio
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
-const PANEL_WAIT_MS = 10000; // 3.8 Live may stay silent (proactive audio); nudge it after this
+const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
 
 export type SessionSetup = { mode: Mode; domain: string; panelists: number; minutes: number };
 
@@ -58,6 +58,7 @@ export class GeminiEngine implements LiveEngine {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private marker: string | null = null; // closing char of a transcript marker still open across chunks
   private nudged = false; // asked a silent panel to go ahead once this turn
+  private asked = false; // a question was approved since the student's last turn
   private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private setup: SessionSetup) {}
@@ -199,6 +200,12 @@ export class GeminiEngine implements LiveEngine {
     const c = m.serverContent;
     if (!c) return;
     if (c.modelTurn || c.outputTranscription || c.turnComplete) this.panelResponded();
+    // The panel never talks over the student. Late speech here is a repeat (e.g. answering a nudge
+    // after its first reply already played), so it is dropped rather than played twice.
+    if (this.studentFloor) {
+      if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
+      return;
+    }
     for (const part of c.modelTurn?.parts ?? []) if (part.inlineData?.data) this.play(part.inlineData.data);
     const said = c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
     if (said?.trim()) this.emit({ type: "panelText", text: said });
@@ -222,6 +229,7 @@ export class GeminiEngine implements LiveEngine {
         panelist: Math.max(0, role) % this.setup.panelists,
       };
       if (this.canAsk(q)) {
+        this.asked = true;
         this.emit({ type: "ask", question: q });
         response = { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." }; // a bare ok sometimes ended the turn silently
       } else {
@@ -266,10 +274,11 @@ export class GeminiEngine implements LiveEngine {
     } else if (this.heard) {
       this.giveFloor();
     } else {
-      // A turn with no voice (tool-only, or the model chose silence). Audio may still follow; if not,
-      // ask it to go ahead once, then hand the floor back (an asked question is on screen anyway).
+      // A turn with no voice (tool-only, or the model chose silence). Audio may still follow. If a
+      // question was approved it is on screen, so just hand the floor back: nudging here made the
+      // panel repeat itself when its voice was only late. Otherwise ask it to go ahead, once.
       this.timer = setTimeout(() => {
-        if (this.nudged) return this.giveFloor();
+        if (this.nudged || this.asked) return this.giveFloor();
         this.nudged = true;
         this.turnDone = false;
         this.sendTurn("(Please go ahead.)");
@@ -304,6 +313,7 @@ export class GeminiEngine implements LiveEngine {
     this.studentFloor = false;
     this.turnDone = false;
     this.nudged = false;
+    this.asked = false;
     this.awaitPanel();
     this.emit({ type: "level", value: 0 });
     this.emit({ type: "youDone" });
