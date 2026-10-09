@@ -50,5 +50,8 @@
     "web": "expo start --web",
     "lint": "expo lint"
   },
-  "private": true
+  "private": true,
+  "patchedDependencies": {
+    "react-native-audio-api@0.13.6": "patches/react-native-audio-api@0.13.6.patch"
+  }
 }

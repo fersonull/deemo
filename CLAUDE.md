@@ -45,6 +45,7 @@ Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp
 - `StyleSheet.create` at the bottom of the component file. Import via `@/*` (→ `src/*`).
 - Platform splits: `.android.tsx` / `.web.tsx` with a default file always present.
 - Never hand-edit `android/` / `ios/`; configure via `app.json` and config plugins.
+- Library fixes go through `bun patch <pkg>` (kept in `patches/`). `react-native-audio-api` is patched so the Android mic uses the VoiceCommunication preset (platform noise suppression and echo cancellation). Re-check the patch when upgrading the library; a patch change needs a native rebuild.
 - Create folders when first needed, not ahead of time.
 
 ## Architecture rules (from the addendum)
