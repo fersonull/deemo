@@ -57,14 +57,15 @@ export const fonts = {
 } as const;
 
 export const type = {
-  hero: { fontFamily: fonts.display, fontWeight: "800", fontSize: 34, lineHeight: 35 },
-  title: { fontFamily: fonts.display, fontWeight: "800", fontSize: 26, lineHeight: 27 },
-  heading: { fontFamily: fonts.display, fontWeight: "700", fontSize: 17 },
+  display: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 42, letterSpacing: -1.6, color: colors.ink },
+  hero: { fontFamily: fonts.display, fontWeight: "800", fontSize: 34, lineHeight: 36, letterSpacing: -1.2, color: colors.ink },
+  title: { fontFamily: fonts.display, fontWeight: "800", fontSize: 32, lineHeight: 34, letterSpacing: -1.1, color: colors.ink },
+  heading: { fontFamily: fonts.display, fontWeight: "700", fontSize: 17, color: colors.ink },
   button: { fontFamily: fonts.body, fontWeight: "600", fontSize: 16 },
-  bodyStrong: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5 },
-  body: { fontFamily: fonts.body, fontWeight: "400", fontSize: 14, lineHeight: 21 },
-  meta: { fontFamily: fonts.body, fontWeight: "400", fontSize: 12 },
-  label: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 10, letterSpacing: 0.6 }, // uppercase section labels
+  bodyStrong: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
+  body: { fontFamily: fonts.body, fontWeight: "400", fontSize: 14, lineHeight: 21, color: colors.ink },
+  meta: { fontFamily: fonts.body, fontWeight: "400", fontSize: 12, color: colors.muted },
+  label: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 10, letterSpacing: 1.2, color: colors.muted }, // uppercase section labels
   timer: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, fontVariant: ["tabular-nums"] },
 } as const;
 
