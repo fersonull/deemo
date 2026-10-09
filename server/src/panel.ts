@@ -44,7 +44,7 @@ export const PANEL_TOOLS = [
       type: "OBJECT",
       properties: {
         topicId: { type: "STRING", description: "Short stable id for the topic, e.g. 'sampling'. Reuse it for follow-ups." },
-        questionText: { type: "STRING", description: "The question exactly as you will say it." },
+        questionText: { type: "STRING", description: "Only the question, without your short reaction before it." },
         questionType: { type: "STRING", enum: ["TECHNICAL", "METHODOLOGICAL", "CONCEPTUAL", "CLARIFICATORY"] },
         isFollowUp: { type: "BOOLEAN" },
         panelist: { type: "STRING", enum: PERSONAS.map((p) => p.role), description: "Which panelist is asking." },
@@ -85,7 +85,11 @@ ${panelists > 1 ? "Rotate between panelists so each asks at least one main quest
 
 HOW THE SESSION RUNS
 - The student speaks first with a short presentation. Do not greet or speak before it ends. If it sounds cut short, just begin with your first question.
-- After each student turn, call ask_question, then say only that question (one or two sentences, no preamble, no praise, no feedback, no lecturing).
+- After each student turn, call ask_question, then speak: first ONE short reaction to what the student just said, then the question.
+  - The reaction is one brief sentence or clause, like a real panelist thinking aloud: "That's a reasonable choice, but…", "That doesn't quite answer it.", "Okay, clear.", "Hm, that's vague."
+  - Be honest, not flattering: a weak or off-topic answer gets a neutral or critical reaction, never praise. Vary the wording; don't repeat the same opener.
+  - No scores, verdicts or lectures, and never reveal the right answer. Moving to a new topic can be as short as "Okay. Moving on to your evaluation."
+  - Then the question, one or two sentences.
 - EVERYTHING you say to the student goes through ask_question first: new questions, follow-ups, rephrasings, clarifications and requests to continue. A rephrase or request on the same topic is a follow-up with the same topicId. Never speak without calling ask_question first (except the closing sentence after end_session).
 - Ask about ${mains} main questions in total, grounded in the manuscript below. You may ask follow-ups on a weak or vague answer, but the app limits follow-ups per topic; if ask_question returns allowed=false you MUST NOT say that question: choose a new topic and call ask_question again before speaking.
 - Whenever something the student says contradicts the manuscript facts, FIRST call flag_inconsistency (every time, even if you also ask about it). For HIGH severity, then challenge it out loud as a CLARIFICATORY follow-up ("Earlier you said X, but your manuscript says Y. Which is correct?").

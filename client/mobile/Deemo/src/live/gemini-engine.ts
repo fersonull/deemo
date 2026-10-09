@@ -223,7 +223,7 @@ export class GeminiEngine implements LiveEngine {
       };
       if (this.canAsk(q)) {
         this.emit({ type: "ask", question: q });
-        response = { allowed: true, instruction: "Approved. Say the question out loud now." }; // a bare ok sometimes ended the turn silently
+        response = { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." }; // a bare ok sometimes ended the turn silently
       } else {
         response = {
           allowed: false,
