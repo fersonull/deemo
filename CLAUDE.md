@@ -34,6 +34,7 @@ Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatica
 - `src/components/` — reusable UI, kebab-case files, one named export each; a big component becomes a folder with `index.tsx`.
 - `src/screens/<name>/` — screen bodies that route files render; private sub-components stay in that folder.
 - `src/hooks/`, `src/utils/` (tests next to the file: `x.test.ts`), `src/theme.ts`, `src/constants.ts`.
+- `src/live/`: the live-session engine. The pure `reducer.ts` consumes events shaped like Gemini Live messages and tool calls (`types.ts`). `MockEngine` plays a scripted defense through the `LiveEngine` interface, and the real Gemini engine will implement the same interface. Tests: `bun test src`.
 - `StyleSheet.create` at the bottom of the component file. Import via `@/*` (→ `src/*`).
 - Platform splits: `.android.tsx` / `.web.tsx` with a default file always present.
 - Never hand-edit `android/` / `ios/`; configure via `app.json` and config plugins.

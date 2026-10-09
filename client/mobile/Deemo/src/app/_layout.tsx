@@ -20,7 +20,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="practice" />
           <Stack.Screen name="mic-check" />
-          <Stack.Screen name="session" />
+          <Stack.Screen name="session" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="scoring" options={{ gestureEnabled: false }} />
         </Stack.Protected>
       </Stack>
     </>

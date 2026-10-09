@@ -1,8 +1,5 @@
-import { router } from "expo-router";
+import { Session } from "@/screens/session";
 
-import { Screen } from "@/components/screen";
-
-// Placeholder for the Live session (screen 11), built in a later task.
-export default function Session() {
-  return <Screen onBack={() => router.back()} title="Live session" subtitle="Coming next." />;
+export default function SessionRoute() {
+  return <Session />;
 }

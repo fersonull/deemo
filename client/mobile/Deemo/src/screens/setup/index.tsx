@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
-import type { Mode } from "@/constants";
+import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, radius, type } from "@/theme";
@@ -13,10 +13,10 @@ import { colors, radius, type } from "@/theme";
 import { Segmented } from "./segmented";
 import { DomainSheet, UpsellSheet } from "./sheets";
 
-const MODES: { value: Mode; title: string; desc: string }[] = [
-  { value: "TITLE", title: "Title Defense", desc: "Problem, objectives, feasibility · 8–10 min" },
-  { value: "PRE_ORAL", title: "Pre-Oral", desc: "Methodology, design, progress · 12–15 min" },
-  { value: "FINAL", title: "Final Defense", desc: "Results, testing, conclusions · 15–20 min" },
+const MODES: { value: Mode; desc: string }[] = [
+  { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },
+  { value: "PRE_ORAL", desc: "Methodology, design, progress · 12–15 min" },
+  { value: "FINAL", desc: "Results, testing, conclusions · 15–20 min" },
 ];
 
 const FEEDBACK = [
@@ -58,7 +58,7 @@ export function Setup() {
               style={[styles.mode, selected && styles.inkCard]}
             >
               <View style={styles.flex}>
-                <Text style={[type.heading, { color: fg }]}>{m.title}</Text>
+                <Text style={[type.heading, { color: fg }]}>{MODE_LABELS[m.value]}</Text>
                 <Text style={[styles.desc, { color: fg }]}>{m.desc}</Text>
               </View>
               <Icon name={locked ? "lock" : selected ? "radio_button_checked" : "radio_button_unchecked"} color={fg} />

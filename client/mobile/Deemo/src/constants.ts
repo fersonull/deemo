@@ -11,3 +11,16 @@ export type Domain = (typeof DOMAINS)[number];
 
 // Session data model values (plan §13).
 export type Mode = "TITLE" | "PRE_ORAL" | "FINAL";
+
+export const MODE_LABELS: Record<Mode, string> = {
+  TITLE: "Title Defense",
+  PRE_ORAL: "Pre-Oral",
+  FINAL: "Final Defense",
+};
+
+// Panel personas (addendum Q7): one voice, distinguished by name, role and questioning focus.
+export const PANEL = [
+  { name: "Reyes", role: "Chair" },
+  { name: "Santos", role: "Tech" },
+  { name: "Cruz", role: "Methods" },
+] as const;
