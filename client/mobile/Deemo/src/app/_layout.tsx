@@ -10,7 +10,9 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="dark" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
+      <Stack
+        screenOptions={{ headerShown: false, animation: "fade_from_bottom", contentStyle: { backgroundColor: colors.paper } }}
+      >
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="welcome" />
           <Stack.Screen name="consent" />
