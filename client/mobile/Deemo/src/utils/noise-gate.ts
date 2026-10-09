@@ -22,8 +22,11 @@ export function createNoiseGate() {
   let hold = 0;
   let pending: { samples: Float32Array; open: boolean } | null = null;
 
-  const emit = (p: NonNullable<typeof pending>, open: boolean) =>
-    p.open || open ? p.samples : new Float32Array(p.samples.length);
+  // voiced: the chunk goes out as recorded (speech, or its lead-in/hold); otherwise it's silence.
+  const emit = (p: NonNullable<typeof pending>, open: boolean) => {
+    const voiced = p.open || open;
+    return { samples: voiced ? p.samples : new Float32Array(p.samples.length), voiced };
+  };
 
   return {
     // Returns the level and speech flag for this chunk, and the (delayed) chunk to send, if any.

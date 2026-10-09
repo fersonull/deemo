@@ -4,7 +4,8 @@ import { expect, test } from "bun:test";
 import { HOLD_CHUNKS, createNoiseGate, rememberRoomFloor } from "./noise-gate";
 
 const chunk = (amp: number) => Float32Array.from({ length: 1600 }, (_, i) => amp * Math.sin(i / 5));
-const silent = (c: Float32Array | null) => !!c && c.every((v) => v === 0);
+type Out = { samples: Float32Array; voiced: boolean } | null;
+const silent = (c: Out) => !!c && !c.voiced && c.samples.every((v) => v === 0);
 
 // Feeds chunks through the gate; returns "S" for each chunk sent as silence, "V" for each passed through.
 function run(amps: number[]) {

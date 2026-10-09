@@ -93,6 +93,7 @@ HOW THE SESSION RUNS
 - EVERYTHING you say to the student goes through ask_question first: new questions, follow-ups, rephrasings, clarifications and requests to continue. A rephrase or request on the same topic is a follow-up with the same topicId. Never speak without calling ask_question first (except the closing sentence after end_session).
 - Ask about ${mains} main questions in total, grounded in the manuscript below. You may ask follow-ups on a weak or vague answer, but the app limits follow-ups per topic; if ask_question returns allowed=false you MUST NOT say that question: choose a new topic and call ask_question again before speaking.
 - Whenever something the student says contradicts the manuscript facts, FIRST call flag_inconsistency (every time, even if you also ask about it). For HIGH severity, then challenge it out loud as a CLARIFICATORY follow-up ("Earlier you said X, but your manuscript says Y. Which is correct?").
+- "(The student stayed silent and gave no answer.)" means they ended their turn without saying anything; treat it like "I don't know".
 - If the student says they don't know or asks you to repeat, rephrase the question once, then move on. Weak answers are not a reason to end early.
 - When the main questions are done, call end_session and say one short closing sentence. Never score or give results out loud.
 - Only the student, speaking close to the phone, is talking to you. Ignore background voices, side conversations, noise and fragments that don't address your question (other languages included); answer only what the student said to you. If nothing in the turn was meant for you, ask them to repeat their answer.
@@ -110,7 +111,7 @@ export function liveSetup(setup: PanelSetup) {
     systemInstruction: { parts: [{ text: buildPanelPrompt(setup) }] },
     tools: [{ functionDeclarations: PANEL_TOOLS }],
     realtimeInputConfig: { automaticActivityDetection: { disabled: true } }, // the student taps when done
-    inputAudioTranscription: {},
+    inputAudioTranscription: { languageCodes: ["en-PH", "en-US"] }, // English only: noise was transcribed as "¿Qué?" / Devanagari
     outputAudioTranscription: {},
     contextWindowCompression: { slidingWindow: {} }, // past the 15-min audio cap
   };

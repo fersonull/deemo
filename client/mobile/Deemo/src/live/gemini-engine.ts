@@ -83,9 +83,10 @@ export class GeminiEngine implements LiveEngine {
     if (!this.studentFloor) return;
     this.endStudentTurn();
     const last = this.gate.flush();
-    if (last && this.activity) this.sendAudio(last);
+    if (last) this.sendMic(last);
+    // Nothing said: a text note instead of a silent activity, which Gemini "transcribed" as made-up words.
     if (this.activity) this.send({ realtimeInput: { activityEnd: {} } });
-    else this.sendTurn("(no answer)");
+    else this.sendTurn("(The student stayed silent and gave no answer.)");
     this.activity = false;
   }
 
@@ -346,14 +347,16 @@ export class GeminiEngine implements LiveEngine {
       this.spoke = true;
       this.emit({ type: "youSpeaking" });
     }
+    if (out) this.sendMic(out);
+  }
+
+  // The turn's activity opens at the first voiced chunk; until then nothing is sent at all.
+  private sendMic({ samples, voiced }: { samples: Float32Array; voiced: boolean }) {
     if (!this.activity) {
+      if (!voiced) return;
       this.send({ realtimeInput: { activityStart: {} } });
       this.activity = true;
     }
-    if (out) this.sendAudio(out);
-  }
-
-  private sendAudio(samples: Float32Array) {
     this.send({ realtimeInput: { audio: { data: encodePcm16(samples), mimeType: `audio/pcm;rate=${MIC_RATE}` } } });
   }
 
