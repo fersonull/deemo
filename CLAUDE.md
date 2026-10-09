@@ -28,6 +28,11 @@ bunx tsc --noEmit
 
 Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatically).
 
+## Workflow rules
+
+- **Never commit on `main`.** Work happens on `dev`, so commit there. If the current branch is `main`, leave the changes uncommitted and tell the user; they commit on `main` themselves.
+- **Never run native rebuilds** (`expo prebuild`, `expo run:android`, Gradle). When a change needs one, such as a new native module, a config plugin, or an `app.json` plugin or permission change, say so clearly and the user will rebuild. JS-only changes reload through Metro.
+
 ## App conventions (Expo plugin)
 
 - `src/app/` is routes only. Everything else goes in sibling folders under `src/`.
