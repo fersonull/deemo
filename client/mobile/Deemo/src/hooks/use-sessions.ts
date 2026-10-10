@@ -1,6 +1,7 @@
-import { API_URL, type Mode } from "@/constants";
+import { type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import type { LiveState } from "@/live/types";
+import { api } from "@/utils/api";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/sessions.ts. Reports are scored on the server; the app submits and reads them.
@@ -61,13 +62,6 @@ const store = createStore({ list: [] as SessionSummary[], loaded: false, error: 
 
 export const useSessions = store.use;
 
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, init);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((body as { error?: string }).error ?? `Request failed (${res.status})`);
-  return body as T;
-}
-
 const post = (body: object) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
@@ -98,6 +92,10 @@ function fromLive(s: LiveState) {
 }
 
 export const sessions = {
+  reset() {
+    store.set({ list: [], loaded: false, error: false, submit: { state: "idle" } });
+  },
+
   // Fire and forget from the session screen; the scoring screen follows store.submit.
   async submit(payload: object) {
     store.set({ submit: { state: "saving" } });

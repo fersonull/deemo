@@ -1,18 +1,33 @@
 import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 
 import { projects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
+import { sessions } from "@/hooks/use-sessions";
 import { colors } from "@/theme";
 
-export default function RootLayout() {
-  const { signedIn } = useSession();
+// Hold the splash until Firebase says whether someone is still signed in (no flash of the welcome screen).
+void SplashScreen.preventAutoHideAsync();
 
-  // Know the active manuscript from the start, so every path into a session uses it.
+export default function RootLayout() {
+  const { ready, signedIn } = useSession();
+
+  useEffect(() => {
+    if (ready) void SplashScreen.hideAsync();
+  }, [ready]);
+
+  // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out.
   useEffect(() => {
     if (signedIn) void projects.refresh();
+    else {
+      projects.reset();
+      sessions.reset();
+    }
   }, [signedIn]);
+
+  if (!ready) return null;
 
   return (
     <>

@@ -1,7 +1,8 @@
 import { File } from "expo-file-system";
 
-import { API_URL, type Domain } from "@/constants";
+import { type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
+import { api } from "@/utils/api";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/store.ts. The server keeps projects; the app only caches the list.
@@ -37,13 +38,6 @@ const store = createStore({ projects: [] as Project[], loaded: false, error: fal
 
 export const useProjects = store.use;
 
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, init);
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((body as { error?: string }).error ?? `Request failed (${res.status})`);
-  return body as T;
-}
-
 function upsert(p: Project) {
   const rest = store.get().projects.filter((x) => x.id !== p.id);
   store.set({ projects: [p, ...rest].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
@@ -59,6 +53,12 @@ function pickActive(projects: Project[]) {
 }
 
 export const projects = {
+  // Signed out: drop the last student's list and active manuscript.
+  reset() {
+    store.set({ projects: [], loaded: false, error: false });
+    practiceSetup.set({ projectId: null });
+  },
+
   async refresh() {
     try {
       const list = await api<Project[]>("/projects");

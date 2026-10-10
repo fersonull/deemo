@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase Android config (download from the Firebase console; see CLAUDE.md)
+google-services.json

@@ -1,4 +1,4 @@
-import { mkdir } from "node:fs/promises";
+import { db } from "./firebase";
 
 // What the panel knows about a manuscript (Document Logic Analysis, plan F2). The raw file is never kept.
 export type Analysis = {
@@ -16,6 +16,7 @@ export type Analysis = {
 
 export type Project = {
   id: string;
+  updatedAt?: string;
   name: string;
   domain: string;
   fileName: string;
@@ -27,48 +28,50 @@ export type Project = {
   confirmedAt?: string; // the student reviewed the summary
 };
 
-const DIR = `${import.meta.dir}/../data`;
+// Background jobs (analysis, scoring) that stopped updating, e.g. the server restarted mid-job.
+const STALE_MS = 5 * 60_000;
 
-// ponytail: one JSON file per collection, rewritten on every change, and no per-user scoping; moves to
-// the real database (and per-user data) when Firebase sign-in lands.
-export function collection<T extends { id: string; createdAt: string; status: string; error?: string }>(name: string) {
-  const file = `${DIR}/${name}.json`;
-  let items: Record<string, T> | null = null;
+type Item = { id: string; createdAt: string; updatedAt?: string; status: string; error?: string };
 
-  async function load() {
-    if (!items) {
-      const f = Bun.file(file);
-      items = (await f.exists()) ? ((await f.json()) as Record<string, T>) : {};
-      // Background work can't survive a restart; don't leave the app polling forever.
-      for (const it of Object.values(items))
-        if (it.status === "analyzing" || it.status === "scoring")
-          Object.assign(it, { status: "failed", error: "The server restarted. Try again." });
-    }
-    return items;
-  }
-
-  async function save() {
-    await mkdir(DIR, { recursive: true });
-    await Bun.write(file, JSON.stringify(items, null, 2));
-  }
+// One Firestore subcollection per user: users/{uid}/{name}/{id}. Only the server reads and writes it.
+export function collection<T extends Item>(name: string) {
+  const col = (uid: string) => db.collection("users").doc(uid).collection(name);
+  const fresh = (it: T): T =>
+    (it.status === "analyzing" || it.status === "scoring") && Date.now() - Date.parse(it.updatedAt ?? it.createdAt) > STALE_MS
+      ? { ...it, status: "failed", error: "This took too long. Try again." }
+      : it;
 
   return {
-    async list() {
-      return Object.values(await load()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    async list(uid: string) {
+      const snap = await col(uid).orderBy("createdAt", "desc").get();
+      return snap.docs.map((d) => fresh(d.data() as T));
     },
-    async get(id: string) {
-      return (await load())[id] ?? null;
+    async get(uid: string, id: string) {
+      const d = await col(uid).doc(id).get();
+      return d.exists ? fresh(d.data() as T) : null;
     },
-    async put(it: T) {
-      (await load())[it.id] = it;
-      await save();
-      return it;
+    async put(uid: string, it: T) {
+      const next = { ...it, updatedAt: new Date().toISOString() };
+      await col(uid).doc(it.id).set(next);
+      return next;
     },
-    async remove(id: string) {
-      delete (await load())[id];
-      await save();
+    async remove(uid: string, id: string) {
+      await col(uid).doc(id).delete();
     },
   };
 }
 
 export const store = collection<Project>("projects");
+
+// The account record (plan §13): consent and the simulated tier (addendum Q1). Set only by the server.
+export type UserRecord = { premium: boolean; consentAt?: string; consentVersion?: string };
+
+export const users = {
+  async get(uid: string): Promise<UserRecord> {
+    const d = await db.collection("users").doc(uid).get();
+    return { premium: false, ...(d.data() as Partial<UserRecord> | undefined) };
+  },
+  async update(uid: string, patch: Partial<UserRecord>) {
+    await db.collection("users").doc(uid).set(patch, { merge: true });
+  },
+};

@@ -30,7 +30,9 @@ Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatica
 
 Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp:3000 tcp:3000` (the app defaults to `http://localhost:3000`; set `EXPO_PUBLIC_API_URL` to use Wi-Fi instead). `EXPO_PUBLIC_LIVE_ENGINE=mock` swaps in the scripted panel for UI work without the server.
 
-Projects (manuscript upload + analysis) live in `server/data/projects.json` (gitignored; one shared list until sign-in exists). Analysis: `server/src/analysis.ts` (Flash model constant, PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`.
+Firebase: the app signs in with React Native Firebase Auth (email/password, Google via `react-native-nitro-google-signin`) and sends its ID token as `Authorization: Bearer` (`src/utils/api.ts`). The server verifies it (`server/src/firebase.ts`) and is the only one touching Firestore: `users/{uid}` (consent, simulated premium) with `projects` and `sessions` subcollections (`server/src/store.ts`). Free-tier limits are enforced on the server. Config files stay out of git: `client/mobile/Deemo/google-services.json` and the service-account key at `FIREBASE_SERVICE_ACCOUNT` in `server/.env`.
+
+Analysis: `server/src/analysis.ts` (Flash model constant, PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`. Scoring: `server/src/sessions.ts` (Flash for levels and feedback) and `server/src/scoring.ts` (the readiness math, tested).
 
 ## Workflow rules
 

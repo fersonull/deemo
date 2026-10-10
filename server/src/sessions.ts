@@ -38,6 +38,7 @@ export type Report = {
 export type Session = {
   id: string;
   createdAt: string;
+  updatedAt?: string;
   status: "scoring" | "ready" | "failed";
   error?: string;
   projectId?: string;
@@ -61,7 +62,7 @@ const num = (x: unknown) => (typeof x === "number" && Number.isFinite(x) ? x : 0
 const SEVERITIES: Severity[] = ["LOW", "MEDIUM", "HIGH"];
 
 // The app's end-of-session payload, checked and trimmed (trust boundary).
-export async function parseSession(body: unknown): Promise<Omit<Session, "id" | "createdAt" | "status"> | null> {
+export async function parseSession(uid: string, body: unknown): Promise<Omit<Session, "id" | "createdAt" | "status"> | null> {
   const b = (body ?? {}) as Record<string, unknown>;
   const setup = parseSetup(b);
   if (!setup || !Array.isArray(b.turns) || !Array.isArray(b.lines) || !Array.isArray(b.flags)) return null;
@@ -91,7 +92,7 @@ export async function parseSession(body: unknown): Promise<Omit<Session, "id" | 
     Array.isArray(w) && w.length === 5 && w.every((x) => typeof x === "number" && x >= 0) && w.some((x) => x > 0)
       ? (w as number[])
       : DEFAULT_WEIGHTS;
-  const project = setup.projectId ? await store.get(setup.projectId) : null;
+  const project = setup.projectId ? await store.get(uid, setup.projectId) : null;
   return {
     projectId: project?.id,
     title: project?.analysis?.title || project?.name || "Sample paper (ReqTrack)",
@@ -202,7 +203,7 @@ async function judge(prompt: string): Promise<Judgment> {
 }
 
 // Rubric levels and wording from Flash; delivery, verified contradictions and the score from code.
-export async function scoreSession(s: Omit<Session, "report">): Promise<Report> {
+export async function scoreSession(uid: string, s: Omit<Session, "report">): Promise<Report> {
   const planned = plannedMainQuestions(s.minutes);
   const answered = new Set(s.turns.filter((t) => t.followUp === 0).map((t) => t.number)).size;
   const d = delivery(s.turns);
@@ -217,7 +218,7 @@ export async function scoreSession(s: Omit<Session, "report">): Promise<Report> 
       headline: "The session ended before any questions were answered.",
     };
   } else {
-    const project = s.projectId ? await store.get(s.projectId) : null;
+    const project = s.projectId ? await store.get(uid, s.projectId) : null;
     j = await judge(scoringPrompt(s, project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT));
   }
 

@@ -1,9 +1,10 @@
 import express from "express";
 
 import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
+import { type Authed, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, type Session } from "./sessions";
-import { type Analysis, type Project, store } from "./store";
+import { type Analysis, type Project, store, users } from "./store";
 
 const app = express();
 app.use(express.json({ limit: "1mb" })); // a 25-minute transcript outgrows the 100 kB default
@@ -12,9 +13,36 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
+// Everything below belongs to a signed-in student (Firebase ID token), stored under users/{uid}.
+app.use(["/me", "/projects", "/sessions", "/live"], requireUser);
+const uidOf = (req: express.Request) => (req as Authed).uid;
+
+// Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 minutes, one manuscript. Enforced here, not just in the app.
+const FREE_PROJECTS = 1;
+
+app.get("/me", async (req, res) => {
+  res.json(await users.get(uidOf(req)));
+});
+
+// Consent (recorded after sign-in, with the version the student agreed to) and the simulated upgrade.
+app.patch("/me", async (req, res) => {
+  const uid = uidOf(req);
+  const body = (req.body ?? {}) as { consentVersion?: unknown; premium?: unknown };
+  if (typeof body.consentVersion === "string")
+    await users.update(uid, { consentVersion: body.consentVersion.slice(0, 20), consentAt: new Date().toISOString() });
+  // ponytail: demo toggle, no payments (addendum Q1).
+  if (body.premium === true) await users.update(uid, { premium: true });
+  res.json(await users.get(uid));
+});
+
 // Upload a manuscript (plan F1). Answers right away; the analysis runs in the background and the app polls.
 // The file only lives in memory for the analysis call; only the analysis is stored.
 app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTES + 1_000_000 }), async (req, res) => {
+  const uid = uidOf(req);
+  const { premium } = await users.get(uid);
+  if (!premium && (await store.list(uid)).filter((p) => p.status !== "failed").length >= FREE_PROJECTS)
+    return void res.status(403).json({ error: "The free plan holds one manuscript. Delete it or try Premium." });
+
   const form = await new Response(req.body, { headers: { "content-type": req.headers["content-type"] ?? "" } })
     .formData()
     .catch(() => null);
@@ -32,7 +60,7 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
       .trim()
       .slice(0, 80) || fileName.replace(/\.(pdf|docx)$/i, "");
 
-  const project = await store.put({
+  const project = await store.put(uid, {
     id: crypto.randomUUID(),
     name,
     domain,
@@ -44,7 +72,7 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   res.status(202).json(project);
 
   // Only if it still exists: the student may have deleted it while it was being read.
-  const finish = async (patch: Partial<Project>) => (await store.get(project.id)) && store.put({ ...project, ...patch });
+  const finish = async (patch: Partial<Project>) => (await store.get(uid, project.id)) && store.put(uid, { ...project, ...patch });
   analyzeManuscript({ bytes, type }).then(
     (analysis) => finish({ status: "ready", analysis }),
     (err) => {
@@ -55,20 +83,19 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   );
 });
 
-// ponytail: everyone sees every project until sign-in exists (single-user dev setup).
-app.get("/projects", async (_req, res) => {
-  res.json(await store.list());
+app.get("/projects", async (req, res) => {
+  res.json(await store.list(uidOf(req)));
 });
 
 app.get("/projects/:id", async (req, res) => {
-  const project = await store.get(req.params.id);
+  const project = await store.get(uidOf(req), req.params.id);
   if (!project) return void res.status(404).json({ error: "not found" });
   res.json(project);
 });
 
 // Deleting a project drops its analysis for good (the raw file was never kept).
 app.delete("/projects/:id", async (req, res) => {
-  await store.remove(req.params.id);
+  await store.remove(uidOf(req), req.params.id);
   res.status(204).end();
 });
 
@@ -76,7 +103,8 @@ const TEXT_FIELDS = ["title", "problem", "objectives", "method", "scope", "featu
 
 // The student's corrections to the summary, and "Looks right" (confirm).
 app.patch("/projects/:id/analysis", async (req, res) => {
-  const project = await store.get(req.params.id);
+  const uid = uidOf(req);
+  const project = await store.get(uid, req.params.id);
   if (!project?.analysis) return void res.status(404).json({ error: "not found" });
   const body = (req.body ?? {}) as { analysis?: Partial<Record<keyof Analysis, unknown>>; confirm?: unknown };
   const edits = body.analysis ?? {};
@@ -96,47 +124,53 @@ app.patch("/projects/:id/analysis", async (req, res) => {
       .slice(0, 40);
   }
   res.json(
-    await store.put({ ...project, analysis: next, ...(body.confirm === true && { confirmedAt: new Date().toISOString() }) }),
+    await store.put(uid, {
+      ...project,
+      analysis: next,
+      ...(body.confirm === true && { confirmedAt: new Date().toISOString() }),
+    }),
   );
 });
 
 // A finished session (plan F14): saved right away, scored in the background (Flash for rubric levels and
 // feedback, code for the score). The app polls GET /sessions/:id.
-function score(session: Session) {
-  scoreSession(session).then(
-    (report) => sessions.put({ ...session, status: "ready", report }),
+function score(uid: string, session: Session) {
+  scoreSession(uid, session).then(
+    (report) => sessions.put(uid, { ...session, status: "ready", report }),
     (err) => {
       console.error("scoring", session.id, err);
-      return sessions.put({ ...session, status: "failed", error: "We couldn't score this session. Try again." });
+      return sessions.put(uid, { ...session, status: "failed", error: "We couldn't score this session. Try again." });
     },
   );
 }
 
 app.post("/sessions", async (req, res) => {
-  const parsed = await parseSession(req.body);
+  const uid = uidOf(req);
+  const parsed = await parseSession(uid, req.body);
   if (!parsed) return void res.status(400).json({ error: "invalid session" });
-  const session = await sessions.put({
+  const session = await sessions.put(uid, {
     ...parsed,
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     status: "scoring",
   });
   res.status(202).json(session);
-  score(session);
+  score(uid, session);
 });
 
 // Re-score a session whose scoring failed; its transcript was kept.
 app.post("/sessions/:id/score", async (req, res) => {
-  const found = await sessions.get(req.params.id);
+  const uid = uidOf(req);
+  const found = await sessions.get(uid, req.params.id);
   if (!found) return void res.status(404).json({ error: "not found" });
-  const session = await sessions.put({ ...found, status: "scoring", error: undefined, report: undefined });
+  const session = await sessions.put(uid, { ...found, status: "scoring", error: undefined, report: undefined });
   res.status(202).json(session);
-  score(session);
+  score(uid, session);
 });
 
 // History rows: no transcripts, just what the list shows.
-app.get("/sessions", async (_req, res) => {
-  const list = await sessions.list();
+app.get("/sessions", async (req, res) => {
+  const list = await sessions.list(uidOf(req));
   res.json(
     list.map(({ id, createdAt, status, mode, title, durationMs, report }) => ({
       id,
@@ -152,18 +186,21 @@ app.get("/sessions", async (_req, res) => {
 });
 
 app.get("/sessions/:id", async (req, res) => {
-  const session = await sessions.get(req.params.id);
+  const session = await sessions.get(uidOf(req), req.params.id);
   if (!session) return void res.status(404).json({ error: "not found" });
   res.json(session);
 });
 
 // Mints a single-use Gemini Live token with the panel setup locked in (addendum B1).
 // The app calls this before every connect, including reconnects (the resumption handle carries the session).
-// ponytail: no auth or quota yet; add requireFirebaseAuth + tier checks when sign-in lands.
 app.post("/live/token", async (req, res) => {
+  const uid = uidOf(req);
   const setup = parseSetup(req.body);
   if (!setup) return void res.status(400).json({ error: "invalid setup" });
-  const analysis = setup.projectId ? (await store.get(setup.projectId))?.analysis : undefined; // else the sample
+  const { premium } = await users.get(uid);
+  if (!premium && (setup.mode === "FINAL" || setup.panelists > 1 || setup.minutes > 10))
+    return void res.status(403).json({ error: "That setup needs Premium." });
+  const analysis = setup.projectId ? (await store.get(uid, setup.projectId))?.analysis : undefined; // else the sample
 
   const now = Date.now();
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {

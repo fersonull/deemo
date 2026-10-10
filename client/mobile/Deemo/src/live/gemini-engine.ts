@@ -1,6 +1,7 @@
 import { AudioContext, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
-import { API_URL, type Mode } from "@/constants";
+import { type Mode } from "@/constants";
+import { api } from "@/utils/api";
 import { createNoiseGate } from "@/utils/noise-gate";
 import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
 import { getRecorder } from "@/utils/recorder";
@@ -132,13 +133,11 @@ export class GeminiEngine implements LiveEngine {
     let token: string;
     let model: string;
     try {
-      const res = await fetch(`${API_URL}/live/token`, {
+      ({ token, model } = await api<{ token: string; model: string }>("/live/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(this.setup),
-      });
-      if (!res.ok) throw new Error(`token ${res.status}`);
-      ({ token, model } = await res.json());
+      }));
     } catch (err) {
       console.warn("[live] token", err);
       return this.retry();
