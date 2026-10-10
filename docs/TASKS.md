@@ -29,6 +29,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
+- [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [ ] **Remaining animations** (from the animation review):
   - [ ] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).
   - [ ] Paused overlay fades in and out (200 / 150 ms).

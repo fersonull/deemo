@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
+import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
@@ -73,7 +74,21 @@ export function Projects() {
             </Pressable>
           );
         })}
-        {loaded && error ? (
+        {!loaded ? (
+          <Skeleton label="Loading your projects">
+            <View style={styles.list}>
+              {[0, 1].map((i) => (
+                <View key={i} style={styles.card}>
+                  <Skeleton.Bone width={42} height={42} radius={12} />
+                  <View style={[styles.flex, styles.bones]}>
+                    <Skeleton.Bone width="80%" height={14} />
+                    <Skeleton.Bone width="50%" height={11} />
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Skeleton>
+        ) : error ? (
           <Text style={styles.note}>{"Can't reach the DEEMO server right now. Your projects will show up when it's back."}</Text>
         ) : loaded && list.length === 0 ? (
           <Text style={styles.note}>No manuscripts yet. Until you add one, practice uses a sample paper.</Text>
@@ -132,6 +147,7 @@ const styles = StyleSheet.create({
   shared: { borderWidth: 2, borderColor: colors.dusk },
   join: { marginTop: 10, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.sand, alignItems: "center" },
   list: { gap: 8, marginTop: 18 },
+  bones: { gap: 8, paddingTop: 2 },
   card: {
     flexDirection: "row",
     alignItems: "flex-start",

@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
+import { Skeleton } from "@/components/skeleton";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
@@ -28,9 +29,12 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // Home (plan S-05, prototype home): greeting, the last readiness score, Start practice, recent sessions.
 export function Home() {
   const { name, email } = useSession();
-  const { list } = useSessions();
+  const { list, loaded } = useSessions();
   const { projectId } = usePracticeSetup();
-  const manuscript = useProjects().projects.find((p) => p.id === projectId);
+  const { projects: mine, loaded: projectsLoaded } = useProjects();
+  const manuscript = mine.find((p) => p.id === projectId);
+  // Until both lists arrive, assume a returning student: no "Add your manuscript" flash.
+  const practiced = !!manuscript || list.length > 0 || !loaded || !projectsLoaded;
   const first = name?.trim().split(/\s+/)[0];
   const last = list.find((s) => s.score !== undefined);
   const recent = list.slice(0, 3);
@@ -55,11 +59,17 @@ export function Home() {
             <Text style={styles.avatarText}>{initials(name, email)}</Text>
           </View>
         </View>
-        <Text style={styles.sub}>
-          {manuscript
-            ? `Your panel has read ${manuscript.name}. Up for a round?`
-            : "Add your manuscript so the panel asks about your own study."}
-        </Text>
+        {projectsLoaded ? (
+          <Text style={styles.sub}>
+            {manuscript
+              ? `Your panel has read ${manuscript.name}. Up for a round?`
+              : "Add your manuscript so the panel asks about your own study."}
+          </Text>
+        ) : (
+          <Skeleton label="Loading your manuscript">
+            <Skeleton.Bone width="80%" height={14} style={styles.subBone} />
+          </Skeleton>
+        )}
 
         {last ? (
           <Pressable
@@ -79,28 +89,54 @@ export function Home() {
             </View>
             <Icon name="chevron_right" size={20} color={colors.muted} />
           </Pressable>
+        ) : !loaded ? (
+          <Skeleton label="Loading your last score">
+            <View style={styles.last}>
+              <Skeleton.Bone width={76} height={66} radius={30} />
+              <View style={[styles.flex, styles.bones]}>
+                <Skeleton.Bone width="55%" height={16} />
+                <Skeleton.Bone width="85%" height={12} />
+              </View>
+            </View>
+          </Skeleton>
         ) : null}
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push(manuscript || list.length ? "/practice" : "/projects")}
+          onPress={() => router.push(practiced ? "/practice" : "/projects")}
           style={({ pressed }) => [styles.start, pressed && styles.pressed]}
         >
           <Text style={[type.button, styles.startLabel]}>
-            {manuscript || list.length ? "Start practice" : "Add your manuscript"}
+            {practiced ? "Start practice" : "Add your manuscript"}
           </Text>
           <Blob width={44} height={44}>
-            <Icon name={manuscript || list.length ? "mic" : "upload_file"} size={22} color={colors.paper} filled />
+            <Icon name={practiced ? "mic" : "upload_file"} size={22} color={colors.paper} filled />
           </Blob>
         </Pressable>
-        {!manuscript && !list.length ? (
+        {!practiced ? (
           <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
             <Text style={styles.sampleText}>Or practice with a sample paper</Text>
           </Pressable>
         ) : null}
 
         <GroupReadiness />
-        {recent.length ? (
+        {!loaded ? (
+          <>
+            <Text style={[type.label, styles.section]}>RECENT</Text>
+            <Skeleton label="Loading recent sessions">
+              {[0, 1, 2].map((i) => (
+                <View key={i} style={styles.row}>
+                  <Skeleton.Bone width={38} height={38} radius={19} />
+                  <View style={[styles.flex, styles.bones]}>
+                    <Skeleton.Bone width="35%" height={13} />
+                    <Skeleton.Bone width="75%" height={11} />
+                  </View>
+                  <Skeleton.Bone width={22} height={15} />
+                </View>
+              ))}
+            </Skeleton>
+          </>
+        ) : recent.length ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
             {recent.map((s) => (
@@ -145,6 +181,8 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskInk },
   sub: { ...type.body, color: colors.inkMuted, marginTop: 8 },
+  subBone: { marginTop: 12, marginBottom: 4 },
+  bones: { gap: 8 },
   last: {
     flexDirection: "row",
     alignItems: "center",

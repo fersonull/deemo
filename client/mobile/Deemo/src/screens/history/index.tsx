@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Screen } from "@/components/screen";
+import { Skeleton } from "@/components/skeleton";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { sessions, useSessions, type SessionSummary } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
@@ -81,7 +82,21 @@ export function History() {
             </Text>
           </Pressable>
         ))}
-        {loaded && error ? (
+        {!loaded ? (
+          <Skeleton label="Loading your sessions">
+            <View style={styles.list}>
+              {[0, 1, 2, 3].map((i) => (
+                <View key={i} style={styles.row}>
+                  <View style={[styles.flex, styles.bones]}>
+                    <Skeleton.Bone width="35%" height={15} />
+                    <Skeleton.Bone width="70%" height={11} />
+                  </View>
+                  <Skeleton.Bone width={38} height={28} />
+                </View>
+              ))}
+            </View>
+          </Skeleton>
+        ) : error ? (
           <Text style={styles.note}>{"Can't reach the DEEMO server right now."}</Text>
         ) : loaded && all.length === 0 ? (
           <Text style={styles.note}>No sessions yet. Your first report will land here.</Text>
@@ -96,6 +111,7 @@ export function History() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   list: { gap: 8, marginTop: 14 },
+  bones: { gap: 8 },
   filters: { flexDirection: "row", gap: 6, marginTop: 16 },
   chip: { height: 34, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
   chipSelected: { backgroundColor: colors.ink },

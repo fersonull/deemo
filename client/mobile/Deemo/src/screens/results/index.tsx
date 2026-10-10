@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
+import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
@@ -157,7 +158,10 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                   </Animated.View>
                 ) : null}
               </>
-            ) : null /* first load: a blank beat beats flashing a waiting screen for a report that's ready */
+            ) : (
+              // First load of a finished report (e.g. from Recent). Fetching fades in after a beat, so a quick load skips it.
+              <Fetching title={"Getting your\nreport."} subtitle="Pulling up your answers and the panel's notes." />
+            )
           }
         </View>
       ) : (
