@@ -1,6 +1,6 @@
 import express from "express";
 
-import { DOCX, MAX_BYTES, PDF, analyzeManuscript } from "./analysis";
+import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { type Analysis, store } from "./store";
 
@@ -19,31 +19,32 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
     .catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) return void res.status(400).json({ error: "Choose a PDF or DOCX." });
-  const lower = file.name.toLowerCase();
-  const type = file.type === PDF || lower.endsWith(".pdf") ? PDF : file.type === DOCX || lower.endsWith(".docx") ? DOCX : null;
-  if (!type) return void res.status(415).json({ error: "Only PDF or DOCX files." });
   if (file.size > MAX_BYTES) return void res.status(413).json({ error: "The file is over 20 MB." });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const type = sniff(bytes);
+  if (!type) return void res.status(415).json({ error: "Only PDF or DOCX files." });
   const domain = String(form?.get("domain") ?? "");
   if (!DOMAINS.includes(domain as (typeof DOMAINS)[number])) return void res.status(400).json({ error: "Pick a domain." });
-  const name = String(form?.get("name") ?? "").trim().slice(0, 80) || file.name.replace(/\.(pdf|docx)$/i, "");
+  const fileName = String(form?.get("fileName") || file.name).slice(0, 200); // the app's cached copy may be renamed
+  const name = String(form?.get("name") ?? "").trim().slice(0, 80) || fileName.replace(/\.(pdf|docx)$/i, "");
 
   const project = await store.put({
     id: crypto.randomUUID(),
     name,
     domain,
-    fileName: file.name,
+    fileName,
     sizeBytes: file.size,
     createdAt: new Date().toISOString(),
     status: "analyzing",
   });
   res.status(202).json(project);
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
   analyzeManuscript({ bytes, type }).then(
     (analysis) => store.put({ ...project, status: "ready", analysis }),
     (err) => {
-      console.error("analysis", project.id, err);
-      return store.put({ ...project, status: "failed", error: "We couldn't read this file. Try a text-based PDF or a DOCX." });
+      if (!(err instanceof Rejected)) console.error("analysis", project.id, err);
+      const error = err instanceof Rejected ? err.message : "We couldn't read this file. Try a text-based PDF or a DOCX.";
+      return store.put({ ...project, status: "failed", error });
     },
   );
 });

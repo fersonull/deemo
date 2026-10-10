@@ -1,3 +1,5 @@
+import { File } from "expo-file-system";
+
 import { API_URL, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { createStore } from "@/utils/store";
@@ -71,10 +73,13 @@ export const projects = {
     return upsert(await api<Project>(`/projects/${id}`));
   },
 
-  // RN's FormData streams the file from its uri; the server reads it and keeps only the analysis.
+  // Expo's fetch only takes Blob-like parts (RN's { uri, name, type } object throws "Unsupported FormDataPart"),
+  // so the picked file goes in as an expo-file-system File. Its cached copy may be renamed, so the original
+  // name travels as a field. The server checks the type from the content and keeps only the analysis.
   async upload(file: PickedFile, name: string, domain: Domain) {
     const form = new FormData();
-    form.append("file", { uri: file.uri, name: file.name, type: file.mimeType ?? "application/octet-stream" } as unknown as Blob);
+    form.append("file", new File(file.uri) as unknown as Blob);
+    form.append("fileName", file.name);
     form.append("name", name);
     form.append("domain", domain);
     return upsert(await api<Project>("/projects", { method: "POST", body: form }));

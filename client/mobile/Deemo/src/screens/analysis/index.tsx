@@ -76,7 +76,7 @@ export function Analysis({ id }: { id: string }) {
             <Icon name="description" size={34} color={colors.inkMuted} />
           </Blob>
           <Text accessibilityRole="header" style={[type.title, styles.failedTitle]}>
-            {"We couldn't\nread this file."}
+            {"This file won't\nwork."}
           </Text>
           <Text style={styles.sub}>{project.error ?? "Try a text-based PDF or a DOCX."}</Text>
         </View>

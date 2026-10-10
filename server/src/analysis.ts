@@ -11,17 +11,30 @@ export const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessin
 
 const FIELDS = ["title", "problem", "objectives", "method", "scope", "features", "limits", "results"] as const;
 
+// A message the student sees as-is (the upload isn't usable), unlike an internal failure.
+export class Rejected extends Error {}
+
+// By content, not by name, so a renamed file can't slip through. Any zip passes here; mammoth rejects non-DOCX.
+export function sniff(b: Uint8Array): typeof PDF | typeof DOCX | null {
+  if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return PDF; // %PDF
+  if (b[0] === 0x50 && b[1] === 0x4b && b[2] === 0x03 && b[3] === 0x04) return DOCX; // PK zip
+  return null;
+}
+
 const SCHEMA = {
   type: "object",
   properties: {
+    isManuscript: { type: "boolean" },
+    notManuscriptReason: { type: "string" },
     ...Object.fromEntries(FIELDS.map((f) => [f, { type: "string" }])),
     facts: { type: "array", items: { type: "string" } },
     unsure: { type: "array", items: { type: "string", enum: [...FIELDS] } },
   },
-  required: [...FIELDS, "facts", "unsure"],
+  required: ["isManuscript", "notManuscriptReason", ...FIELDS, "facts", "unsure"],
 };
 
-const PROMPT = `This is a BSIT capstone manuscript. A mock defense panel will question the student using only what you extract, and will flag spoken answers that contradict it. Extract, in plain English:
+const PROMPT = `A student uploaded this as their BSIT capstone manuscript. A mock defense panel will question them using only what you extract, and will flag spoken answers that contradict it.
+First decide isManuscript: true for a capstone, thesis or research manuscript at any stage (title proposal, Chapters 1–3, or a full paper, even incomplete or rough). False for anything else: a resume, an assignment or quiz, slides or notes on an unrelated topic, a form, a story, a manual, or a file with almost no readable content. If false, set notManuscriptReason to one short sentence for the student saying what the file looks like instead (e.g. "This looks like a resume, not a research paper."), leave every other field empty and facts and unsure as empty lists. If true, set notManuscriptReason to "" and extract, in plain English:
 - title: the exact title.
 - problem: the problem the study addresses and for whom (1–2 sentences).
 - objectives: the general and specific objectives, condensed (1–3 sentences).
@@ -37,10 +50,20 @@ type Input = { bytes: Uint8Array; type: string };
 
 // The file only lives in this call: a PDF goes to Gemini as-is (it reads scanned pages too), a DOCX as its text.
 export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysis> {
-  const doc =
-    type === PDF
-      ? { inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } }
-      : { text: (await mammoth.extractRawText({ buffer: Buffer.from(bytes) })).value };
+  let doc;
+  if (type === PDF) {
+    doc = { inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } };
+  } else {
+    const text = await mammoth
+      .extractRawText({ buffer: Buffer.from(bytes) })
+      .then((r) => r.value)
+      .catch(() => {
+        throw new Rejected("This isn't a readable Word document. Save it as .docx or PDF and try again.");
+      });
+    // ponytail: a fixed floor; a real manuscript is tens of thousands of characters.
+    if (text.trim().length < 500) throw new Rejected("We couldn't find enough text in this file. If it's scanned, upload it as a PDF.");
+    doc = { text };
+  }
 
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ANALYSIS_MODEL}:generateContent`, {
     method: "POST",
@@ -53,5 +76,10 @@ export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysi
   if (!r.ok) throw new Error(`analysis ${r.status}: ${(await r.text()).slice(0, 300)}`);
   const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-  return JSON.parse(text) as Analysis;
+  const { isManuscript, notManuscriptReason, ...analysis } = JSON.parse(text) as Analysis & {
+    isManuscript: boolean;
+    notManuscriptReason: string;
+  };
+  if (!isManuscript) throw new Rejected(notManuscriptReason || "This doesn't look like a research manuscript.");
+  return analysis;
 }
