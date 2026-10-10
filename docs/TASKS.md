@@ -44,6 +44,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
 - [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
 - [ ] **Delimitations:** simulated payments, no adviser dashboard (Q1, Q2).
+- [ ] **Privacy notice / Chapter 3:** name OpenAI as the backup processor for analysis, rubric reading and scoring (only for students who agreed to consent 2026-10.2), alongside Google. The live voice panel stays Gemini-only.
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 
 ## Housekeeping

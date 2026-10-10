@@ -1,7 +1,7 @@
 import { generateJson } from "./analysis";
 import { SAMPLE_MANUSCRIPT, manuscriptFacts, parseSetup, plannedMainQuestions, type Difficulty, type Mode } from "./panel";
 import { CRITERIA, DEFAULT_WEIGHTS, band, delivery, readiness, type RubricCriterion, type Severity } from "./scoring";
-import { collection, store } from "./store";
+import { allowsBackup, collection, store, users } from "./store";
 import { accessibleProject } from "./groups";
 
 // A finished practice session and its report (plan F14, addendum Q3/Q4). Transcripts only; audio is never stored.
@@ -250,11 +250,14 @@ Return:
 - headline: one honest, encouraging sentence for the top of the report, e.g. "Nice recovery on question 2. Next time, state your sample size first."`;
 }
 
-async function judge(prompt: string, keys: string[]): Promise<Judgment & { model: string }> {
-  const { text, model } = await generateJson({
+async function judge(prompt: string, keys: string[], backup: boolean): Promise<Judgment & { model: string }> {
+  const { text, model } = await generateJson(
+    {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: "application/json", responseJsonSchema: schema(keys), temperature: 0 }, // same answers, same levels
-  });
+    },
+    { backup },
+  );
   return { ...(JSON.parse(text) as Judgment), model };
 }
 
@@ -274,6 +277,7 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
   const j = await judge(
     scoringPrompt(s, s.manuscriptContext ?? (project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT), judged),
     judged.keys,
+    allowsBackup(await users.get(uid)),
   );
 
   const levelOf = (key: string) => Math.round(Math.min(5, Math.max(1, j.criteria.find((c) => c.key === key)?.level ?? 3)));
