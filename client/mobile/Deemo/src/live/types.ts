@@ -45,6 +45,7 @@ export type LiveState = {
   flags: Inconsistency[];
   turns: Turn[];
   followUps: Record<string, number>;
+  followUpLimit: number; // per topic, chosen in setup (plan F8)
   level: number; // 0..1 mic level for the mic ring
 };
 

@@ -1,6 +1,6 @@
 import { AudioContext, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
-import { type Mode } from "@/constants";
+import { type Difficulty, type Mode } from "@/constants";
 import { api } from "@/utils/api";
 import { createNoiseGate } from "@/utils/noise-gate";
 import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
@@ -22,7 +22,15 @@ const QUIET_TURN_MS = 5000; // a turn that ended without a voice: wait this long
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
 const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
 
-export type SessionSetup = { mode: Mode; domain: string; panelists: number; minutes: number; projectId?: string };
+export type SessionSetup = {
+  mode: Mode;
+  domain: string;
+  panelists: number;
+  minutes: number;
+  followUps: number;
+  difficulty: Difficulty;
+  projectId?: string;
+};
 
 type FunctionCall = { id: string; name: string; args?: Record<string, unknown> };
 type ServerMessage = {
@@ -238,8 +246,7 @@ export class GeminiEngine implements LiveEngine {
       } else {
         response = {
           allowed: false,
-          instruction:
-            "Follow-up limit reached for this topic. Do not ask it. Pick a new topic and call ask_question again before speaking.",
+          instruction: "Follow-up limit reached for this topic. Do not ask it. Pick a new topic and call ask_question again before speaking.",
         };
       }
     } else if (name === "flag_inconsistency") {

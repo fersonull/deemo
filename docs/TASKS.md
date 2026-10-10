@@ -25,7 +25,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **PDF export and read-only share link** (F16, addendum Q2), Premium. The link expires after 7 days.
 - [ ] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) mapped onto the five criteria, with weights the student reviews.
 - [ ] **Download my data** (§17 user rights).
-- [ ] **Follow-up limit and difficulty in setup** (F5a, S-09). Both are fixed today; the follow-up limit is 2.
+- [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [ ] **Remaining animations** (from the animation review):
   - [ ] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).

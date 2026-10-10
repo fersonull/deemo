@@ -10,7 +10,25 @@ export type Mode = (typeof MODES)[number];
 
 export const DOMAINS = ["Web/Mobile App", "Networking & Security", "Data & AI", "IoT/Hardware", "Information Systems"] as const;
 
-export type PanelSetup = { mode: Mode; domain: string; panelists: number; minutes: number; projectId?: string };
+export const DIFFICULTIES = ["EASY", "STANDARD", "HARD"] as const;
+export type Difficulty = (typeof DIFFICULTIES)[number];
+
+export type PanelSetup = {
+  mode: Mode;
+  domain: string;
+  panelists: number;
+  minutes: number;
+  followUps: number; // per topic, 0–3 (plan F8 default 2); the app enforces it, the prompt states it
+  difficulty: Difficulty; // plan F5a
+  projectId?: string;
+};
+
+// How hard the panel pushes (plan F5a). Scoring doesn't change with it; the rubric stays the same.
+const DIFFICULTY_STYLE: Record<Difficulty, string> = {
+  EASY: "Be supportive: ask clear, foundational questions about what the study is and why, one idea at a time, and rephrase readily when the student is stuck.",
+  STANDARD: "Ask the questions a typical panel would: what was done, why, and how it was checked.",
+  HARD: "Be demanding: probe justifications, alternatives, limitations and edge cases, ask for exact figures, and press on any vague or generic answer.",
+};
 
 // Same order as PANEL in the app's constants.ts; the tool's `panelist` value indexes it.
 const PERSONAS = [
@@ -95,7 +113,7 @@ export function manuscriptFacts(a: Analysis): string {
 // About one main question per 2.5 minutes; the report's coverage factor divides by the same number.
 export const plannedMainQuestions = (minutes: number) => Math.max(2, Math.round(minutes / 2.5));
 
-export function buildPanelPrompt({ mode, domain, panelists, minutes }: PanelSetup, analysis?: Analysis): string {
+export function buildPanelPrompt({ mode, domain, panelists, minutes, followUps, difficulty }: PanelSetup, analysis?: Analysis): string {
   const panel = PERSONAS.slice(0, panelists);
   const mains = plannedMainQuestions(minutes);
   return `You are a capstone defense panel for a BSIT student in the Philippines. This is ${MODE_FOCUS[mode]}. Project domain: ${domain}.
@@ -112,7 +130,8 @@ HOW THE SESSION RUNS
   - No scores, verdicts or lectures, and never reveal the right answer. Moving to a new topic can be as short as "Okay. Moving on to your evaluation."
   - Then the question, one or two sentences.
 - EVERYTHING you say to the student goes through ask_question first: new questions, follow-ups, rephrasings, clarifications and requests to continue. A rephrase or request on the same topic is a follow-up with the same topicId. Never speak without calling ask_question first (except the closing sentence after end_session).
-- Ask about ${mains} main questions in total, grounded in the manuscript below. You may ask follow-ups on a weak or vague answer, but the app limits follow-ups per topic; if ask_question returns allowed=false you MUST NOT say that question: choose a new topic and call ask_question again before speaking.
+- Ask about ${mains} main questions in total, grounded in the manuscript below. ${followUps === 0 ? "Don't ask follow-ups: every question opens a new topic." : `You may ask up to ${followUps} follow-up${followUps === 1 ? "" : "s"} per topic on a weak or vague answer; the app enforces this.`} If ask_question returns allowed=false you MUST NOT say that question: choose a new topic and call ask_question again before speaking.
+- Difficulty: ${DIFFICULTY_STYLE[difficulty]}
 - Whenever something the student says contradicts the manuscript facts, FIRST call flag_inconsistency (every time, even if you also ask about it). For HIGH severity, then challenge it out loud as a CLARIFICATORY follow-up ("Earlier you said X, but your manuscript says Y. Which is correct?").
 - "(The student stayed silent and gave no answer.)" means they ended their turn without saying anything; treat it like "I don't know".
 - If the student says they don't know or asks you to repeat, rephrase the question once, then move on. Weak answers are not a reason to end early.
@@ -138,15 +157,27 @@ export function liveSetup(setup: PanelSetup, analysis?: Analysis) {
   };
 }
 
-export const LOCKED_FIELDS = Object.keys(liveSetup({ mode: "TITLE", domain: "", panelists: 1, minutes: 10 })).join(",");
+export const LOCKED_FIELDS = Object.keys(
+  liveSetup({ mode: "TITLE", domain: "", panelists: 1, minutes: 10, followUps: 2, difficulty: "STANDARD" }),
+).join(",");
 
 export function parseSetup(body: unknown): PanelSetup | null {
   const b = (body ?? {}) as Record<string, unknown>;
-  const { mode, domain, panelists, minutes, projectId } = b;
+  const { mode, domain, panelists, minutes, projectId, followUps = 2, difficulty = "STANDARD" } = b;
   if (!MODES.includes(mode as Mode)) return null;
   if (!DOMAINS.includes(domain as (typeof DOMAINS)[number])) return null;
   if (!Number.isInteger(panelists) || (panelists as number) < 1 || (panelists as number) > 3) return null;
   if (!Number.isInteger(minutes) || (minutes as number) < 5 || (minutes as number) > 30) return null;
   if (projectId !== undefined && typeof projectId !== "string") return null;
-  return { mode: mode as Mode, domain: domain as string, panelists: panelists as number, minutes: minutes as number, projectId };
+  if (!Number.isInteger(followUps) || (followUps as number) < 0 || (followUps as number) > 3) return null;
+  if (!DIFFICULTIES.includes(difficulty as Difficulty)) return null;
+  return {
+    mode: mode as Mode,
+    domain: domain as string,
+    panelists: panelists as number,
+    minutes: minutes as number,
+    followUps: followUps as number,
+    difficulty: difficulty as Difficulty,
+    projectId,
+  };
 }

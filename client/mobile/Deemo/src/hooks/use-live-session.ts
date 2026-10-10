@@ -13,14 +13,17 @@ const TICK_MS = 250;
 // EXPO_PUBLIC_LIVE_ENGINE=mock plays the scripted defense instead of Gemini (UI work, no server needed).
 function createEngine(): LiveEngine {
   if (process.env.EXPO_PUBLIC_LIVE_ENGINE === "mock") return new MockEngine();
-  const { mode, domain, panelists, minutes, projectId } = practiceSetup.get();
-  return new GeminiEngine({ mode, domain, panelists, minutes, projectId: projectId ?? undefined }); // no project: the sample paper
+  const { mode, domain, panelists, minutes, followUps, difficulty, projectId } = practiceSetup.get();
+  return new GeminiEngine({ mode, domain, panelists, minutes, followUps, difficulty, projectId: projectId ?? undefined }); // no project: the sample paper
 }
 
 // Runs one live session: engine events -> reducer, client-side timers, and the auto-pauses
 // the brief asks for (app backgrounded, connection lost).
 export function useLiveSession() {
-  const [state, dispatch] = useReducer(liveReducer, initialLiveState);
+  const [state, dispatch] = useReducer(liveReducer, undefined, () => ({
+    ...initialLiveState,
+    followUpLimit: practiceSetup.get().followUps,
+  }));
   const stateRef = useRef(state);
   const engineRef = useRef<LiveEngine | null>(null);
   const userPaused = useRef(false);

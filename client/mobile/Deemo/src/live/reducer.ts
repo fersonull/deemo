@@ -1,6 +1,6 @@
 import type { AskQuestion, Line, LiveEvent, LiveState } from "./types";
 
-export const FOLLOW_UP_LIMIT = 2; // Bounded Adaptive Follow-Up default (plan F8)
+export const FOLLOW_UP_LIMIT = 2; // Bounded Adaptive Follow-Up default (plan F8); setup can change it
 
 export const initialLiveState: LiveState = {
   phase: "connecting",
@@ -15,12 +15,13 @@ export const initialLiveState: LiveState = {
   flags: [],
   turns: [],
   followUps: {},
+  followUpLimit: FOLLOW_UP_LIMIT,
   level: 0,
 };
 
 // The client-side tool handler's rule: the AI can't exceed the follow-up limit even if it tries.
-export function canAsk(state: LiveState, q: AskQuestion, limit = FOLLOW_UP_LIMIT): boolean {
-  return !q.isFollowUp || (state.followUps[q.topicId] ?? 0) < limit;
+export function canAsk(state: LiveState, q: AskQuestion): boolean {
+  return !q.isFollowUp || (state.followUps[q.topicId] ?? 0) < state.followUpLimit;
 }
 
 function finish(s: LiveState): Line[] {

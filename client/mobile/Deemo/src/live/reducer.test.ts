@@ -84,3 +84,12 @@ test("panel speech without ask_question still counts toward the follow-up limit"
   expect(s.question).toMatchObject({ topicId: "t1", isFollowUp: true, followUp: FOLLOW_UP_LIMIT, number: 1 });
   expect(canAsk(s, follow)).toBe(false);
 });
+
+test("the follow-up limit chosen in setup is the one enforced", () => {
+  const none = run([{ type: "ask", question: main }], { ...initialLiveState, followUpLimit: 0 });
+  expect(canAsk(none, follow)).toBe(false); // 0: every question opens a new topic
+  let three = run([{ type: "ask", question: main }], { ...initialLiveState, followUpLimit: 3 });
+  for (let i = 0; i < 3; i++) three = liveReducer(three, { type: "ask", question: follow });
+  expect(three.question?.followUp).toBe(3);
+  expect(canAsk(three, follow)).toBe(false);
+});

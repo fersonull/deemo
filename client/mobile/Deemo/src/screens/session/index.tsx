@@ -128,7 +128,14 @@ export function Session() {
           ))}
         </View>
 
-        <QuestionCard phase={s.phase} question={s.question} closing={closing} count={count} onDonePresenting={finishTurn} />
+        <QuestionCard
+          phase={s.phase}
+          question={s.question}
+          closing={closing}
+          count={count}
+          followUpLimit={s.followUpLimit}
+          onDonePresenting={finishTurn}
+        />
 
         <Transcript lines={s.lines} partial={s.partial} coach={setup.coach} />
 

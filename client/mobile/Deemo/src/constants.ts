@@ -12,6 +12,11 @@ export type Domain = (typeof DOMAINS)[number];
 // Session data model values (plan §13).
 export type Mode = "TITLE" | "PRE_ORAL" | "FINAL";
 
+// How hard the panel pushes (plan F5a); scoring doesn't change with it.
+export type Difficulty = "EASY" | "STANDARD" | "HARD";
+
+export const DIFFICULTY_LABELS: Record<Difficulty, string> = { EASY: "Easy", STANDARD: "Standard", HARD: "Hard" };
+
 export const MODE_LABELS: Record<Mode, string> = {
   TITLE: "Title Defense",
   PRE_ORAL: "Pre-Oral",

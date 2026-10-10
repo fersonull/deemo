@@ -1,4 +1,4 @@
-import { type Mode } from "@/constants";
+import { type Difficulty, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import type { LiveState } from "@/live/types";
 import { api } from "@/utils/api";
@@ -43,6 +43,7 @@ export type Session = {
   error?: string;
   title: string;
   mode: Mode;
+  difficulty?: Difficulty; // missing on sessions from before the setting
   durationMs: number;
   turns: SessionTurn[];
   lines: { who: "you" | number; text: string; flagged?: boolean }[];
@@ -69,13 +70,15 @@ const post = (body: object) => ({ method: "POST", headers: { "content-type": "ap
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
 function fromLive(s: LiveState, endedBy: "panel" | "student") {
-  const { mode, domain, panelists, minutes, projectId, weights } = practiceSetup.get();
+  const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights } = practiceSetup.get();
   const lines = s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines;
   return {
     mode,
     domain,
     panelists,
     minutes,
+    followUps,
+    difficulty,
     projectId: projectId ?? undefined,
     weights,
     durationMs: s.sessionMs,

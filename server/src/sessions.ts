@@ -1,5 +1,5 @@
 import { generateJson } from "./analysis";
-import { SAMPLE_MANUSCRIPT, manuscriptFacts, parseSetup, plannedMainQuestions, type Mode } from "./panel";
+import { SAMPLE_MANUSCRIPT, manuscriptFacts, parseSetup, plannedMainQuestions, type Difficulty, type Mode } from "./panel";
 import { CRITERIA, DEFAULT_WEIGHTS, band, delivery, readiness, type Severity } from "./scoring";
 import { collection, store } from "./store";
 
@@ -49,6 +49,8 @@ export type Session = {
   domain: string;
   minutes: number;
   panelists: number;
+  followUps: number;
+  difficulty: Difficulty;
   durationMs: number;
   endedBy: "panel" | "student"; // the panel closing early doesn't count against coverage
   weights: number[];
@@ -103,6 +105,8 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     domain: setup.domain,
     minutes: setup.minutes,
     panelists: setup.panelists,
+    followUps: setup.followUps,
+    difficulty: setup.difficulty,
     durationMs: num(b.durationMs),
     endedBy: b.endedBy === "panel" ? "panel" : "student",
     weights,
