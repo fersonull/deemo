@@ -45,7 +45,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
   const [sharing, setSharing] = useState(false);
-  const group = useProjects().projects.find((p) => s?.groupCode && p.group?.code === s.groupCode);
+  const mine = useProjects().projects;
+  const group = mine.find((p) => s?.groupCode && p.group?.code === s.groupCode);
   const [error, setError] = useState("");
   const [upsell, setUpsell] = useState(false);
   const [shown, setShown] = useState(0);
@@ -84,9 +85,10 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const close = () => (fromSession ? router.dismissAll() : router.back());
   const r = s?.report;
 
+  // The group sheet and "Practice weak topics" both need the current project list.
   useEffect(() => {
-    if (s?.groupCode) void projects.refresh();
-  }, [s?.groupCode]);
+    void projects.refresh();
+  }, []);
 
   // The adviser's copy (design brief "PDF export", Premium): printed on the phone, sent through the share sheet.
   const exportPdf = async () => {
@@ -117,7 +119,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
       minutes: s.minutes,
       followUps: s.followUps,
       difficulty: s.difficulty ?? "STANDARD",
-      projectId: s.projectId ?? null,
+      // The original manuscript may be gone (deleted, re-uploaded, left the group): use the current one instead.
+      projectId: mine.some((p) => p.id === s.projectId) ? s.projectId! : practiceSetup.get().projectId,
       weakFrom: s.id,
     });
     router.replace("/mic-check");

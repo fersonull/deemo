@@ -322,7 +322,9 @@ app.post("/live/token", async (req, res) => {
   setup.focusArea = project?.group?.focusArea;
   if (setup.weakFrom) {
     const last = await sessions.get(uid, setup.weakFrom); // the student's own session only
-    if (!last?.report?.scored) return void res.status(404).json({ error: "That report can't start a weak-topics round." });
+    // Reports from before the `scored` field count as scored, like in the app.
+    if (!last?.report || last.report.scored === false)
+      return void res.status(404).json({ error: "That report can't start a weak-topics round." });
     setup.weakTopics = weakTopics(last.report);
   }
   const analysis = project?.analysis;
