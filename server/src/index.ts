@@ -23,6 +23,11 @@ import {
 } from "./groups";
 
 const app = express();
+// The Cloudflare tunnel (https://api.deemo-ai.com/api) passes its /api prefix through; the same routes answer under it.
+app.use((req, _res, next) => {
+  if (req.url === "/api" || req.url.startsWith("/api/")) req.url = req.url.slice(4) || "/";
+  next();
+});
 app.use(express.json({ limit: "1mb" })); // a 25-minute transcript outgrows the 100 kB default
 
 app.get("/health", (_req, res) => {
@@ -40,6 +45,26 @@ const BUSY = "The AI panel is busy right now. Try again in a few minutes.";
 
 app.get("/me", async (req, res) => {
   res.json(await users.get(uidOf(req)));
+});
+
+// Download my data (plan §17 user rights): everything kept about the student, as one JSON file. Projects include the
+// group ones they can open (with their own membership settings); other members' sessions are never included.
+app.get("/me/export", async (req, res) => {
+  const uid = uidOf(req);
+  const [user, account, projects, history] = await Promise.all([
+    getAuth().getUser(uid),
+    users.get(uid),
+    listProjects(uid),
+    sessions.list(uid),
+  ]);
+  res.json({
+    exportedAt: new Date().toISOString(),
+    email: user.email ?? null,
+    name: user.displayName ?? null,
+    account,
+    projects,
+    sessions: history,
+  });
 });
 
 // Consent (recorded after sign-in, with the version the student agreed to) and the simulated upgrade.

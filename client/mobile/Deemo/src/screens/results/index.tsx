@@ -1,19 +1,24 @@
+import * as Print from "expo-print";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
+import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
 import { DIFFICULTY_LABELS, MODE_LABELS } from "@/constants";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
-import { sessions, type Report, type Session } from "@/hooks/use-sessions";
+import { sessions, type Session } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
+import { formula, reportHtml } from "@/utils/report-html";
+import { shareFile } from "@/utils/share-file";
 
 import { SCORING_MS, SCORING_STEPS } from "../scoring";
 
@@ -29,21 +34,16 @@ const BAND_RANGE: Record<string, string> = {
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Every number in the score, spelled out (addendum Q4: the arithmetic is done in code and shown).
-function formula(r: Report, severities: string[]) {
-  const counts = (["HIGH", "MEDIUM", "LOW"] as const)
-    .map((s) => [s, severities.filter((x) => x === s).length] as const)
-    .filter(([, n]) => n)
-    .map(([s, n]) => `${n} ${s.toLowerCase()}`);
-  const coverage = `${Math.min(r.answered, r.planned)}/${r.planned}`;
-  return `Rubric ${r.rubricScore} × coverage ${coverage} − consistency ${r.penalty}${counts.length ? ` (${counts.join(", ")})` : ""} = ${r.score}`;
-}
-
 // Defense Performance Analytics (plan F14, screen S-12). Free: score, fixes, contradictions, feedback,
 // transcript. Premium: rubric breakdown, delivery stats, stronger answers (addendum Q1).
 export function Results({ id, fromSession }: { id: string; fromSession: boolean }) {
-  const { premium } = useSession();
+  const { premium, name, email } = useSession();
   const [s, setS] = useState<Session | null>(null);
+  const [sheet, setSheet] = useState<"share" | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [sharing, setSharing] = useState(false);
+  const group = useProjects().projects.find((p) => s?.groupCode && p.group?.code === s.groupCode);
   const [error, setError] = useState("");
   const [upsell, setUpsell] = useState(false);
   const [shown, setShown] = useState(0);
@@ -81,6 +81,34 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
 
   const close = () => (fromSession ? router.dismissAll() : router.back());
   const r = s?.report;
+
+  useEffect(() => {
+    if (s?.groupCode) void projects.refresh();
+  }, [s?.groupCode]);
+
+  // The adviser's copy (design brief "PDF export", Premium): printed on the phone, sent through the share sheet.
+  const exportPdf = async () => {
+    if (!premium) return setUpsell(true);
+    if (!s || !r) return;
+    setExporting(true);
+    setExportError("");
+    try {
+      const date = new Date(s.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const { uri } = await Print.printToFileAsync({ html: reportHtml(s, r, { student: name ?? email ?? "Student", date }) });
+      await shareFile(`DEEMO report ${day(s.createdAt)}.pdf`, "application/pdf", { uri });
+    } catch {
+      setExportError("Couldn't make the PDF. Try again.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const toggleShare = async (shareScore: boolean) => {
+    if (!group) return;
+    setSharing(true);
+    await projects.updateMember(group, { shareScore }).catch(() => {});
+    setSharing(false);
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -150,10 +178,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
             <Text style={styles.headline}>{r.headline}</Text>
             {r.scored === false ? null : (
               <Text style={styles.formula}>
-                {formula(
-                  r,
-                  r.contradictions.map((c) => c.severity),
-                )}
+                {formula(r)}
               </Text>
             )}
           </Animated.View>
@@ -212,13 +237,59 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
               <Transcript lines={s.lines} count={r.answered} />
             </View>
 
-            <View style={styles.cta}>
+            {/* Actions, as in the prototype: practice, share the score with the group, the adviser's PDF. */}
+            <View style={styles.actions}>
               <Button label="Practice again" onPress={() => router.replace("/practice")} />
+              {group ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setSheet("share")}
+                  style={({ pressed }) => [styles.action, styles.actionSand, pressed && styles.pressed]}
+                >
+                  <Icon name="group" size={17} />
+                  <Text style={styles.actionText}>Share with group</Text>
+                </Pressable>
+              ) : null}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
+                accessibilityState={{ busy: exporting }}
+                disabled={exporting}
+                onPress={exportPdf}
+                style={({ pressed }) => [styles.action, styles.actionOutline, pressed && styles.pressed]}
+              >
+                <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} />
+                <Text style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
+              </Pressable>
+              {exportError ? (
+                <Text style={styles.sub} accessibilityLiveRegion="polite">
+                  {exportError}
+                </Text>
+              ) : null}
             </View>
             <Text style={styles.footnote}>Practice result, not an official evaluation.</Text>
           </Animated.View>
         </ScrollView>
       )}
+
+      <Sheet visible={sheet === "share"} onClose={() => setSheet(null)}>
+        <Text style={type.title}>Share with group</Text>
+        <Text style={styles.sheetNote}>Your group sees only your score, not your transcript or feedback.</Text>
+        <View style={styles.shareRow}>
+          <Text style={styles.shareText}>Show my latest score on the Group readiness card</Text>
+          <Switch
+            accessibilityLabel="Show my latest score on the Group readiness card"
+            value={!!group?.group?.shareScore}
+            disabled={sharing}
+            onValueChange={toggleShare}
+            trackColor={{ false: colors.border, true: colors.dusk }}
+            thumbColor={colors.paper}
+          />
+        </View>
+        <View style={styles.cta}>
+          <Button label="Done" onPress={() => setSheet(null)} />
+        </View>
+      </Sheet>
 
       <UpsellSheet
         visible={upsell}
@@ -272,5 +343,23 @@ const styles = StyleSheet.create({
   cards: { gap: 8 },
   transcript: { marginTop: 16 },
   cta: { marginTop: 20 },
+  actions: { gap: 8, marginTop: 22 },
+  action: { height: 50, borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  actionSand: { backgroundColor: colors.sand },
+  actionOutline: { borderWidth: 1.5, borderColor: colors.sand },
+  actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
+  pressed: { opacity: 0.85 },
+  sheetNote: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
+  shareRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginTop: 16,
+    backgroundColor: colors.sand,
+    borderRadius: radius.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  shareText: { flex: 1, fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, lineHeight: 20, color: colors.ink },
   footnote: { ...type.meta, textAlign: "center", marginTop: 12 },
 });

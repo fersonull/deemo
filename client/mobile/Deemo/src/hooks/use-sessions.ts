@@ -44,6 +44,7 @@ export type Session = {
   title: string;
   mode: Mode;
   difficulty?: Difficulty; // missing on sessions from before the setting
+  groupCode?: string; // practiced on a group project
   durationMs: number;
   turns: SessionTurn[];
   lines: { who: "you" | number; text: string; flagged?: boolean }[];
