@@ -29,7 +29,8 @@ const store = createStore({
   premium: false, // simulated freemium (addendum Q1)
 });
 
-export const CONSENT_VERSION = "2026-10";
+// 2026-10.2 names OpenAI as the backup AI; the server only uses it for students who agreed (server/src/store.ts).
+export const CONSENT_VERSION = "2026-10.2";
 
 type Me = { premium: boolean; allowTyping: boolean; consentAt?: string };
 

@@ -124,30 +124,47 @@ export function delivery(turns: SpokenTurn[]) {
   };
 }
 
-// Proposed weights → what the rubric screen can show: whole 5% steps, each 0–60, summing to 100
-// (largest-remainder rounding). An all-zero proposal falls back to the default weights.
-export function toFiveSteps(raw: number[], max = 60): number[] {
+// A panel's own rubric (plan F3, rubric upload): it replaces the five default criteria entirely. Criteria DEEMO can't
+// judge from a spoken defense (the written paper, a live system demo) stay listed with scored = false and weight 0.
+export type RubricCriterion = {
+  name: string;
+  desc: string; // what the panel looks for
+  points: number; // as written on the form (display only)
+  weight: number; // whole percent of the score; the scored criteria total 100
+  scored: boolean;
+  levels: [string, string, string]; // what a 1, a 3 and a 5 look like
+};
+export type Rubric = { source: string; criteria: RubricCriterion[] };
+
+export const MAX_CRITERIA = 12;
+
+// Points → whole percents summing to 100 (largest remainder). All zero → equal shares.
+export function toPercents(raw: number[]): number[] {
   const clean = raw.map((w) => (Number.isFinite(w) && w > 0 ? w : 0));
-  const total = clean.reduce((a, b) => a + b, 0);
-  if (total === 0) return [...DEFAULT_WEIGHTS];
-  // Cap at max and hand the excess to the uncapped criteria in proportion, until nothing is over.
-  let w = clean.map((x) => (x / total) * 100);
-  for (let i = 0; i < w.length; i++) {
-    const over = w.reduce((a, x) => a + Math.max(0, x - max), 0);
-    if (over <= 1e-9) break;
-    const room = w.reduce((a, x) => a + (x < max ? x : 0), 0);
-    w = w.map((x) => (x >= max ? max : room > 0 ? x + (over * x) / room : x));
-  }
-  const steps = w.map((x) => x / 5);
-  const floor = steps.map(Math.floor);
-  let left = 20 - floor.reduce((a, b) => a + b, 0);
-  const order = steps.map((s, i) => [s - Math.floor(s), i] as const).sort((a, b) => b[0] - a[0]);
-  for (const [, i] of order) {
-    if (left <= 0) break;
-    if (floor[i]! * 5 < max) {
-      floor[i]!++;
-      left--;
-    }
-  }
-  return floor.map((s) => s * 5);
+  const total = sum(clean);
+  const share = total ? clean.map((w) => (w / total) * 100) : clean.map(() => 100 / clean.length);
+  const out = share.map(Math.floor);
+  const order = share.map((x, i) => [x - Math.floor(x), i] as const).sort((a, b) => b[0] - a[0]);
+  for (let k = 0, left = 100 - sum(out); k < left; k++) out[order[k]![1]]!++;
+  return out;
+}
+
+const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+// A rubric coming back from the app to be saved (trust boundary): trimmed, capped, and the weights must add up.
+export function parseRubric(x: unknown): Rubric | null {
+  const r = (x ?? {}) as Record<string, unknown>;
+  if (!Array.isArray(r.criteria) || r.criteria.length < 1 || r.criteria.length > MAX_CRITERIA) return null;
+  const criteria = (r.criteria as Record<string, unknown>[]).map((c) => ({
+    name: text(c?.name, 80),
+    desc: text(c?.desc, 300),
+    points: typeof c?.points === "number" && c.points >= 0 && c.points <= 1000 ? c.points : 0,
+    weight: c?.weight as number,
+    scored: c?.scored === true,
+    levels: (Array.isArray(c?.levels) ? c.levels : []).slice(0, 3).map((l) => text(l, 200)) as [string, string, string],
+  }));
+  if (criteria.some((c) => !c.name || c.levels.length !== 3 || c.levels.some((l) => !l))) return null;
+  if (criteria.some((c) => !Number.isInteger(c.weight) || c.weight < 0 || c.weight > 100 || (!c.scored && c.weight !== 0))) return null;
+  if (sum(criteria.filter((c) => c.scored).map((c) => c.weight)) !== 100) return null;
+  return { source: text(r.source, 200), criteria };
 }

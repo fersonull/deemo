@@ -22,11 +22,15 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 ## Planned features not built yet
 
 - [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
-- [ ] **PDF export and read-only share link** (F16, addendum Q2), Premium. The link expires after 7 days.
-- [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) mapped onto the five criteria, with weights the student reviews.
-- [ ] **Download my data** (§17 user rights).
+- [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).
+- [ ] **Read-only share link** (addendum Q2, optional; not in the prototype): one report, expires after 7 days. Skipped for now; the PDF covers sending results to the adviser.
+- [x] **Practice weak topics** (prototype results screen, primary action): the same setup again, aimed at the report's weak criteria, contradictions and fixes. The app sends only the session id (`weakFrom`); the server builds the focus from the stored report.
+- [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) becomes the whole rubric, replacing the five defaults: its own criteria, weights from its points, level anchors from its descriptors. Criteria needing the paper or a live demo are listed but not scored. Saved on the project (shared with the group); "Back to the default rubric" undoes it.
+- [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
+- [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
+- [x] **Pull to refresh** on Home, History and Projects.
 - [ ] **Remaining animations** (from the animation review):
   - [ ] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).
   - [ ] Paused overlay fades in and out (200 / 150 ms).
@@ -38,7 +42,9 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 - [ ] **Chapter 3, readiness formula.** The app now uses: level points = (level − 1) / 4; coverage = answered ÷ planned with no floor, counting only real answers (the panel closing early doesn't count against the student); unmeasurable delivery drops out of the weights; sessions with no answer aren't scored. The addendum's worked example becomes 54 (was 62).
 - [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
+- [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
 - [ ] **Delimitations:** simulated payments, no adviser dashboard (Q1, Q2).
+- [ ] **Privacy notice / Chapter 3:** name OpenAI as the backup processor for analysis, rubric reading and scoring (only for students who agreed to consent 2026-10.2), alongside Google. The live voice panel stays Gemini-only.
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 
 ## Housekeeping

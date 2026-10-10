@@ -19,8 +19,20 @@ export type Analysis = {
   unsure: string[];
 };
 
+// The panel's own rubric (plan F3), replacing the default five criteria. Mirrors server/src/scoring.ts.
+export type RubricCriterion = {
+  name: string;
+  desc: string;
+  points: number; // as written on the form
+  weight: number; // whole percent; the scored criteria total 100
+  scored: boolean; // false: needs the paper or a live demo, so practice can't judge it
+  levels: [string, string, string]; // a 1, a 3 and a 5
+};
+export type Rubric = { source: string; criteria: RubricCriterion[] };
+
 export type Project = {
-  weights?: number[];
+  weights?: number[]; // the default rubric's weights
+  rubric?: Rubric;
   group?: { code: string; isOwner: boolean; shareScore: boolean; focusArea: string };
   id: string;
   name: string;
@@ -142,8 +154,9 @@ export const projects = {
     await api(`/groups/${p.group.code}/me`, { method: "DELETE" });
     await this.refresh();
   },
-  async saveWeights(id: string, weights: number[]) {
-    return upsert(await api<Project>(`/projects/${id}/rubric`, json("PATCH", { weights })));
+  // `{ rubric }`: the panel's own; `{ weights }`: back to the default criteria with these weights.
+  async saveRubric(id: string, body: { rubric: Rubric } | { weights: number[] }) {
+    return upsert(await api<Project>(`/projects/${id}/rubric`, json("PATCH", body)));
   },
 
   async remove(id: string) {

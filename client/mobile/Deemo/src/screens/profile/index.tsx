@@ -7,20 +7,24 @@ import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
+import { api } from "@/utils/api";
 import { initials } from "@/utils/initials";
+import { shareFile } from "@/utils/share-file";
 
 const PLANS = {
   free: { name: "Free plan", desc: "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript." },
   premium: { name: "Premium (demo)", desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report." },
 };
 
-// Profile (prototype profile screen): account, plan, the typed-answer setting, delete my data, sign out.
+// Profile (prototype profile screen): account, plan, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
   const { name, email, premium, allowTyping } = useSession();
   const [sheet, setSheet] = useState<"upsell" | "delete" | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   const plan = premium ? PLANS.premium : PLANS.free;
 
   const deleteAll = async () => {
@@ -31,6 +35,20 @@ export function Profile() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't delete your data. Try again.");
       setDeleting(false);
+    }
+  };
+
+  // Download my data (plan §17 user rights): everything the server keeps, as one JSON file through the share sheet.
+  const download = async () => {
+    setDownloading(true);
+    setDownloadError("");
+    try {
+      const data = await api<object>("/me/export");
+      await shareFile("DEEMO my data.json", "application/json", { text: JSON.stringify(data, null, 2) });
+    } catch {
+      setDownloadError("Couldn't get your data. Try again.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -78,6 +96,20 @@ export function Profile() {
             thumbColor={colors.paper}
           />
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: downloading }}
+          disabled={downloading}
+          onPress={download}
+          style={styles.row}
+        >
+          <View style={styles.flex}>
+            <Text style={styles.rowLabel}>{downloading ? "Getting your data…" : "Download my data"}</Text>
+            <Text style={styles.meta} accessibilityLiveRegion="polite">
+              {downloadError || "Your manuscripts' summaries, transcripts and reports, as one file."}
+            </Text>
+          </View>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => setSheet("delete")} style={styles.row}>
           <Text style={[styles.rowLabel, styles.danger]}>Delete my data</Text>
         </Pressable>

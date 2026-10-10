@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
+import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
@@ -39,6 +40,7 @@ export function Setup() {
   useFocusEffect(
     useCallback(() => {
       void projects.refresh();
+      practiceSetup.set({ weakFrom: null }); // setting up by hand is a normal round
     }, []),
   );
 
@@ -53,9 +55,15 @@ export function Setup() {
         <Icon name="description" size={20} color={colors.duskIcon} />
         <View style={styles.flex}>
           <Text style={type.label}>MANUSCRIPT</Text>
-          <Text style={styles.manuscriptName} numberOfLines={1}>
-            {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
-          </Text>
+          {manuscript || list.loaded ? (
+            <Text style={styles.manuscriptName} numberOfLines={1}>
+              {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
+            </Text>
+          ) : (
+            <Skeleton label="Loading your manuscript">
+              <Skeleton.Bone width="70%" height={14} style={styles.nameBone} />
+            </Skeleton>
+          )}
         </View>
         <View style={styles.change}>
           <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
@@ -72,8 +80,12 @@ export function Setup() {
           <Text style={type.label}>SCORING</Text>
           <Text style={styles.manuscriptName} numberOfLines={1}>
             {manuscript?.group
-              ? "Shared group rubric"
-              : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
+              ? manuscript.rubric
+                ? "Your group's panel rubric"
+                : "Shared group rubric"
+              : manuscript?.rubric
+                ? "Your panel's rubric"
+                : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
                 ? "Default rubric"
                 : "Your rubric weights"}
           </Text>
@@ -217,6 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   manuscriptName: { ...type.bodyStrong, marginTop: 2 },
+  nameBone: { marginTop: 6, marginBottom: 2 },
   rubricRow: { marginTop: 8 },
   domain: {
     alignSelf: "flex-start",

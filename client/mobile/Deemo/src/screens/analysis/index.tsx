@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
+import { Fetching } from "@/components/fetching";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
@@ -78,7 +79,11 @@ export function Analysis({ id }: { id: string }) {
   if (!project || project.status === "analyzing") {
     return (
       <Screen onBack={back}>
-        {project ? <Reading since={project.createdAt} /> : null}
+        {project ? (
+          <Reading since={project.createdAt} />
+        ) : (
+          <Fetching title={"Opening your\nmanuscript."} subtitle="Getting the summary the panel works from." />
+        )}
         {offline ? <Text style={styles.offline}>{"Can't reach the DEEMO server. Retrying…"}</Text> : null}
       </Screen>
     );

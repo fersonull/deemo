@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
 
-import { DEFAULT_WEIGHTS, band, consistencyPenalty, delivery, levelPoints, readiness, toFiveSteps } from "./scoring";
+import { DEFAULT_WEIGHTS, band, consistencyPenalty, delivery, levelPoints, parseRubric, readiness, toPercents } from "./scoring";
 
 test("a Poor answer earns nothing, Satisfactory half, Excellent all", () => {
   expect([1, 2, 3, 4, 5].map(levelPoints)).toEqual([0, 0.25, 0.5, 0.75, 1]);
@@ -46,12 +46,30 @@ test("delivery uses spoken answers only; with none it isn't measured", () => {
   expect(delivery([{ answer: "typed", latencyMs: null, answerMs: 0 }]).level).toBeNull();
 });
 
-test("proposed weights round to 5% steps that sum to 100, each at most 60", () => {
-  expect(toFiveSteps([30, 25, 20, 15, 10])).toEqual([30, 25, 20, 15, 10]);
-  expect(toFiveSteps([40, 30, 30, 0, 0])).toEqual([40, 30, 30, 0, 0]);
-  expect(toFiveSteps([1, 1, 1, 0, 0]).reduce((a, b) => a + b, 0)).toBe(100);
-  expect(toFiveSteps([90, 10, 0, 0, 0])).toEqual([60, 40, 0, 0, 0]);
-  expect(toFiveSteps([0, 0, 0, 0, 0])).toEqual(DEFAULT_WEIGHTS);
-  for (const w of [toFiveSteps([7, 13, 29, 31, 20]), toFiveSteps([33, 33, 34, 0, 0])])
-    expect(w.every((x) => x % 5 === 0 && x <= 60) && w.reduce((a, b) => a + b, 0) === 100).toBe(true);
+test("a form's points become whole percents that sum to 100", () => {
+  expect(toPercents([30, 25, 20, 15, 10])).toEqual([30, 25, 20, 15, 10]);
+  expect(toPercents([20, 20, 10])).toEqual([40, 40, 20]);
+  expect(toPercents([1, 1, 1])).toEqual([34, 33, 33]);
+  expect(toPercents([0, 0])).toEqual([50, 50]);
+  expect(toPercents([7, 13, 29, 31, 20]).reduce((a, b) => a + b, 0)).toBe(100);
+});
+
+const criterion = (name: string, weight: number, scored = true) => ({
+  name,
+  desc: "What the panel looks for.",
+  points: weight,
+  weight,
+  scored,
+  levels: ["Poor", "Fair", "Excellent"],
+});
+
+test("a saved rubric is trimmed and its scored weights must total 100", () => {
+  const ok = parseRubric({ source: "form.pdf", criteria: [criterion("Mastery", 60), criterion("Delivery", 40), criterion("Paper", 0, false)] });
+  expect(ok?.criteria.map((c) => c.weight)).toEqual([60, 40, 0]);
+  expect(parseRubric({ criteria: [criterion("Mastery", 60), criterion("Delivery", 30)] })).toBeNull(); // 90%
+  expect(parseRubric({ criteria: [criterion("Mastery", 100), criterion("Paper", 10, false)] })).toBeNull(); // unscored with weight
+  expect(parseRubric({ criteria: [{ ...criterion("Mastery", 100), levels: ["a", "b"] }] })).toBeNull();
+  expect(parseRubric({ criteria: [criterion("", 100)] })).toBeNull();
+  expect(parseRubric({ criteria: Array.from({ length: 13 }, (_, i) => criterion(`C${i}`, i ? 0 : 100)) })).toBeNull();
+  expect(parseRubric({ criteria: [criterion("x".repeat(200), 100)] })?.criteria[0]?.name.length).toBe(80);
 });

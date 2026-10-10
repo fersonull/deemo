@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/icon";
+import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { colors, type } from "@/theme";
 
 type Props = {
@@ -11,10 +12,14 @@ type Props = {
   onBack?: () => void;
   scroll?: boolean;
   tabBar?: boolean; // leave room for the floating tab bar
+  onRefresh?: () => Promise<unknown>; // pull down to reload (scroll screens)
   children?: ReactNode;
 };
 
-export function Screen({ title, subtitle, onBack, scroll, tabBar, children }: Props) {
+const idle = async () => {};
+
+export function Screen({ title, subtitle, onBack, scroll, tabBar, onRefresh, children }: Props) {
+  const refresh = usePullRefresh(onRefresh ?? idle);
   const body = (
     <>
       {title ? (
@@ -39,6 +44,7 @@ export function Screen({ title, subtitle, onBack, scroll, tabBar, children }: Pr
       {scroll ? (
         <ScrollView
           keyboardShouldPersistTaps="handled" // buttons work on the first tap while the keyboard is up
+          refreshControl={onRefresh ? refresh : undefined}
           contentContainerStyle={[styles.scroll, { paddingTop: onBack ? 0 : 14, paddingBottom: tabBar ? 120 : 24 }]}
         >
           {body}

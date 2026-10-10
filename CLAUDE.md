@@ -32,7 +32,7 @@ Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp
 
 Firebase: the app signs in with React Native Firebase Auth (email/password, Google via `react-native-nitro-google-signin`) and sends its ID token as `Authorization: Bearer` (`src/utils/api.ts`). The server verifies it (`server/src/firebase.ts`) and is the only one touching Firestore: `users/{uid}` (consent, simulated premium) with `projects` and `sessions` subcollections (`server/src/store.ts`). Free-tier limits are enforced on the server. Config files stay out of git: `client/mobile/Deemo/google-services.json` and the service-account key at `FIREBASE_SERVICE_ACCOUNT` in `server/.env`.
 
-Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first; the next model takes over on a rate limit, quota cap or outage; PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`. Scoring: `server/src/sessions.ts` (Flash for levels and feedback) and `server/src/scoring.ts` (the readiness math, tested).
+Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first; the next model takes over on a rate limit, quota cap, hang or outage, and a struggling model sits out 5 minutes; OpenAI (`OPENAI_API_KEY`, `OPENAI_MODELS`) is the last resort, only for students whose consent is `BACKUP_CONSENT` or later; PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`. Scoring: `server/src/sessions.ts` (Flash for levels and feedback) and `server/src/scoring.ts` (the readiness math, tested).
 
 ## Workflow rules
 
@@ -76,5 +76,5 @@ Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first
 
 - Source of truth: claude.ai/design project `2fedfea1-9f17-429d-a735-c7b644e092d9` (via the `claude_design` MCP). It also holds `DEEMO Branding.dc.html` and `uploads/DEEMO - UI UX Design Brief.md`, which covers screen specs, live-session states, and accessibility rules.
 - Local copy: `docs/design/DEEMO Prototype.dc.html` + `support.js` (open the HTML in a browser). It is reference only; never ship it.
-- Tokens: `client/mobile/Deemo/src/theme.ts`. Use these values; don't hardcode colors. The palette is light only so far, with a warm paper background and a "dusk" indigo primary. Amber marks contradictions. Never use red during a session.
+- Tokens: `client/mobile/Deemo/src/theme.ts` (colors live in `src/colors.ts`, re-exported by theme, so plain TS like the PDF report can import them). Use these values; don't hardcode colors. The palette is light only so far, with a warm paper background and a "dusk" indigo primary. Amber marks contradictions. Never use red during a session.
 - Fonts: Bricolage Grotesque, DM Sans, DM Mono. Icons: Material Symbols Rounded (ligatures, regular + filled). They are embedded at build time through the `expo-font` plugin in `app.json` (Android font families), so use `fonts.*` from `theme.ts` together with `fontWeight`. Adding a weight means adding it to `app.json` and rebuilding.
