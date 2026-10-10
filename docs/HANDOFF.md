@@ -6,8 +6,8 @@ _Last updated: 2026-10-10_
 
 ## Current state
 
-- **Branch:** `feat/pdf-export` is open (off `dev`, committed, **not merged**). It adds the native modules `expo-print` and `expo-sharing`, so it needs a **native rebuild** before it can be tested; the current dev build will fail on the results and Profile screens while Metro serves this branch. `dev` has everything else below.
-- **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The last native rebuild includes Firebase, Google sign-in, the document picker and the VoiceCommunication mic patch. `feat/pdf-export` needs the next one (print and sharing).
+- **Branch:** `dev` is the integration branch and has everything below; no feature branch is open. (If `feat/pdf-export` still exists, its merge was waiting on the user's GPG passphrase: merge it into `dev`, delete the branch.)
+- **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The last native rebuild includes Firebase, Google sign-in, the document picker and the VoiceCommunication mic patch. The latest rebuild adds print and sharing (`expo-print`, `expo-sharing`).
 - **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
 - **Data:** Firebase project with Auth (email/password, Google) and Firestore (`users/{uid}` plus `projects` and `sessions` subcollections, and top-level `groups/{code}`). Only the server reads and writes Firestore.
 - **AI:** Gemini Live (`gemini-3.8-live`) for the panel. Flash models with a fallback chain for analysis and scoring (`FLASH_MODELS` in `server/src/analysis.ts`).
@@ -15,18 +15,19 @@ _Last updated: 2026-10-10_
 
 ## Next task
 
-**Test and merge `feat/pdf-export`** once the user has rebuilt (`bunx expo run:android` on that branch):
-- Results screen: actions below the transcript, as in the prototype: "Practice again", "Share with group" (only for sessions on a group project; opens a sheet with the score toggle), "Export PDF" (outlined; lock icon and upsell on Free). Premium Export PDF opens the share sheet with `DEEMO report <date>.pdf`; check the PDF (2 pages for a 4-question session, disclaimer in the header).
-- Profile: "Download my data" shares `DEEMO my data.json` (account, projects, sessions).
-- Then merge into `dev` and delete the branch.
+**Practice weak topics** (prototype results screen; `docs/TASKS.md` → Planned features). In the prototype it's the results screen's primary button, above "Practice again". It starts a session aimed at that report's weak criteria and fixes.
+- The app sends only the session id (e.g. `weakFrom: <sessionId>` in the setup). The server reads the stored report and builds the focus text (lowest-level criteria plus the top fixes), then injects it into the panel prompt the same way as the group focus area (`server/src/panel.ts`, a JSON string, treated as a topic preference only). Never take prompt text from the app.
+- Mint the token with the same project, mode and weights as the original session. Free-tier limits still apply.
+- Results UI: the primary "Practice weak topics" button, then "Practice again" and "Share with group" side by side (sand, 50 high), then the outlined "Export PDF" (prototype layout). Hide the button for unscored sessions.
+- No native rebuild. Small enough for `dev`, or `feat/weak-topics` if it touches the token route a lot.
 
-After that, from `docs/TASKS.md`: Practice weak topics (prototype results primary action) → remaining animations → panel voice speed and dark mode. The read-only share link (addendum Q2, optional) is skipped unless the user asks.
+After that: remaining animations → panel voice speed and dark mode. The read-only share link (addendum Q2, optional) is skipped unless the user asks.
 
 ## Recent changes (newest first)
 
 | When | What | Where |
 |---|---|---|
-| 2026-10-10 | **PDF export and Download my data**: results actions match the prototype (Practice again, Share with group sheet, Export PDF). Export PDF (Premium) prints results blocks 1–7 on the phone from `src/utils/report-html.ts` (tested, all text escaped) and shares the file; Free sees a lock and the upsell. Profile "Download my data" shares `GET /me/export` as JSON (own sessions only; covered by the group integration test). Colors moved to `src/colors.ts` (re-exported by theme) so the PDF builder stays plain TS. Needs a native rebuild (`expo-print`, `expo-sharing`). | `feat/pdf-export` (not merged) |
+| 2026-10-10 | **PDF export and Download my data**: results actions match the prototype (Practice again, Share with group sheet, Export PDF). Export PDF (Premium) prints results blocks 1–7 on the phone from `src/utils/report-html.ts` (tested, all text escaped) and shares the file; Free sees a lock and the upsell. Profile "Download my data" shares `GET /me/export` as JSON (own sessions only; covered by the group integration test). Colors moved to `src/colors.ts` (re-exported by theme) so the PDF builder stays plain TS. Needs a native rebuild (`expo-print`, `expo-sharing`). | `feat/pdf-export` → `dev`; device-tested by the user |
 | 2026-10-10 | **Group projects** (addendum Q10; started by Codex, finished and device-tested by Claude): leader taps "Create a group code" on the analysis screen for a 6-character code; members use Projects → "Join with a code" and see the shared project as `group-{code}` (analysis and rubric read-only; only the leader edits). Sessions stay private; "Share with group" puts the member's latest scored session on Home's **Group readiness** card. Optional per-member focus area steers the panel prompt. Free tier: a joined project counts as the one manuscript (checked in a transaction). Join attempts are rate-limited; deleting the account or the project removes memberships. Opt-in integration test: `DEEMO_GROUP_INTEGRATION=1 bun test tests` in `server/`. | `codex/group-projects` → `dev` |
 | 2026-10-10 | **Codex device tooling:** registered agent-device MCP; initialization and 59-tool discovery verified. Existing installation reused; no app changes. | User Codex config; docs uncommitted |
 | 2026-10-10 | **Rubric upload**: "Use your panel's rubric" on the rubric screen (PDF, DOCX, JPG, PNG). `POST /rubric/map` checks it's a defense rubric, Flash maps each criterion onto the five (written-paper criteria are left out), `toFiveSteps` rounds weights to the editor's 5% steps; nothing is stored, the student reviews and taps Use. The document picker is now imported statically (lazy import broke under Metro). | `feat/rubric-upload` → `dev` |
