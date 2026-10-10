@@ -193,6 +193,7 @@ app.get("/sessions", async (req, res) => {
       durationMs,
       score: report?.score,
       band: report?.band,
+      tip: report?.fixes[0]?.text, // the Home card's one line
     })),
   );
 });

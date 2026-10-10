@@ -50,6 +50,7 @@ export type Session = {
 export type SessionSummary = Pick<Session, "id" | "createdAt" | "status" | "mode" | "title" | "durationMs"> & {
   score?: number;
   band?: string;
+  tip?: string;
 };
 
 type Submit =

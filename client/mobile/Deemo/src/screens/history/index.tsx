@@ -1,12 +1,14 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Screen } from "@/components/screen";
-import { MODE_LABELS } from "@/constants";
+import { MODE_LABELS, type Mode } from "@/constants";
 import { sessions, useSessions, type SessionSummary } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+
+import { TrendChart } from "./trend-chart";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -19,9 +21,18 @@ function trend(list: SessionSummary[]) {
   return "Level with your first session.";
 }
 
-// History (plan S-13), list only for now; the trend chart and mode filters come later.
+const FILTERS: { label: string; mode: Mode | null }[] = [
+  { label: "All", mode: null },
+  { label: "Title", mode: "TITLE" },
+  { label: "Pre-Oral", mode: "PRE_ORAL" },
+  { label: "Final", mode: "FINAL" },
+];
+
+// History (plan S-13): readiness over time, filterable by defense stage; tap a row for its report.
 export function History() {
-  const { list, loaded, error } = useSessions();
+  const { list: all, loaded, error } = useSessions();
+  const [mode, setMode] = useState<Mode | null>(null);
+  const list = mode ? all.filter((s) => s.mode === mode) : all;
 
   useFocusEffect(
     useCallback(() => {
@@ -31,6 +42,25 @@ export function History() {
 
   return (
     <Screen scroll tabBar title="History" subtitle={trend(list)}>
+      <TrendChart sessions={list} />
+      {all.length ? (
+        <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>
+          {FILTERS.map((f) => {
+            const selected = f.mode === mode;
+            return (
+              <Pressable
+                key={f.label}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                onPress={() => setMode(f.mode)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{f.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
       <View style={styles.list}>
         {list.map((s) => (
           <Pressable
@@ -53,8 +83,10 @@ export function History() {
         ))}
         {loaded && error ? (
           <Text style={styles.note}>{"Can't reach the DEEMO server right now."}</Text>
-        ) : loaded && list.length === 0 ? (
+        ) : loaded && all.length === 0 ? (
           <Text style={styles.note}>No sessions yet. Your first report will land here.</Text>
+        ) : loaded && list.length === 0 ? (
+          <Text style={styles.note}>No sessions at this stage yet.</Text>
         ) : null}
       </View>
     </Screen>
@@ -63,7 +95,12 @@ export function History() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  list: { gap: 8, marginTop: 18 },
+  list: { gap: 8, marginTop: 14 },
+  filters: { flexDirection: "row", gap: 6, marginTop: 16 },
+  chip: { height: 34, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
+  chipSelected: { backgroundColor: colors.ink },
+  chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
+  chipTextSelected: { color: colors.paper },
   row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
   pressed: { opacity: 0.85 },
   mode: { ...type.heading, fontSize: 16 },
