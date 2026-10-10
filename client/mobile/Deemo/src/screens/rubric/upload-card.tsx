@@ -66,7 +66,7 @@ export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void })
             {busy ? "Reading your rubric…" : result ? "Upload a different rubric" : "Use your panel's rubric"}
           </Text>
           <Text style={type.meta}>
-            {busy ? "This takes a few seconds." : "PDF, Word or a photo. It replaces the default criteria."}
+            {busy ? "This can take a minute or two." : "PDF, Word or a photo. It replaces the default criteria."}
           </Text>
         </View>
       </Pressable>
