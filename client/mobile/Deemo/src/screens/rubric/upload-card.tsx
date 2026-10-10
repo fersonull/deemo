@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
-import { RUBRIC } from "@/constants";
+import type { Rubric } from "@/hooks/use-projects";
 import { colors, radius, type } from "@/theme";
 import { api } from "@/utils/api";
 import { riseIn } from "@/utils/motion";
@@ -16,16 +16,13 @@ const TYPES = [
   "image/jpeg",
   "image/png",
 ];
-const KEYS = ["content", "reasoning", "clarity", "consistency", "delivery"]; // RUBRIC order, server/src/scoring.ts keys
 
-type Mapping = { weights: number[]; mappings: { theirs: string; theirWeight: number; ours: string }[]; uncovered: string[] };
-
-// "Upload mine" (prototype rubric screen, plan F3): the panel's own form (PDF, DOCX or a photo) mapped onto the
-// five criteria. The proposed weights land in the editor below; the student still decides and taps "Use".
-export function UploadCard({ onWeights }: { onWeights: (weights: number[]) => void }) {
+// "Upload mine" (prototype rubric screen, plan F3): the panel's own form (PDF, DOCX or a photo) read into a whole new
+// rubric that replaces the default. It lands in the editor below; the student still reviews it and taps "Use".
+export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<Mapping | null>(null);
+  const [result, setResult] = useState<Rubric | null>(null);
   const reduced = useReducedMotion();
 
   const pick = async () => {
@@ -38,17 +35,15 @@ export function UploadCard({ onWeights }: { onWeights: (weights: number[]) => vo
     try {
       const form = new FormData();
       form.append("file", new File(file.uri) as unknown as Blob);
-      const mapped = await api<Mapping>("/rubric/map", { method: "POST", body: form });
-      setResult(mapped);
-      onWeights(mapped.weights);
+      const rubric = await api<Rubric>("/rubric/map", { method: "POST", body: form });
+      setResult(rubric);
+      onRubric(rubric);
     } catch (e) {
       setError(e instanceof Error ? e.message : "We couldn't read this rubric.");
     } finally {
       setBusy(false);
     }
   };
-
-  const nameOf = (key: string) => RUBRIC[KEYS.indexOf(key)]?.name;
 
   return (
     <View>
@@ -71,7 +66,7 @@ export function UploadCard({ onWeights }: { onWeights: (weights: number[]) => vo
             {busy ? "Reading your rubric…" : result ? "Upload a different rubric" : "Use your panel's rubric"}
           </Text>
           <Text style={type.meta}>
-            {busy ? "This takes a few seconds." : "PDF, Word or a photo. We map it onto these five criteria."}
+            {busy ? "This takes a few seconds." : "PDF, Word or a photo. It replaces the default criteria."}
           </Text>
         </View>
       </Pressable>
@@ -84,22 +79,10 @@ export function UploadCard({ onWeights }: { onWeights: (weights: number[]) => vo
 
       {result && !busy ? (
         <Animated.View entering={riseIn(0, reduced)} style={styles.mapped} accessibilityLiveRegion="polite">
-          <Text style={type.label}>FROM YOUR RUBRIC</Text>
-          {result.mappings.map((m, i) => (
-            <Text key={i} style={styles.line}>
-              {m.theirs}
-              {m.ours === "none" ? (
-                <Text style={styles.muted}> · not scored (DEEMO scores the oral defense only)</Text>
-              ) : (
-                <Text style={styles.muted}> → {nameOf(m.ours)}</Text>
-              )}
-            </Text>
-          ))}
-          {result.uncovered.length ? (
-            <Text style={styles.note}>
-              {`Your rubric doesn't weigh ${result.uncovered.join(" or ")}, so ${result.uncovered.length === 1 ? "it's" : "they're"} at 0%. Raise ${result.uncovered.length === 1 ? "it" : "them"} if your panel cares.`}
-            </Text>
-          ) : null}
+          <Text style={type.label}>FROM YOUR PANEL&apos;S FORM</Text>
+          <Text style={styles.line}>
+            {`${result.criteria.length} criteria, weighted the way your form weighs them. Review them below, then tap "Use this rubric".`}
+          </Text>
         </Animated.View>
       ) : null}
     </View>
@@ -131,6 +114,4 @@ const styles = StyleSheet.create({
   error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 8, paddingHorizontal: 4 },
   mapped: { backgroundColor: colors.duskTint, borderRadius: radius.lg, padding: 14, marginTop: 10, gap: 4 },
   line: { ...type.body, fontSize: 13.5, lineHeight: 19 },
-  muted: { color: colors.inkMuted },
-  note: { ...type.meta, lineHeight: 17, color: colors.duskInk, marginTop: 4 },
 });

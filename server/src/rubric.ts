@@ -1,53 +1,49 @@
 import mammoth from "mammoth";
 
 import { DOCX, Rejected, generateJson, type JPEG, type PDF, type PNG } from "./analysis";
-import { CRITERIA, toFiveSteps } from "./scoring";
+import { MAX_CRITERIA, toPercents, type Rubric } from "./scoring";
 
-// Rubric upload (plan F3): the panel's own form, mapped onto DEEMO's five criteria. Nothing is stored;
-// the student reviews the proposed weights before using them. The criteria stay fixed because the
-// readiness formula is built on them; only the weights follow the panel's form.
-
-const KEYS = CRITERIA.map((c) => c.key);
+// Rubric upload (plan F3): the panel's own form becomes the rubric, criteria and all, replacing the five defaults.
+// Nothing is stored here; the student reviews it on the rubric screen and saves it to the project.
 
 const SCHEMA = {
   type: "object",
   properties: {
     isRubric: { type: "boolean" },
     notRubricReason: { type: "string" },
-    mappings: {
+    criteria: {
       type: "array",
       items: {
         type: "object",
         properties: {
-          theirs: { type: "string" },
-          theirWeight: { type: "number" },
-          ours: { type: "string", enum: [...KEYS, "none"] },
+          name: { type: "string" },
+          desc: { type: "string" },
+          points: { type: "number" },
+          scorable: { type: "boolean" },
+          level1: { type: "string" },
+          level3: { type: "string" },
+          level5: { type: "string" },
         },
-        required: ["theirs", "theirWeight", "ours"],
+        required: ["name", "desc", "points", "scorable", "level1", "level3", "level5"],
       },
     },
   },
-  required: ["isRubric", "notRubricReason", "mappings"],
+  required: ["isRubric", "notRubricReason", "criteria"],
 };
 
 const PROMPT = `A student uploaded this as the evaluation rubric or grading form their capstone defense panel uses.
-First decide isRubric: true only for a defense / oral presentation evaluation rubric or scoring form. If false, set notRubricReason to one short sentence for the student (e.g. "This looks like a class schedule, not a defense rubric.") and return no mappings.
-If true, list every scored criterion on the form in mappings:
-- theirs: the criterion's name as written (short).
-- theirWeight: its weight or maximum points as written; if the form gives no weights, use 1 for each.
-- ours: the closest of these five, or "none" if it fits none of them:
-${CRITERIA.map((c) => `  - ${c.key}: ${c.name} (${c.desc})`).join("\n")}
-Delivery, presentation skills, poise, confidence and time management go to delivery. Answering questions well goes to content (knowledge) or reasoning (justification). Document quality, formatting and the written paper itself go to none: DEEMO only scores the oral defense.`;
-
-export type RubricMapping = {
-  weights: number[]; // CRITERIA order, 5% steps summing to 100
-  mappings: { theirs: string; theirWeight: number; ours: string }[];
-  uncovered: string[]; // our criteria the form doesn't weigh (set to 0%)
-};
+First decide isRubric: true only for a defense / oral presentation evaluation rubric or scoring form. If false, set notRubricReason to one short sentence for the student (e.g. "This looks like a class schedule, not a defense rubric.") and return no criteria.
+If true, list every scored criterion on the form, in the form's order (at most ${MAX_CRITERIA}; merge sub-items into their parent criterion if there are more):
+- name: the criterion's name as written, short.
+- desc: one sentence on what the panel looks for, from the form's own wording.
+- points: its weight or maximum points as written; if the form gives none, use 1 for each.
+- scorable: true if it can be judged from a recording of the student presenting and answering the panel's questions out loud (knowledge, reasoning, answering questions, clarity, organization, consistency with the paper, delivery, confidence, time management). false for anything that needs the written document itself (formatting, grammar, citations, the paper's quality) or watching the working system (a live demo, the system's functionality or design).
+- level1, level3, level5: what a poor, a satisfactory and an excellent performance on it look like, one short sentence each. Use the form's descriptors when it has them; otherwise write them from the criterion's meaning.`;
 
 type Input = { bytes: Uint8Array; type: typeof PDF | typeof DOCX | typeof JPEG | typeof PNG };
+type Read = { name: string; desc: string; points: number; scorable: boolean; level1: string; level3: string; level5: string };
 
-export async function mapRubric({ bytes, type }: Input): Promise<RubricMapping> {
+export async function buildRubric({ bytes, type }: Input, source: string): Promise<Rubric> {
   let doc;
   if (type === DOCX) {
     const text = await mammoth
@@ -66,15 +62,24 @@ export async function mapRubric({ bytes, type }: Input): Promise<RubricMapping> 
     contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
     generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 },
   });
-  const r = JSON.parse(text) as { isRubric: boolean; notRubricReason: string; mappings: RubricMapping["mappings"] };
+  const r = JSON.parse(text) as { isRubric: boolean; notRubricReason: string; criteria: Read[] };
   if (!r.isRubric) throw new Rejected(r.notRubricReason || "This doesn't look like a defense rubric.");
-  const mapped = r.mappings.filter((m) => KEYS.includes(m.ours as (typeof KEYS)[number]));
-  if (!mapped.length) throw new Rejected("None of this rubric's criteria match what DEEMO scores in an oral defense.");
+  const read = r.criteria.filter((c) => c.name.trim()).slice(0, MAX_CRITERIA);
+  if (!read.some((c) => c.scorable))
+    throw new Rejected("None of this rubric's criteria can be judged in a practice defense. DEEMO scores the oral defense only.");
 
-  const raw = KEYS.map((k) => mapped.filter((m) => m.ours === k).reduce((a, m) => a + Math.max(0, m.theirWeight), 0));
+  const scored = read.filter((c) => c.scorable);
+  const weights = toPercents(scored.map((c) => c.points));
+  const cut = (s: string, max: number) => s.trim().slice(0, max);
   return {
-    weights: toFiveSteps(raw),
-    mappings: r.mappings.slice(0, 20),
-    uncovered: CRITERIA.filter((_, i) => raw[i] === 0).map((c) => c.name),
+    source: cut(source, 200),
+    criteria: read.map((c) => ({
+      name: cut(c.name, 80),
+      desc: cut(c.desc, 300),
+      points: Number.isFinite(c.points) && c.points >= 0 ? Math.min(c.points, 1000) : 0,
+      weight: c.scorable ? weights[scored.indexOf(c)]! : 0,
+      scored: c.scorable,
+      levels: [cut(c.level1, 200), cut(c.level3, 200), cut(c.level5, 200)].map((l) => l || "—") as [string, string, string],
+    })),
   };
 }

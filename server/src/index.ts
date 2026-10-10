@@ -1,12 +1,14 @@
 import express from "express";
 
 import { Busy, MAX_BYTES, Rejected, analyzeManuscript, sniff, sniffDocOrImage } from "./analysis";
-import { mapRubric } from "./rubric";
+import { buildRubric } from "./rubric";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, weakTopics, type Session } from "./sessions";
 import { type Analysis, type Project, store, users } from "./store";
 import { db } from "./firebase";
+import { FieldValue } from "firebase-admin/firestore";
+import { parseRubric } from "./scoring";
 import {
   GroupError,
   accessibleProject,
@@ -174,18 +176,29 @@ app.delete("/groups/:code/me", async (req, res) => {
   await leaveGroup(uidOf(req), req.params.code);
   res.status(204).end();
 });
+// Saves the project's rubric: `{ rubric }` is the panel's own (from /rubric/map, reviewed by the student), `{ weights }`
+// goes back to the default five criteria with these weights.
 app.patch("/projects/:id/rubric", async (req, res) => {
-  if (!validWeights(req.body?.weights))
+  const body = (req.body ?? {}) as { rubric?: unknown; weights?: unknown };
+  const rubric = body.rubric === undefined ? undefined : parseRubric(body.rubric);
+  if (rubric === null) return void res.status(400).json({ error: "Each scored criterion needs a weight, totaling 100%." });
+  if (!rubric && !validWeights(body.weights))
     return void res.status(400).json({ error: "Use five weights in 5% steps, up to 60% each, totaling 100%." });
   const uid = uidOf(req);
   const p = await accessibleProject(uid, req.params.id);
   if (!p) throw new GroupError(404, "Project not found.");
   if (p.group && !p.group.isOwner) throw new GroupError(403, "Only the group leader can edit the shared rubric.");
-  await db.collection("users").doc(uid).collection("projects").doc(p.id).update({ weights: req.body.weights });
+  await db
+    .collection("users")
+    .doc(uid)
+    .collection("projects")
+    .doc(p.id)
+    .update(rubric ? { rubric } : { weights: body.weights, rubric: FieldValue.delete() });
   res.json(await accessibleProject(uid, p.id));
 });
 
-// Rubric upload (plan F3): map the panel's own form onto the five criteria and propose weights. Nothing is stored.
+// Rubric upload (plan F3): the panel's own form, read into a whole rubric that replaces the default. Nothing is stored;
+// the student reviews it and saves it with PATCH /projects/:id/rubric.
 app.post("/rubric/map", express.raw({ type: "multipart/form-data", limit: 11_000_000 }), async (req, res) => {
   const form = await new Response(req.body, { headers: { "content-type": req.headers["content-type"] ?? "" } })
     .formData()
@@ -197,7 +210,7 @@ app.post("/rubric/map", express.raw({ type: "multipart/form-data", limit: 11_000
   const type = sniffDocOrImage(bytes);
   if (!type) return void res.status(415).json({ error: "Only PDF, DOCX, JPG or PNG files." });
   try {
-    res.json(await mapRubric({ bytes, type }));
+    res.json(await buildRubric({ bytes, type }, file.name));
   } catch (err) {
     if (err instanceof Rejected) return void res.status(422).json({ error: err.message });
     if (err instanceof Busy) return void res.status(503).json({ error: BUSY });

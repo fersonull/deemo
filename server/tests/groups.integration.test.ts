@@ -98,6 +98,26 @@ test.skipIf(process.env.DEEMO_GROUP_INTEGRATION !== "1")(
       expect(parsed?.groupCode).toBe(code);
       expect(parsed?.weights).toEqual([30, 25, 20, 15, 10]);
       expect(parsed?.focusArea).toBe("Database and testing");
+      // The panel's own rubric replaces the default for every member; only the leader sets it.
+      const level = ["Poor", "Fair", "Excellent"];
+      const panelRubric = {
+        source: "form.pdf",
+        criteria: [
+          { name: "Mastery", desc: "Knows the study.", points: 60, weight: 60, scored: true, levels: level },
+          { name: "Delivery", desc: "Speaks clearly.", points: 40, weight: 40, scored: true, levels: level },
+          { name: "Paper", desc: "Formatting.", points: 10, weight: 0, scored: false, levels: level },
+        ],
+      };
+      expect((await request(1, `/projects/${sharedId}/rubric`, "PATCH", { rubric: panelRubric })).status).toBe(403);
+      const lopsided = { ...panelRubric, criteria: panelRubric.criteria.map((c) => ({ ...c, weight: c.scored ? 30 : 0 })) };
+      expect((await request(0, `/projects/${project.id}/rubric`, "PATCH", { rubric: lopsided })).status).toBe(400);
+      expect((await request(0, `/projects/${project.id}/rubric`, "PATCH", { rubric: panelRubric })).status).toBe(200);
+      expect((await request(1, `/projects/${sharedId}`)).body.rubric.criteria).toHaveLength(3);
+      const custom = await parseSession(member, { ...setup, turns: [], lines: [], flags: [] });
+      expect(custom?.weights).toEqual([60, 40, 0]);
+      expect(custom?.rubric?.map((c) => c.scored)).toEqual([true, true, false]);
+      expect((await request(0, `/projects/${project.id}/rubric`, "PATCH", { weights: [30, 25, 20, 15, 10] })).status).toBe(200);
+      expect((await request(1, `/projects/${sharedId}`)).body.rubric).toBeUndefined();
       const shared = await accessibleProject(member, sharedId);
       expect(
         buildPanelPrompt(

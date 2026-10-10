@@ -94,6 +94,8 @@ export class Busy extends Error {}
 
 // One Flash call: the first model in FLASH_MODELS that answers wins. A rate limit, quota cap (each model has its
 // own), overload or retired model moves on to the next one; only a bad key or request stops the chain early.
+const TIMEOUT_MS = 120_000; // per model: a long manuscript takes about a minute
+
 export async function generateJson(body: object): Promise<{ text: string; model: string }> {
   let busy = false;
   let last = "";
@@ -102,7 +104,15 @@ export async function generateJson(body: object): Promise<{ text: string; model:
       method: "POST",
       headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
       body: JSON.stringify(body),
-    });
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    }).catch((err: Error) => err);
+    if (r instanceof Error) {
+      // A hung or dropped request (seen in practice) would otherwise block the upload or the report forever.
+      last = `${model}: ${r.name === "TimeoutError" ? "timed out" : r.message}`;
+      busy = true;
+      console.warn("gemini fallback:", last);
+      continue;
+    }
     if (r.ok) {
       const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
       const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";

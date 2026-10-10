@@ -25,7 +25,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).
 - [ ] **Read-only share link** (addendum Q2, optional; not in the prototype): one report, expires after 7 days. Skipped for now; the PDF covers sending results to the adviser.
 - [x] **Practice weak topics** (prototype results screen, primary action): the same setup again, aimed at the report's weak criteria, contradictions and fixes. The app sends only the session id (`weakFrom`); the server builds the focus from the stored report.
-- [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) mapped onto the five criteria, with weights the student reviews.
+- [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) becomes the whole rubric, replacing the five defaults: its own criteria, weights from its points, level anchors from its descriptors. Criteria needing the paper or a live demo are listed but not scored. Saved on the project (shared with the group); "Back to the default rubric" undoes it.
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
@@ -42,6 +42,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 - [ ] **Chapter 3, readiness formula.** The app now uses: level points = (level − 1) / 4; coverage = answered ÷ planned with no floor, counting only real answers (the panel closing early doesn't count against the student); unmeasurable delivery drops out of the weights; sessions with no answer aren't scored. The addendum's worked example becomes 54 (was 62).
 - [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
+- [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
 - [ ] **Delimitations:** simulated payments, no adviser dashboard (Q1, Q2).
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 

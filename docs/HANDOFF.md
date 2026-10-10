@@ -6,7 +6,7 @@ _Last updated: 2026-10-10_
 
 ## Current state
 
-- **Branch:** `feat/weak-topics` is open (off `dev`, not merged yet): waiting for the user to try it on the phone, then merge into `dev` and delete the branch. `dev` has everything else below.
+- **Branch:** `feat/custom-rubric` is open, branched from `feat/weak-topics` (so it contains it); neither is merged. Once the user has tried both on the phone, merge `feat/custom-rubric` into `dev` (it brings weak topics along) and delete both branches. `dev` has everything else below.
 - **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The last native rebuild includes Firebase, Google sign-in, the document picker and the VoiceCommunication mic patch. The latest rebuild adds print and sharing (`expo-print`, `expo-sharing`).
 - **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
 - **Data:** Firebase project with Auth (email/password, Google) and Firestore (`users/{uid}` plus `projects` and `sessions` subcollections, and top-level `groups/{code}`). Only the server reads and writes Firestore.
@@ -15,14 +15,20 @@ _Last updated: 2026-10-10_
 
 ## Next task
 
-**Try and merge `feat/weak-topics`** (JS and server only, no rebuild): open a scored report → "Practice weak topics" goes straight to the mic check with the same stage, manuscript and options; the panel should spend most questions on the weak areas. The new report's header says "Weak topics". On Free, a Final/multi-panelist/long original opens the upsell. Unscored reports show only "Practice again". Then merge into `dev` and delete the branch.
+**Try and merge `feat/custom-rubric`** (includes `feat/weak-topics`; JS and server only, no rebuild):
+- Rubric screen (Setup → Scoring → Change, on a project you own): "Use your panel's rubric" → pick the panel's form. The list switches to the form's own criteria and weights; written-paper / demo criteria show "Not scored in practice". Adjust weights to 100% → "Use this rubric". Setup's Scoring row says "Your panel's rubric".
+- Practice, then check the report: its Rubric section lists the panel's criteria with levels; unscored ones say why.
+- "Back to the default rubric" restores the five criteria. Group members see the leader's rubric read-only.
+- Weak topics (from the earlier branch): open a scored report → "Practice weak topics".
+- Then merge into `dev`, delete `feat/custom-rubric` and `feat/weak-topics`.
 
-After that, from `docs/TASKS.md`: remaining animations (summary card stagger, paused overlay fade, reconnecting banner, smooth expand on report rows, button press feedback) → panel voice speed and dark mode. The read-only share link (addendum Q2, optional) is skipped unless the user asks.
+After that, from `docs/TASKS.md`: remaining animations → panel voice speed and dark mode.
 
 ## Recent changes (newest first)
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-10 | **Uploaded rubric replaces the default**: `/rubric/map` now builds a whole rubric (`buildRubric` in `server/src/rubric.ts`): the form's criteria, descriptions, points → whole percents (`toPercents`), level 1/3/5 anchors, and `scored` (false for the written paper or a live demo, weight 0). Saved on the project as `rubric` (`PATCH /projects/:id/rubric` with `{ rubric }`, validated by `parseRubric`; `{ weights }` goes back to the default and deletes it). Sessions snapshot it; the judge scores each scored criterion (keys c0, c1…) with the measured delivery numbers as evidence, and the readiness formula is unchanged. Gemini calls now time out after 120 s per model and fall back (a hung request used to block forever). | `feat/custom-rubric` (not merged) |
 | 2026-10-10 | **Practice weak topics** (prototype results primary action): the setup gets `weakFrom` (a session id). `/live/token` reads that session from the student's own sessions (404 otherwise, unscored too), `weakTopics(report)` in `server/src/sessions.ts` builds the focus (two weakest judged criteria at level ≤ 3 or the lowest one, up to two contradictions, the fixes), and the prompt adds it as a JSON string, topic data only. Sessions keep `weakFrom`; the report header shows "Weak topics". Results actions now match the prototype: Practice weak topics, then Practice again / Share with group side by side, then Export PDF. Setup clears `weakFrom`. If the original manuscript is gone (deleted, re-uploaded, left the group), the round uses the current one; reports from before the `scored` field count as scored. Tests: unit (sessions.test.ts) and the group integration test. | `feat/weak-topics` (not merged) |
 | 2026-10-10 | **Pull to refresh** on Home, History and Projects (`usePullRefresh`, Screen's `onRefresh`): Android's spinner in dusk while the lists reload. Not yet checked on the phone. | `dev` |
 | 2026-10-10 | **Loading states**: `Fetching` (a page floating out of the blob, fades in after 300 ms so quick loads skip it) when opening a report from Recent/History or a manuscript summary; `Skeleton` + `Skeleton.Bone` (the real layout's shapes, breathing together, still with reduce motion) on Home's last score and recent sessions, History, Projects and Setup's manuscript row. Home no longer flashes "Add your manuscript" before the lists arrive. Not yet checked on the phone. | `dev` |
@@ -52,4 +58,5 @@ Older history: `git log dev`.
 - **Group integration test** (`server/tests/groups.integration.test.ts`) talks to the real Firebase project; it only runs with `DEEMO_GROUP_INTEGRATION=1` and cleans up its own `*@deemo.test` accounts.
 - **Previewing the PDF without the phone:** render `reportHtml()` to an HTML file and print it with headless Chrome (`chrome --headless=new --no-pdf-header-footer --print-to-pdf=out.pdf file:///…`). Android's WebView prints the same way.
 - **Waits:** new work the server is doing (reading a manuscript, scoring) uses `Working` (steps and a progress bar); opening something that already exists uses `Fetching`; a list loading for the first time uses `Skeleton` with bones shaped like its rows.
+- **Rubrics:** a project has either `weights` (the default five criteria) or `rubric` (the panel's own, which wins). Report criteria come from whichever the session snapshotted, so old reports keep their criteria.
 - **Rules:** never commit on `main`; never run native rebuilds (tell the user); risky work goes on its own branch and is merged into `dev` after testing (CLAUDE.md).

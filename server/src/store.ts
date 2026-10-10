@@ -1,4 +1,5 @@
 import { db } from "./firebase";
+import type { Rubric } from "./scoring";
 
 // What the panel knows about a manuscript (Document Logic Analysis, plan F2). The raw file is never kept.
 export type Analysis = {
@@ -16,7 +17,8 @@ export type Analysis = {
 };
 
 export type Project = {
-  weights?: number[];
+  weights?: number[]; // the default rubric's weights
+  rubric?: Rubric; // the panel's own rubric, replacing the default (plan F3)
   id: string;
   updatedAt?: string;
   name: string;

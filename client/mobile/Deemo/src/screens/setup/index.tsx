@@ -80,8 +80,12 @@ export function Setup() {
           <Text style={type.label}>SCORING</Text>
           <Text style={styles.manuscriptName} numberOfLines={1}>
             {manuscript?.group
-              ? "Shared group rubric"
-              : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
+              ? manuscript.rubric
+                ? "Your group's panel rubric"
+                : "Shared group rubric"
+              : manuscript?.rubric
+                ? "Your panel's rubric"
+                : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
                 ? "Default rubric"
                 : "Your rubric weights"}
           </Text>
