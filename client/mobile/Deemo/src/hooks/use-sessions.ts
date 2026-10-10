@@ -45,6 +45,12 @@ export type Session = {
   mode: Mode;
   difficulty?: Difficulty; // missing on sessions from before the setting
   groupCode?: string; // practiced on a group project
+  weakFrom?: string; // a "Practice weak topics" round on that session
+  projectId?: string;
+  domain: string;
+  panelists: number;
+  minutes: number;
+  followUps: number;
   durationMs: number;
   turns: SessionTurn[];
   lines: { who: "you" | number; text: string; flagged?: boolean }[];
@@ -71,7 +77,7 @@ const post = (body: object) => ({ method: "POST", headers: { "content-type": "ap
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
 function fromLive(s: LiveState, endedBy: "panel" | "student") {
-  const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights } = practiceSetup.get();
+  const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights, weakFrom } = practiceSetup.get();
   const lines = s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines;
   return {
     mode,
@@ -81,6 +87,7 @@ function fromLive(s: LiveState, endedBy: "panel" | "student") {
     followUps,
     difficulty,
     projectId: projectId ?? undefined,
+    weakFrom: weakFrom ?? undefined,
     weights,
     durationMs: s.sessionMs,
     endedBy, // the panel closing early doesn't lower coverage; the student leaving does

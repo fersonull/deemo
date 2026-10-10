@@ -11,7 +11,8 @@ import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
-import { DIFFICULTY_LABELS, MODE_LABELS } from "@/constants";
+import { DIFFICULTY_LABELS, MODE_LABELS, type Domain } from "@/constants";
+import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Session } from "@/hooks/use-sessions";
@@ -104,6 +105,24 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
     }
   };
 
+  // Practice weak topics (prototype primary action): the same setup again, aimed at this report's weak spots.
+  // The app sends only this session's id; the server builds the focus from the stored report.
+  const practiceWeak = () => {
+    if (!s) return;
+    if (!premium && (s.mode === "FINAL" || s.panelists > 1 || s.minutes > 10)) return setUpsell(true);
+    practiceSetup.set({
+      mode: s.mode,
+      domain: s.domain as Domain,
+      panelists: s.panelists,
+      minutes: s.minutes,
+      followUps: s.followUps,
+      difficulty: s.difficulty ?? "STANDARD",
+      projectId: s.projectId ?? null,
+      weakFrom: s.id,
+    });
+    router.replace("/mic-check");
+  };
+
   const toggleShare = async (shareScore: boolean) => {
     if (!group) return;
     setSharing(true);
@@ -120,7 +139,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
         {s ? (
           <Text style={styles.headerText}>
             {MODE_LABELS[s.mode]}
-            {s.difficulty && s.difficulty !== "STANDARD" ? ` · ${DIFFICULTY_LABELS[s.difficulty]}` : ""} · {day(s.createdAt)}
+            {s.difficulty && s.difficulty !== "STANDARD" ? ` · ${DIFFICULTY_LABELS[s.difficulty]}` : ""}
+            {s.weakFrom ? " · Weak topics" : ""} · {day(s.createdAt)}
           </Text>
         ) : null}
       </View>
@@ -241,19 +261,34 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
               <Transcript lines={s.lines} count={r.answered} />
             </View>
 
-            {/* Actions, as in the prototype: practice, share the score with the group, the adviser's PDF. */}
+            {/* Actions, as in the prototype: weak topics, practice again / share with group, the adviser's PDF. */}
             <View style={styles.actions}>
-              <Button label="Practice again" onPress={() => router.replace("/practice")} />
-              {group ? (
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => setSheet("share")}
-                  style={({ pressed }) => [styles.action, styles.actionSand, pressed && styles.pressed]}
-                >
-                  <Icon name="group" size={17} />
-                  <Text style={styles.actionText}>Share with group</Text>
-                </Pressable>
-              ) : null}
+              {r.scored === false ? (
+                <Button label="Practice again" onPress={() => router.replace("/practice")} />
+              ) : (
+                <>
+                  <Button label="Practice weak topics" onPress={practiceWeak} />
+                  <View style={styles.actionRow}>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => router.replace("/practice")}
+                      style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.actionText}>Practice again</Text>
+                    </Pressable>
+                    {group ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        onPress={() => setSheet("share")}
+                        style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                      >
+                        <Icon name="group" size={17} />
+                        <Text style={styles.actionText}>Share with group</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </>
+              )}
               <Pressable
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
@@ -350,6 +385,8 @@ const styles = StyleSheet.create({
   actions: { gap: 8, marginTop: 22 },
   action: { height: 50, borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   actionSand: { backgroundColor: colors.sand },
+  actionRow: { flexDirection: "row", gap: 8 },
+  flexAction: { flex: 1 },
   actionOutline: { borderWidth: 1.5, borderColor: colors.sand },
   actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
   pressed: { opacity: 0.85 },

@@ -120,6 +120,10 @@ test.skipIf(process.env.DEEMO_GROUP_INTEGRATION !== "1")(
           lines: [{ text: "PRIVATE TRANSCRIPT" }],
         });
       expect((await request(0, `/sessions/${privateId}`)).status).toBe(404);
+      // Practice weak topics only reads the student's own scored report (no token is minted on these paths).
+      expect((await request(0, "/live/token", "POST", { ...setup, weakFrom: privateId })).status).toBe(404);
+      expect((await request(1, "/live/token", "POST", { ...setup, weakFrom: "missing" })).status).toBe(404);
+      expect((await request(1, "/live/token", "POST", { ...setup, weakFrom: "../x" })).status).toBe(400);
       let readiness = (await request(0, "/groups")).body[0];
       expect(readiness.members.find((m: any) => m.name === "Member").score).toBeUndefined();
       expect((await request(1, `/groups/${code}/me`, "PATCH", { shareScore: true })).status).toBe(204);

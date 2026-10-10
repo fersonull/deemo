@@ -4,7 +4,7 @@ import { Busy, MAX_BYTES, Rejected, analyzeManuscript, sniff, sniffDocOrImage } 
 import { mapRubric } from "./rubric";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
-import { parseSession, scoreSession, sessions, type Session } from "./sessions";
+import { parseSession, scoreSession, sessions, weakTopics, type Session } from "./sessions";
 import { type Analysis, type Project, store, users } from "./store";
 import { db } from "./firebase";
 import {
@@ -320,6 +320,11 @@ app.post("/live/token", async (req, res) => {
   if (setup.projectId && (!project?.analysis || !project.confirmedAt))
     return void res.status(403).json({ error: "This manuscript is unavailable. Choose a reviewed project." });
   setup.focusArea = project?.group?.focusArea;
+  if (setup.weakFrom) {
+    const last = await sessions.get(uid, setup.weakFrom); // the student's own session only
+    if (!last?.report?.scored) return void res.status(404).json({ error: "That report can't start a weak-topics round." });
+    setup.weakTopics = weakTopics(last.report);
+  }
   const analysis = project?.analysis;
 
   const now = Date.now();

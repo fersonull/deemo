@@ -40,6 +40,7 @@ export function Setup() {
   useFocusEffect(
     useCallback(() => {
       void projects.refresh();
+      practiceSetup.set({ weakFrom: null }); // setting up by hand is a normal round
     }, []),
   );
 

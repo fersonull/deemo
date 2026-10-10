@@ -47,6 +47,7 @@ export type Session = {
   projectId?: string;
   groupCode?: string;
   focusArea?: string;
+  weakFrom?: string; // a "Practice weak topics" round on this earlier session
   manuscriptContext?: string; // private scoring snapshot, survives leaving a group
   title: string; // the manuscript's title, or the sample paper
   mode: Mode;
@@ -107,6 +108,7 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     projectId: project?.id,
     groupCode: project?.group?.code,
     focusArea: project?.group?.focusArea,
+    weakFrom: setup.weakFrom,
     manuscriptContext: project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT,
     title: project?.analysis?.title || project?.name || "Sample paper (ReqTrack)",
     mode: setup.mode,
@@ -122,6 +124,24 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     lines,
     flags,
   };
+}
+
+// Practice weak topics (prototype results screen): what the next panel should dwell on, built from the stored report
+// so the app never supplies prompt text. The weakest judged criteria (up to two at level 3 or below, else the lowest),
+// the contradictions to revisit, and the report's fixes.
+export function weakTopics(r: Report): string {
+  const judged = r.criteria.filter((c) => c.level !== null).sort((a, b) => a.level! - b.level!);
+  const weak = judged.filter((c) => c.level! <= 3).slice(0, 2);
+  const picked = weak.length ? weak : judged.slice(0, 1);
+  return [
+    ...picked.map((c) => `Weak criterion: ${c.name} (${c.level}/5). ${c.why}`),
+    ...r.contradictions
+      .slice(0, 2)
+      .map((c) => `Contradicted the manuscript: said "${c.spokenClaim}", the manuscript says "${c.manuscriptEvidence}".`),
+    ...r.fixes.map((f) => `To fix: ${f.text}`),
+  ]
+    .join("\n")
+    .slice(0, 2000);
 }
 
 const JUDGED = CRITERIA.filter((c) => c.key !== "delivery"); // delivery is measured in code

@@ -6,7 +6,7 @@ _Last updated: 2026-10-10_
 
 ## Current state
 
-- **Branch:** `dev` is the integration branch and has everything below; no feature branch is open. (If `feat/pdf-export` still exists, its merge was waiting on the user's GPG passphrase: merge it into `dev`, delete the branch.)
+- **Branch:** `feat/weak-topics` is open (off `dev`, not merged yet): waiting for the user to try it on the phone, then merge into `dev` and delete the branch. `dev` has everything else below.
 - **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The last native rebuild includes Firebase, Google sign-in, the document picker and the VoiceCommunication mic patch. The latest rebuild adds print and sharing (`expo-print`, `expo-sharing`).
 - **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
 - **Data:** Firebase project with Auth (email/password, Google) and Firestore (`users/{uid}` plus `projects` and `sessions` subcollections, and top-level `groups/{code}`). Only the server reads and writes Firestore.
@@ -15,18 +15,15 @@ _Last updated: 2026-10-10_
 
 ## Next task
 
-**Practice weak topics** (prototype results screen; `docs/TASKS.md` → Planned features). In the prototype it's the results screen's primary button, above "Practice again". It starts a session aimed at that report's weak criteria and fixes.
-- The app sends only the session id (e.g. `weakFrom: <sessionId>` in the setup). The server reads the stored report and builds the focus text (lowest-level criteria plus the top fixes), then injects it into the panel prompt the same way as the group focus area (`server/src/panel.ts`, a JSON string, treated as a topic preference only). Never take prompt text from the app.
-- Mint the token with the same project, mode and weights as the original session. Free-tier limits still apply.
-- Results UI: the primary "Practice weak topics" button, then "Practice again" and "Share with group" side by side (sand, 50 high), then the outlined "Export PDF" (prototype layout). Hide the button for unscored sessions.
-- No native rebuild. Small enough for `dev`, or `feat/weak-topics` if it touches the token route a lot.
+**Try and merge `feat/weak-topics`** (JS and server only, no rebuild): open a scored report → "Practice weak topics" goes straight to the mic check with the same stage, manuscript and options; the panel should spend most questions on the weak areas. The new report's header says "Weak topics". On Free, a Final/multi-panelist/long original opens the upsell. Unscored reports show only "Practice again". Then merge into `dev` and delete the branch.
 
-After that: remaining animations → panel voice speed and dark mode. The read-only share link (addendum Q2, optional) is skipped unless the user asks.
+After that, from `docs/TASKS.md`: remaining animations (summary card stagger, paused overlay fade, reconnecting banner, smooth expand on report rows, button press feedback) → panel voice speed and dark mode. The read-only share link (addendum Q2, optional) is skipped unless the user asks.
 
 ## Recent changes (newest first)
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-10 | **Practice weak topics** (prototype results primary action): the setup gets `weakFrom` (a session id). `/live/token` reads that session from the student's own sessions (404 otherwise, unscored too), `weakTopics(report)` in `server/src/sessions.ts` builds the focus (two weakest judged criteria at level ≤ 3 or the lowest one, up to two contradictions, the fixes), and the prompt adds it as a JSON string, topic data only. Sessions keep `weakFrom`; the report header shows "Weak topics". Results actions now match the prototype: Practice weak topics, then Practice again / Share with group side by side, then Export PDF. Setup clears `weakFrom`. Tests: unit (sessions.test.ts) and the group integration test. | `feat/weak-topics` (not merged) |
 | 2026-10-10 | **Pull to refresh** on Home, History and Projects (`usePullRefresh`, Screen's `onRefresh`): Android's spinner in dusk while the lists reload. Not yet checked on the phone. | `dev` |
 | 2026-10-10 | **Loading states**: `Fetching` (a page floating out of the blob, fades in after 300 ms so quick loads skip it) when opening a report from Recent/History or a manuscript summary; `Skeleton` + `Skeleton.Bone` (the real layout's shapes, breathing together, still with reduce motion) on Home's last score and recent sessions, History, Projects and Setup's manuscript row. Home no longer flashes "Add your manuscript" before the lists arrive. Not yet checked on the phone. | `dev` |
 | 2026-10-10 | **PDF export and Download my data**: results actions match the prototype (Practice again, Share with group sheet, Export PDF). Export PDF (Premium) prints results blocks 1–7 on the phone from `src/utils/report-html.ts` (tested, all text escaped) and shares the file; Free sees a lock and the upsell. Profile "Download my data" shares `GET /me/export` as JSON (own sessions only; covered by the group integration test). Colors moved to `src/colors.ts` (re-exported by theme) so the PDF builder stays plain TS. Needs a native rebuild (`expo-print`, `expo-sharing`). | `feat/pdf-export` → `dev`; device-tested by the user |

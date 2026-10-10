@@ -30,6 +30,7 @@ export type SessionSetup = {
   followUps: number;
   difficulty: Difficulty;
   projectId?: string;
+  weakFrom?: string; // the server turns that session's report into the round's focus
 };
 
 type FunctionCall = { id: string; name: string; args?: Record<string, unknown> };
