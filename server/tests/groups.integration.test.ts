@@ -140,6 +140,12 @@ test.skipIf(process.env.DEEMO_GROUP_INTEGRATION !== "1")(
       const joinedRace = competing[0]?.status === "fulfilled" && competing[0].value.status === 200;
       const uploadedRace = competing[1]?.status === "fulfilled";
       expect(Number(joinedRace) + Number(uploadedRace)).toBe(1);
+      const exported = (await request(1, "/me/export")).body;
+      expect(exported.name).toBe("Member");
+      expect(exported.sessions.map((x: any) => x.id)).toEqual([privateId]);
+      expect(exported.projects.some((p: any) => p.id === sharedId && p.group.code === code)).toBe(true);
+      expect((await request(0, "/me/export")).body.sessions).toEqual([]);
+      expect((await request(null, "/me/export")).status).toBe(401);
       expect((await request(1, `/groups/${code}/me`, "DELETE")).status).toBe(204);
       expect((await request(1, `/projects/${sharedId}`)).status).toBe(404);
       expect((await request(1, "/live/token", "POST", setup)).status).toBe(403);

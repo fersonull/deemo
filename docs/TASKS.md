@@ -22,9 +22,11 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 ## Planned features not built yet
 
 - [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
-- [ ] **PDF export and read-only share link** (F16, addendum Q2), Premium. The link expires after 7 days.
+- [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).
+- [ ] **Read-only share link** (addendum Q2, optional; not in the prototype): one report, expires after 7 days. Skipped for now; the PDF covers sending results to the adviser.
+- [ ] **Practice weak topics** (prototype results screen, primary action): a session aimed at the report's weak criteria and fixes. The server should build the focus from the stored report, not take it from the app.
 - [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) mapped onto the five criteria, with weights the student reviews.
-- [ ] **Download my data** (§17 user rights).
+- [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [ ] **Remaining animations** (from the animation review):

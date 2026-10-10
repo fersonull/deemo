@@ -5,8 +5,8 @@ import { Icon } from "@/components/icon";
 import { PANEL } from "@/constants";
 import type { Report, Session, SessionTurn } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
+import { turnLabel } from "@/utils/report-html";
 
-export const turnLabel = (t: SessionTurn) => `Q${t.number}${t.followUp ? `.${t.followUp}` : ""}`;
 
 export function Label({ children }: { children: ReactNode }) {
   return <Text style={[type.label, styles.section]}>{children}</Text>;
