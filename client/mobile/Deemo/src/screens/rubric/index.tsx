@@ -8,11 +8,13 @@ import { DEFAULT_WEIGHTS, RUBRIC } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { colors, fonts, radius, type } from "@/theme";
 
+import { UploadCard } from "./upload-card";
+
 const STEP = 5;
 const MAX = 60;
 
-// "How you'll be scored." (prototype rubric screen, plan F3 default rubric). Uploading a panel's own
-// rubric comes later; the weights are the student's way to match their panel's form today.
+// "How you'll be scored." (prototype rubric screen, plan F3): the default five criteria, weights set by hand or
+// proposed from the panel's own rubric (upload-card.tsx).
 export function Rubric() {
   const saved = usePracticeSetup().weights;
   const [weights, setWeights] = useState(saved);
@@ -30,6 +32,7 @@ export function Rubric() {
   return (
     <Screen scroll onBack={() => router.back()} title={"How you'll\nbe scored."}>
       <Text style={styles.sub}>Five criteria, like most capstone defense forms. Set the weights to match your panel.</Text>
+      <UploadCard onWeights={setWeights} />
 
       <View style={styles.list}>
         {RUBRIC.map((c, i) => (

@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
 
-import { DEFAULT_WEIGHTS, band, consistencyPenalty, delivery, levelPoints, readiness } from "./scoring";
+import { DEFAULT_WEIGHTS, band, consistencyPenalty, delivery, levelPoints, readiness, toFiveSteps } from "./scoring";
 
 test("a Poor answer earns nothing, Satisfactory half, Excellent all", () => {
   expect([1, 2, 3, 4, 5].map(levelPoints)).toEqual([0, 0.25, 0.5, 0.75, 1]);
@@ -44,4 +44,14 @@ test("delivery uses spoken answers only; with none it isn't measured", () => {
   expect(d.fillersPerMin).toBe(7.5);
   expect(d.level).toBe(4); // latency 5, fillers 3, rate 5
   expect(delivery([{ answer: "typed", latencyMs: null, answerMs: 0 }]).level).toBeNull();
+});
+
+test("proposed weights round to 5% steps that sum to 100, each at most 60", () => {
+  expect(toFiveSteps([30, 25, 20, 15, 10])).toEqual([30, 25, 20, 15, 10]);
+  expect(toFiveSteps([40, 30, 30, 0, 0])).toEqual([40, 30, 30, 0, 0]);
+  expect(toFiveSteps([1, 1, 1, 0, 0]).reduce((a, b) => a + b, 0)).toBe(100);
+  expect(toFiveSteps([90, 10, 0, 0, 0])).toEqual([60, 40, 0, 0, 0]);
+  expect(toFiveSteps([0, 0, 0, 0, 0])).toEqual(DEFAULT_WEIGHTS);
+  for (const w of [toFiveSteps([7, 13, 29, 31, 20]), toFiveSteps([33, 33, 34, 0, 0])])
+    expect(w.every((x) => x % 5 === 0 && x <= 60) && w.reduce((a, b) => a + b, 0) === 100).toBe(true);
 });

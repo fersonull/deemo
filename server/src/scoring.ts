@@ -123,3 +123,31 @@ export function delivery(turns: SpokenTurn[]) {
     why: `Started answers in ${r1(latencyS)} s on average, ${r1(fillersPerMin)} fillers a minute, ${Math.round(wordsPerMin)} words a minute.`,
   };
 }
+
+// Proposed weights → what the rubric screen can show: whole 5% steps, each 0–60, summing to 100
+// (largest-remainder rounding). An all-zero proposal falls back to the default weights.
+export function toFiveSteps(raw: number[], max = 60): number[] {
+  const clean = raw.map((w) => (Number.isFinite(w) && w > 0 ? w : 0));
+  const total = clean.reduce((a, b) => a + b, 0);
+  if (total === 0) return [...DEFAULT_WEIGHTS];
+  // Cap at max and hand the excess to the uncapped criteria in proportion, until nothing is over.
+  let w = clean.map((x) => (x / total) * 100);
+  for (let i = 0; i < w.length; i++) {
+    const over = w.reduce((a, x) => a + Math.max(0, x - max), 0);
+    if (over <= 1e-9) break;
+    const room = w.reduce((a, x) => a + (x < max ? x : 0), 0);
+    w = w.map((x) => (x >= max ? max : room > 0 ? x + (over * x) / room : x));
+  }
+  const steps = w.map((x) => x / 5);
+  const floor = steps.map(Math.floor);
+  let left = 20 - floor.reduce((a, b) => a + b, 0);
+  const order = steps.map((s, i) => [s - Math.floor(s), i] as const).sort((a, b) => b[0] - a[0]);
+  for (const [, i] of order) {
+    if (left <= 0) break;
+    if (floor[i]! * 5 < max) {
+      floor[i]!++;
+      left--;
+    }
+  }
+  return floor.map((s) => s * 5);
+}

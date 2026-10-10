@@ -1,6 +1,7 @@
 import express from "express";
 
-import { Busy, MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
+import { Busy, MAX_BYTES, Rejected, analyzeManuscript, sniff, sniffDocOrImage } from "./analysis";
+import { mapRubric } from "./rubric";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, type Session } from "./sessions";
@@ -14,7 +15,7 @@ app.get("/health", (_req, res) => {
 });
 
 // Everything below belongs to a signed-in student (Firebase ID token), stored under users/{uid}.
-app.use(["/me", "/projects", "/sessions", "/live"], requireUser);
+app.use(["/me", "/projects", "/sessions", "/live", "/rubric"], requireUser);
 const uidOf = (req: express.Request) => (req as Authed).uid;
 
 // Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 minutes, one manuscript. Enforced here, not just in the app.
@@ -115,6 +116,27 @@ app.get("/projects/:id", async (req, res) => {
 app.delete("/projects/:id", async (req, res) => {
   await store.remove(uidOf(req), req.params.id);
   res.status(204).end();
+});
+
+// Rubric upload (plan F3): map the panel's own form onto the five criteria and propose weights. Nothing is stored.
+app.post("/rubric/map", express.raw({ type: "multipart/form-data", limit: 11_000_000 }), async (req, res) => {
+  const form = await new Response(req.body, { headers: { "content-type": req.headers["content-type"] ?? "" } })
+    .formData()
+    .catch(() => null);
+  const file = form?.get("file");
+  if (!(file instanceof File)) return void res.status(400).json({ error: "Choose a PDF, DOCX or photo." });
+  if (file.size > 10_000_000) return void res.status(413).json({ error: "The file is over 10 MB." });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const type = sniffDocOrImage(bytes);
+  if (!type) return void res.status(415).json({ error: "Only PDF, DOCX, JPG or PNG files." });
+  try {
+    res.json(await mapRubric({ bytes, type }));
+  } catch (err) {
+    if (err instanceof Rejected) return void res.status(422).json({ error: err.message });
+    if (err instanceof Busy) return void res.status(503).json({ error: BUSY });
+    console.error("rubric", err);
+    res.status(502).json({ error: "We couldn't read this rubric. Try a clearer photo or a PDF." });
+  }
 });
 
 const TEXT_FIELDS = ["title", "problem", "objectives", "method", "scope", "features", "limits", "results"] as const;
