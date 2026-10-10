@@ -2,7 +2,7 @@ import express from "express";
 
 import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
-import { type Analysis, store } from "./store";
+import { type Analysis, type Project, store } from "./store";
 
 const app = express();
 app.use(express.json());
@@ -39,12 +39,14 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   });
   res.status(202).json(project);
 
+  // Only if it still exists: the student may have deleted it while it was being read.
+  const finish = async (patch: Partial<Project>) => (await store.get(project.id)) && store.put({ ...project, ...patch });
   analyzeManuscript({ bytes, type }).then(
-    (analysis) => store.put({ ...project, status: "ready", analysis }),
+    (analysis) => finish({ status: "ready", analysis }),
     (err) => {
       if (!(err instanceof Rejected)) console.error("analysis", project.id, err);
       const error = err instanceof Rejected ? err.message : "We couldn't read this file. Try a text-based PDF or a DOCX.";
-      return store.put({ ...project, status: "failed", error });
+      return finish({ status: "failed", error });
     },
   );
 });
@@ -58,6 +60,12 @@ app.get("/projects/:id", async (req, res) => {
   const project = await store.get(req.params.id);
   if (!project) return void res.status(404).json({ error: "not found" });
   res.json(project);
+});
+
+// Deleting a project drops its analysis for good (the raw file was never kept).
+app.delete("/projects/:id", async (req, res) => {
+  await store.remove(req.params.id);
+  res.status(204).end();
 });
 
 const TEXT_FIELDS = ["title", "problem", "objectives", "method", "scope", "features", "limits", "results"] as const;

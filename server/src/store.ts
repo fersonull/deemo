@@ -62,4 +62,8 @@ export const store = {
     await save();
     return p;
   },
+  async remove(id: string) {
+    delete (await load())[id];
+    await save();
+  },
 };

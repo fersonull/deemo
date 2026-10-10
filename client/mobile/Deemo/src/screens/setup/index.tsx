@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
+import { UpsellSheet } from "@/components/upsell-sheet";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
@@ -12,7 +13,7 @@ import { session, useSession } from "@/hooks/use-session";
 import { colors, radius, type } from "@/theme";
 
 import { Segmented } from "./segmented";
-import { DomainSheet, UpsellSheet } from "./sheets";
+import { DomainSheet } from "./sheets";
 
 const MODES: { value: Mode; desc: string }[] = [
   { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },

@@ -1,11 +1,12 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
+import { Sheet } from "@/components/sheet";
 import { projects, useProjects, type Analysis as AnalysisData } from "@/hooks/use-projects";
 import { colors, type } from "@/theme";
 
@@ -33,6 +34,7 @@ export function Analysis({ id }: { id: string }) {
   const [offline, setOffline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Poll until the server finishes reading (or fails).
   useEffect(() => {
@@ -59,6 +61,19 @@ export function Analysis({ id }: { id: string }) {
 
   const back = () => router.back();
 
+  const remove = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await projects.remove(id);
+      router.back();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't delete. Try again.");
+      setConfirmDelete(false);
+      setBusy(false);
+    }
+  };
+
   if (!project || project.status === "analyzing") {
     return (
       <Screen onBack={back}>
@@ -80,7 +95,12 @@ export function Analysis({ id }: { id: string }) {
           </Text>
           <Text style={styles.sub}>{project.error ?? "Try a text-based PDF or a DOCX."}</Text>
         </View>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
         <Button label="Back to projects" onPress={back} />
+        {/* A rejected upload holds nothing worth keeping, so no confirmation. */}
+        <Pressable accessibilityRole="button" disabled={busy} onPress={remove} style={styles.textButton}>
+          <Text style={styles.textButtonLabel}>Delete this upload</Text>
+        </Pressable>
       </Screen>
     );
   }
@@ -126,6 +146,20 @@ export function Analysis({ id }: { id: string }) {
       <View style={styles.cta}>
         <Button label={project.confirmedAt ? "Practice with this" : "Looks right"} onPress={go} disabled={busy} />
       </View>
+      <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
+        <Text style={styles.textButtonLabel}>Delete project</Text>
+      </Pressable>
+
+      <Sheet visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
+        <Text style={styles.sheetTitle}>Delete this project?</Text>
+        <Text style={styles.sub}>The summary and your corrections are removed for good. You can upload the manuscript again anytime.</Text>
+        <View style={styles.cta}>
+          <Button label={busy ? "Deleting…" : "Delete project"} onPress={remove} disabled={busy} />
+        </View>
+        <Pressable accessibilityRole="button" onPress={() => setConfirmDelete(false)} style={styles.textButton}>
+          <Text style={styles.textButtonLabel}>Keep it</Text>
+        </Pressable>
+      </Sheet>
     </Screen>
   );
 }
@@ -136,6 +170,9 @@ const styles = StyleSheet.create({
   factsNote: { ...type.meta, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
   error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 10 },
   cta: { marginTop: 16 },
+  textButton: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
+  textButtonLabel: { ...type.button, fontSize: 14, color: colors.ink },
+  sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
   offline: { ...type.meta, textAlign: "center", marginBottom: 8 },
   failed: { flex: 1, justifyContent: "center" },
   failedTitle: { marginTop: 22 },

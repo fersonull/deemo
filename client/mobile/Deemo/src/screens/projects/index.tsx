@@ -4,26 +4,31 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
+import { UpsellSheet } from "@/components/upsell-sheet";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
-import { projects, useProjects, type Project } from "@/hooks/use-projects";
+import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
+import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 
 import { UploadSheet } from "./upload-sheet";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-function describe(p: Project, active: boolean): { icon: string; meta: string } {
+function describe(p: Project): { icon: string; meta: string } {
   if (p.status === "analyzing") return { icon: "hourglass_top", meta: `Reading… · ${p.domain}` };
   if (p.status === "failed") return { icon: "error", meta: p.error ?? "Couldn't read this file." };
   if (!p.confirmedAt) return { icon: "rate_review", meta: `Check the summary · ${p.domain}` };
-  return { icon: "description", meta: `${active ? "Active · " : ""}${p.domain} · analyzed ${day(p.createdAt)}` };
+  return { icon: "description", meta: `${p.domain} · analyzed ${day(p.createdAt)}` };
 }
 
 // Projects (plan S-05/S-06): one manuscript per project. Group join codes come later (addendum Q10).
 export function Projects() {
   const { projects: list, loaded, error } = useProjects();
   const { projectId } = usePracticeSetup();
-  const [adding, setAdding] = useState(false);
+  const { premium } = useSession();
+  const [sheet, setSheet] = useState<"upload" | "upsell" | null>(null);
+  // Free tier holds one manuscript; delete it to upload another (addendum Q1).
+  const locked = !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
 
   useFocusEffect(
     useCallback(() => {
@@ -38,14 +43,14 @@ export function Projects() {
       <View style={styles.list}>
         {list.map((p) => {
           const active = p.id === projectId;
-          const { icon, meta } = describe(p, active);
+          const { icon, meta } = describe(p);
           return (
             <Pressable
               key={p.id}
               accessibilityRole="button"
               accessibilityHint="Opens the manuscript summary"
               onPress={() => open(p)}
-              style={({ pressed }) => [styles.card, active && styles.active, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.card, pressed && styles.pressed]}
             >
               <View style={styles.tile}>
                 <Icon name={icon} size={21} color={p.status === "failed" ? colors.clay : colors.duskIcon} />
@@ -54,7 +59,15 @@ export function Projects() {
                 <Text style={styles.cardTitle} numberOfLines={2}>
                   {p.analysis?.title || p.name}
                 </Text>
-                <Text style={styles.meta}>{meta}</Text>
+                <View style={styles.metaRow}>
+                  {active ? (
+                    <View style={styles.chip} accessibilityLabel="Used for practice">
+                      <Icon name="mic" size={13} color={colors.duskInk} filled />
+                      <Text style={styles.chipText}>Practicing</Text>
+                    </View>
+                  ) : null}
+                  <Text style={[styles.meta, styles.flex]}>{meta}</Text>
+                </View>
               </View>
             </Pressable>
           );
@@ -66,17 +79,31 @@ export function Projects() {
         ) : null}
       </View>
 
-      <Pressable accessibilityRole="button" onPress={() => setAdding(true)} style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
-        <Icon name="upload_file" size={21} color={colors.duskLink} />
-        <Text style={styles.addText}>Upload a manuscript</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
+        onPress={() => setSheet(locked ? "upsell" : "upload")}
+        style={({ pressed }) => [styles.add, pressed && styles.pressed]}
+      >
+        <Icon name={locked ? "lock" : "upload_file"} size={21} color={colors.duskLink} />
+        <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
       </Pressable>
+      {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
 
       <UploadSheet
-        visible={adding}
-        onClose={() => setAdding(false)}
+        visible={sheet === "upload"}
+        onClose={() => setSheet(null)}
         onUploaded={(p) => {
-          setAdding(false);
+          setSheet(null);
           open(p);
+        }}
+      />
+      <UpsellSheet
+        visible={sheet === "upsell"}
+        onClose={() => setSheet(null)}
+        onUpgrade={() => {
+          session.upgrade();
+          setSheet("upload");
         }}
       />
     </Screen>
@@ -93,15 +120,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: radius.xl,
     backgroundColor: colors.sand,
-    borderWidth: 2,
-    borderColor: "transparent",
   },
-  active: { borderColor: colors.dusk },
   pressed: { opacity: 0.85 },
   tile: { width: 42, height: 42, borderRadius: radius.md, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
   cardTitle: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14.5, lineHeight: 19.5, color: colors.ink },
-  meta: { ...type.meta, lineHeight: 17, marginTop: 3 },
-  note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  meta: { ...type.meta, lineHeight: 17 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 22,
+    borderRadius: 11,
+    paddingHorizontal: 8,
+    backgroundColor: colors.duskTint,
+  },
+  chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.duskInk },
+  note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4, marginTop: 8 },
   add: {
     height: 58,
     marginTop: 12,

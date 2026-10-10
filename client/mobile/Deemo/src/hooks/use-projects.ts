@@ -97,4 +97,15 @@ export const projects = {
   use(p: Project) {
     practiceSetup.set({ projectId: p.id, domain: p.domain });
   },
+
+  async remove(id: string) {
+    await api<unknown>(`/projects/${id}`, { method: "DELETE" });
+    const rest = store.get().projects.filter((p) => p.id !== id);
+    store.set({ projects: rest });
+    pickActive(rest);
+  },
 };
+
+// Free tier: one manuscript (addendum Q1). Rejected uploads don't take the slot.
+export const FREE_PROJECTS = 1;
+export const countsTowardLimit = (p: Project) => p.status !== "failed";
