@@ -40,6 +40,9 @@ export type LiveState = {
   lines: Line[]; // finished transcript lines
   partial: Line | null; // the line still streaming in
   sessionMs: number; // excludes paused and reconnecting time
+  durationLimitMs: number;
+  endedBy: "panel" | "time";
+  error?: string;
   responseMs: number; // current answer, since the panel finished asking
   firstSpeechMs: number | null; // responseMs when the student started talking
   flags: Inconsistency[];
@@ -60,7 +63,8 @@ export type LiveEvent =
   | { type: "youSpeaking" } // first speech heard on the mic this turn
   | { type: "youDone" } // student finished their turn
   | { type: "flag"; flag: Omit<Inconsistency, "atMs"> } // flag_inconsistency tool call
-  | { type: "end" } // end_session tool call
+  | { type: "end"; reason?: "time" } // end_session tool call or client time limit
+  | { type: "error"; message: string }
   | { type: "ended" }
   | { type: "level"; value: number }
   | { type: "tick"; ms: number }
@@ -73,6 +77,7 @@ export interface LiveEngine {
   start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean): void;
   finishTurn(): void; // student taps the mic / Done presenting
   sendText(text: string): void; // typed-answer fallback
+  endForTime(): void;
   pause(): void;
   resume(): void;
   stop(): void;

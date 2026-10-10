@@ -50,14 +50,14 @@ export function Session() {
     setHeldBySheet(false);
   };
 
-  const leave = (endedBy: "panel" | "student" = "student") => {
+  const leave = (endedBy: "panel" | "student" | "time" = s.endedBy === "time" ? "time" : "student") => {
     stop();
     sessions.submitLive(s, endedBy); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
 
   useEffect(() => {
-    if (s.phase === "ended") leave("panel");
+    if (s.phase === "ended") leave(s.endedBy);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- leave once, when the panel closes
   }, [s.phase]);
 
@@ -80,7 +80,7 @@ export function Session() {
     return "listening";
   };
 
-  const frozen = s.paused || s.reconnecting;
+  const frozen = s.paused || s.reconnecting || !!s.error;
   const studentTurn = (s.phase === "listening" || s.phase === "presentation") && !frozen;
   const micLabel =
     s.phase === "listening"
@@ -92,7 +92,12 @@ export function Session() {
           : s.phase === "thinking"
             ? "…"
             : "";
-  const closing = s.partial && s.phase === "ending" ? s.partial.text : (s.lines.at(-1)?.text ?? "");
+  const closing =
+    s.partial && s.phase === "ending" && s.partial.who !== "you"
+      ? s.partial.text
+      : s.endedBy === "time"
+        ? "Time is up. The panel is closing your practice."
+        : (s.lines.at(-1)?.text ?? "");
 
   const send = () => {
     sendText(draft);
@@ -158,7 +163,7 @@ export function Session() {
         )}
 
         <View style={styles.bottom}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Pause" onPress={pause} style={styles.round}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Pause" disabled={s.phase === "ending"} onPress={pause} style={styles.round}>
             <Icon name="pause" size={26} filled />
           </Pressable>
           <View style={styles.micCol}>
@@ -176,6 +181,7 @@ export function Session() {
               accessibilityRole="button"
               accessibilityLabel="Type an answer instead"
               accessibilityState={{ expanded: typing }}
+              disabled={s.phase === "ending"}
               onPress={() => setTyping(!typing)}
               style={[styles.round, typing && { backgroundColor: colors.duskTint }]}
             >
@@ -189,13 +195,24 @@ export function Session() {
 
       {s.paused && !heldBySheet && <PausedOverlay time={time} onResume={resume} onEnd={askEnd} />}
 
+      <Sheet visible={!!s.error} onClose={() => s.phase === "connecting" ? router.replace("/practice") : leave()}>
+        <Text style={styles.sheetTitle}>{s.phase === "connecting" ? "Couldn't start practice" : "Practice stopped"}</Text>
+        <Text style={styles.sheetBody} accessibilityLiveRegion="polite">{s.error}</Text>
+        <View style={styles.sheetCta}>
+          <Button
+            label={s.phase === "connecting" ? "Back to setup" : "Save and see report"}
+            onPress={() => s.phase === "connecting" ? router.replace("/practice") : leave()}
+          />
+        </View>
+      </Sheet>
+
       <Sheet visible={confirmEnd} onClose={keepGoing}>
         <Text style={styles.sheetTitle}>End the session early?</Text>
         <Text style={styles.sheetBody}>
           {`You'll still get a report for the ${answered} ${answered === 1 ? "question" : "questions"} you've answered.`}
         </Text>
         <View style={styles.sheetCta}>
-          <Button label="End and see report" onPress={() => leave("student")} />
+          <Button label="End and see report" onPress={() => leave()} />
         </View>
         <Pressable accessibilityRole="button" onPress={keepGoing} style={styles.keepGoing}>
           <Text style={[type.button, styles.keepGoingText]}>Keep going</Text>

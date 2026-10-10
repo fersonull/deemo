@@ -85,6 +85,7 @@ test.skipIf(process.env.DEEMO_GROUP_INTEGRATION !== "1")(
       expect((await request(1, `/projects/${sharedId}`)).body.weights).toEqual([30, 25, 20, 15, 10]);
       expect((await request(1, `/groups/${code}/me`, "PATCH", { focusArea: "Database and testing" })).status).toBe(204);
       const setup = {
+        startId: "group-fixture-start",
         mode: "PRE_ORAL",
         domain: "Data & AI",
         panelists: 1,
