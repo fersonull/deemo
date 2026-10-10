@@ -23,6 +23,16 @@ export function sniff(b: Uint8Array): typeof PDF | typeof DOCX | null {
   return null;
 }
 
+export const JPEG = "image/jpeg";
+export const PNG = "image/png";
+
+// sniff, plus photos (rubrics are often a photo of a printed form).
+export function sniffDocOrImage(b: Uint8Array): typeof PDF | typeof DOCX | typeof JPEG | typeof PNG | null {
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return JPEG;
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return PNG;
+  return sniff(b);
+}
+
 const SCHEMA = {
   type: "object",
   properties: {

@@ -1,3 +1,4 @@
+import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -25,10 +26,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
   const [error, setError] = useState("");
 
   const pick = async () => {
-    // Loaded on use: the native picker only exists in builds made after it was added.
-    const picker = await import("expo-document-picker").catch(() => null);
-    if (!picker) return setError("Choosing files needs the latest app build.");
-    const r = await picker.getDocumentAsync({ type: [PDF, DOCX], copyToCacheDirectory: true });
+    const r = await DocumentPicker.getDocumentAsync({ type: [PDF, DOCX], copyToCacheDirectory: true });
     if (r.canceled) return;
     const f = r.assets[0];
     setError(f.size && f.size > MAX_MB * 1024 * 1024 ? `That file is over ${MAX_MB} MB.` : "");
@@ -141,7 +139,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   fileChosen: { borderColor: colors.sage },
-  tile: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  tile: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   field: { marginTop: 8, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
   fieldLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 11, color: colors.muted },
   input: { fontFamily: fonts.body, fontWeight: "500", fontSize: 15, color: colors.ink, paddingVertical: 4, paddingHorizontal: 0 },

@@ -14,17 +14,18 @@ _Last updated: 2026-10-10_
 
 ## Next task
 
-**Rubric upload** (plan F3, S-08; `docs/TASKS.md` → Planned features). Students upload their panel's own rubric (PDF/DOCX/photo). Flash maps it onto the five fixed criteria with suggested weights, and the student reviews them on the existing "How you'll be scored" screen (`src/screens/rubric/`).
-- Reuse the upload flow from manuscripts: `expo-document-picker`, an `expo-file-system` `File` in `FormData`, content sniffing, and `generateJson`. Photos need `image/*` added to the picker and sent to Gemini as inline images.
-- Keep the five criteria fixed (the score formula depends on them). The upload only proposes weights and maybe per-criterion descriptors.
-- Branch: `feat/rubric-upload`. No native rebuild expected (the picker is already in the build).
+**Group projects** (addendum Q10; `docs/TASKS.md` → Planned features). The leader uploads the manuscript once and gets a 6-character join code; members join with the code and share the project's analysis (and rubric weights). Each member's sessions stay private; an optional "Share with group" toggle shows their latest score on a **Group readiness** card on Home (design: `docs/design` prototype, Home and Projects "Join with a code"). Optional per-member focus area that the panel prompt weights questions toward.
+- Data model: a top-level `groups/{code}` doc (projectId, ownerUid, members) or members referencing the owner's project; the server must check membership before serving a shared project or minting a token for it. Free tier: a joined project counts as the one manuscript (decide and note it).
+- Server routes: create code, join by code, leave, list members' shared scores. App: Projects "Join with a code" sheet, shared-project row (ring, per the design), Home card, setup focus area.
+- Branch: `feat/group-projects`. No native rebuild expected.
 
-After that, from `docs/TASKS.md`: group projects → PDF export + share link + Download my data (**one native rebuild** for printing and sharing modules) → remaining animations → panel voice speed and dark mode.
+After that, from `docs/TASKS.md`: PDF export + share link + Download my data (**one native rebuild** for printing and sharing modules) → remaining animations → panel voice speed and dark mode.
 
 ## Recent changes (newest first)
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-10 | **Rubric upload**: "Use your panel's rubric" on the rubric screen (PDF, DOCX, JPG, PNG). `POST /rubric/map` checks it's a defense rubric, Flash maps each criterion onto the five (written-paper criteria are left out), `toFiveSteps` rounds weights to the editor's 5% steps; nothing is stored, the student reviews and taps Use. The document picker is now imported statically (lazy import broke under Metro). | `feat/rubric-upload` → `dev` |
 | 2026-10-10 | **Follow-ups per topic** (None–3, default 2) and **Difficulty** (Easy/Standard/Hard) in setup. The limit lives in live state (`followUpLimit`); difficulty only changes the panel prompt, saved on the session and shown in the report header. | `feat/session-options` → `dev` |
 | 2026-10-10 | **Backup Flash models**: 3.8 → 3.7 → 3.6 → 3.5. Rate limit, quota cap, overload or retired model moves to the next one; a bad key stops at once. Reports and analyses record the model. | `d9246e5` |
 | 2026-10-10 | **Task list** traced to the plan. | `docs/TASKS.md`, `f7738e1` |
