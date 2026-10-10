@@ -6,7 +6,7 @@ import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { UpsellSheet } from "@/components/upsell-sheet";
-import { MODE_LABELS, type Mode } from "@/constants";
+import { DEFAULT_WEIGHTS, MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -56,6 +56,23 @@ export function Setup() {
         </View>
         <View style={styles.change}>
           <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
+        </View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Change the rubric weights"
+        onPress={() => router.push("/rubric")}
+        style={[styles.manuscript, styles.rubricRow]}
+      >
+        <Icon name="balance" size={20} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={type.label}>SCORING</Text>
+          <Text style={styles.manuscriptName} numberOfLines={1}>
+            {setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i]) ? "Default rubric" : "Your rubric weights"}
+          </Text>
+        </View>
+        <View style={styles.change}>
+          <Text style={styles.changeText}>Change</Text>
         </View>
       </Pressable>
       <Pressable accessibilityRole="button" accessibilityHint="Change domain" onPress={() => setSheet("domain")} style={styles.domain}>
@@ -169,6 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   manuscriptName: { ...type.bodyStrong, marginTop: 2 },
+  rubricRow: { marginTop: 8 },
   domain: {
     alignSelf: "flex-start",
     marginTop: 12,

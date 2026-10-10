@@ -2,10 +2,11 @@ import express from "express";
 
 import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
+import { parseSession, scoreSession, sessions, type Session } from "./sessions";
 import { type Analysis, type Project, store } from "./store";
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "1mb" })); // a 25-minute transcript outgrows the 100 kB default
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
@@ -26,7 +27,10 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   const domain = String(form?.get("domain") ?? "");
   if (!DOMAINS.includes(domain as (typeof DOMAINS)[number])) return void res.status(400).json({ error: "Pick a domain." });
   const fileName = String(form?.get("fileName") || file.name).slice(0, 200); // the app's cached copy may be renamed
-  const name = String(form?.get("name") ?? "").trim().slice(0, 80) || fileName.replace(/\.(pdf|docx)$/i, "");
+  const name =
+    String(form?.get("name") ?? "")
+      .trim()
+      .slice(0, 80) || fileName.replace(/\.(pdf|docx)$/i, "");
 
   const project = await store.put({
     id: crypto.randomUUID(),
@@ -86,11 +90,71 @@ app.patch("/projects/:id/analysis", async (req, res) => {
   if (edits.facts !== undefined) {
     if (!Array.isArray(edits.facts) || !edits.facts.every((x) => typeof x === "string"))
       return void res.status(400).json({ error: "facts must be a list of text" });
-    next.facts = (edits.facts as string[]).map((x) => x.trim().slice(0, 300)).filter(Boolean).slice(0, 40);
+    next.facts = (edits.facts as string[])
+      .map((x) => x.trim().slice(0, 300))
+      .filter(Boolean)
+      .slice(0, 40);
   }
   res.json(
     await store.put({ ...project, analysis: next, ...(body.confirm === true && { confirmedAt: new Date().toISOString() }) }),
   );
+});
+
+// A finished session (plan F14): saved right away, scored in the background (Flash for rubric levels and
+// feedback, code for the score). The app polls GET /sessions/:id.
+function score(session: Session) {
+  scoreSession(session).then(
+    (report) => sessions.put({ ...session, status: "ready", report }),
+    (err) => {
+      console.error("scoring", session.id, err);
+      return sessions.put({ ...session, status: "failed", error: "We couldn't score this session. Try again." });
+    },
+  );
+}
+
+app.post("/sessions", async (req, res) => {
+  const parsed = await parseSession(req.body);
+  if (!parsed) return void res.status(400).json({ error: "invalid session" });
+  const session = await sessions.put({
+    ...parsed,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    status: "scoring",
+  });
+  res.status(202).json(session);
+  score(session);
+});
+
+// Re-score a session whose scoring failed; its transcript was kept.
+app.post("/sessions/:id/score", async (req, res) => {
+  const found = await sessions.get(req.params.id);
+  if (!found) return void res.status(404).json({ error: "not found" });
+  const session = await sessions.put({ ...found, status: "scoring", error: undefined, report: undefined });
+  res.status(202).json(session);
+  score(session);
+});
+
+// History rows: no transcripts, just what the list shows.
+app.get("/sessions", async (_req, res) => {
+  const list = await sessions.list();
+  res.json(
+    list.map(({ id, createdAt, status, mode, title, durationMs, report }) => ({
+      id,
+      createdAt,
+      status,
+      mode,
+      title,
+      durationMs,
+      score: report?.score,
+      band: report?.band,
+    })),
+  );
+});
+
+app.get("/sessions/:id", async (req, res) => {
+  const session = await sessions.get(req.params.id);
+  if (!session) return void res.status(404).json({ error: "not found" });
+  res.json(session);
 });
 
 // Mints a single-use Gemini Live token with the panel setup locked in (addendum B1).

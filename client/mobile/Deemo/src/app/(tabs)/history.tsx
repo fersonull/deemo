@@ -1,5 +1,5 @@
-import { Screen } from "@/components/screen";
+import { History } from "@/screens/history";
 
-export default function History() {
-  return <Screen scroll tabBar title="History" subtitle="Your sessions will show up here." />;
+export default function HistoryRoute() {
+  return <History />;
 }

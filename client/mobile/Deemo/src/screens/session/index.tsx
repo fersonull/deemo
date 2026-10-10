@@ -10,6 +10,7 @@ import { Sheet } from "@/components/sheet";
 import { MODE_LABELS } from "@/constants";
 import { useLiveSession } from "@/hooks/use-live-session";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
+import { sessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 
@@ -49,6 +50,7 @@ export function Session() {
 
   const leave = () => {
     stop();
+    sessions.submitLive(s); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
 

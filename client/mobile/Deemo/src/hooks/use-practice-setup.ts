@@ -1,4 +1,4 @@
-import { DOMAINS, type Domain, type Mode } from "@/constants";
+import { DEFAULT_WEIGHTS, DOMAINS, type Domain, type Mode } from "@/constants";
 import { createStore } from "@/utils/store";
 
 // Last-used session setup, so returning users start where they left off (brief flow 1).
@@ -10,6 +10,7 @@ const store = createStore({
   minutes: 10,
   coach: true, // Coach mode marks contradictions; Panel mode shows nothing (addendum Q3)
   projectId: null as string | null, // the manuscript the panel reads; null uses the built-in sample
+  weights: DEFAULT_WEIGHTS, // rubric weights in percent, RUBRIC order
 });
 
 export const practiceSetup = { get: store.get, set: store.set };

@@ -28,42 +28,47 @@ export type Project = {
 };
 
 const DIR = `${import.meta.dir}/../data`;
-const FILE = `${DIR}/projects.json`;
 
-let projects: Record<string, Project> | null = null;
+// ponytail: one JSON file per collection, rewritten on every change, and no per-user scoping; moves to
+// the real database (and per-user data) when Firebase sign-in lands.
+export function collection<T extends { id: string; createdAt: string; status: string; error?: string }>(name: string) {
+  const file = `${DIR}/${name}.json`;
+  let items: Record<string, T> | null = null;
 
-// ponytail: one JSON file rewritten on every change and no per-user scoping; moves to the real
-// database (and per-user projects) when Firebase sign-in lands.
-async function load() {
-  if (!projects) {
-    const f = Bun.file(FILE);
-    projects = (await f.exists()) ? ((await f.json()) as Record<string, Project>) : {};
-    // An analysis can't survive a restart; don't leave the app polling forever.
-    for (const p of Object.values(projects))
-      if (p.status === "analyzing") Object.assign(p, { status: "failed", error: "The server restarted. Upload again." });
+  async function load() {
+    if (!items) {
+      const f = Bun.file(file);
+      items = (await f.exists()) ? ((await f.json()) as Record<string, T>) : {};
+      // Background work can't survive a restart; don't leave the app polling forever.
+      for (const it of Object.values(items))
+        if (it.status === "analyzing" || it.status === "scoring")
+          Object.assign(it, { status: "failed", error: "The server restarted. Try again." });
+    }
+    return items;
   }
-  return projects;
+
+  async function save() {
+    await mkdir(DIR, { recursive: true });
+    await Bun.write(file, JSON.stringify(items, null, 2));
+  }
+
+  return {
+    async list() {
+      return Object.values(await load()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+    async get(id: string) {
+      return (await load())[id] ?? null;
+    },
+    async put(it: T) {
+      (await load())[it.id] = it;
+      await save();
+      return it;
+    },
+    async remove(id: string) {
+      delete (await load())[id];
+      await save();
+    },
+  };
 }
 
-async function save() {
-  await mkdir(DIR, { recursive: true });
-  await Bun.write(FILE, JSON.stringify(projects, null, 2));
-}
-
-export const store = {
-  async list() {
-    return Object.values(await load()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  },
-  async get(id: string) {
-    return (await load())[id] ?? null;
-  },
-  async put(p: Project) {
-    (await load())[p.id] = p;
-    await save();
-    return p;
-  },
-  async remove(id: string) {
-    delete (await load())[id];
-    await save();
-  },
-};
+export const store = collection<Project>("projects");

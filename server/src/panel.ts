@@ -26,7 +26,7 @@ const MODE_FOCUS: Record<Mode, string> = {
 };
 
 // Used when the session has no uploaded manuscript (a student who skipped upload, or dev).
-const SAMPLE_MANUSCRIPT = `Title: ReqTrack: An Enrollment Requirements Tracking System for PMFTCI
+export const SAMPLE_MANUSCRIPT = `Title: ReqTrack: An Enrollment Requirements Tracking System for PMFTCI
 Problem: students queue at the registrar to check paper requirement checklists; staff update records by hand.
 Objectives: (1) let students see missing requirements on their phone, (2) let the registrar update records in real time, (3) evaluate the system using ISO/IEC 25010.
 Architecture: React Native mobile app for students, web dashboard for registrar staff, Firebase Firestore database, Firebase Authentication.
@@ -92,9 +92,12 @@ export function manuscriptFacts(a: Analysis): string {
   ].join("\n");
 }
 
+// About one main question per 2.5 minutes; the report's coverage factor divides by the same number.
+export const plannedMainQuestions = (minutes: number) => Math.max(2, Math.round(minutes / 2.5));
+
 export function buildPanelPrompt({ mode, domain, panelists, minutes }: PanelSetup, analysis?: Analysis): string {
   const panel = PERSONAS.slice(0, panelists);
-  const mains = Math.max(2, Math.round(minutes / 2.5));
+  const mains = plannedMainQuestions(minutes);
   return `You are a capstone defense panel for a BSIT student in the Philippines. This is ${MODE_FOCUS[mode]}. Project domain: ${domain}.
 
 PANEL (one voice; the student sees who is asking):
