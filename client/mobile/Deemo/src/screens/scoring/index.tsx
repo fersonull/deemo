@@ -1,22 +1,34 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { BackHandler, StyleSheet, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
-import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
+import { Working, type Step } from "@/components/working";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+import { riseIn } from "@/utils/motion";
 
 const POLL_MS = 2500;
+
+// What the server does while scoring (server/src/sessions.ts); usually 5–20 s.
+export const SCORING_STEPS: Step[] = [
+  ["Reading your answers", 15],
+  ["Checking them against your manuscript", 40],
+  ["Scoring the rubric", 65],
+  ["Writing your feedback", 88],
+];
+export const SCORING_MS = 15_000;
 
 // Session complete (screen 12): a calm bridge while the server scores the session, then the report.
 export function Scoring({ ms, answered }: { ms: number; answered: number }) {
   const { submit } = useSessions();
   const [failed, setFailed] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [since, setSince] = useState(Date.now); // scoring starts as the session is submitted
+  const reduced = useReducedMotion();
   const id = submit.state === "saved" ? submit.id : null;
   const home = () => router.dismissAll();
 
@@ -53,6 +65,7 @@ export function Scoring({ ms, answered }: { ms: number; answered: number }) {
 
   const retry = async () => {
     setFailed("");
+    setSince(Date.now());
     if (submit.state === "failed") return sessions.retrySubmit();
     if (id) {
       await sessions.rescore(id).catch(() => {});
@@ -60,43 +73,30 @@ export function Scoring({ ms, answered }: { ms: number; answered: number }) {
     }
   };
 
-  const t = useSharedValue(0);
-  useEffect(() => {
-    t.value = withRepeat(withTiming(1, { duration: 2400 }), -1, true);
-  }, [t]);
-  const breathe = useAnimatedStyle(() => ({ transform: [{ scale: 1 + 0.06 * t.value }] }));
-
   const problem = submit.state === "failed" ? `We couldn't save your session. ${submit.error}` : failed;
 
   return (
     <Screen>
-      <View style={styles.center}>
-        <Animated.View style={breathe}>
-          <Blob width={110} height={96}>
-            <View style={styles.dots}>
-              {[0.6, 1, 0.6].map((o, i) => (
-                <View key={i} style={[styles.dot, { opacity: o }]} />
-              ))}
-            </View>
-          </Blob>
-        </Animated.View>
-        <Text style={[type.title, styles.title]} accessibilityRole="header">
-          {"That's a wrap."}
-        </Text>
-        <Text style={styles.body} accessibilityLiveRegion="polite">
-          {problem || "The panel is writing up your notes."}
-        </Text>
+      <Working
+        title={"That's a wrap."}
+        subtitle={problem || "The panel is writing up your notes."}
+        since={since}
+        expectedMs={SCORING_MS}
+        steps={problem ? undefined : SCORING_STEPS}
+      >
         <View style={styles.stats}>
           <Stat value={formatTime(ms)} label="session" />
           <Stat value={String(answered)} label="answered" />
         </View>
-      </View>
+      </Working>
       {problem ? (
-        <View style={styles.retry}>
+        <Animated.View entering={riseIn(0, reduced)} style={styles.retry}>
           <Button label="Try again" onPress={retry} />
-        </View>
+        </Animated.View>
       ) : null}
-      <Button variant="secondary" label="Back to home" onPress={home} />
+      <View style={styles.home}>
+        <Button variant="secondary" label="Back to home" onPress={home} />
+      </View>
     </Screen>
   );
 }
@@ -111,14 +111,10 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  dots: { flexDirection: "row", gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.paper },
-  title: { marginTop: 28, fontSize: 30, lineHeight: 32 },
-  body: { ...type.body, color: colors.inkMuted, textAlign: "center", marginTop: 8 },
-  stats: { flexDirection: "row", gap: 8, marginTop: 26 },
+  stats: { flexDirection: "row", gap: 8, marginTop: 18 },
   stat: { backgroundColor: colors.sand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 16 },
   statValue: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 18, color: colors.ink },
   statLabel: { fontSize: 11.5, marginTop: 2 },
-  retry: { marginBottom: 8 },
+  retry: { marginTop: 16 },
+  home: { marginTop: 8 },
 });

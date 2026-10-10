@@ -37,6 +37,7 @@ export type Report = {
 export type Session = {
   id: string;
   createdAt: string;
+  updatedAt?: string; // a re-score restarts the wait from here
   status: "scoring" | "ready" | "failed";
   error?: string;
   title: string;
