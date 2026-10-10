@@ -2,6 +2,8 @@
 // oklch values converted to hex because React Native can't parse oklch().
 // ponytail: light theme only — the prototype has no dark palette yet; add one when it's designed.
 
+import { Easing } from "react-native-reanimated";
+
 export const colors = {
   // warm paper neutrals
   paper: "#F7F3EC", // screen background
@@ -77,3 +79,6 @@ export const radius = {
   xl: 22, // content cards
   pill: 29, // 58dp primary buttons
 } as const;
+
+// Motion: a strong ease-out for things entering or responding (cubic-bezier(0.23, 1, 0.32, 1)). UI motion stays under 300 ms.
+export const easeOut = Easing.bezier(0.23, 1, 0.32, 1);

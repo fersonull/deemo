@@ -1,16 +1,21 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { UpsellSheet } from "@/components/upsell-sheet";
+import { Working } from "@/components/working";
 import { MODE_LABELS } from "@/constants";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Report, type Session } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+import { riseIn } from "@/utils/motion";
+
+import { SCORING_MS, SCORING_STEPS } from "../scoring";
 
 import { Contradictions, Criteria, Fixes, Label, Locked, Question, ResponseTimes, Transcript } from "./parts";
 
@@ -43,6 +48,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const [upsell, setUpsell] = useState(false);
   const [shown, setShown] = useState(0);
   const [attempt, setAttempt] = useState(0);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     let alive = true;
@@ -91,81 +97,119 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
 
       {!s || !r ? (
         <View style={styles.waiting}>
-          <Text style={styles.sub} accessibilityLiveRegion="polite">
-            {error || (s?.status === "failed" ? (s.error ?? "We couldn't score this session.") : "The panel is writing up your notes…")}
-          </Text>
-          {s?.status === "failed" ? (
-            <View style={styles.cta}>
-              <Button label="Try again" onPress={() => sessions.rescore(id).then(() => setAttempt((a) => a + 1), () => {})} />
-            </View>
-          ) : null}
+          {
+            error ? (
+              <Text style={styles.sub} accessibilityLiveRegion="polite">
+                {error}
+              </Text>
+            ) : s ? (
+              // Still scoring (opened from History mid-score), or scoring failed.
+              <>
+                <Working
+                  title={"Writing up\nyour notes."}
+                  subtitle={
+                    s.status === "failed" ? (s.error ?? "We couldn't score this session.") : "This usually takes under a minute."
+                  }
+                  since={Date.parse(s.updatedAt ?? s.createdAt)}
+                  expectedMs={SCORING_MS}
+                  steps={s.status === "failed" ? undefined : SCORING_STEPS}
+                />
+                {s.status === "failed" ? (
+                  <Animated.View entering={riseIn(0, reduced)} style={styles.cta}>
+                    <Button
+                      label="Try again"
+                      onPress={() =>
+                        sessions.rescore(id).then(
+                          () => setAttempt((a) => a + 1),
+                          () => {},
+                        )
+                      }
+                    />
+                  </Animated.View>
+                ) : null}
+              </>
+            ) : null /* first load: a blank beat beats flashing a waiting screen for a report that's ready */
+          }
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.scoreRow} accessible accessibilityLabel={`Readiness ${r.score} out of 100, ${r.band}`}>
-            <Text style={styles.score}>{shown}</Text>
-            <View>
-              <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
-              <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text>
-            </View>
-          </View>
-          <Text style={styles.headline}>{r.headline}</Text>
-          <Text style={styles.formula}>{formula(r, r.contradictions.map((c) => c.severity))}</Text>
-
-          <View style={styles.stats}>
-            <Stat value={formatTime(s.durationMs)} label="length" />
-            <Stat value={String(r.answered)} label="answered" />
-            <Stat value={String(r.contradictions.length)} label={r.contradictions.length === 1 ? "contradiction" : "contradictions"} />
-          </View>
-
-          {r.fixes.length ? (
-            <>
-              <Label>TOP 3 THINGS TO FIX</Label>
-              <Fixes fixes={r.fixes} turns={s.turns} />
-            </>
-          ) : null}
-
-          {r.contradictions.length ? (
-            <>
-              <Label>CONTRADICTIONS</Label>
-              <Contradictions items={r.contradictions} turns={s.turns} />
-            </>
-          ) : null}
-
-          <Label>RUBRIC</Label>
-          {premium ? (
-            <>
-              <Criteria criteria={r.criteria} />
-              <Label>RESPONSE TIME</Label>
-              <ResponseTimes turns={s.turns} delivery={r.delivery} />
-            </>
-          ) : (
-            <Locked
-              title="Rubric breakdown and delivery stats"
-              body="See how each criterion scored, and why. Included in Premium."
-              onPress={() => setUpsell(true)}
-            />
-          )}
-
-          {s.turns.length ? (
-            <>
-              <Label>QUESTION BY QUESTION</Label>
-              <View style={styles.cards}>
-                {s.turns.map((t, i) => (
-                  <Question key={i} turn={t} feedback={r.turns[i]} premium={premium} onLocked={() => setUpsell(true)} />
-                ))}
+          {/* The report arrives in two beats: the verdict, then the details 60 ms later. */}
+          <Animated.View entering={riseIn(0, reduced)}>
+            <View style={styles.scoreRow} accessible accessibilityLabel={`Readiness ${r.score} out of 100, ${r.band}`}>
+              <Text style={styles.score}>{shown}</Text>
+              <View>
+                <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
+                <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text>
               </View>
-            </>
-          ) : null}
+            </View>
+            <Text style={styles.headline}>{r.headline}</Text>
+            <Text style={styles.formula}>
+              {formula(
+                r,
+                r.contradictions.map((c) => c.severity),
+              )}
+            </Text>
+          </Animated.View>
 
-          <View style={styles.transcript}>
-            <Transcript lines={s.lines} count={r.answered} />
-          </View>
+          <Animated.View entering={riseIn(60, reduced)}>
+            <View style={styles.stats}>
+              <Stat value={formatTime(s.durationMs)} label="length" />
+              <Stat value={String(r.answered)} label="answered" />
+              <Stat
+                value={String(r.contradictions.length)}
+                label={r.contradictions.length === 1 ? "contradiction" : "contradictions"}
+              />
+            </View>
 
-          <View style={styles.cta}>
-            <Button label="Practice again" onPress={() => router.replace("/practice")} />
-          </View>
-          <Text style={styles.footnote}>Practice result, not an official evaluation.</Text>
+            {r.fixes.length ? (
+              <>
+                <Label>TOP 3 THINGS TO FIX</Label>
+                <Fixes fixes={r.fixes} turns={s.turns} />
+              </>
+            ) : null}
+
+            {r.contradictions.length ? (
+              <>
+                <Label>CONTRADICTIONS</Label>
+                <Contradictions items={r.contradictions} turns={s.turns} />
+              </>
+            ) : null}
+
+            <Label>RUBRIC</Label>
+            {premium ? (
+              <>
+                <Criteria criteria={r.criteria} />
+                <Label>RESPONSE TIME</Label>
+                <ResponseTimes turns={s.turns} delivery={r.delivery} />
+              </>
+            ) : (
+              <Locked
+                title="Rubric breakdown and delivery stats"
+                body="See how each criterion scored, and why. Included in Premium."
+                onPress={() => setUpsell(true)}
+              />
+            )}
+
+            {s.turns.length ? (
+              <>
+                <Label>QUESTION BY QUESTION</Label>
+                <View style={styles.cards}>
+                  {s.turns.map((t, i) => (
+                    <Question key={i} turn={t} feedback={r.turns[i]} premium={premium} onLocked={() => setUpsell(true)} />
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            <View style={styles.transcript}>
+              <Transcript lines={s.lines} count={r.answered} />
+            </View>
+
+            <View style={styles.cta}>
+              <Button label="Practice again" onPress={() => router.replace("/practice")} />
+            </View>
+            <Text style={styles.footnote}>Practice result, not an official evaluation.</Text>
+          </Animated.View>
         </ScrollView>
       )}
 
@@ -197,11 +241,19 @@ const styles = StyleSheet.create({
   header: { height: 52, flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10 },
   close: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   headerText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.inkMuted },
-  waiting: { flex: 1, justifyContent: "center", paddingHorizontal: 22 },
+  waiting: { flex: 1, paddingHorizontal: 22, paddingBottom: 24 },
   scroll: { paddingHorizontal: 20, paddingBottom: 32 },
   sub: { ...type.body, color: colors.inkMuted, textAlign: "center" },
   scoreRow: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 4 },
-  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 88, lineHeight: 92, letterSpacing: -4, color: colors.ink, fontVariant: ["tabular-nums"] },
+  score: {
+    fontFamily: fonts.display,
+    fontWeight: "800",
+    fontSize: 88,
+    lineHeight: 92,
+    letterSpacing: -4,
+    color: colors.ink,
+    fontVariant: ["tabular-nums"],
+  },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
   bandRange: { ...type.meta, marginTop: 4 },
   headline: { ...type.body, fontSize: 15, lineHeight: 22, marginTop: 10 },
