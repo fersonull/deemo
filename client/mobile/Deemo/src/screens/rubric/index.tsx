@@ -6,6 +6,7 @@ import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { DEFAULT_WEIGHTS, RUBRIC } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { colors, fonts, radius, type } from "@/theme";
 
 import { UploadCard } from "./upload-card";
@@ -16,23 +17,41 @@ const MAX = 60;
 // "How you'll be scored." (prototype rubric screen, plan F3): the default five criteria, weights set by hand or
 // proposed from the panel's own rubric (upload-card.tsx).
 export function Rubric() {
-  const saved = usePracticeSetup().weights;
+  const { weights: saved, projectId } = usePracticeSetup();
+  const project = useProjects().projects.find((p) => p.id === projectId);
+  const readOnly = !!project?.group && !project.group.isOwner;
   const [weights, setWeights] = useState(saved);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const total = weights.reduce((a, b) => a + b, 0);
   const isDefault = weights.every((w, i) => w === DEFAULT_WEIGHTS[i]);
 
   const nudge = (i: number, by: number) =>
     setWeights((ws) => ws.map((w, k) => (k === i ? Math.min(MAX, Math.max(0, w + by)) : w)));
 
-  const use = () => {
-    practiceSetup.set({ weights });
-    router.back();
+  const use = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      if (projectId) await projects.saveWeights(projectId, weights);
+      practiceSetup.set({ weights });
+      router.back();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save the rubric.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <Screen scroll onBack={() => router.back()} title={"How you'll\nbe scored."}>
       <Text style={styles.sub}>Five criteria, like most capstone defense forms. Set the weights to match your panel.</Text>
-      <UploadCard onWeights={setWeights} />
+      {project?.group ? (
+        <Text style={styles.sub}>
+          {readOnly ? "Your leader manages this shared rubric." : "Changes apply to every member's next practice."}
+        </Text>
+      ) : null}
+      {!readOnly && !busy ? <UploadCard onWeights={setWeights} /> : null}
 
       <View style={styles.list}>
         {RUBRIC.map((c, i) => (
@@ -44,7 +63,7 @@ export function Rubric() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Lower ${c.name}`}
-              disabled={weights[i] <= 0}
+              disabled={readOnly || busy || weights[i] <= 0}
               onPress={() => nudge(i, -STEP)}
               style={[styles.step, weights[i] <= 0 && styles.dim]}
             >
@@ -56,7 +75,7 @@ export function Rubric() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Raise ${c.name}`}
-              disabled={weights[i] >= MAX}
+              disabled={readOnly || busy || weights[i] >= MAX}
               onPress={() => nudge(i, STEP)}
               style={[styles.step, weights[i] >= MAX && styles.dim]}
             >
@@ -71,9 +90,18 @@ export function Rubric() {
       </Text>
 
       <View style={styles.cta}>
-        <Button label="Use this rubric" onPress={use} disabled={total !== 100} />
+        {error ? (
+          <Text accessibilityLiveRegion="polite" style={styles.sub}>
+            {error}
+          </Text>
+        ) : null}
+        <Button
+          label={readOnly ? "Back to setup" : busy ? "Saving…" : "Use this rubric"}
+          onPress={readOnly ? () => router.back() : use}
+          disabled={busy || total !== 100}
+        />
       </View>
-      {!isDefault ? (
+      {!isDefault && !readOnly && !busy ? (
         <Pressable accessibilityRole="button" onPress={() => setWeights(DEFAULT_WEIGHTS)} style={styles.reset}>
           <Text style={styles.resetText}>Back to the default weights</Text>
         </Pressable>
@@ -98,7 +126,14 @@ const styles = StyleSheet.create({
   },
   name: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14.5, color: colors.ink },
   desc: { ...type.meta, lineHeight: 17, marginTop: 2 },
-  step: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  step: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.paper,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   stepText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 18, color: colors.ink },
   dim: { opacity: 0.35 },
   weight: { width: 48, textAlign: "center", fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },

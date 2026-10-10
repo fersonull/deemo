@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
@@ -14,6 +14,7 @@ import { colors, radius, type } from "@/theme";
 
 import { Segmented } from "./segmented";
 import { DomainSheet } from "./sheets";
+import { FocusArea } from "./focus-area";
 
 const MODES: { value: Mode; desc: string }[] = [
   { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },
@@ -35,9 +36,11 @@ export function Setup() {
   const list = useProjects();
   const manuscript = list.projects.find((p) => p.id === setup.projectId);
 
-  useEffect(() => {
-    if (!list.loaded) void projects.refresh();
-  }, [list.loaded]);
+  useFocusEffect(
+    useCallback(() => {
+      void projects.refresh();
+    }, []),
+  );
 
   return (
     <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
@@ -68,14 +71,23 @@ export function Setup() {
         <View style={styles.flex}>
           <Text style={type.label}>SCORING</Text>
           <Text style={styles.manuscriptName} numberOfLines={1}>
-            {setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i]) ? "Default rubric" : "Your rubric weights"}
+            {manuscript?.group
+              ? "Shared group rubric"
+              : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
+                ? "Default rubric"
+                : "Your rubric weights"}
           </Text>
         </View>
         <View style={styles.change}>
-          <Text style={styles.changeText}>Change</Text>
+          <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
         </View>
       </Pressable>
-      <Pressable accessibilityRole="button" accessibilityHint="Change domain" onPress={() => setSheet("domain")} style={styles.domain}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Change domain"
+        onPress={() => setSheet("domain")}
+        style={styles.domain}
+      >
         <Icon name="category" size={16} color={colors.duskIcon} />
         <Text style={styles.domainText}>
           Domain: <Text style={styles.domainValue}>{setup.domain}</Text>
@@ -145,6 +157,7 @@ export function Setup() {
         options={(["EASY", "STANDARD", "HARD"] as const).map((d) => ({ value: d, label: DIFFICULTY_LABELS[d] }))}
       />
 
+      {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
       <Text style={[type.label, styles.section]}>FEEDBACK</Text>
       <View accessibilityRole="radiogroup" accessibilityLabel="Feedback" style={styles.feedback}>
         {FEEDBACK.map((f) => {

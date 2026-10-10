@@ -98,7 +98,9 @@ export function Profile() {
       <Sheet visible={sheet === "delete"} onClose={() => !deleting && setSheet(null)}>
         <Text style={styles.sheetTitle}>Delete all your data?</Text>
         <Text style={styles.sheetBody}>
-          {"This removes your manuscripts, transcripts, scores and account. It can't be undone."}
+          {
+            "This removes your manuscripts, transcripts, scores and account. Groups you lead are dissolved; teammates keep their own past sessions. It can't be undone."
+          }
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable
@@ -121,7 +123,14 @@ export function Profile() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   account: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
-  avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.duskTint, alignItems: "center", justifyContent: "center" },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.duskTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatarText: { fontFamily: fonts.display, fontWeight: "700", fontSize: 20, color: colors.duskInk },
   name: { ...type.heading, fontSize: 18 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
@@ -146,7 +155,14 @@ const styles = StyleSheet.create({
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
   sheetBody: { ...type.body, color: colors.inkMuted, marginTop: 8 },
   error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 10 },
-  deleteButton: { height: 58, borderRadius: radius.pill, backgroundColor: colors.clay, alignItems: "center", justifyContent: "center", marginTop: 20 },
+  deleteButton: {
+    height: 58,
+    borderRadius: radius.pill,
+    backgroundColor: colors.clay,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
   deleteText: { ...type.button, color: colors.paper },
   dim: { opacity: 0.6 },
   cancel: { marginTop: 8 },

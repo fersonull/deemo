@@ -16,6 +16,7 @@ export type Analysis = {
 };
 
 export type Project = {
+  weights?: number[];
   id: string;
   updatedAt?: string;
   name: string;

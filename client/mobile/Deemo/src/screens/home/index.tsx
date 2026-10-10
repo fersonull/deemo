@@ -7,11 +7,12 @@ import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
-import { useProjects } from "@/hooks/use-projects";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
+import { GroupReadiness } from "./group-readiness";
 
 const MODE_INITIALS: Record<Mode, string> = { TITLE: "T", PRE_ORAL: "PO", FINAL: "F" };
 const MODE_BG: Record<Mode, string> = { TITLE: colors.sand, PRE_ORAL: colors.duskTint, FINAL: colors.sageTint };
@@ -25,7 +26,6 @@ function greeting(hour: number) {
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 // Home (plan S-05, prototype home): greeting, the last readiness score, Start practice, recent sessions.
-// ponytail: the design's group readiness card waits for group projects (addendum Q10).
 export function Home() {
   const { name, email } = useSession();
   const { list } = useSessions();
@@ -38,6 +38,7 @@ export function Home() {
   useFocusEffect(
     useCallback(() => {
       void sessions.refresh();
+      void projects.refresh();
     }, []),
   );
 
@@ -85,7 +86,9 @@ export function Home() {
           onPress={() => router.push(manuscript || list.length ? "/practice" : "/projects")}
           style={({ pressed }) => [styles.start, pressed && styles.pressed]}
         >
-          <Text style={[type.button, styles.startLabel]}>{manuscript || list.length ? "Start practice" : "Add your manuscript"}</Text>
+          <Text style={[type.button, styles.startLabel]}>
+            {manuscript || list.length ? "Start practice" : "Add your manuscript"}
+          </Text>
           <Blob width={44} height={44}>
             <Icon name={manuscript || list.length ? "mic" : "upload_file"} size={22} color={colors.paper} filled />
           </Blob>
@@ -96,6 +99,7 @@ export function Home() {
           </Pressable>
         ) : null}
 
+        <GroupReadiness />
         {recent.length ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
@@ -131,10 +135,25 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.duskTint, alignItems: "center", justifyContent: "center" },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.duskTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatarText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskInk },
   sub: { ...type.body, color: colors.inkMuted, marginTop: 8 },
-  last: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: colors.sand, borderRadius: 24, padding: 16, marginTop: 18 },
+  last: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: colors.sand,
+    borderRadius: 24,
+    padding: 16,
+    marginTop: 18,
+  },
   lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
   lastBand: { ...type.heading },
   lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },

@@ -6,6 +6,21 @@ import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, type Session } from "./sessions";
 import { type Analysis, type Project, store, users } from "./store";
+import { db } from "./firebase";
+import {
+  GroupError,
+  accessibleProject,
+  createGroup,
+  groupReadiness,
+  joinGroup,
+  leaveGroup,
+  listProjects,
+  removeMemberships,
+  removeProject,
+  reserveProject,
+  updateMember,
+  validWeights,
+} from "./groups";
 
 const app = express();
 app.use(express.json({ limit: "1mb" })); // a 25-minute transcript outgrows the 100 kB default
@@ -15,11 +30,10 @@ app.get("/health", (_req, res) => {
 });
 
 // Everything below belongs to a signed-in student (Firebase ID token), stored under users/{uid}.
-app.use(["/me", "/projects", "/sessions", "/live", "/rubric"], requireUser);
+app.use(["/me", "/projects", "/sessions", "/live", "/rubric", "/groups"], requireUser);
 const uidOf = (req: express.Request) => (req as Authed).uid;
 
 // Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 minutes, one manuscript. Enforced here, not just in the app.
-const FREE_PROJECTS = 1;
 
 // Gemini rate-limited us (Busy); the transcript or upload is kept, so trying later works.
 const BUSY = "The AI panel is busy right now. Try again in a few minutes.";
@@ -44,6 +58,7 @@ app.patch("/me", async (req, res) => {
 // sign-in account itself. Done here with the Admin SDK, so it works however long ago the student signed in.
 app.delete("/me", async (req, res) => {
   const uid = uidOf(req);
+  await removeMemberships(uid);
   await users.removeAll(uid);
   await getAuth().deleteUser(uid);
   res.status(204).end();
@@ -53,9 +68,6 @@ app.delete("/me", async (req, res) => {
 // The file only lives in memory for the analysis call; only the analysis is stored.
 app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTES + 1_000_000 }), async (req, res) => {
   const uid = uidOf(req);
-  const { premium } = await users.get(uid);
-  if (!premium && (await store.list(uid)).filter((p) => p.status !== "failed").length >= FREE_PROJECTS)
-    return void res.status(403).json({ error: "The free plan holds one manuscript. Delete it or try Premium." });
 
   const form = await new Response(req.body, { headers: { "content-type": req.headers["content-type"] ?? "" } })
     .formData()
@@ -74,7 +86,7 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
       .trim()
       .slice(0, 80) || fileName.replace(/\.(pdf|docx)$/i, "");
 
-  const project = await store.put(uid, {
+  const project = await reserveProject(uid, {
     id: crypto.randomUUID(),
     name,
     domain,
@@ -86,7 +98,8 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   res.status(202).json(project);
 
   // Only if it still exists: the student may have deleted it while it was being read.
-  const finish = async (patch: Partial<Project>) => (await store.get(uid, project.id)) && store.put(uid, { ...project, ...patch });
+  const finish = async (patch: Partial<Project>) =>
+    (await store.get(uid, project.id)) && store.put(uid, { ...project, ...patch });
   analyzeManuscript({ bytes, type }).then(
     (analysis) => finish({ status: "ready", analysis }),
     (err) => {
@@ -103,19 +116,48 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
 });
 
 app.get("/projects", async (req, res) => {
-  res.json(await store.list(uidOf(req)));
+  res.json(await listProjects(uidOf(req)));
 });
 
 app.get("/projects/:id", async (req, res) => {
-  const project = await store.get(uidOf(req), req.params.id);
+  const project = await accessibleProject(uidOf(req), req.params.id);
   if (!project) return void res.status(404).json({ error: "not found" });
   res.json(project);
 });
 
 // Deleting a project drops its analysis for good (the raw file was never kept).
 app.delete("/projects/:id", async (req, res) => {
-  await store.remove(uidOf(req), req.params.id);
+  await removeProject(uidOf(req), req.params.id);
   res.status(204).end();
+});
+
+const memberName = async (uid: string) => (await getAuth().getUser(uid)).displayName?.trim().slice(0, 60) || "Group member";
+app.post("/projects/:id/group", async (req, res) => {
+  const uid = uidOf(req);
+  res.json(await createGroup(uid, req.params.id, await memberName(uid)));
+});
+app.post("/groups/join", async (req, res) => {
+  const uid = uidOf(req);
+  res.json(await joinGroup(uid, req.body?.code, await memberName(uid)));
+});
+app.get("/groups", async (req, res) => res.json(await groupReadiness(uidOf(req))));
+app.patch("/groups/:code/me", async (req, res) => {
+  await updateMember(uidOf(req), req.params.code, req.body);
+  res.status(204).end();
+});
+app.delete("/groups/:code/me", async (req, res) => {
+  await leaveGroup(uidOf(req), req.params.code);
+  res.status(204).end();
+});
+app.patch("/projects/:id/rubric", async (req, res) => {
+  if (!validWeights(req.body?.weights))
+    return void res.status(400).json({ error: "Use five weights in 5% steps, up to 60% each, totaling 100%." });
+  const uid = uidOf(req);
+  const p = await accessibleProject(uid, req.params.id);
+  if (!p) throw new GroupError(404, "Project not found.");
+  if (p.group && !p.group.isOwner) throw new GroupError(403, "Only the group leader can edit the shared rubric.");
+  await db.collection("users").doc(uid).collection("projects").doc(p.id).update({ weights: req.body.weights });
+  res.json(await accessibleProject(uid, p.id));
 });
 
 // Rubric upload (plan F3): map the panel's own form onto the five criteria and propose weights. Nothing is stored.
@@ -144,8 +186,10 @@ const TEXT_FIELDS = ["title", "problem", "objectives", "method", "scope", "featu
 // The student's corrections to the summary, and "Looks right" (confirm).
 app.patch("/projects/:id/analysis", async (req, res) => {
   const uid = uidOf(req);
-  const project = await store.get(uid, req.params.id);
+  const project = await accessibleProject(uid, req.params.id);
   if (!project?.analysis) return void res.status(404).json({ error: "not found" });
+  if (project.group && !project.group.isOwner)
+    return void res.status(403).json({ error: "Only the group leader can edit the summary." });
   const body = (req.body ?? {}) as { analysis?: Partial<Record<keyof Analysis, unknown>>; confirm?: unknown };
   const edits = body.analysis ?? {};
   const next: Analysis = { ...project.analysis };
@@ -163,13 +207,16 @@ app.patch("/projects/:id/analysis", async (req, res) => {
       .filter(Boolean)
       .slice(0, 40);
   }
-  res.json(
-    await store.put(uid, {
-      ...project,
+  await db
+    .collection("users")
+    .doc(uid)
+    .collection("projects")
+    .doc(project.id)
+    .update({
       analysis: next,
       ...(body.confirm === true && { confirmedAt: new Date().toISOString() }),
-    }),
-  );
+    });
+  res.json(await accessibleProject(uid, project.id));
 });
 
 // A finished session (plan F14): saved right away, scored in the background (Flash for rubric levels and
@@ -244,7 +291,11 @@ app.post("/live/token", async (req, res) => {
   const { premium } = await users.get(uid);
   if (!premium && (setup.mode === "FINAL" || setup.panelists > 1 || setup.minutes > 10))
     return void res.status(403).json({ error: "That setup needs Premium." });
-  const analysis = setup.projectId ? (await store.get(uid, setup.projectId))?.analysis : undefined; // else the sample
+  const project = setup.projectId ? await accessibleProject(uid, setup.projectId) : null;
+  if (setup.projectId && (!project?.analysis || !project.confirmedAt))
+    return void res.status(403).json({ error: "This manuscript is unavailable. Choose a reviewed project." });
+  setup.focusArea = project?.group?.focusArea;
+  const analysis = project?.analysis;
 
   const now = Date.now();
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
@@ -267,4 +318,10 @@ app.post("/live/token", async (req, res) => {
 });
 
 const port = Number(process.env.PORT) || 3000;
-app.listen(port, () => console.log(`DEEMO server on :${port}`));
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  if (err instanceof GroupError) return void res.status(err.status).json({ error: err.message });
+  console.error(err);
+  res.status(500).json({ error: "Something went wrong. Try again." });
+});
+export { app };
+if (import.meta.main) app.listen(port, () => console.log(`DEEMO server on :${port}`));

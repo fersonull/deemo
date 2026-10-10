@@ -1,6 +1,6 @@
 import { File } from "expo-file-system";
 
-import { type Domain } from "@/constants";
+import { DEFAULT_WEIGHTS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { api } from "@/utils/api";
 import { createStore } from "@/utils/store";
@@ -20,6 +20,8 @@ export type Analysis = {
 };
 
 export type Project = {
+  weights?: number[];
+  group?: { code: string; isOwner: boolean; shareScore: boolean; focusArea: string };
   id: string;
   name: string;
   domain: Domain;
@@ -34,38 +36,62 @@ export type Project = {
 
 export type PickedFile = { uri: string; name: string; mimeType?: string; size?: number };
 
-const store = createStore({ projects: [] as Project[], loaded: false, error: false });
+export type GroupReadiness = {
+  code: string;
+  projectId: string;
+  title: string;
+  members: { name: string; isYou: boolean; sharing: boolean; score?: number; mode?: string; createdAt?: string }[];
+};
+const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false });
+let generation = 0;
+const json = (method: string, body: object) => ({
+  method,
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify(body),
+});
 
 export const useProjects = store.use;
 
 function upsert(p: Project) {
   const rest = store.get().projects.filter((x) => x.id !== p.id);
   store.set({ projects: [p, ...rest].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) });
+  if (practiceSetup.get().projectId === p.id && p.weights) practiceSetup.set({ weights: p.weights });
   return p;
 }
 
 // The newest reviewed project is the one practice uses, unless the student picked another.
 function pickActive(projects: Project[]) {
   const { projectId } = practiceSetup.get();
-  if (projectId && projects.some((p) => p.id === projectId && p.analysis)) return;
+  const current = projects.find((p) => p.id === projectId && p.analysis);
+  if (current) {
+    if (current.weights) practiceSetup.set({ weights: current.weights });
+    return;
+  }
   const latest = projects.find((p) => p.analysis && p.confirmedAt);
-  practiceSetup.set(latest ? { projectId: latest.id, domain: latest.domain } : { projectId: null });
+  practiceSetup.set(
+    latest
+      ? { projectId: latest.id, domain: latest.domain, weights: latest.weights ?? DEFAULT_WEIGHTS }
+      : { projectId: null, weights: DEFAULT_WEIGHTS },
+  );
 }
 
 export const projects = {
   // Signed out: drop the last student's list and active manuscript.
   reset() {
-    store.set({ projects: [], loaded: false, error: false });
-    practiceSetup.set({ projectId: null });
+    generation++;
+    store.set({ projects: [], groups: [], loaded: false, error: false });
+    practiceSetup.set({ projectId: null, weights: DEFAULT_WEIGHTS });
   },
 
   async refresh() {
+    const started = generation;
     try {
-      const list = await api<Project[]>("/projects");
-      store.set({ projects: list, loaded: true, error: false });
+      const [list, groups] = await Promise.all([api<Project[]>("/projects"), api<GroupReadiness[]>("/groups")]);
+      if (started !== generation) return;
+      store.set({ projects: list, groups, loaded: true, error: false });
       pickActive(list);
     } catch {
-      store.set({ loaded: true, error: true });
+      if (started === generation) store.set({ groups: [], loaded: true, error: true });
     }
   },
 
@@ -95,7 +121,29 @@ export const projects = {
   },
 
   use(p: Project) {
-    practiceSetup.set({ projectId: p.id, domain: p.domain });
+    practiceSetup.set({ projectId: p.id, domain: p.domain, weights: p.weights ?? DEFAULT_WEIGHTS });
+  },
+
+  async createGroup(id: string) {
+    return upsert(await api<Project>(`/projects/${id}/group`, { method: "POST" }));
+  },
+  async join(code: string) {
+    const p = upsert(await api<Project>("/groups/join", json("POST", { code })));
+    this.use(p);
+    return p;
+  },
+  async updateMember(p: Project, patch: { shareScore?: boolean; focusArea?: string }) {
+    if (!p.group) return;
+    await api(`/groups/${p.group.code}/me`, json("PATCH", patch));
+    await this.get(p.id);
+  },
+  async leaveGroup(p: Project) {
+    if (!p.group) return;
+    await api(`/groups/${p.group.code}/me`, { method: "DELETE" });
+    await this.refresh();
+  },
+  async saveWeights(id: string, weights: number[]) {
+    return upsert(await api<Project>(`/projects/${id}/rubric`, json("PATCH", { weights })));
   },
 
   async remove(id: string) {

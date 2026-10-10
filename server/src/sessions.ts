@@ -2,6 +2,7 @@ import { generateJson } from "./analysis";
 import { SAMPLE_MANUSCRIPT, manuscriptFacts, parseSetup, plannedMainQuestions, type Difficulty, type Mode } from "./panel";
 import { CRITERIA, DEFAULT_WEIGHTS, band, delivery, readiness, type Severity } from "./scoring";
 import { collection, store } from "./store";
+import { accessibleProject } from "./groups";
 
 // A finished practice session and its report (plan F14, addendum Q3/Q4). Transcripts only; audio is never stored.
 
@@ -44,6 +45,9 @@ export type Session = {
   status: "scoring" | "ready" | "failed";
   error?: string;
   projectId?: string;
+  groupCode?: string;
+  focusArea?: string;
+  manuscriptContext?: string; // private scoring snapshot, survives leaving a group
   title: string; // the manuscript's title, or the sample paper
   mode: Mode;
   domain: string;
@@ -97,9 +101,13 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     Array.isArray(w) && w.length === 5 && w.every((x) => typeof x === "number" && x >= 0) && w.some((x) => x > 0)
       ? (w as number[])
       : DEFAULT_WEIGHTS;
-  const project = setup.projectId ? await store.get(uid, setup.projectId) : null;
+  const project = setup.projectId ? await accessibleProject(uid, setup.projectId) : null;
+  if (setup.projectId && (!project?.analysis || !project.confirmedAt)) return null;
   return {
     projectId: project?.id,
+    groupCode: project?.group?.code,
+    focusArea: project?.group?.focusArea,
+    manuscriptContext: project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT,
     title: project?.analysis?.title || project?.name || "Sample paper (ReqTrack)",
     mode: setup.mode,
     domain: setup.domain,
@@ -109,7 +117,7 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     difficulty: setup.difficulty,
     durationMs: num(b.durationMs),
     endedBy: b.endedBy === "panel" ? "panel" : "student",
-    weights,
+    weights: project?.weights ?? weights,
     turns,
     lines,
     flags,
@@ -222,7 +230,9 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
   if (answered === 0) return unscored(s, d, planned);
 
   const project = s.projectId ? await store.get(uid, s.projectId) : null;
-  const j = await judge(scoringPrompt(s, project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT));
+  const j = await judge(
+    scoringPrompt(s, s.manuscriptContext ?? (project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT)),
+  );
 
   const levelOf = (key: string) => Math.round(Math.min(5, Math.max(1, j.criteria.find((c) => c.key === key)?.level ?? 3)));
   const criteria = CRITERIA.map((c, i) => ({
@@ -267,7 +277,11 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
 }
 
 // A real answer: 3+ words that contain letters or digits ("I'm not sure." counts; "uh" or "..." doesn't).
-export const substantive = (answer: string) => answer.trim().split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length >= 3;
+export const substantive = (answer: string) =>
+  answer
+    .trim()
+    .split(/\s+/)
+    .filter((w) => /[a-z0-9]/i.test(w)).length >= 3;
 
 // Nothing answered: no score, no AI call, just what to do next time.
 function unscored(s: Omit<Session, "report">, d: ReturnType<typeof delivery>, planned: number): Report {
@@ -280,7 +294,13 @@ function unscored(s: Omit<Session, "report">, d: ReturnType<typeof delivery>, pl
     penalty: 0,
     answered: 0,
     planned,
-    criteria: CRITERIA.map((c, i) => ({ key: c.key, name: c.name, weight: s.weights[i] ?? 0, level: null, why: "No answers to judge." })),
+    criteria: CRITERIA.map((c, i) => ({
+      key: c.key,
+      name: c.name,
+      weight: s.weights[i] ?? 0,
+      level: null,
+      why: "No answers to judge.",
+    })),
     contradictions: [],
     turns: s.turns.map(() => ({ feedback: "No answer to give feedback on.", betterAnswer: "" })),
     fixes: [{ text: "Answer at least one question, out loud or typed, so the panel has something to score.", turn: null }],
