@@ -21,7 +21,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Planned features not built yet
 
-- [ ] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area.
+- [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
 - [ ] **PDF export and read-only share link** (F16, addendum Q2), Premium. The link expires after 7 days.
 - [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) mapped onto the five criteria, with weights the student reviews.
 - [ ] **Download my data** (§17 user rights).
@@ -43,6 +43,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] Register agent-device MCP in Codex using the existing global installation; verify initialization and tool discovery (59 tools).
 - [ ] Stray local branch `setup-firebase-auth` (not created during this work): delete if unused.
 
 ## Done

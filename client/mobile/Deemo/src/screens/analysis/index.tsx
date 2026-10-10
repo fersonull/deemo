@@ -12,6 +12,7 @@ import { colors, type } from "@/theme";
 
 import { Reading } from "./reading";
 import { SummaryCard } from "./summary-card";
+import { GroupCard } from "./group-card";
 
 type TextField = Exclude<keyof AnalysisData, "facts" | "unsure">;
 
@@ -106,6 +107,7 @@ export function Analysis({ id }: { id: string }) {
   }
 
   const a = project.analysis;
+  const readOnly = !!project.group && !project.group.isOwner;
   const save = (edits: Partial<AnalysisData>) => projects.saveAnalysis(id, edits).then(() => {});
 
   const go = async () => {
@@ -123,11 +125,17 @@ export function Analysis({ id }: { id: string }) {
 
   return (
     <Screen scroll onBack={back} title={"Here's what\nwe understood."}>
-      <Text style={styles.sub}>{"The panel asks questions from this. Fix anything that's off."}</Text>
+      <Text style={styles.sub}>
+        {readOnly
+          ? "Your group's shared summary. Ask your leader to correct anything that's off."
+          : "The panel asks questions from this. Fix anything that's off."}
+      </Text>
+      {project.confirmedAt ? <GroupCard project={project} onLeft={back} /> : null}
       <View style={styles.cards}>
         {CARDS.filter((c) => c.k !== "results" || a.results.trim()).map((c) => (
           <SummaryCard
             key={c.k}
+            readOnly={readOnly}
             title={c.title}
             body={a[c.k]}
             unsure={a.unsure.includes(c.k)}
@@ -136,9 +144,17 @@ export function Analysis({ id }: { id: string }) {
         ))}
         <SummaryCard
           title="KEY FACTS"
+          readOnly={readOnly}
           list
           body={a.facts.join("\n")}
-          onSave={(text) => save({ facts: text.split("\n").map((l) => l.replace(/^[•\-\s]+/, "").trim()).filter(Boolean) })}
+          onSave={(text) =>
+            save({
+              facts: text
+                .split("\n")
+                .map((l) => l.replace(/^[•\-\s]+/, "").trim())
+                .filter(Boolean),
+            })
+          }
         />
       </View>
       <Text style={styles.factsNote}>Key facts are what the panel checks your answers against.</Text>
@@ -146,13 +162,19 @@ export function Analysis({ id }: { id: string }) {
       <View style={styles.cta}>
         <Button label={project.confirmedAt ? "Practice with this" : "Looks right"} onPress={go} disabled={busy} />
       </View>
-      <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
-        <Text style={styles.textButtonLabel}>Delete project</Text>
-      </Pressable>
+      {!readOnly ? (
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
+          <Text style={styles.textButtonLabel}>Delete project</Text>
+        </Pressable>
+      ) : null}
 
       <Sheet visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
         <Text style={styles.sheetTitle}>Delete this project?</Text>
-        <Text style={styles.sub}>The summary and your corrections are removed for good. You can upload the manuscript again anytime.</Text>
+        <Text style={styles.sub}>
+          {project.group
+            ? "The summary and corrections are removed for good. Your group is dissolved and teammates lose manuscript access. Past sessions stay in each member's private history."
+            : "The summary and your corrections are removed for good. You can upload the manuscript again anytime."}
+        </Text>
         <View style={styles.cta}>
           <Button label={busy ? "Deleting…" : "Delete project"} onPress={remove} disabled={busy} />
         </View>

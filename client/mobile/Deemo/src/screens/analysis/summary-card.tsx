@@ -8,11 +8,12 @@ type Props = {
   body: string; // a list card holds one item per line
   list?: boolean;
   unsure?: boolean;
+  readOnly?: boolean;
   onSave: (text: string) => Promise<void>;
 };
 
 // One card of "Here's what we understood": read, or edit in place and save.
-export function SummaryCard({ title, body, list, unsure, onSave }: Props) {
+export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -43,7 +44,7 @@ export function SummaryCard({ title, body, list, unsure, onSave }: Props) {
             <Text style={styles.badgeText}>AI unsure</Text>
           </View>
         ) : null}
-        {!editing ? (
+        {!editing && !readOnly ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Edit ${title.toLowerCase()}`}
@@ -94,7 +95,14 @@ export function SummaryCard({ title, body, list, unsure, onSave }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1.5, borderColor: "transparent" },
+  card: {
+    backgroundColor: colors.sand,
+    borderRadius: radius.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+  },
   unsure: { borderColor: "rgba(235,179,83,0.7)" },
   editing: { borderColor: colors.dusk },
   head: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 28 },

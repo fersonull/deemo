@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { KeyboardAvoidingView, Modal, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
@@ -38,18 +38,27 @@ export function Sheet({ visible, onClose, children }: Props) {
   const card = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - progress.value) * cardHeight.value }] }));
 
   return (
-    <Modal visible={mounted} transparent animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdrop]}>
-        <Pressable accessibilityLabel="Close" style={styles.flex} onPress={onClose} />
-      </Animated.View>
-      <View style={styles.flex} pointerEvents="box-none" />
-      <Animated.View
-        style={[styles.card, { paddingBottom: 26 + bottom }, card]}
-        onLayout={(e) => (cardHeight.value = e.nativeEvent.layout.height)}
-      >
-        <View style={styles.grabber} />
-        {children}
-      </Animated.View>
+    <Modal
+      visible={mounted}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
+        <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdrop]}>
+          <Pressable accessibilityLabel="Close" style={styles.flex} onPress={onClose} />
+        </Animated.View>
+        <View style={styles.flex} pointerEvents="box-none" />
+        <Animated.View
+          style={[styles.card, { paddingBottom: 26 + bottom }, card]}
+          onLayout={(e) => (cardHeight.value = e.nativeEvent.layout.height)}
+        >
+          <View style={styles.grabber} />
+          {children}
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

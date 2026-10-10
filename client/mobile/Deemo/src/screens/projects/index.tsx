@@ -11,6 +11,7 @@ import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 
 import { UploadSheet } from "./upload-sheet";
+import { JoinSheet } from "./join-sheet";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -21,12 +22,12 @@ function describe(p: Project): { icon: string; meta: string } {
   return { icon: "description", meta: `${p.domain} · analyzed ${day(p.createdAt)}` };
 }
 
-// Projects (plan S-05/S-06): one manuscript per project. Group join codes come later (addendum Q10).
+// Owned and joined manuscripts share the same project list (addendum Q10).
 export function Projects() {
   const { projects: list, loaded, error } = useProjects();
   const { projectId } = usePracticeSetup();
   const { premium } = useSession();
-  const [sheet, setSheet] = useState<"upload" | "upsell" | null>(null);
+  const [sheet, setSheet] = useState<"upload" | "upsell" | "join" | null>(null);
   // Free tier holds one manuscript; delete it to upload another (addendum Q1).
   const locked = !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
 
@@ -52,8 +53,8 @@ export function Projects() {
               onPress={() => open(p)}
               style={({ pressed }) => [styles.card, pressed && styles.pressed]}
             >
-              <View style={styles.tile}>
-                <Icon name={icon} size={21} color={p.status === "failed" ? colors.clay : colors.duskIcon} />
+              <View style={[styles.tile, p.group && styles.shared]}>
+                <Icon name={p.group ? "group" : icon} size={21} color={p.status === "failed" ? colors.clay : colors.duskIcon} />
               </View>
               <View style={styles.flex}>
                 <Text style={styles.cardTitle} numberOfLines={2}>
@@ -66,7 +67,7 @@ export function Projects() {
                       <Text style={styles.chipText}>Practicing</Text>
                     </View>
                   ) : null}
-                  <Text style={[styles.meta, styles.flex]}>{meta}</Text>
+                  <Text style={[styles.meta, styles.flex]}>{p.group ? `Shared · ${p.domain}` : meta}</Text>
                 </View>
               </View>
             </Pressable>
@@ -89,6 +90,22 @@ export function Projects() {
         <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
       </Pressable>
       {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
+      <Pressable accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
+        <Icon name="group_add" size={22} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={styles.cardTitle}>Join with a code</Text>
+          <Text style={styles.meta}>6 characters, from your group leader</Text>
+        </View>
+        <Icon name="chevron_right" size={20} color={colors.muted} />
+      </Pressable>
+      <JoinSheet
+        visible={sheet === "join"}
+        onClose={() => setSheet(null)}
+        onJoined={(p) => {
+          setSheet(null);
+          open(p);
+        }}
+      />
 
       <UploadSheet
         visible={sheet === "upload"}
@@ -112,6 +129,8 @@ export function Projects() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  shared: { borderWidth: 2, borderColor: colors.dusk },
+  join: { marginTop: 10, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.sand, alignItems: "center" },
   list: { gap: 8, marginTop: 18 },
   card: {
     flexDirection: "row",
@@ -122,7 +141,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   pressed: { opacity: 0.85 },
-  tile: { width: 42, height: 42, borderRadius: radius.md, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  tile: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: colors.paper,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   cardTitle: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14.5, lineHeight: 19.5, color: colors.ink },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
   meta: { ...type.meta, lineHeight: 17 },
