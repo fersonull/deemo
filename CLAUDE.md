@@ -2,7 +2,7 @@
 
 Voice-based AI mock panel for BSIT capstone defense practice (Title / Pre-Oral / Final). The AI panel reads the student's manuscript, asks questions out loud, flags contradictions, and scores against a rubric.
 
-Specs: `docs/DEEMO_Mobile_App_Plan.md`. `docs/DEEMO_Plan_Addendum.md` **overrides §10–14** (AI pipeline, architecture, stack, API) and answers the open questions — read it first for anything live-session related.
+Specs: `docs/DEEMO_Mobile_App_Plan.md`. What is built and what is left: `docs/TASKS.md` (keep it current). `docs/DEEMO_Plan_Addendum.md` **overrides §10–14** (AI pipeline, architecture, stack, API) and answers the open questions — read it first for anything live-session related.
 
 ## Layout
 
