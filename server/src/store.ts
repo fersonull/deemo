@@ -12,6 +12,7 @@ export type Analysis = {
   results: string; // "" before the results chapter exists (Title / Pre-Oral)
   facts: string[]; // checkable claims for the consistency checker, e.g. "30 respondents (Ch. 3)"
   unsure: string[]; // fields the model couldn't find clearly
+  model?: string; // which Flash model read it (FLASH_MODELS)
 };
 
 export type Project = {

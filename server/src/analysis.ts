@@ -3,7 +3,9 @@ import mammoth from "mammoth";
 import type { Analysis } from "./store";
 
 // Document Logic Analysis (plan F2, addendum B3): a regular Flash model, before the session.
-export const ANALYSIS_MODEL = "models/gemini-3.8-flash"; // check the Models page before changing
+// Flash models for analysis and scoring, best first; the next one takes over when one is rate-limited, over quota
+// or unavailable (addendum B3: model names change often, check the Models page before changing this list).
+export const FLASH_MODELS = ["models/gemini-3.8-flash", "models/gemini-3.7-flash", "models/gemini-3.6-flash", "models/gemini-3.5-flash"];
 
 export const MAX_BYTES = 20 * 1024 * 1024; // Gemini's inline request limit
 export const PDF = "application/pdf";
@@ -65,7 +67,7 @@ export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysi
     doc = { text };
   }
 
-  const text = await generateJson({
+  const { text, model } = await generateJson({
     contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
     generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0.2 },
   });
@@ -74,39 +76,34 @@ export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysi
     notManuscriptReason: string;
   };
   if (!isManuscript) throw new Rejected(notManuscriptReason || "This doesn't look like a research manuscript.");
-  return analysis;
+  return { ...analysis, model };
 }
 
-// Gemini is rate-limited or overloaded and asked for a wait we won't sit through (e.g. a daily cap).
+// Every Flash model in the chain was rate-limited, over quota or unavailable.
 export class Busy extends Error {}
 
-const retryDelaySeconds = (body: string) => {
-  const m = body.match(/"retryDelay":\s*"(\d+(?:\.\d+)?)s"/);
-  return m ? Number(m[1]) : null;
-};
-
-// One Flash call that returns the response text. A 429/503 with a short retry hint is retried up to twice;
-// a long one fails fast as Busy so the student hears "busy", not "couldn't read".
-export async function generateJson(body: object): Promise<string> {
-  for (let attempt = 0; ; attempt++) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ANALYSIS_MODEL}:generateContent`, {
+// One Flash call: the first model in FLASH_MODELS that answers wins. A rate limit, quota cap (each model has its
+// own), overload or retired model moves on to the next one; only a bad key or request stops the chain early.
+export async function generateJson(body: object): Promise<{ text: string; model: string }> {
+  let busy = false;
+  let last = "";
+  for (const model of FLASH_MODELS) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
       method: "POST",
       headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
       body: JSON.stringify(body),
     });
     if (r.ok) {
       const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-      return json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      if (text) return { text, model: model.replace("models/", "") };
+      last = `${model}: empty response`;
+      continue;
     }
-    const detail = await r.text();
-    if (r.status === 429 || r.status === 503) {
-      const wait = retryDelaySeconds(detail) ?? 5;
-      if (attempt < 2 && wait <= 20) {
-        await Bun.sleep(wait * 1000);
-        continue;
-      }
-      throw new Busy(`gemini ${r.status}: ${detail.slice(0, 300)}`);
-    }
-    throw new Error(`gemini ${r.status}: ${detail.slice(0, 300)}`);
+    last = `${model} ${r.status}: ${(await r.text()).slice(0, 200)}`;
+    if (r.status === 401 || r.status === 403) break; // the key itself is the problem; every model would fail
+    if (r.status === 429 || r.status === 503) busy = true;
+    console.warn("gemini fallback:", last);
   }
+  throw busy ? new Busy(last) : new Error(last);
 }

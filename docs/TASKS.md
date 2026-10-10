@@ -4,7 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
-- [ ] **Gemini paid tier.** The API key is on the free tier (`generate_content_free_tier_requests`, 20 requests/day per model). It runs out during normal testing, and free-tier inputs may be reviewed by humans, which the plan forbids for unpublished manuscripts and student transcripts (addendum Q9, CLAUDE.md scope guards). Enable billing on the key's Google Cloud project and set billing alerts. *Owner: you.*
+- [ ] **Gemini paid tier.** The API key is on the free tier (`generate_content_free_tier_requests`, 20 requests/day per model). It runs out during normal testing, and free-tier inputs may be reviewed by humans, which the plan forbids for unpublished manuscripts and student transcripts (addendum Q9, CLAUDE.md scope guards). Enable billing on the key's Google Cloud project and set billing alerts. *Owner: you.* (Backup Flash models now keep analysis and scoring running when one model's quota runs out, but that doesn't fix the privacy issue.)
 
 ## Must do before the 40-student evaluation
 
@@ -57,6 +57,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 | S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, length, Coach/Panel feedback, manuscript, scoring |
 | S-10 Live session (F6–F13, F13a) | Gemini Live voice panel through an ephemeral token; adaptive questions from the manuscript; follow-up limit enforced in code; question-type chips; live transcript; contradiction flags; answer timing; pause/resume; reconnect; up to 3 personas, one voice; typed-answer fallback; noise gate and platform noise suppression |
 | S-11 Paused | Pause overlay, timers frozen |
+| Model fallback | Analysis and scoring try gemini-3.8 → 3.7 → 3.6 → 3.5 Flash; each report and analysis records which model answered |
 | S-12 Report (F14) | Readiness score with its formula, top fixes, verified contradictions, rubric breakdown, response times, per-question feedback and stronger answers, transcript; Premium gating |
 | S-13 History (F15) | Readiness trend chart, stage filters |
 | S-14 Subscription (F18) | Simulated Premium (demo upgrade); free-tier limits enforced on the server |

@@ -27,6 +27,7 @@ export type Report = {
   penalty: number;
   answered: number;
   planned: number;
+  model?: string; // which Flash model judged it; levels can differ between models
   scored: boolean; // false: nothing was answered, so there is no readiness score (it stays out of the trend)
   criteria: { key: string; name: string; weight: number; level: number | null; why: string }[]; // null: not measured
   contradictions: { spokenClaim: string; manuscriptEvidence: string; severity: Severity; turn: number | null }[];
@@ -197,12 +198,12 @@ Return:
 - headline: one honest, encouraging sentence for the top of the report, e.g. "Nice recovery on question 2. Next time, state your sample size first."`;
 }
 
-async function judge(prompt: string): Promise<Judgment> {
-  const text = await generateJson({
+async function judge(prompt: string): Promise<Judgment & { model: string }> {
+  const { text, model } = await generateJson({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 }, // same answers, same levels
   });
-  return JSON.parse(text) as Judgment;
+  return { ...(JSON.parse(text) as Judgment), model };
 }
 
 // Rubric levels and wording from Flash; delivery, verified contradictions and the score from code.
@@ -246,6 +247,7 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
   return {
     ...band(r.score),
     scored: true,
+    model: j.model,
     score: r.score,
     rubricScore: r.rubricScore,
     penalty: r.penalty,
