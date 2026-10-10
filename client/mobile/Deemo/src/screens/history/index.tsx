@@ -42,7 +42,7 @@ export function History() {
   );
 
   return (
-    <Screen scroll tabBar title="History" subtitle={trend(list)}>
+    <Screen scroll tabBar title="History" subtitle={trend(list)} onRefresh={sessions.refresh}>
       <TrendChart sessions={list} />
       {all.length ? (
         <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>

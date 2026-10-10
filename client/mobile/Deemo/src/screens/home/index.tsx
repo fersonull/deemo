@@ -8,6 +8,7 @@ import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
+import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
@@ -23,6 +24,8 @@ function greeting(hour: number) {
   if (hour < 18) return "Afternoon";
   return "Evening";
 }
+
+const reload = () => Promise.all([sessions.refresh(), projects.refresh()]);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -47,10 +50,11 @@ export function Home() {
   );
 
   const open = (id: string) => router.push({ pathname: "/results", params: { id } });
+  const refresh = usePullRefresh(reload);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} refreshControl={refresh}>
         <View style={styles.head}>
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}

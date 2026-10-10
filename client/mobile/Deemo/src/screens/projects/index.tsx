@@ -41,7 +41,7 @@ export function Projects() {
   const open = (p: Project) => router.push({ pathname: "/analysis", params: { id: p.id } });
 
   return (
-    <Screen scroll tabBar title="Projects" subtitle="One manuscript per project.">
+    <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={projects.refresh}>
       <View style={styles.list}>
         {list.map((p) => {
           const active = p.id === projectId;
