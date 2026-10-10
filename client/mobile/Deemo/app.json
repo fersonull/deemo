@@ -18,7 +18,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -128,7 +129,10 @@
           "iosMicrophonePermission": "DEEMO uses the microphone so the AI panel can hear your answers.",
           "disableFFmpeg": true
         }
-      ]
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "react-native-nitro-google-signin"
     ],
     "experiments": {
       "typedRoutes": true,

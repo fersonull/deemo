@@ -37,7 +37,10 @@ export function Screen({ title, subtitle, onBack, scroll, tabBar, children }: Pr
         </View>
       ) : null}
       {scroll ? (
-        <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: onBack ? 0 : 14, paddingBottom: tabBar ? 120 : 24 }]}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled" // buttons work on the first tap while the keyboard is up
+          contentContainerStyle={[styles.scroll, { paddingTop: onBack ? 0 : 14, paddingBottom: tabBar ? 120 : 24 }]}
+        >
           {body}
         </ScrollView>
       ) : (

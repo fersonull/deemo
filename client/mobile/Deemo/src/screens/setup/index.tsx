@@ -1,17 +1,20 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
-import { MODE_LABELS, type Mode } from "@/constants";
+import { UpsellSheet } from "@/components/upsell-sheet";
+import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, radius, type } from "@/theme";
 
 import { Segmented } from "./segmented";
-import { DomainSheet, UpsellSheet } from "./sheets";
+import { DomainSheet } from "./sheets";
+import { FocusArea } from "./focus-area";
 
 const MODES: { value: Mode; desc: string }[] = [
   { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },
@@ -30,10 +33,61 @@ export function Setup() {
   const { premium } = useSession();
   const [sheet, setSheet] = useState<"domain" | "upsell" | null>(null);
   const upsell = () => setSheet("upsell");
+  const list = useProjects();
+  const manuscript = list.projects.find((p) => p.id === setup.projectId);
+
+  useFocusEffect(
+    useCallback(() => {
+      void projects.refresh();
+    }, []),
+  );
 
   return (
     <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
-      <Pressable accessibilityRole="button" accessibilityHint="Change domain" onPress={() => setSheet("domain")} style={styles.domain}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
+        onPress={() => router.push("/projects")}
+        style={styles.manuscript}
+      >
+        <Icon name="description" size={20} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={type.label}>MANUSCRIPT</Text>
+          <Text style={styles.manuscriptName} numberOfLines={1}>
+            {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
+          </Text>
+        </View>
+        <View style={styles.change}>
+          <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
+        </View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Change the rubric weights"
+        onPress={() => router.push("/rubric")}
+        style={[styles.manuscript, styles.rubricRow]}
+      >
+        <Icon name="balance" size={20} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={type.label}>SCORING</Text>
+          <Text style={styles.manuscriptName} numberOfLines={1}>
+            {manuscript?.group
+              ? "Shared group rubric"
+              : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
+                ? "Default rubric"
+                : "Your rubric weights"}
+          </Text>
+        </View>
+        <View style={styles.change}>
+          <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
+        </View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Change domain"
+        onPress={() => setSheet("domain")}
+        style={styles.domain}
+      >
         <Icon name="category" size={16} color={colors.duskIcon} />
         <Text style={styles.domainText}>
           Domain: <Text style={styles.domainValue}>{setup.domain}</Text>
@@ -85,6 +139,25 @@ export function Setup() {
         options={[10, 15, 25].map((n) => ({ value: n, label: `${n} min`, locked: n > 10 && !premium }))}
       />
 
+      <Text style={[type.label, styles.section]}>FOLLOW-UPS PER TOPIC</Text>
+      <Segmented
+        label="Follow-ups per topic"
+        value={setup.followUps}
+        onChange={(followUps) => practiceSetup.set({ followUps })}
+        onLocked={upsell}
+        options={[0, 1, 2, 3].map((n) => ({ value: n, label: n === 0 ? "None" : String(n) }))}
+      />
+
+      <Text style={[type.label, styles.section]}>DIFFICULTY</Text>
+      <Segmented
+        label="Difficulty"
+        value={setup.difficulty}
+        onChange={(difficulty) => practiceSetup.set({ difficulty })}
+        onLocked={upsell}
+        options={(["EASY", "STANDARD", "HARD"] as const).map((d) => ({ value: d, label: DIFFICULTY_LABELS[d] }))}
+      />
+
+      {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
       <Text style={[type.label, styles.section]}>FEEDBACK</Text>
       <View accessibilityRole="radiogroup" accessibilityLabel="Feedback" style={styles.feedback}>
         {FEEDBACK.map((f) => {
@@ -131,7 +204,20 @@ export function Setup() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
+  manuscript: {
+    marginTop: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+    paddingLeft: 14,
+    paddingRight: 8,
+    borderRadius: radius.lg,
+    backgroundColor: colors.sand,
+  },
+  manuscriptName: { ...type.bodyStrong, marginTop: 2 },
+  rubricRow: { marginTop: 8 },
   domain: {
     alignSelf: "flex-start",
     marginTop: 12,

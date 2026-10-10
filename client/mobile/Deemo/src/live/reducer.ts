@@ -1,6 +1,6 @@
 import type { AskQuestion, Line, LiveEvent, LiveState } from "./types";
 
-export const FOLLOW_UP_LIMIT = 2; // Bounded Adaptive Follow-Up default (plan F8)
+export const FOLLOW_UP_LIMIT = 2; // Bounded Adaptive Follow-Up default (plan F8); setup can change it
 
 export const initialLiveState: LiveState = {
   phase: "connecting",
@@ -15,20 +15,23 @@ export const initialLiveState: LiveState = {
   flags: [],
   turns: [],
   followUps: {},
+  followUpLimit: FOLLOW_UP_LIMIT,
   level: 0,
 };
 
 // The client-side tool handler's rule: the AI can't exceed the follow-up limit even if it tries.
-export function canAsk(state: LiveState, q: AskQuestion, limit = FOLLOW_UP_LIMIT): boolean {
-  return !q.isFollowUp || (state.followUps[q.topicId] ?? 0) < limit;
-}
-
-function append(partial: Line | null, who: Line["who"], text: string): Line {
-  return partial && partial.who === who ? { ...partial, text: partial.text + text } : { who, text };
+export function canAsk(state: LiveState, q: AskQuestion): boolean {
+  return !q.isFollowUp || (state.followUps[q.topicId] ?? 0) < state.followUpLimit;
 }
 
 function finish(s: LiveState): Line[] {
   return s.partial && s.partial.text.trim() ? [...s.lines, { ...s.partial, text: s.partial.text.trim() }] : s.lines;
+}
+
+// Adds a transcription chunk; a different speaker's unfinished line is closed first, never dropped.
+function append(s: LiveState, who: Line["who"], text: string): Pick<LiveState, "lines" | "partial"> {
+  if (s.partial?.who === who) return { lines: s.lines, partial: { ...s.partial, text: s.partial.text + text } };
+  return { lines: finish(s), partial: { who, text } };
 }
 
 export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
@@ -51,19 +54,46 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       };
     }
 
-    case "panelText":
-      return { ...s, partial: append(s.partial, s.phase === "ending" ? 0 : (s.question?.panelist ?? 0), e.text) };
+    case "panelText": {
+      const who = s.phase === "ending" ? 0 : (s.question?.panelist ?? 0);
+      if (s.phase !== "thinking") return { ...s, ...append(s, who, e.text) };
+      // The panel spoke without ask_question (a rephrase or challenge, seen after reconnects).
+      // Count it as a follow-up on the current topic so the limit still holds for the next tool call.
+      const q = s.question;
+      if (!q) return { ...s, ...append(s, who, e.text), phase: "speaking" };
+      const followUp = (s.followUps[q.topicId] ?? 0) + 1;
+      return {
+        ...s,
+        ...append(s, who, e.text),
+        phase: "speaking",
+        question: { ...q, isFollowUp: true, followUp },
+        followUps: { ...s.followUps, [q.topicId]: followUp },
+      };
+    }
 
-    case "panelDone":
-      return s.phase === "ending"
-        ? { ...s, lines: finish(s), partial: null }
-        : { ...s, phase: "listening", lines: finish(s), partial: null, responseMs: 0, firstSpeechMs: null };
+    case "panelDone": {
+      if (s.phase === "ending") return { ...s, lines: finish(s), partial: null };
+      const phase = s.question ? "listening" : "presentation"; // no question yet: the panel let the presentation run on
+      return { ...s, phase, lines: finish(s), partial: null, responseMs: 0, firstSpeechMs: null };
+    }
 
     case "youText": {
+      // Gemini transcribes a manual turn only after the student taps done, so text can land while "thinking".
+      if (s.phase === "thinking") {
+        const last = s.turns.at(-1);
+        const turns =
+          last && last.question === s.question
+            ? [...s.turns.slice(0, -1), { ...last, answer: (last.answer + e.text).trim() }]
+            : s.turns;
+        return { ...s, ...append(s, "you", e.text), turns };
+      }
       if (s.phase !== "listening" && s.phase !== "presentation") return s;
       const first = s.phase === "listening" && s.firstSpeechMs === null ? s.responseMs : s.firstSpeechMs;
-      return { ...s, partial: append(s.partial, "you", e.text), firstSpeechMs: first };
+      return { ...s, ...append(s, "you", e.text), firstSpeechMs: first };
     }
+
+    case "youSpeaking": // mic heard speech: the latency mark when transcription comes later
+      return s.phase === "listening" && s.firstSpeechMs === null ? { ...s, firstSpeechMs: s.responseMs } : s;
 
     case "youDone": {
       if (s.phase !== "listening" && s.phase !== "presentation") return s;

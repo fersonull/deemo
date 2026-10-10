@@ -45,6 +45,7 @@ export type LiveState = {
   flags: Inconsistency[];
   turns: Turn[];
   followUps: Record<string, number>;
+  followUpLimit: number; // per topic, chosen in setup (plan F8)
   level: number; // 0..1 mic level for the mic ring
 };
 
@@ -56,6 +57,7 @@ export type LiveEvent =
   | { type: "panelText"; text: string } // output transcription chunk
   | { type: "panelDone" } // panel finished speaking
   | { type: "youText"; text: string } // input transcription chunk
+  | { type: "youSpeaking" } // first speech heard on the mic this turn
   | { type: "youDone" } // student finished their turn
   | { type: "flag"; flag: Omit<Inconsistency, "atMs"> } // flag_inconsistency tool call
   | { type: "end" } // end_session tool call

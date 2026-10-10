@@ -1,19 +1,5 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Profile } from "@/screens/profile";
 
-import { Screen } from "@/components/screen";
-import { session } from "@/hooks/use-session";
-import { colors, type } from "@/theme";
-
-export default function Profile() {
-  return (
-    <Screen scroll tabBar title="Profile">
-      <Pressable accessibilityRole="button" onPress={session.signOut} style={styles.row}>
-        <Text style={type.bodyStrong}>Sign out</Text>
-      </Pressable>
-    </Screen>
-  );
+export default function ProfileRoute() {
+  return <Profile />;
 }
-
-const styles = StyleSheet.create({
-  row: { height: 56, justifyContent: "center", marginTop: 16, borderTopWidth: 1, borderTopColor: colors.border },
-});

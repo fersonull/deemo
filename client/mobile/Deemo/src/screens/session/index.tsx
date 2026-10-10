@@ -10,6 +10,8 @@ import { Sheet } from "@/components/sheet";
 import { MODE_LABELS } from "@/constants";
 import { useLiveSession } from "@/hooks/use-live-session";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
+import { useSession } from "@/hooks/use-session";
+import { sessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 
@@ -23,6 +25,7 @@ import { Transcript } from "./transcript";
 export function Session() {
   useKeepAwake();
   const setup = usePracticeSetup();
+  const { allowTyping } = useSession(); // Profile setting
   const { state: s, finishTurn, sendText, pause, resume, stop } = useLiveSession();
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [heldBySheet, setHeldBySheet] = useState(false);
@@ -47,13 +50,14 @@ export function Session() {
     setHeldBySheet(false);
   };
 
-  const leave = () => {
+  const leave = (endedBy: "panel" | "student" = "student") => {
     stop();
+    sessions.submitLive(s, endedBy); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
 
   useEffect(() => {
-    if (s.phase === "ended") leave();
+    if (s.phase === "ended") leave("panel");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- leave once, when the panel closes
   }, [s.phase]);
 
@@ -124,7 +128,14 @@ export function Session() {
           ))}
         </View>
 
-        <QuestionCard phase={s.phase} question={s.question} closing={closing} count={count} onDonePresenting={finishTurn} />
+        <QuestionCard
+          phase={s.phase}
+          question={s.question}
+          closing={closing}
+          count={count}
+          followUpLimit={s.followUpLimit}
+          onDonePresenting={finishTurn}
+        />
 
         <Transcript lines={s.lines} partial={s.partial} coach={setup.coach} />
 
@@ -160,15 +171,19 @@ export function Session() {
             />
             <Text style={styles.micLabel}>{micLabel}</Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Type an answer instead"
-            accessibilityState={{ expanded: typing }}
-            onPress={() => setTyping(!typing)}
-            style={[styles.round, typing && { backgroundColor: colors.duskTint }]}
-          >
-            <Icon name="keyboard" size={24} />
-          </Pressable>
+          {allowTyping ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Type an answer instead"
+              accessibilityState={{ expanded: typing }}
+              onPress={() => setTyping(!typing)}
+              style={[styles.round, typing && { backgroundColor: colors.duskTint }]}
+            >
+              <Icon name="keyboard" size={24} />
+            </Pressable>
+          ) : (
+            <View style={styles.roundSpacer} /> // keeps the mic centered
+          )}
         </View>
       </KeyboardAvoidingView>
 
@@ -180,7 +195,7 @@ export function Session() {
           {`You'll still get a report for the ${answered} ${answered === 1 ? "question" : "questions"} you've answered.`}
         </Text>
         <View style={styles.sheetCta}>
-          <Button label="End and see report" onPress={leave} />
+          <Button label="End and see report" onPress={() => leave("student")} />
         </View>
         <Pressable accessibilityRole="button" onPress={keepGoing} style={styles.keepGoing}>
           <Text style={[type.button, styles.keepGoingText]}>Keep going</Text>
@@ -216,6 +231,7 @@ const styles = StyleSheet.create({
   input: { ...type.body, flex: 1, height: 48, borderRadius: 24, backgroundColor: colors.sand, paddingHorizontal: 16 },
   sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center" },
   bottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, paddingHorizontal: 18, paddingBottom: 16 },
+  roundSpacer: { width: 56, height: 56 },
   round: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.sand, alignItems: "center", justifyContent: "center" },
   micCol: { alignItems: "center", gap: 6 },
   micLabel: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 12, color: colors.inkMuted, height: 16 },

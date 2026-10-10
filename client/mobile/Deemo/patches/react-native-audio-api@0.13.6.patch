@@ -1,0 +1,17 @@
+diff --git a/android/src/main/cpp/audioapi/android/core/AndroidAudioRecorder.cpp b/android/src/main/cpp/audioapi/android/core/AndroidAudioRecorder.cpp
+index 0f997f8ebaae0243057cc920be5c86a7fbf679ad..3a67d65b670181fd68b6794e32bcde84a3ed6328 100644
+--- a/android/src/main/cpp/audioapi/android/core/AndroidAudioRecorder.cpp
++++ b/android/src/main/cpp/audioapi/android/core/AndroidAudioRecorder.cpp
+@@ -69,7 +69,11 @@ Result<NoneType, std::string> AndroidAudioRecorder::openAudioStream() {
+   }
+ 
+   oboe::AudioStreamBuilder builder;
+-  builder.setSharingMode(oboe::SharingMode::Exclusive)
++  // DEEMO patch: VoiceCommunication turns on the platform's call-grade noise suppression and echo
++  // cancellation (the default VoiceRecognition preset is unprocessed). Shared mode, because the
++  // exclusive (MMAP) path skips those effects.
++  builder.setSharingMode(oboe::SharingMode::Shared)
++      ->setInputPreset(oboe::InputPreset::VoiceCommunication)
+       ->setDirection(oboe::Direction::Input)
+       ->setFormat(oboe::AudioFormat::Float)
+       ->setFormatConversionAllowed(true)

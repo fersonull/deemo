@@ -1,0 +1,111 @@
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { Screen } from "@/components/screen";
+import { MODE_LABELS, type Mode } from "@/constants";
+import { sessions, useSessions, type SessionSummary } from "@/hooks/use-sessions";
+import { colors, fonts, radius, type } from "@/theme";
+import { formatTime } from "@/utils/format-time";
+
+import { TrendChart } from "./trend-chart";
+
+const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+function trend(list: SessionSummary[]) {
+  const scored = list.filter((s) => s.score !== undefined);
+  if (scored.length < 2) return "Every session you finish shows up here.";
+  const diff = (scored[0].score ?? 0) - (scored[scored.length - 1].score ?? 0);
+  if (diff > 0) return `Up ${diff} points since your first session.`;
+  if (diff < 0) return `Down ${-diff} points since your first session. Keep practicing the flagged topics.`;
+  return "Level with your first session.";
+}
+
+const FILTERS: { label: string; mode: Mode | null }[] = [
+  { label: "All", mode: null },
+  { label: "Title", mode: "TITLE" },
+  { label: "Pre-Oral", mode: "PRE_ORAL" },
+  { label: "Final", mode: "FINAL" },
+];
+
+// History (plan S-13): readiness over time, filterable by defense stage; tap a row for its report.
+export function History() {
+  const { list: all, loaded, error } = useSessions();
+  const [mode, setMode] = useState<Mode | null>(null);
+  const list = mode ? all.filter((s) => s.mode === mode) : all;
+
+  useFocusEffect(
+    useCallback(() => {
+      void sessions.refresh();
+    }, []),
+  );
+
+  return (
+    <Screen scroll tabBar title="History" subtitle={trend(list)}>
+      <TrendChart sessions={list} />
+      {all.length ? (
+        <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>
+          {FILTERS.map((f) => {
+            const selected = f.mode === mode;
+            return (
+              <Pressable
+                key={f.label}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                onPress={() => setMode(f.mode)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{f.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      <View style={styles.list}>
+        {list.map((s) => (
+          <Pressable
+            key={s.id}
+            accessibilityRole="button"
+            accessibilityHint="Opens the report"
+            onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
+            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+          >
+            <View style={styles.flex}>
+              <Text style={styles.mode}>{MODE_LABELS[s.mode]}</Text>
+              <Text style={styles.meta} numberOfLines={1}>
+                {day(s.createdAt)} · {formatTime(s.durationMs)} · {s.title}
+              </Text>
+            </View>
+            <Text style={[styles.score, s.score === undefined && styles.pending]}>
+              {s.score ?? (s.status === "scoring" ? "…" : "–")}
+            </Text>
+          </Pressable>
+        ))}
+        {loaded && error ? (
+          <Text style={styles.note}>{"Can't reach the DEEMO server right now."}</Text>
+        ) : loaded && all.length === 0 ? (
+          <Text style={styles.note}>No sessions yet. Your first report will land here.</Text>
+        ) : loaded && list.length === 0 ? (
+          <Text style={styles.note}>No sessions at this stage yet.</Text>
+        ) : null}
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0 },
+  list: { gap: 8, marginTop: 14 },
+  filters: { flexDirection: "row", gap: 6, marginTop: 16 },
+  chip: { height: 34, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
+  chipSelected: { backgroundColor: colors.ink },
+  chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
+  chipTextSelected: { color: colors.paper },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
+  pressed: { opacity: 0.85 },
+  mode: { ...type.heading, fontSize: 16 },
+  meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
+  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, color: colors.ink, fontVariant: ["tabular-nums"] },
+  pending: { color: colors.muted },
+  note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4 },
+});
