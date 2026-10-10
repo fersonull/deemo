@@ -7,17 +7,12 @@ import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
+import { initials } from "@/utils/initials";
 
 const PLANS = {
   free: { name: "Free plan", desc: "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript." },
   premium: { name: "Premium (demo)", desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report." },
 };
-
-function initials(name: string | null, email: string | null) {
-  const words = (name ?? "").trim().split(/\s+/).filter(Boolean);
-  if (words.length) return (words[0][0] + (words[1]?.[0] ?? "")).toUpperCase();
-  return (email ?? "?").slice(0, 2).toUpperCase();
-}
 
 // Profile (prototype profile screen): account, plan, the typed-answer setting, delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
