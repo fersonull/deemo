@@ -93,23 +93,30 @@ export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysi
 export class Busy extends Error {}
 
 // One Flash call: the first model in FLASH_MODELS that answers wins. A rate limit, quota cap (each model has its
-// own), overload or retired model moves on to the next one; only a bad key or request stops the chain early.
-const TIMEOUT_MS = 120_000; // per model: a long manuscript takes about a minute
+// own), overload, hang or retired model moves on to the next one; only a bad key or request stops the chain early.
+// A model that just timed out or said it's busy sits out for a few minutes, so the next request doesn't wait on it
+// again. If every model is sitting out, all are tried anyway.
+const COOLDOWN_MS = 5 * 60_000;
+const coolingUntil = new Map<string, number>();
 
-export async function generateJson(body: object): Promise<{ text: string; model: string }> {
+export async function generateJson(body: object, { timeoutMs = 120_000 } = {}): Promise<{ text: string; model: string }> {
   let busy = false;
   let last = "";
-  for (const model of FLASH_MODELS) {
+  const now = Date.now();
+  const ready = FLASH_MODELS.filter((m) => (coolingUntil.get(m) ?? 0) <= now);
+  const coolDown = (model: string) => coolingUntil.set(model, Date.now() + COOLDOWN_MS);
+  for (const model of ready.length ? ready : FLASH_MODELS) {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
       method: "POST",
       headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     }).catch((err: Error) => err);
     if (r instanceof Error) {
-      // A hung or dropped request (seen in practice) would otherwise block the upload or the report forever.
+      // A hung or dropped request (seen under high demand) would otherwise block the upload or the report.
       last = `${model}: ${r.name === "TimeoutError" ? "timed out" : r.message}`;
       busy = true;
+      coolDown(model);
       console.warn("gemini fallback:", last);
       continue;
     }
@@ -122,7 +129,10 @@ export async function generateJson(body: object): Promise<{ text: string; model:
     }
     last = `${model} ${r.status}: ${(await r.text()).slice(0, 200)}`;
     if (r.status === 401 || r.status === 403) break; // the key itself is the problem; every model would fail
-    if (r.status === 429 || r.status === 503) busy = true;
+    if (r.status === 429 || r.status === 503) {
+      busy = true;
+      coolDown(model);
+    }
     console.warn("gemini fallback:", last);
   }
   throw busy ? new Busy(last) : new Error(last);

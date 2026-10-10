@@ -58,10 +58,19 @@ export async function buildRubric({ bytes, type }: Input, source: string): Promi
     doc = { inlineData: { mimeType: type, data: Buffer.from(bytes).toString("base64") } }; // PDF or photo, read as-is
   }
 
-  const { text } = await generateJson({
-    contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
-    generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 },
-  });
+  // A one-page form: copying it out needs little thinking, and a model that hasn't answered in 25 s is overloaded.
+  const { text } = await generateJson(
+    {
+      contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseJsonSchema: SCHEMA,
+        temperature: 0,
+        thinkingConfig: { thinkingLevel: "low" },
+      },
+    },
+    { timeoutMs: 25_000 },
+  );
   const r = JSON.parse(text) as { isRubric: boolean; notRubricReason: string; criteria: Read[] };
   if (!r.isRubric) throw new Rejected(r.notRubricReason || "This doesn't look like a defense rubric.");
   const read = r.criteria.filter((c) => c.name.trim()).slice(0, MAX_CRITERIA);
