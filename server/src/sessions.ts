@@ -1,4 +1,4 @@
-import { ANALYSIS_MODEL } from "./analysis";
+import { generateJson } from "./analysis";
 import { SAMPLE_MANUSCRIPT, manuscriptFacts, parseSetup, plannedMainQuestions, type Mode } from "./panel";
 import { CRITERIA, DEFAULT_WEIGHTS, band, delivery, readiness, type Severity } from "./scoring";
 import { collection, store } from "./store";
@@ -27,7 +27,8 @@ export type Report = {
   penalty: number;
   answered: number;
   planned: number;
-  criteria: { key: string; name: string; weight: number; level: number; why: string }[];
+  scored: boolean; // false: nothing was answered, so there is no readiness score (it stays out of the trend)
+  criteria: { key: string; name: string; weight: number; level: number | null; why: string }[]; // null: not measured
   contradictions: { spokenClaim: string; manuscriptEvidence: string; severity: Severity; turn: number | null }[];
   turns: { feedback: string; betterAnswer: string }[]; // aligned with Session.turns
   fixes: { text: string; turn: number | null }[];
@@ -48,6 +49,7 @@ export type Session = {
   minutes: number;
   panelists: number;
   durationMs: number;
+  endedBy: "panel" | "student"; // the panel closing early doesn't count against coverage
   weights: number[];
   turns: SessionTurn[];
   lines: SessionLine[];
@@ -101,6 +103,7 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     minutes: setup.minutes,
     panelists: setup.panelists,
     durationMs: num(b.durationMs),
+    endedBy: b.endedBy === "panel" ? "panel" : "student",
     weights,
     turns,
     lines,
@@ -180,6 +183,12 @@ ${s.turns.map((t, i) => `[${i}] ${label(t)} (${t.type}): ${t.question}\n    Answ
 CONTRADICTIONS FLAGGED DURING THE SESSION
 ${s.flags.length ? s.flags.map((f, i) => `[${i}] (${f.severity}) said: "${f.spokenClaim}" / manuscript: "${f.manuscriptEvidence}"`).join("\n") : "(none)"}
 
+CALIBRATION: score like a strict but fair Filipino capstone panel, not a tutor.
+- 5 is rare: complete, precise, and grounded in the manuscript's own specifics (numbers, tools, methods).
+- 3 is acceptable: on topic and mostly correct, but generic or missing specifics.
+- 1 is wrong, off-topic, evasive, "I don't know", or no answer. A one-line or vague answer can't score above 2 for content or reasoning.
+- Judge every criterion only from what the student actually said or typed; the questions don't earn credit. Don't round up out of kindness.
+
 Return:
 - criteria: one entry for each of ${JUDGED.map((c) => c.key).join(", ")}: an integer level 1–5 and one sentence of justification that points at a specific answer.
 - contradictions: one entry per flagged contradiction above, in order. keep = true only if the student's words really contradict the manuscript facts (not a rounding, a synonym, or something the manuscript doesn't cover). spokenClaim: a short quote of what they said. manuscriptEvidence: the matching manuscript fact, quoted. turn: the answer's index, or -1. Then add any clear contradiction the session missed (keep = true).
@@ -189,38 +198,26 @@ Return:
 }
 
 async function judge(prompt: string): Promise<Judgment> {
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ANALYSIS_MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 }, // same answers, same levels
-    }),
+  const text = await generateJson({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0 }, // same answers, same levels
   });
-  if (!r.ok) throw new Error(`scoring ${r.status}: ${(await r.text()).slice(0, 300)}`);
-  const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  return JSON.parse(json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "") as Judgment;
+  return JSON.parse(text) as Judgment;
 }
 
 // Rubric levels and wording from Flash; delivery, verified contradictions and the score from code.
 export async function scoreSession(uid: string, s: Omit<Session, "report">): Promise<Report> {
-  const planned = plannedMainQuestions(s.minutes);
-  const answered = new Set(s.turns.filter((t) => t.followUp === 0).map((t) => t.number)).size;
+  // A main question counts as answered when its answer or a follow-up's has real content (3+ words).
+  const asked = new Set(s.turns.filter((t) => t.followUp === 0).map((t) => t.number));
+  const answered = new Set(s.turns.filter((t) => substantive(t.answer)).map((t) => t.number)).size;
+  // The panel closing on its own after fewer questions than planned isn't the student's doing.
+  const planned = s.endedBy === "panel" ? Math.max(asked.size, 1) : Math.max(plannedMainQuestions(s.minutes), asked.size);
   const d = delivery(s.turns);
 
-  let j: Judgment;
-  if (s.turns.length === 0) {
-    j = {
-      criteria: JUDGED.map((c) => ({ key: c.key, level: 1, why: "No answers to judge yet." })),
-      contradictions: [],
-      turns: [],
-      fixes: [{ text: "Stay for at least one full question so the panel has something to score.", turn: -1 }],
-      headline: "The session ended before any questions were answered.",
-    };
-  } else {
-    const project = s.projectId ? await store.get(uid, s.projectId) : null;
-    j = await judge(scoringPrompt(s, project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT));
-  }
+  if (answered === 0) return unscored(s, d, planned);
+
+  const project = s.projectId ? await store.get(uid, s.projectId) : null;
+  const j = await judge(scoringPrompt(s, project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT));
 
   const levelOf = (key: string) => Math.round(Math.min(5, Math.max(1, j.criteria.find((c) => c.key === key)?.level ?? 3)));
   const criteria = CRITERIA.map((c, i) => ({
@@ -248,6 +245,7 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
   );
   return {
     ...band(r.score),
+    scored: true,
     score: r.score,
     rubricScore: r.rubricScore,
     penalty: r.penalty,
@@ -258,6 +256,29 @@ export async function scoreSession(uid: string, s: Omit<Session, "report">): Pro
     turns: s.turns.map((_, i) => j.turns[i] ?? { feedback: "", betterAnswer: "" }),
     fixes: j.fixes.slice(0, 3).map((f) => ({ text: f.text, turn: turnIndex(f.turn) })),
     headline: j.headline,
+    delivery: { latencyS: d.latencyS, fillersPerMin: d.fillersPerMin, wordsPerMin: d.wordsPerMin },
+  };
+}
+
+// A real answer: 3+ words that contain letters or digits ("I'm not sure." counts; "uh" or "..." doesn't).
+export const substantive = (answer: string) => answer.trim().split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length >= 3;
+
+// Nothing answered: no score, no AI call, just what to do next time.
+function unscored(s: Omit<Session, "report">, d: ReturnType<typeof delivery>, planned: number): Report {
+  return {
+    scored: false,
+    score: 0,
+    band: "Not scored",
+    message: "Answer at least one question",
+    rubricScore: 0,
+    penalty: 0,
+    answered: 0,
+    planned,
+    criteria: CRITERIA.map((c, i) => ({ key: c.key, name: c.name, weight: s.weights[i] ?? 0, level: null, why: "No answers to judge." })),
+    contradictions: [],
+    turns: s.turns.map(() => ({ feedback: "No answer to give feedback on.", betterAnswer: "" })),
+    fixes: [{ text: "Answer at least one question, out loud or typed, so the panel has something to score.", turn: null }],
+    headline: "The session ended before any question got a real answer, so there's no score this time.",
     delivery: { latencyS: d.latencyS, fillersPerMin: d.fillersPerMin, wordsPerMin: d.wordsPerMin },
   };
 }

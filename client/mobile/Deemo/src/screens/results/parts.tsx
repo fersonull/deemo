@@ -66,12 +66,11 @@ export function Criteria({ criteria }: { criteria: Report["criteria"] }) {
         <View key={c.key}>
           <View style={styles.cHead}>
             <Text style={[styles.strong, styles.flex]}>{c.name}</Text>
-            <Text style={styles.mono}>
-              {c.level}/5 · {c.weight}%
-            </Text>
+            <Text style={styles.mono}>{c.level === null ? "Not measured" : `${c.level}/5 · ${c.weight}%`}</Text>
           </View>
           <View style={styles.track}>
-            <View style={[styles.bar, { width: `${(c.level / 5) * 100}%` }]} />
+            {/* Bar = points earned: level 1 is empty, 5 is full (server/src/scoring.ts levelPoints). */}
+            <View style={[styles.bar, { width: `${c.level === null ? 0 : ((c.level - 1) / 4) * 100}%` }]} />
           </View>
           <Text style={styles.why}>{c.why}</Text>
         </View>

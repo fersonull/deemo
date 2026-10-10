@@ -135,20 +135,26 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
         <ScrollView contentContainerStyle={styles.scroll}>
           {/* The report arrives in two beats: the verdict, then the details 60 ms later. */}
           <Animated.View entering={riseIn(0, reduced)}>
-            <View style={styles.scoreRow} accessible accessibilityLabel={`Readiness ${r.score} out of 100, ${r.band}`}>
-              <Text style={styles.score}>{shown}</Text>
+            <View
+              style={styles.scoreRow}
+              accessible
+              accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} out of 100, ${r.band}`}
+            >
+              <Text style={styles.score}>{r.scored === false ? "–" : shown}</Text>
               <View>
                 <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
-                <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text>
+                {BAND_RANGE[r.band] ? <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text> : null}
               </View>
             </View>
             <Text style={styles.headline}>{r.headline}</Text>
-            <Text style={styles.formula}>
-              {formula(
-                r,
-                r.contradictions.map((c) => c.severity),
-              )}
-            </Text>
+            {r.scored === false ? null : (
+              <Text style={styles.formula}>
+                {formula(
+                  r,
+                  r.contradictions.map((c) => c.severity),
+                )}
+              </Text>
+            )}
           </Animated.View>
 
           <Animated.View entering={riseIn(60, reduced)}>

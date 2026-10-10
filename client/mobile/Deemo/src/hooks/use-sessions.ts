@@ -19,6 +19,7 @@ export type SessionTurn = {
 };
 
 export type Report = {
+  scored?: boolean; // false: nothing was answered, so no score (missing on reports from before this field)
   score: number;
   band: string;
   message: string;
@@ -26,7 +27,7 @@ export type Report = {
   penalty: number;
   answered: number;
   planned: number;
-  criteria: { key: string; name: string; weight: number; level: number; why: string }[];
+  criteria: { key: string; name: string; weight: number; level: number | null; why: string }[]; // null: not measured
   contradictions: { spokenClaim: string; manuscriptEvidence: string; severity: Severity; turn: number | null }[];
   turns: { feedback: string; betterAnswer: string }[];
   fixes: { text: string; turn: number | null }[];
@@ -67,7 +68,7 @@ export const useSessions = store.use;
 const post = (body: object) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
-function fromLive(s: LiveState) {
+function fromLive(s: LiveState, endedBy: "panel" | "student") {
   const { mode, domain, panelists, minutes, projectId, weights } = practiceSetup.get();
   const lines = s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines;
   return {
@@ -78,6 +79,7 @@ function fromLive(s: LiveState) {
     projectId: projectId ?? undefined,
     weights,
     durationMs: s.sessionMs,
+    endedBy, // the panel closing early doesn't lower coverage; the student leaving does
     turns: s.turns.map((t) => ({
       number: t.question.number,
       followUp: t.question.followUp,
@@ -109,8 +111,8 @@ export const sessions = {
     }
   },
 
-  submitLive(s: LiveState) {
-    void this.submit(fromLive(s));
+  submitLive(s: LiveState, endedBy: "panel" | "student") {
+    void this.submit(fromLive(s, endedBy));
   },
 
   retrySubmit() {
