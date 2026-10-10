@@ -1,7 +1,7 @@
 import express from "express";
 
 import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
-import { type Authed, requireUser } from "./firebase";
+import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, type Session } from "./sessions";
 import { type Analysis, type Project, store, users } from "./store";
@@ -27,12 +27,22 @@ app.get("/me", async (req, res) => {
 // Consent (recorded after sign-in, with the version the student agreed to) and the simulated upgrade.
 app.patch("/me", async (req, res) => {
   const uid = uidOf(req);
-  const body = (req.body ?? {}) as { consentVersion?: unknown; premium?: unknown };
+  const body = (req.body ?? {}) as { consentVersion?: unknown; premium?: unknown; allowTyping?: unknown };
   if (typeof body.consentVersion === "string")
     await users.update(uid, { consentVersion: body.consentVersion.slice(0, 20), consentAt: new Date().toISOString() });
   // ponytail: demo toggle, no payments (addendum Q1).
   if (body.premium === true) await users.update(uid, { premium: true });
+  if (typeof body.allowTyping === "boolean") await users.update(uid, { allowTyping: body.allowTyping });
   res.json(await users.get(uid));
+});
+
+// Delete my data (addendum Q9, RA 10173): manuscript analyses, transcripts, reports, the account record and the
+// sign-in account itself. Done here with the Admin SDK, so it works however long ago the student signed in.
+app.delete("/me", async (req, res) => {
+  const uid = uidOf(req);
+  await users.removeAll(uid);
+  await getAuth().deleteUser(uid);
+  res.status(204).end();
 });
 
 // Upload a manuscript (plan F1). Answers right away; the analysis runs in the background and the app polls.
@@ -136,9 +146,11 @@ app.patch("/projects/:id/analysis", async (req, res) => {
 // feedback, code for the score). The app polls GET /sessions/:id.
 function score(uid: string, session: Session) {
   scoreSession(uid, session).then(
-    (report) => sessions.put(uid, { ...session, status: "ready", report }),
-    (err) => {
+    // Only if it still exists: the student may have deleted their data while it was being scored.
+    async (report) => (await sessions.get(uid, session.id)) && sessions.put(uid, { ...session, status: "ready", report }),
+    async (err) => {
       console.error("scoring", session.id, err);
+      if (!(await sessions.get(uid, session.id))) return;
       return sessions.put(uid, { ...session, status: "failed", error: "We couldn't score this session. Try again." });
     },
   );

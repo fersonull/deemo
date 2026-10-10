@@ -64,14 +64,18 @@ export function collection<T extends Item>(name: string) {
 export const store = collection<Project>("projects");
 
 // The account record (plan §13): consent and the simulated tier (addendum Q1). Set only by the server.
-export type UserRecord = { premium: boolean; consentAt?: string; consentVersion?: string };
+export type UserRecord = { premium: boolean; allowTyping: boolean; consentAt?: string; consentVersion?: string };
 
 export const users = {
   async get(uid: string): Promise<UserRecord> {
     const d = await db.collection("users").doc(uid).get();
-    return { premium: false, ...(d.data() as Partial<UserRecord> | undefined) };
+    return { premium: false, allowTyping: true, ...(d.data() as Partial<UserRecord> | undefined) };
   },
   async update(uid: string, patch: Partial<UserRecord>) {
     await db.collection("users").doc(uid).set(patch, { merge: true });
+  },
+  // Everything under users/{uid}: the record, projects and sessions (addendum Q9 "Delete my data").
+  async removeAll(uid: string) {
+    await db.recursiveDelete(db.collection("users").doc(uid));
   },
 };

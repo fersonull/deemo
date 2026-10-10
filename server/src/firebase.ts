@@ -3,6 +3,8 @@ import { cert, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
+export { getAuth };
+
 // Firebase Admin (addendum B5): the server verifies who's calling and is the only one touching Firestore.
 // Credentials: FIREBASE_SERVICE_ACCOUNT points at the service-account JSON (see server/.env.example).
 const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -21,7 +23,8 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
   const token = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
   if (!token) return void res.status(401).json({ error: "Sign in first." });
   try {
-    (req as Authed).uid = (await getAuth().verifyIdToken(token)).uid;
+    // checkRevoked: a deleted, disabled or signed-out-everywhere account stops working at once, not when its token expires.
+    (req as Authed).uid = (await getAuth().verifyIdToken(token, true)).uid;
     next();
   } catch {
     res.status(401).json({ error: "Your sign-in expired. Sign in again." });

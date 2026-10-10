@@ -23,28 +23,35 @@ const store = createStore({
   ready: false, // Firebase has reported whether someone is already signed in
   signedIn: false,
   email: null as string | null,
+  name: null as string | null, // Google display name, if any
+  allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
   premium: false, // simulated freemium (addendum Q1)
 });
 
 export const CONSENT_VERSION = "2026-10";
 
-type Me = { premium: boolean; consentAt?: string };
+type Me = { premium: boolean; allowTyping: boolean; consentAt?: string };
+
+const patchMe = (body: object) =>
+  api<Me>("/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 // Sign-in survives restarts: the first callback says whether someone is still signed in.
 onAuthStateChanged(getAuth(), async (user) => {
-  store.set({ ready: true, signedIn: !!user, email: user?.email ?? null, ...(!user && { premium: false }) });
+  store.set({
+    ready: true,
+    signedIn: !!user,
+    email: user?.email ?? null,
+    name: user?.displayName ?? null,
+    ...(!user && { premium: false, allowTyping: true }),
+  });
   if (!user) return;
   try {
     // Consent was given before there was an account to record it on.
     const me = store.get().consentAt
-      ? await api<Me>("/me", {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ consentVersion: CONSENT_VERSION }),
-        })
+      ? await patchMe({ consentVersion: CONSENT_VERSION })
       : await api<Me>("/me");
-    store.set({ premium: me.premium, consentAt: me.consentAt ?? store.get().consentAt });
+    store.set({ premium: me.premium, allowTyping: me.allowTyping, consentAt: me.consentAt ?? store.get().consentAt });
   } catch {
     // Offline or server down: the account record loads on the next sign-in.
   }
@@ -71,6 +78,23 @@ export function authMessage(e: unknown): string {
 }
 
 export const session = {
+  // Saved on the account, so it follows the student; the switch flips right away and rolls back on failure.
+  async setAllowTyping(allowTyping: boolean) {
+    store.set({ allowTyping });
+    try {
+      store.set({ allowTyping: (await patchMe({ allowTyping })).allowTyping });
+    } catch {
+      store.set({ allowTyping: !allowTyping });
+    }
+  },
+
+  // Delete my data (addendum Q9): the server removes everything and the sign-in account; then sign out here.
+  async deleteEverything() {
+    await api<unknown>("/me", { method: "DELETE" });
+    store.set({ consentAt: null });
+    await this.signOut().catch(() => {}); // the account is already gone server-side
+  },
+
   consent: () => store.set({ consentAt: new Date().toISOString() }),
 
   signInWithEmail: (email: string, password: string) => signInWithEmailAndPassword(getAuth(), email.trim(), password),
@@ -102,11 +126,7 @@ export const session = {
   // ponytail: demo upgrade, no payments (addendum Q1). The server records it, so its limits follow.
   async upgrade() {
     try {
-      const me = await api<Me>("/me", {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ premium: true }),
-      });
+      const me = await patchMe({ premium: true });
       store.set({ premium: me.premium });
     } catch {
       // Server unreachable: stay on the free tier; the locked choices still explain why.
