@@ -38,6 +38,7 @@ Analysis: `server/src/analysis.ts` (Flash model constant, PDF sent as-is, DOCX v
 
 - **Never commit on `main`.** Work happens on `dev`, so commit there. If the current branch is `main`, leave the changes uncommitted and tell the user; they commit on `main` themselves.
 - **Never run native rebuilds** (`expo prebuild`, `expo run:android`, Gradle). When a change needs one, such as a new native module, a config plugin, or an `app.json` plugin or permission change, say so clearly and the user will rebuild. JS-only changes reload through Metro.
+- **Risky work gets its own branch.** A task that might break the app (native modules or config plugins, auth or data-model changes, refactors that touch many files, dependency upgrades) starts on a new branch off `dev` (e.g. `feat/home-dashboard`). Commit there while working; merge into `dev` only after it has been tested and works, then delete the branch. Small, contained changes can go straight onto `dev`.
 
 ## App conventions (Expo plugin)
 
