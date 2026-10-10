@@ -3,7 +3,6 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
 import { PANEL } from "@/constants";
-import { FOLLOW_UP_LIMIT } from "@/live/reducer";
 import type { Phase, Question, QuestionType } from "@/live/types";
 import { colors, fonts, type } from "@/theme";
 
@@ -15,9 +14,16 @@ const TYPES: Record<QuestionType, { label: string; icon: string }> = {
   CLARIFICATORY: { label: "Clarificatory", icon: "help" },
 };
 
-type Props = { phase: Phase; question: Question | null; closing: string; count: number; onDonePresenting: () => void };
+type Props = {
+  phase: Phase;
+  question: Question | null;
+  closing: string;
+  count: number;
+  followUpLimit: number;
+  onDonePresenting: () => void;
+};
 
-export function QuestionCard({ phase, question, closing, count, onDonePresenting }: Props) {
+export function QuestionCard({ phase, question, closing, count, followUpLimit, onDonePresenting }: Props) {
   const showQuestion = question && phase !== "connecting" && phase !== "presentation" && phase !== "ending" && phase !== "ended";
   const text =
     phase === "connecting"
@@ -48,7 +54,7 @@ export function QuestionCard({ phase, question, closing, count, onDonePresenting
                 <View style={[styles.chip, styles.followUp]}>
                   <Icon name="subdirectory_arrow_right" size={14} color={colors.duskInk} />
                   <Text style={[styles.chipText, { color: colors.duskInk }]}>
-                    Follow-up {question.followUp} of {FOLLOW_UP_LIMIT}
+                    Follow-up {question.followUp} of {followUpLimit}
                   </Text>
                 </View>
               )}

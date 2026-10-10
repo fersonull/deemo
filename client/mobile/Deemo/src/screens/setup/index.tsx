@@ -6,7 +6,7 @@ import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { UpsellSheet } from "@/components/upsell-sheet";
-import { DEFAULT_WEIGHTS, MODE_LABELS, type Mode } from "@/constants";
+import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -125,6 +125,24 @@ export function Setup() {
         onChange={(minutes) => practiceSetup.set({ minutes })}
         onLocked={upsell}
         options={[10, 15, 25].map((n) => ({ value: n, label: `${n} min`, locked: n > 10 && !premium }))}
+      />
+
+      <Text style={[type.label, styles.section]}>FOLLOW-UPS PER TOPIC</Text>
+      <Segmented
+        label="Follow-ups per topic"
+        value={setup.followUps}
+        onChange={(followUps) => practiceSetup.set({ followUps })}
+        onLocked={upsell}
+        options={[0, 1, 2, 3].map((n) => ({ value: n, label: n === 0 ? "None" : String(n) }))}
+      />
+
+      <Text style={[type.label, styles.section]}>DIFFICULTY</Text>
+      <Segmented
+        label="Difficulty"
+        value={setup.difficulty}
+        onChange={(difficulty) => practiceSetup.set({ difficulty })}
+        onLocked={upsell}
+        options={(["EASY", "STANDARD", "HARD"] as const).map((d) => ({ value: d, label: DIFFICULTY_LABELS[d] }))}
       />
 
       <Text style={[type.label, styles.section]}>FEEDBACK</Text>

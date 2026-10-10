@@ -8,7 +8,7 @@ import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
-import { MODE_LABELS } from "@/constants";
+import { DIFFICULTY_LABELS, MODE_LABELS } from "@/constants";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Report, type Session } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
@@ -90,7 +90,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
         </Pressable>
         {s ? (
           <Text style={styles.headerText}>
-            {MODE_LABELS[s.mode]} · {day(s.createdAt)}
+            {MODE_LABELS[s.mode]}
+            {s.difficulty && s.difficulty !== "STANDARD" ? ` · ${DIFFICULTY_LABELS[s.difficulty]}` : ""} · {day(s.createdAt)}
           </Text>
         ) : null}
       </View>

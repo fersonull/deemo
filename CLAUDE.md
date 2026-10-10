@@ -2,7 +2,7 @@
 
 Voice-based AI mock panel for BSIT capstone defense practice (Title / Pre-Oral / Final). The AI panel reads the student's manuscript, asks questions out loud, flags contradictions, and scores against a rubric.
 
-Specs: `docs/DEEMO_Mobile_App_Plan.md`. What is built and what is left: `docs/TASKS.md` (keep it current). `docs/DEEMO_Plan_Addendum.md` **overrides §10–14** (AI pipeline, architecture, stack, API) and answers the open questions — read it first for anything live-session related.
+Specs: `docs/DEEMO_Mobile_App_Plan.md`. Start here: `docs/HANDOFF.md` (current state, recent changes, next task). Backlog: `docs/TASKS.md`. `docs/DEEMO_Plan_Addendum.md` **overrides §10–14** (AI pipeline, architecture, stack, API) and answers the open questions — read it first for anything live-session related.
 
 ## Layout
 
@@ -38,6 +38,7 @@ Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first
 
 - **Never commit on `main`.** Work happens on `dev`, so commit there. If the current branch is `main`, leave the changes uncommitted and tell the user; they commit on `main` themselves.
 - **Never run native rebuilds** (`expo prebuild`, `expo run:android`, Gradle). When a change needs one, such as a new native module, a config plugin, or an `app.json` plugin or permission change, say so clearly and the user will rebuild. JS-only changes reload through Metro.
+- **Update the handoff with every change.** After each piece of work, update `docs/HANDOFF.md`: current state (branch, anything uncommitted), a row in Recent changes (what, where, commit), the next task with enough detail for another agent to start, and new gotchas. Tick the item in `docs/TASKS.md`. Include both in the same commit as the work.
 - **Risky work gets its own branch.** A task that might break the app (native modules or config plugins, auth or data-model changes, refactors that touch many files, dependency upgrades) starts on a new branch off `dev` (e.g. `feat/home-dashboard`). Commit there while working; merge into `dev` only after it has been tested and works, then delete the branch. Small, contained changes can go straight onto `dev`.
 
 ## App conventions (Expo plugin)
