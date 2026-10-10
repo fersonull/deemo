@@ -1,6 +1,6 @@
 import express from "express";
 
-import { MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
+import { Busy, MAX_BYTES, Rejected, analyzeManuscript, sniff } from "./analysis";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, type Session } from "./sessions";
@@ -19,6 +19,9 @@ const uidOf = (req: express.Request) => (req as Authed).uid;
 
 // Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 minutes, one manuscript. Enforced here, not just in the app.
 const FREE_PROJECTS = 1;
+
+// Gemini rate-limited us (Busy); the transcript or upload is kept, so trying later works.
+const BUSY = "The AI panel is busy right now. Try again in a few minutes.";
 
 app.get("/me", async (req, res) => {
   res.json(await users.get(uidOf(req)));
@@ -87,7 +90,12 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
     (analysis) => finish({ status: "ready", analysis }),
     (err) => {
       if (!(err instanceof Rejected)) console.error("analysis", project.id, err);
-      const error = err instanceof Rejected ? err.message : "We couldn't read this file. Try a text-based PDF or a DOCX.";
+      const error =
+        err instanceof Rejected
+          ? err.message
+          : err instanceof Busy
+            ? BUSY
+            : "We couldn't read this file. Try a text-based PDF or a DOCX.";
       return finish({ status: "failed", error });
     },
   );
@@ -151,7 +159,8 @@ function score(uid: string, session: Session) {
     async (err) => {
       console.error("scoring", session.id, err);
       if (!(await sessions.get(uid, session.id))) return;
-      return sessions.put(uid, { ...session, status: "failed", error: "We couldn't score this session. Try again." });
+      const error = err instanceof Busy ? BUSY : "We couldn't score this session. Try again.";
+      return sessions.put(uid, { ...session, status: "failed", error });
     },
   );
 }
@@ -191,7 +200,7 @@ app.get("/sessions", async (req, res) => {
       mode,
       title,
       durationMs,
-      score: report?.score,
+      score: report?.scored === false ? undefined : report?.score, // no score stays out of Home and the trend
       band: report?.band,
       tip: report?.fixes[0]?.text, // the Home card's one line
     })),

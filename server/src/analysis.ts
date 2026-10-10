@@ -65,21 +65,48 @@ export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysi
     doc = { text };
   }
 
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ANALYSIS_MODEL}:generateContent`, {
-    method: "POST",
-    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
-      generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0.2 },
-    }),
+  const text = await generateJson({
+    contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
+    generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0.2 },
   });
-  if (!r.ok) throw new Error(`analysis ${r.status}: ${(await r.text()).slice(0, 300)}`);
-  const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
   const { isManuscript, notManuscriptReason, ...analysis } = JSON.parse(text) as Analysis & {
     isManuscript: boolean;
     notManuscriptReason: string;
   };
   if (!isManuscript) throw new Rejected(notManuscriptReason || "This doesn't look like a research manuscript.");
   return analysis;
+}
+
+// Gemini is rate-limited or overloaded and asked for a wait we won't sit through (e.g. a daily cap).
+export class Busy extends Error {}
+
+const retryDelaySeconds = (body: string) => {
+  const m = body.match(/"retryDelay":\s*"(\d+(?:\.\d+)?)s"/);
+  return m ? Number(m[1]) : null;
+};
+
+// One Flash call that returns the response text. A 429/503 with a short retry hint is retried up to twice;
+// a long one fails fast as Busy so the student hears "busy", not "couldn't read".
+export async function generateJson(body: object): Promise<string> {
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${ANALYSIS_MODEL}:generateContent`, {
+      method: "POST",
+      headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (r.ok) {
+      const json = (await r.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+      return json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+    }
+    const detail = await r.text();
+    if (r.status === 429 || r.status === 503) {
+      const wait = retryDelaySeconds(detail) ?? 5;
+      if (attempt < 2 && wait <= 20) {
+        await Bun.sleep(wait * 1000);
+        continue;
+      }
+      throw new Busy(`gemini ${r.status}: ${detail.slice(0, 300)}`);
+    }
+    throw new Error(`gemini ${r.status}: ${detail.slice(0, 300)}`);
+  }
 }

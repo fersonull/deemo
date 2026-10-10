@@ -49,10 +49,16 @@ export const DEFAULT_WEIGHTS = [25, 20, 20, 20, 15];
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
-// RS = Σ(weight × level / 5) × 100, weights normalized to 1.
-export function rubricScore(levels: number[], weights: number[]) {
-  const total = sum(weights) || 1;
-  return sum(weights.map((w, i) => (w / total) * ((levels[i] ?? 1) / 5))) * 100;
+// A level earns (level − 1) / 4: "Poor" (1) earns nothing, "Satisfactory" (3) half, "Excellent" (5) all.
+// (The addendum's level / 5 banked 20% for a non-answer.)
+export const levelPoints = (level: number) => (clamp(Math.round(level), 1, 5) - 1) / 4;
+
+// RS = Σ(weight × points) × 100 over the criteria that could be measured. A null level (e.g. delivery in a
+// typed-only session) drops out and the other weights are renormalized, instead of earning a free middle score.
+export function rubricScore(levels: (number | null)[], weights: number[]) {
+  const used = weights.map((w, i) => (levels[i] == null ? 0 : w));
+  const total = sum(used) || 1;
+  return sum(used.map((w, i) => (w / total) * levelPoints(levels[i] ?? 1))) * 100;
 }
 
 // CP = min(15, 5×HIGH + 2×MEDIUM + 0.5×LOW), verified contradictions only.
@@ -61,10 +67,12 @@ export function consistencyPenalty(severities: Severity[]) {
   return Math.min(15, 5 * n("HIGH") + 2 * n("MEDIUM") + 0.5 * n("LOW"));
 }
 
-// Readiness = clamp(RS × CF − CP, 0, 100), CF = answered / planned main questions, floor 0.6.
-export function readiness(levels: number[], weights: number[], severities: Severity[], answered: number, planned: number) {
+// Readiness = clamp(RS × CF − CP, 0, 100), CF = answered / planned main questions, no floor: leaving after one
+// question keeps a quarter of the score, not 60%. (The panel ending early itself doesn't count against the student;
+// the caller passes planned = questions asked in that case.)
+export function readiness(levels: (number | null)[], weights: number[], severities: Severity[], answered: number, planned: number) {
   const rs = rubricScore(levels, weights);
-  const cf = clamp(planned > 0 ? answered / planned : 1, 0.6, 1);
+  const cf = planned > 0 ? clamp(answered / planned, 0, 1) : 0;
   const cp = consistencyPenalty(severities);
   return { score: Math.round(clamp(rs * cf - cp, 0, 100)), rubricScore: Math.round(rs), penalty: cp, coverage: cf };
 }
@@ -95,8 +103,8 @@ export function delivery(turns: SpokenTurn[]) {
       latencyS: null,
       fillersPerMin: null,
       wordsPerMin: null,
-      level: 3,
-      why: "Not enough spoken answers to measure delivery.",
+      level: null,
+      why: "Not measured: no spoken answers.",
     };
   }
   const minutes = sum(spoken.map((t) => t.answerMs)) / 60000;

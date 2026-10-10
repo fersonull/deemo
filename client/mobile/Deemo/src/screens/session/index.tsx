@@ -50,14 +50,14 @@ export function Session() {
     setHeldBySheet(false);
   };
 
-  const leave = () => {
+  const leave = (endedBy: "panel" | "student" = "student") => {
     stop();
-    sessions.submitLive(s); // scored on the server; the scoring screen waits for it
+    sessions.submitLive(s, endedBy); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
 
   useEffect(() => {
-    if (s.phase === "ended") leave();
+    if (s.phase === "ended") leave("panel");
     // eslint-disable-next-line react-hooks/exhaustive-deps -- leave once, when the panel closes
   }, [s.phase]);
 
@@ -188,7 +188,7 @@ export function Session() {
           {`You'll still get a report for the ${answered} ${answered === 1 ? "question" : "questions"} you've answered.`}
         </Text>
         <View style={styles.sheetCta}>
-          <Button label="End and see report" onPress={leave} />
+          <Button label="End and see report" onPress={() => leave("student")} />
         </View>
         <Pressable accessibilityRole="button" onPress={keepGoing} style={styles.keepGoing}>
           <Text style={[type.button, styles.keepGoingText]}>Keep going</Text>
