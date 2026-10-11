@@ -16,6 +16,7 @@ import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
 import { GroupReadiness } from "./group-readiness";
 
+const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
 const MODE_INITIALS: Record<Mode, string> = { TITLE: "T", PRE_ORAL: "PO", FINAL: "F" };
 const MODE_BG: Record<Mode, string> = { TITLE: colors.sand, PRE_ORAL: colors.duskTint, FINAL: colors.sageTint };
 
@@ -103,7 +104,22 @@ export function Home() {
               </View>
             </View>
           </Skeleton>
-        ) : null}
+        ) : (
+          // No score yet: the same card, holding the place the score will take.
+          <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
+            <Blob width={76} height={66} color={colors.duskTint}>
+              <Icon name="insights" size={28} color={colors.duskIcon} />
+            </Blob>
+            <View style={styles.flex}>
+              <Text style={styles.lastBand}>No score yet</Text>
+              <Text style={styles.lastTip}>
+                {list.length
+                  ? "Answer at least one question and your score shows up here."
+                  : "Your readiness score shows up here after your first practice."}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <Pressable
           accessibilityRole="button"
@@ -139,6 +155,25 @@ export function Home() {
                 </View>
               ))}
             </Skeleton>
+          </>
+        ) : !recent.length ? (
+          // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
+          <>
+            <Text style={[type.label, styles.section]}>GET STARTED</Text>
+            {STEPS.map((step, i) => {
+              const done = i === 0 && !!manuscript;
+              return (
+                <View key={step} style={styles.row} accessible accessibilityLabel={`${step}${done ? ", done" : ""}`}>
+                  <Icon
+                    name={done ? "check_circle" : "radio_button_unchecked"}
+                    size={22}
+                    color={done ? colors.sage : colors.muted}
+                    filled={done}
+                  />
+                  <Text style={[styles.rowTitle, styles.flex, done && styles.done]}>{step}</Text>
+                </View>
+              );
+            })}
           </>
         ) : recent.length ? (
           <>
@@ -220,5 +255,6 @@ const styles = StyleSheet.create({
   modeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   meta: { ...type.meta, marginTop: 2 },
+  done: { color: colors.muted, textDecorationLine: "line-through" },
   rowScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },
 });
