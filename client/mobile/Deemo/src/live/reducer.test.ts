@@ -93,3 +93,46 @@ test("the follow-up limit chosen in setup is the one enforced", () => {
   expect(three.question?.followUp).toBe(3);
   expect(canAsk(three, follow)).toBe(false);
 });
+
+test("the time limit closes once, clamps duration and preserves an answer arriving after time is up", () => {
+  let s = run([
+    { type: "connected" }, { type: "ask", question: main }, { type: "panelDone" },
+    { type: "tick", ms: 500 }, { type: "youSpeaking" }, { type: "tick", ms: 2000 },
+  ], { ...initialLiveState, durationLimitMs: 1000 });
+  expect(s.phase).toBe("ending");
+  expect(s.sessionMs).toBe(1000);
+  expect(s.turns[0]).toMatchObject({ latencyMs: 500, answerMs: 500 });
+  expect(canAsk(s, main)).toBe(false);
+  s = run([
+    { type: "youText", text: "It syncs in real time." }, { type: "panelText", text: "Thank you." },
+    { type: "panelDone" }, { type: "end" }, { type: "tick", ms: 8000 }, { type: "ended" },
+  ], s);
+  expect(s.turns[0]?.answer).toBe("It syncs in real time.");
+  expect(s.lines).toContainEqual({ who: "you", text: "It syncs in real time." });
+  expect(s.lines.at(-1)).toEqual({ who: 0, text: "Thank you." });
+  expect(s.sessionMs).toBe(1000);
+  expect(s.endedBy).toBe("time");
+  expect(s.turns).toHaveLength(1);
+});
+
+test("a paused, connecting or reconnecting session cannot reach its time limit", () => {
+  for (const held of [{ paused: true }, { reconnecting: true }, { phase: "connecting" as const }]) {
+    const s = { ...initialLiveState, phase: "presentation" as const, durationLimitMs: 1000, ...held };
+    expect(liveReducer(s, { type: "tick", ms: 60_000 })).toBe(s);
+  }
+});
+
+test("expiry during presentation or panel speech never invents an answer", () => {
+  for (const phase of ["presentation", "speaking", "thinking"] as const) {
+    const s = liveReducer({ ...initialLiveState, phase, durationLimitMs: 1000 }, { type: "tick", ms: 1000 });
+    expect(s.phase).toBe("ending");
+    expect(s.turns).toHaveLength(0);
+  }
+});
+
+test("a terminal token error stops timers and keeps the transcript", () => {
+  const s = run([{ type: "connected" }, { type: "youText", text: "My study" }, { type: "error", message: "Daily cap reached" }]);
+  expect(s.error).toBe("Daily cap reached");
+  expect(s.partial?.text).toBe("My study");
+  expect(liveReducer(s, { type: "tick", ms: 5000 })).toBe(s);
+});

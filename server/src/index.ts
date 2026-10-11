@@ -9,6 +9,7 @@ import { type Analysis, type Project, allowsBackup, store, users } from "./store
 import { db } from "./firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { parseRubric } from "./scoring";
+import { LiveStartError, finishLiveStart, reserveLiveStart } from "./live-starts";
 import {
   GroupError,
   accessibleProject,
@@ -326,9 +327,10 @@ app.post("/live/token", async (req, res) => {
   const uid = uidOf(req);
   const setup = parseSetup(req.body);
   if (!setup) return void res.status(400).json({ error: "invalid setup" });
-  const { premium } = await users.get(uid);
-  if (!premium && (setup.mode === "FINAL" || setup.panelists > 1 || setup.minutes > 10))
-    return void res.status(403).json({ error: "That setup needs Premium." });
+  const { startId, resume = false } = req.body;
+  if (typeof startId !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(startId) || typeof resume !== "boolean")
+    return void res.status(400).json({ error: "invalid practice start" });
+  const fingerprint = { ...setup };
   const project = setup.projectId ? await accessibleProject(uid, setup.projectId) : null;
   if (setup.projectId && (!project?.analysis || !project.confirmedAt))
     return void res.status(403).json({ error: "This manuscript is unavailable. Choose a reviewed project." });
@@ -342,29 +344,39 @@ app.post("/live/token", async (req, res) => {
   }
   const analysis = project?.analysis;
 
-  const now = Date.now();
-  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
-    method: "POST",
-    headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({
-      uses: 1,
-      newSessionExpireTime: new Date(now + 60_000).toISOString(),
-      expireTime: new Date(now + (setup.minutes + 30) * 60_000).toISOString(), // session plus pauses
-      bidiGenerateContentSetup: liveSetup(setup, analysis),
-      fieldMask: LOCKED_FIELDS,
-    }),
-  });
-  if (!r.ok) {
-    console.error("auth_tokens", r.status, await r.text());
-    return void res.status(502).json({ error: "token mint failed" });
+  const start = await reserveLiveStart(uid, startId, fingerprint, resume);
+  if (start.cached) return void res.json({ token: start.token, model: LIVE_MODEL });
+  try {
+    const now = Date.now();
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
+      method: "POST",
+      signal: AbortSignal.timeout(20_000),
+      headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
+      body: JSON.stringify({
+        uses: 1,
+        newSessionExpireTime: new Date(now + 60_000).toISOString(),
+        expireTime: new Date(start.expiresAt).toISOString(), // reconnects never extend this round
+        bidiGenerateContentSetup: liveSetup(setup, analysis),
+        fieldMask: LOCKED_FIELDS,
+      }),
+    });
+    if (!r.ok) {
+      console.error("auth_tokens", r.status, await r.text());
+      throw new LiveStartError(502, "Couldn't connect to the AI panel. Please try again.");
+    }
+    const { name } = (await r.json()) as { name: string };
+    if (typeof name !== "string" || !name) throw new LiveStartError(502, "Couldn't connect to the AI panel. Please try again.");
+    await finishLiveStart(uid, startId, start.lease, name, now + 60_000);
+    res.json({ token: name, model: LIVE_MODEL });
+  } catch (err) {
+    await finishLiveStart(uid, startId, start.lease);
+    throw err;
   }
-  const { name } = (await r.json()) as { name: string };
-  res.json({ token: name, model: LIVE_MODEL });
 });
 
 const port = Number(process.env.PORT) || 3000;
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  if (err instanceof GroupError) return void res.status(err.status).json({ error: err.message });
+  if (err instanceof GroupError || err instanceof LiveStartError) return void res.status(err.status).json({ error: err.message });
   console.error(err);
   res.status(500).json({ error: "Something went wrong. Try again." });
 });

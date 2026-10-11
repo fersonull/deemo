@@ -57,7 +57,7 @@ export type Session = {
   followUps: number;
   difficulty: Difficulty;
   durationMs: number;
-  endedBy: "panel" | "student"; // the panel closing early doesn't count against coverage
+  endedBy: "panel" | "student" | "time"; // only the panel closing early relaxes coverage
   weights: number[];
   rubric?: RubricCriterion[]; // the panel's own rubric at the time, replacing the default criteria
   turns: SessionTurn[];
@@ -119,7 +119,7 @@ export async function parseSession(uid: string, body: unknown): Promise<Omit<Ses
     followUps: setup.followUps,
     difficulty: setup.difficulty,
     durationMs: num(b.durationMs),
-    endedBy: b.endedBy === "panel" ? "panel" : "student",
+    endedBy: b.endedBy === "panel" || b.endedBy === "time" ? b.endedBy : "student",
     weights: project?.rubric ? project.rubric.criteria.map((c) => c.weight) : (project?.weights ?? weights),
     ...(project?.rubric && { rubric: project.rubric.criteria }),
     turns,

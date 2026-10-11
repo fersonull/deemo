@@ -13,6 +13,7 @@ export class MockEngine implements LiveEngine {
   private jobs: Job[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
   private paused = false;
+  private ending = false;
   private next = 0; // next SCRIPT item
   private turn: "none" | "presenting" | "answering" = "none";
 
@@ -41,6 +42,13 @@ export class MockEngine implements LiveEngine {
     this.jobs = this.jobs.filter((j) => j.tag !== "you");
     this.emit({ type: "youText", text: ` ${text.trim()}` });
     this.finishTurn();
+  }
+
+  endForTime() {
+    if (this.ending) return;
+    this.jobs = [];
+    this.turn = "none";
+    this.close("time");
   }
 
   pause() {
@@ -108,8 +116,10 @@ export class MockEngine implements LiveEngine {
     );
   }
 
-  private close(): void {
-    this.emit({ type: "end" });
+  private close(reason?: "time"): void {
+    if (this.ending) return;
+    this.ending = true;
+    this.emit({ type: "end", ...(reason && { reason }) });
     const words = CLOSING.split(" ");
     words.forEach((w, i) => this.after(110 * (i + 1), () => this.emit({ type: "panelText", text: `${i ? " " : ""}${w}` })));
     this.after(110 * words.length + 400, () => this.emit({ type: "panelDone" }));

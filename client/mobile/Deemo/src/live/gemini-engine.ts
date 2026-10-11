@@ -1,7 +1,7 @@
 import { AudioContext, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
 import { type Difficulty, type Mode } from "@/constants";
-import { api } from "@/utils/api";
+import { ApiError, api } from "@/utils/api";
 import { createNoiseGate } from "@/utils/noise-gate";
 import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
 import { getRecorder } from "@/utils/recorder";
@@ -54,6 +54,9 @@ export class GeminiEngine implements LiveEngine {
   private connected = false; // first setupComplete seen
   private handle: string | null = null; // session resumption across sockets
   private stopped = false;
+  private connecting = false;
+  private startId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  private closeDeadline: ReturnType<typeof setTimeout> | null = null;
   private paused = false;
   private studentFloor = false; // presenting or answering
   private activity = false; // activityStart sent, activityEnd not yet
@@ -109,6 +112,26 @@ export class GeminiEngine implements LiveEngine {
     this.sendTurn(text.trim());
   }
 
+  endForTime() {
+    if (this.stopped || this.ending !== "no") return;
+    const last = this.gate.flush();
+    if (last && this.studentFloor) this.sendMic(last);
+    if (this.activity) this.send({ realtimeInput: { activityEnd: {} } });
+    this.activity = false;
+    this.studentFloor = false;
+    this.turnDone = false;
+    this.ending = "asked";
+    this.clearTimer();
+    this.panelResponded();
+    this.voice?.clearBuffers();
+    this.queued = 0;
+    this.emit({ type: "level", value: 0 });
+    this.emit({ type: "end", reason: "time" });
+    // Independent of playback/retries: a silent or disconnected panel cannot prolong the round.
+    this.closeDeadline = setTimeout(() => this.finish(), CLOSE_GRACE_MS);
+    this.sendTurn("(The practice time limit has been reached. Do not ask another question. Say one short closing sentence, then call end_session.)");
+  }
+
   pause() {
     this.paused = true;
     this.emit({ type: "level", value: 0 });
@@ -124,6 +147,8 @@ export class GeminiEngine implements LiveEngine {
   stop() {
     if (this.stopped) return;
     this.stopped = true;
+    if (this.closeDeadline) clearTimeout(this.closeDeadline);
+    this.closeDeadline = null;
     this.clearTimer();
     this.panelResponded();
     const ws = this.ws;
@@ -138,20 +163,29 @@ export class GeminiEngine implements LiveEngine {
   }
 
   private async connect() {
-    if (this.stopped || this.paused || this.ws) return;
+    if (this.stopped || this.paused || this.ws || this.connecting) return;
+    this.connecting = true;
     let token: string;
     let model: string;
     try {
       ({ token, model } = await api<{ token: string; model: string }>("/live/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(this.setup),
+        body: JSON.stringify({ ...this.setup, startId: this.startId, resume: !!this.handle }),
       }));
     } catch (err) {
+      if (this.stopped) return;
+      if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 408) {
+        this.emit({ type: "error", message: err.message });
+        this.stop();
+        return;
+      }
       console.warn("[live] token", err);
       return this.retry();
+    } finally {
+      this.connecting = false;
     }
-    if (this.stopped || this.ws) return;
+    if (this.stopped || this.paused || this.ws) return;
 
     const ws = new WebSocket(`${WS_URL}?access_token=${encodeURIComponent(token)}`);
     ws.binaryType = "arraybuffer";
@@ -232,6 +266,8 @@ export class GeminiEngine implements LiveEngine {
   private onToolCall({ id, name, args = {} }: FunctionCall) {
     let response: Record<string, unknown> = { ok: true };
     if (name === "ask_question") {
+      if (this.ending !== "no")
+        return { id, name, response: { allowed: false, instruction: "Practice has ended. Say only a short closing sentence." } };
       const role = ROLES.indexOf(String(args.panelist));
       const q: AskQuestion = {
         topicId: String(args.topicId ?? "general"),
@@ -254,8 +290,10 @@ export class GeminiEngine implements LiveEngine {
       this.emit({ type: "flag", flag: args as Omit<Inconsistency, "atMs"> });
       response = { ok: true, scheduling: "SILENT" };
     } else if (name === "end_session") {
-      this.ending = "asked";
-      this.emit({ type: "end" });
+      if (this.ending === "no") {
+        this.ending = "asked";
+        this.emit({ type: "end" });
+      }
     }
     return { id, name, response };
   }

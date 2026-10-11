@@ -1,6 +1,6 @@
 # DEEMO — Task list
 
-What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature, S = screen, § = section) and `DEEMO_Plan_Addendum.md` (Q = decision). Updated 2026-10-10. Tick items as they land on `dev`.
+What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature, S = screen, § = section) and `DEEMO_Plan_Addendum.md` (Q = decision). Updated 2026-10-10. Checked items marked pending are implemented/tested on a feature branch and still need user verification and merging into `dev`.
 
 ## Blocker
 
@@ -9,8 +9,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 ## Must do before the 40-student evaluation
 
 - [ ] **Deploy the server** to a public host and point the app at it (`EXPO_PUBLIC_API_URL`). Build a release APK with EAS Build. Add the release and Play signing SHA-1/SHA-256 to Firebase, then re-download `google-services.json` (Google sign-in). Today the app only reaches `localhost` through `adb reverse`.
-- [ ] **Session time limit** (§9.4, F13). The panel doesn't know the clock, so a 10-minute session can run long. The app ends the session when time is up and asks the panel for a closing line.
-- [ ] **Daily session cap** (addendum Q1, §16 cost control): 2 sessions/day free, 10 premium, enforced on the server at `POST /live/token`.
+- [x] **Session time limit** (§9.4, F13): app clamps the active timer to the selected duration, preserves the final answer and asks for a closing line; stops within 8 seconds even if Gemini stays silent. Paused/reconnecting time is excluded. **Pending:** uncommitted on `codex/session-rules`; phone verification and user commit/merge.
+- [x] **Daily session cap** (addendum Q1, §16 cost control): 2 starts/day Free, 10 Premium at `POST /live/token`, enforced with Firestore transactions; Manila midnight reset, idempotent retries/resumption, failed-mint refunds and an actionable cap error. Unit and real Firebase/fake-Gemini integration checks pass. **Pending:** uncommitted on `codex/session-rules`; phone verification and user commit/merge.
 - [ ] **Recover a session** after the app is backgrounded or the connection drops, and keep the transcript so far (§16 reliability, connectivity).
 - [ ] **Latency logging** (addendum B6): log "student stops speaking → first panel audio" per turn, for Chapter 4 (ISO 25010 performance efficiency).
 - [ ] **Accuracy and integration tests** (§18.1):
@@ -31,6 +31,9 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
+- [x] **History empty states**: Start practice when there's nothing yet, a practice button for an empty stage filter, a retry hint when offline.
+- [x] **Home empty state**: "No score yet" card and a three-step "Get started" list for new students.
+- [x] **History chart details and empty state**: labelled defense-ready line, tap a point for its score/stage/date, best score; an empty state below two scored sessions.
 - [ ] **Remaining animations** (from the animation review):
   - [ ] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).
   - [ ] Paused overlay fades in and out (200 / 150 ms).

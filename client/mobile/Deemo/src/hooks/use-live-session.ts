@@ -32,6 +32,7 @@ export function useLiveSession() {
   const [state, dispatch] = useReducer(liveReducer, undefined, () => ({
     ...initialLiveState,
     followUpLimit: practiceSetup.get().followUps,
+    durationLimitMs: practiceSetup.get().minutes * 60_000,
   }));
   const stateRef = useRef(state);
   const engineRef = useRef<LiveEngine | null>(null);
@@ -58,6 +59,10 @@ export function useLiveSession() {
       engine.stop();
     };
   }, []);
+
+  useEffect(() => {
+    if (state.phase === "ending" && state.endedBy === "time") engineRef.current?.endForTime();
+  }, [state.phase, state.endedBy]);
 
   const pause = useCallback(() => {
     userPaused.current = true;

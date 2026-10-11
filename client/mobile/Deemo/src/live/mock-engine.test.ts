@@ -49,3 +49,18 @@ test("pausing freezes the panel", () => {
   for (let i = 0; i < 20; i++) tick();
   expect(events[0]).toEqual({ type: "connected" });
 });
+
+test("time expiry cancels pending questions and finishes with one closing", () => {
+  const engine = new MockEngine();
+  const events: LiveEvent[] = [];
+  engine.start((e) => events.push(e), () => true);
+  clearInterval((engine as unknown as { timer: ReturnType<typeof setInterval> }).timer);
+  const tick = (engine as unknown as { tick: () => void }).tick.bind(engine);
+  engine.endForTime();
+  engine.endForTime();
+  for (let i = 0; i < 100; i++) tick();
+  expect(events.filter((e) => e.type === "end")).toEqual([{ type: "end", reason: "time" }]);
+  expect(events.filter((e) => e.type === "ended")).toHaveLength(1);
+  expect(events.some((e) => e.type === "ask" || e.type === "youText")).toBe(false);
+  engine.stop();
+});

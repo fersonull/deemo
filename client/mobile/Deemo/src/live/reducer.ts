@@ -10,6 +10,8 @@ export const initialLiveState: LiveState = {
   lines: [],
   partial: null,
   sessionMs: 0,
+  durationLimitMs: 10 * 60_000,
+  endedBy: "panel",
   responseMs: 0,
   firstSpeechMs: null,
   flags: [],
@@ -21,7 +23,10 @@ export const initialLiveState: LiveState = {
 
 // The client-side tool handler's rule: the AI can't exceed the follow-up limit even if it tries.
 export function canAsk(state: LiveState, q: AskQuestion): boolean {
-  return !q.isFollowUp || (state.followUps[q.topicId] ?? 0) < state.followUpLimit;
+  return (
+    !state.error && state.phase !== "ending" && state.phase !== "ended" &&
+    (!q.isFollowUp || (state.followUps[q.topicId] ?? 0) < state.followUpLimit)
+  );
 }
 
 function finish(s: LiveState): Line[] {
@@ -79,7 +84,7 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
 
     case "youText": {
       // Gemini transcribes a manual turn only after the student taps done, so text can land while "thinking".
-      if (s.phase === "thinking") {
+      if (s.phase === "thinking" || (s.phase === "ending" && s.endedBy === "time")) {
         const last = s.turns.at(-1);
         const turns =
           last && last.question === s.question
@@ -122,18 +127,25 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
     }
 
     case "end":
-      return { ...s, phase: "ending", lines: finish(s), partial: null };
+      return { ...s, phase: "ending", endedBy: e.reason ?? s.endedBy, lines: finish(s), partial: null };
+
+    case "error":
+      return { ...s, error: e.message, reconnecting: false, paused: false, level: 0 };
 
     case "ended":
       return { ...s, phase: "ended" };
 
     case "tick": {
-      if (s.paused || s.reconnecting || s.phase === "connecting" || s.phase === "ended") return s;
-      return {
+      if (s.error || s.paused || s.reconnecting || s.phase === "connecting" || s.phase === "ending" || s.phase === "ended") return s;
+      const ms = Math.min(e.ms, s.durationLimitMs - s.sessionMs);
+      const next = {
         ...s,
-        sessionMs: s.sessionMs + e.ms,
-        responseMs: s.phase === "listening" ? s.responseMs + e.ms : s.responseMs,
+        sessionMs: s.sessionMs + ms,
+        responseMs: s.phase === "listening" ? s.responseMs + ms : s.responseMs,
       };
+      if (next.sessionMs < s.durationLimitMs) return next;
+      const finished = liveReducer(next, { type: "youDone" });
+      return liveReducer(finished, { type: "end", reason: "time" });
     }
 
     case "level":

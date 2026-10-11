@@ -76,7 +76,7 @@ export const useSessions = store.use;
 const post = (body: object) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
-function fromLive(s: LiveState, endedBy: "panel" | "student") {
+function fromLive(s: LiveState, endedBy: "panel" | "student" | "time") {
   const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights, weakFrom } = practiceSetup.get();
   const lines = s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines;
   return {
@@ -122,7 +122,7 @@ export const sessions = {
     }
   },
 
-  submitLive(s: LiveState, endedBy: "panel" | "student") {
+  submitLive(s: LiveState, endedBy: "panel" | "student" | "time") {
     void this.submit(fromLive(s, endedBy));
   },
 
