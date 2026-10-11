@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Blob } from "@/components/blob";
 import { Deemo } from "@/components/deemo";
+import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -35,7 +36,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // Home (plan S-05, prototype home): greeting, the last readiness score, Start practice, recent sessions.
 export function Home() {
   const { name, email } = useSession();
-  const { list, loaded } = useSessions();
+  const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
   const manuscript = mine.find((p) => p.id === projectId);
@@ -106,6 +107,11 @@ export function Home() {
               </View>
             </View>
           </Skeleton>
+        ) : error ? (
+          // Offline: say so, rather than "No score yet" to a student who has scores.
+          <DeemoNote mood="sleepy" style={styles.offline}>
+            {"Can't reach the DEEMO server right now. Pull down to try again."}
+          </DeemoNote>
         ) : (
           // No score yet: the same card, holding the place the score will take.
           <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
@@ -150,7 +156,7 @@ export function Home() {
               ))}
             </Skeleton>
           </>
-        ) : !recent.length ? (
+        ) : error ? null : !recent.length ? (
           // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
           <>
             <Text style={[type.label, styles.section]}>GET STARTED</Text>
@@ -200,6 +206,7 @@ export function Home() {
 }
 
 const styles = StyleSheet.create({
+  offline: { marginTop: 18 },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
   flex: { flex: 1, minWidth: 0 },

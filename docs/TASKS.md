@@ -29,19 +29,19 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
 - [x] **Deemo, the guide** (design D1–D5, glasses instead of the sprout; SVG + Reanimated, needs a native rebuild): component, moods and motion; Welcome, Home and History empty states, Projects notes, reading waits.
-  - [ ] Remaining placements: mic check tip, Results note by band, Sleepy on the other offline notes.
+  - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
 - [x] **History empty states**: Start practice when there's nothing yet, a practice button for an empty stage filter, a retry hint when offline.
 - [x] **Home empty state**: "No score yet" card and a three-step "Get started" list for new students.
 - [x] **History chart details and empty state**: labelled defense-ready line, tap a point for its score/stage/date, best score; an empty state below two scored sessions.
-- [ ] **Remaining animations** (from the animation review):
-  - [ ] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).
-  - [ ] Paused overlay fades in and out (200 / 150 ms).
-  - [ ] Reconnecting banner fades in and the content below glides instead of jumping.
-  - [ ] Report's "Question by question" rows and transcript expand smoothly; chevron rotates.
-  - [ ] Button press feedback (scale 0.97); needs a feel check on a phone.
+- [x] **Remaining animations** (from the animation review):
+  - [x] Manuscript summary cards enter with a short stagger (40 ms, first 6 cards).
+  - [x] Paused overlay fades in and out (200 / 150 ms).
+  - [x] Reconnecting banner fades in and the content below glides instead of jumping.
+  - [x] Report's "Question by question" rows and transcript expand smoothly; chevron rotates.
+  - [x] Button press feedback (scale 0.97); needs a feel check on a phone.
 
 ## Documentation (manuscript, not code)
 

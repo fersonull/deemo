@@ -1,12 +1,39 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
 import { PANEL } from "@/constants";
 import type { Report, Session, SessionTurn } from "@/hooks/use-sessions";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
 import { turnLabel } from "@/utils/report-html";
 
+
+// Expanding cards: the card's height glides, the details fade in, the chevron turns (200 ms, ease-out).
+// Reanimated skips all of it when the system reduces motion.
+const glide = LinearTransition.duration(200).easing(easeOut);
+const reveal = FadeIn.duration(200).easing(easeOut);
+const hide = FadeOut.duration(120);
+
+function Chevron({ open }: { open: boolean }) {
+  const turn = useSharedValue(open ? 180 : 0);
+  useEffect(() => {
+    turn.value = withTiming(open ? 180 : 0, { duration: 200, easing: easeOut });
+  }, [open, turn]);
+  const turning = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));
+  return (
+    <Animated.View style={turning}>
+      <Icon name="expand_more" size={22} color={colors.muted} />
+    </Animated.View>
+  );
+}
 
 export function Label({ children }: { children: ReactNode }) {
   return <Text style={[type.label, styles.section]}>{children}</Text>;
@@ -129,16 +156,16 @@ type QuestionProps = { turn: SessionTurn; feedback: Report["turns"][number]; pre
 export function Question({ turn, feedback, premium, onLocked }: QuestionProps) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={styles.card}>
+    <Animated.View layout={glide} style={styles.card}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
         <Text style={styles.qLabel}>{turnLabel(turn)}</Text>
         <Text style={[styles.body, styles.flex]} numberOfLines={open ? undefined : 2}>
           {turn.question}
         </Text>
-        <Icon name={open ? "expand_less" : "expand_more"} size={22} color={colors.muted} />
+        <Chevron open={open} />
       </Pressable>
       {open ? (
-        <View style={styles.qBody}>
+        <Animated.View entering={reveal} exiting={hide} style={styles.qBody}>
           <Text style={styles.chip}>{turn.type.charAt(0) + turn.type.slice(1).toLowerCase()}</Text>
           <View>
             <Text style={type.label}>YOUR ANSWER</Text>
@@ -159,25 +186,25 @@ export function Question({ turn, feedback, premium, onLocked }: QuestionProps) {
               <Text style={styles.link}>See a stronger answer</Text>
             </Pressable>
           )}
-        </View>
+        </Animated.View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
 export function Transcript({ lines, count }: { lines: Session["lines"]; count: number }) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={styles.card}>
+    <Animated.View layout={glide} style={styles.card}>
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
         <Icon name="subject" size={20} color={colors.inkMuted} />
         <Text style={[styles.strong, styles.flex]}>
           Full transcript · {count} {count === 1 ? "question" : "questions"}
         </Text>
-        <Icon name={open ? "expand_less" : "expand_more"} size={22} color={colors.muted} />
+        <Chevron open={open} />
       </Pressable>
       {open ? (
-        <View style={styles.qBody}>
+        <Animated.View entering={reveal} exiting={hide} style={styles.qBody}>
           {lines.map((l, i) => (
             <View key={i} style={styles.line}>
               {l.flagged ? <View key="flag" style={[styles.dot, styles.dotFlag]} /> : <View key="none" style={styles.dot} />}
@@ -192,9 +219,9 @@ export function Transcript({ lines, count }: { lines: Session["lines"]; count: n
               <Text style={styles.meta}>{"Doesn't match your manuscript"}</Text>
             </View>
           ) : null}
-        </View>
+        </Animated.View>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

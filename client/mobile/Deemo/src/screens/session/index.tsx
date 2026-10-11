@@ -2,6 +2,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { BackHandler, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
@@ -12,7 +13,7 @@ import { useLiveSession } from "@/hooks/use-live-session";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
-import { colors, fonts, type } from "@/theme";
+import { colors, easeOut, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 
 import { MicButton } from "./mic-button";
@@ -20,6 +21,9 @@ import { Panelist, type PanelistStatus } from "./panelist";
 import { PausedOverlay } from "./paused-overlay";
 import { QuestionCard } from "./question-card";
 import { Transcript } from "./transcript";
+
+// When the reconnecting banner comes and goes, the panel and question glide instead of jumping.
+const GLIDE = LinearTransition.duration(200).easing(easeOut);
 
 // Live session (screen 11). Sparse like a real panel: no pop-ups, no red (brief).
 export function Session() {
@@ -121,26 +125,33 @@ export function Session() {
         </View>
 
         {s.reconnecting && (
-          <View style={styles.banner} accessibilityLiveRegion="polite">
+          <Animated.View
+            entering={FadeIn.duration(200).easing(easeOut)}
+            exiting={FadeOut.duration(150)}
+            style={styles.banner}
+            accessibilityLiveRegion="polite"
+          >
             <Icon name="progress_activity" size={20} color={colors.duskIcon} />
             <Text style={styles.bannerText}>Reconnecting… your progress is safe.</Text>
-          </View>
+          </Animated.View>
         )}
 
-        <View style={[styles.panel, { gap: count === 1 ? 0 : 6 }]}>
+        <Animated.View layout={GLIDE} style={[styles.panel, { gap: count === 1 ? 0 : 6 }]}>
           {Array.from({ length: count }, (_, i) => (
             <Panelist key={i} index={i} status={status(i)} count={count} />
           ))}
-        </View>
+        </Animated.View>
 
-        <QuestionCard
+        <Animated.View layout={GLIDE}>
+          <QuestionCard
           phase={s.phase}
           question={s.question}
           closing={closing}
           count={count}
           followUpLimit={s.followUpLimit}
           onDonePresenting={finishTurn}
-        />
+          />
+        </Animated.View>
 
         <Transcript lines={s.lines} partial={s.partial} coach={setup.coach} />
 

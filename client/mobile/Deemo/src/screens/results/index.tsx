@@ -2,10 +2,11 @@ import * as Print from "expo-print";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import Animated, { useReducedMotion } from "react-native-reanimated";
+import Animated, { LinearTransition, useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
+import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
@@ -16,7 +17,7 @@ import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Session } from "@/hooks/use-sessions";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
 import { formula, reportHtml } from "@/utils/report-html";
@@ -202,7 +203,13 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 {BAND_RANGE[r.band] ? <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text> : null}
               </View>
             </View>
-            <Text style={styles.headline}>{r.headline}</Text>
+            {/* Deemo's note carries the headline; it cheers when the student is nearly ready (design D5). */}
+            <DeemoNote
+              mood={r.scored !== false && (r.band === "Defense-ready" || r.band === "Nearly ready") ? "cheering" : "encouraging"}
+              style={styles.headline}
+            >
+              {r.headline}
+            </DeemoNote>
             {r.scored === false ? null : (
               <Text style={styles.formula}>
                 {formula(r)}
@@ -260,9 +267,9 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
               </>
             ) : null}
 
-            <View style={styles.transcript}>
+            <Animated.View layout={LinearTransition.duration(200).easing(easeOut)} style={styles.transcript}>
               <Transcript lines={s.lines} count={r.answered} />
-            </View>
+            </Animated.View>
 
             {/* Actions, as in the prototype: weak topics, practice again / share with group, the adviser's PDF. */}
             <View style={styles.actions}>
@@ -376,7 +383,7 @@ const styles = StyleSheet.create({
   },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
   bandRange: { ...type.meta, marginTop: 4 },
-  headline: { ...type.body, fontSize: 15, lineHeight: 22, marginTop: 10 },
+  headline: { marginTop: 12 },
   formula: { fontFamily: fonts.mono, fontWeight: "400", fontSize: 11.5, lineHeight: 17, color: colors.muted, marginTop: 8 },
   stats: { flexDirection: "row", gap: 8, marginTop: 16 },
   stat: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },

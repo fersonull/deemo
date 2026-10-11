@@ -91,15 +91,20 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
     );
   }, [hop, mood, reduced, w]);
 
-  // Wave: the hand rocks 0 → 22°, three times, then rests.
+  // Wave: the hand rocks 0 → 22°, three times, then tucks away (fades out). With reduce motion it stays,
+  // still, so the mood still reads from shape.
   const wave = useSharedValue(0);
+  const handShown = useSharedValue(1);
   useEffect(() => {
+    handShown.value = 1;
     if (reduced || mood !== "waving") return;
     wave.value = withDelay(
       200,
-      withRepeat(withSequence(withTiming(22, { duration: 220 }), withTiming(0, { duration: 220 })), 3),
+      withRepeat(withSequence(withTiming(22, { duration: 220 }), withTiming(0, { duration: 220 })), 3, false, (done) => {
+        if (done) handShown.value = withTiming(0, { duration: 150, easing: easeOut });
+      }),
     );
-  }, [wave, mood, reduced]);
+  }, [wave, handShown, mood, reduced]);
 
   // Look: pupils drift toward the bubble.
   const gaze = useSharedValue(0);
@@ -122,7 +127,7 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
   // The hand swings on a pivot at the shoulder, so its center travels an arc.
   const hand = useAnimatedProps(() => {
     const a = ((-50 - wave.value) * Math.PI) / 180;
-    return { cx: 93 + 14 * Math.cos(a), cy: 32 + 14 * Math.sin(a) };
+    return { cx: 93 + 14 * Math.cos(a), cy: 32 + 14 * Math.sin(a), opacity: handShown.value };
   });
 
   const tilt = mood === "encouraging" ? -8 : 0;

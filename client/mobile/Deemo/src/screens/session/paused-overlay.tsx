@@ -1,14 +1,20 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
-import { colors, fonts, type } from "@/theme";
+import { colors, easeOut, fonts, type } from "@/theme";
 
 type Props = { time: string; onResume: () => void; onEnd: () => void };
 
 export function PausedOverlay({ time, onResume, onEnd }: Props) {
   return (
-    <View style={styles.overlay} accessibilityViewIsModal>
+    <Animated.View
+      entering={FadeIn.duration(200).easing(easeOut)}
+      exiting={FadeOut.duration(150)}
+      style={styles.overlay}
+      accessibilityViewIsModal
+    >
       <Blob width={96} height={84} color={colors.sand}>
         <View style={styles.bars}>
           <View style={styles.bar} />
@@ -27,7 +33,7 @@ export function PausedOverlay({ time, onResume, onEnd }: Props) {
           <Text style={[type.button, styles.endText]}>End session</Text>
         </Pressable>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

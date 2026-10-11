@@ -2,6 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { DeemoNote } from "@/components/deemo-note";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -117,7 +118,7 @@ export function History() {
             </View>
           </Skeleton>
         ) : error ? (
-          <Text style={styles.note}>{"Can't reach the DEEMO server right now. Pull down to try again."}</Text>
+          <DeemoNote mood="sleepy">{"Can't reach the DEEMO server right now. Pull down to try again."}</DeemoNote>
         ) : null}
       </View>
     </Screen>
@@ -139,5 +140,4 @@ const styles = StyleSheet.create({
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, color: colors.ink, fontVariant: ["tabular-nums"] },
   pending: { color: colors.muted },
-  note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4 },
 });
