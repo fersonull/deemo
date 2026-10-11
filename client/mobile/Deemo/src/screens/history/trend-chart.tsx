@@ -1,7 +1,14 @@
+import { router } from "expo-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
-import Animated, { useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
-import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedProps,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
+import Svg, { Line, Path, Rect } from "react-native-svg";
 
 import { Blob } from "@/components/blob";
 import { Deemo } from "@/components/deemo";
@@ -9,56 +16,44 @@ import { Icon } from "@/components/icon";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
-import {
-  areaPath,
-  chartPoints,
-  linePath,
-  nearestIndex,
-  pathLength,
-  scaleY,
-  scoreDomain,
-  type Box,
-} from "@/utils/chart";
+import { columnPath, columns, contentWidth, scoreY, type Box, type Column } from "@/utils/chart";
 
 const HEIGHT = 150;
 const READY = 85; // "Defense-ready" band (addendum Q4)
-const TICKS = [50, 70, 85, 100]; // band edges
-const MAX_DOTS = 12; // past this, only the picked point gets a dot
-const BOX: Omit<Box, "width"> = { height: HEIGHT, left: 6, right: 30, top: 10, bottom: 10 };
+const TICKS = [0, 50, 70, 85, 100]; // the baseline and the band edges
+const GUTTER = 30; // tick labels, right of the plot
+const BOX: Box = { height: HEIGHT, top: 18, bottom: 1 }; // room above for the picked column's value
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Readiness over time (plan F15, S-13), oldest to newest. One series, so no legend: the screen title names it.
-// The readout above the plot shows the picked session (the newest to start): its score, stage, date and the
-// change from the session before. Touch and drag along the plot to scrub; it snaps to sessions. The 85+ band is
-// a soft wash; gridlines are solid hairlines at the band edges. The line draws itself in once (still with reduce
-// motion). Fewer than two scored sessions show the empty state instead (Empty below), with `children` as its action.
+// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0. One series, so no
+// legend: the screen title names it. Tap a column to preview it in the readout above (score, stage, date, change
+// since the session before) and open its report from there; the newest is picked to start. The 85+ band is a soft
+// wash, gridlines are solid hairlines at the band edges. Many sessions scroll sideways, starting at the newest.
+// Columns grow in once (still with reduce motion). Fewer than two scored sessions show the empty state instead
+// (Empty below), with `children` as its action.
 type Props = { sessions: SessionSummary[]; stage: string | null; children?: ReactNode };
 
 export function TrendChart({ sessions, stage, children }: Props) {
-  const [width, setWidth] = useState(0);
+  const [visible, setVisible] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
-  const plot = useRef<View>(null);
-  const plotX = useRef(0);
   const reduced = useReducedMotion();
+  const scroller = useRef<ScrollView>(null);
+  const atEnd = useRef(false);
 
   const scored = sessions.filter((s) => s.score !== undefined).reverse();
   const scores = scored.map((s) => s.score ?? 0);
-  const domain = scoreDomain(scores);
-  const box: Box = { ...BOX, width };
-  const points = width ? chartPoints(scores, domain, box) : [];
-  const length = pathLength(points);
+  const width = contentWidth(scored.length, visible);
+  const cols = visible ? columns(scores, width, BOX) : [];
   const sel = Math.min(picked ?? scored.length - 1, scored.length - 1);
 
-  // Draw the line in once, when the plot first has a width.
-  const drawn = useSharedValue(reduced ? 1 : 0);
+  // Grow the columns in once, when the plot first has a width.
+  const grown = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
-    if (width && !reduced) drawn.value = withTiming(1, { duration: 700, easing: easeOut });
-  }, [width, reduced, drawn]);
-  const drawing = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - drawn.value) }));
-  const washing = useAnimatedProps(() => ({ fillOpacity: 0.1 * drawn.value }));
+    if (visible && !reduced) grown.value = withTiming(1, { duration: 500, easing: easeOut });
+  }, [visible, reduced, grown]);
 
   if (scored.length < 2) return <Empty score={scored[0]?.score} stage={stage} action={children} />;
 
@@ -67,15 +62,11 @@ export function TrendChart({ sessions, stage, children }: Props) {
   const best = Math.max(...scores);
   const s = scored[sel];
   const delta = sel > 0 ? scores[sel] - scores[sel - 1] : null;
-  const p = points[sel];
-
-  const scrub = (e: GestureResponderEvent) => {
-    if (points.length) setPicked(nearestIndex(points, e.nativeEvent.pageX - plotX.current));
-  };
+  const c = cols[sel];
 
   return (
     <View style={styles.card}>
-      {/* Readout: the picked session */}
+      {/* Readout: the picked session, with its report one tap away */}
       <View style={styles.readout} accessibilityLiveRegion="polite">
         <Text style={styles.score}>{s.score}</Text>
         <View style={styles.flex}>
@@ -83,109 +74,106 @@ export function TrendChart({ sessions, stage, children }: Props) {
             {MODE_LABELS[s.mode]} · {day(s.createdAt)}
           </Text>
           <View style={styles.deltaRow}>
-            {delta !== null && delta !== 0 ? (
-              <Icon name={delta > 0 ? "trending_up" : "trending_down"} size={16} color={colors.inkMuted} />
-            ) : null}
+            {delta ? <Icon name={delta > 0 ? "trending_up" : "trending_down"} size={16} color={colors.inkMuted} /> : null}
             <Text style={styles.delta} numberOfLines={1}>
               {delta === null
-                ? "First scored session here"
+                ? "First one here"
                 : delta === 0
-                  ? "Same as the session before"
-                  : `${delta > 0 ? "+" : "−"}${Math.abs(delta)} from the session before`}
+                  ? "Same as last time"
+                  : `${delta > 0 ? "+" : "−"}${Math.abs(delta)} since last`}
             </Text>
           </View>
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open the ${MODE_LABELS[s.mode]} report from ${day(s.createdAt)}`}
+          hitSlop={8}
+          onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
+          style={({ pressed }) => [styles.open, pressed && styles.pressed]}
+        >
+          <Text style={styles.openText}>Report</Text>
+          <Icon name="chevron_right" size={18} color={colors.duskLink} />
+        </Pressable>
       </View>
 
-      <View
-        ref={plot}
-        style={styles.plot}
-        onLayout={(e) => {
-          setWidth(e.nativeEvent.layout.width);
-          plot.current?.measure((_x, _y, _w, _h, pageX) => (plotX.current = pageX));
-        }}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={(e) => {
-          plot.current?.measure((_x, _y, _w, _h, pageX) => (plotX.current = pageX));
-          scrub(e);
-        }}
-        onResponderMove={scrub}
-        accessible
-        accessibilityRole="adjustable"
-        accessibilityLabel={`Readiness trend, ${scored.length} sessions. Went from ${first.score} on ${day(first.createdAt)} to ${last.score} on ${day(last.createdAt)}. Best ${best}.`}
-        accessibilityValue={{ text: `${s.score}, ${MODE_LABELS[s.mode]}, ${day(s.createdAt)}` }}
-        accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
-        onAccessibilityAction={(e) =>
-          setPicked(Math.max(0, Math.min(scored.length - 1, sel + (e.nativeEvent.actionName === "increment" ? 1 : -1))))
-        }
-      >
-        {width ? (
-          <Svg width={width} height={HEIGHT}>
-            {/* Defense-ready band */}
-            <Rect
-              x={box.left}
-              y={scaleY(100, domain, box)}
-              width={width - box.left - box.right}
-              height={scaleY(READY, domain, box) - scaleY(100, domain, box)}
-              fill={colors.duskTint}
-              opacity={0.6}
-            />
-            {TICKS.filter((t) => t >= domain[0]).map((t) => (
-              <Line
-                key={t}
-                x1={box.left}
-                x2={width - box.right}
-                y1={scaleY(t, domain, box)}
-                y2={scaleY(t, domain, box)}
-                stroke={colors.border}
-                strokeWidth={1}
-              />
-            ))}
-            <AnimatedPath animatedProps={washing} d={areaPath(points, box)} fill={colors.dusk} fillOpacity={0.1} />
-            {/* Crosshair, once the student has touched the chart (the newest point needs no pointer) */}
-            {picked !== null ? (
-              <Line x1={p.x} x2={p.x} y1={box.top} y2={HEIGHT - box.bottom} stroke={colors.duskSoft} strokeWidth={1} />
-            ) : null}
-            <AnimatedPath
-              animatedProps={drawing}
-              d={linePath(points)}
-              stroke={colors.dusk}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={[length, length]}
-              fill="none"
-            />
-            {points.map((q, i) =>
-              i === sel || points.length <= MAX_DOTS ? (
-                <Circle
-                  key={i}
-                  cx={q.x}
-                  cy={q.y}
-                  r={i === sel ? 6 : 4}
-                  fill={colors.dusk}
-                  stroke={colors.sand}
-                  strokeWidth={2}
+      <View style={styles.plotRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.flex}
+          ref={scroller}
+          onLayout={(e) => setVisible(e.nativeEvent.layout.width)}
+          // Start at the newest sessions, once; after that the student's own scrolling stays put.
+          onContentSizeChange={() => {
+            if (atEnd.current || !visible) return;
+            atEnd.current = true;
+            scroller.current?.scrollToEnd({ animated: false });
+          }}
+        >
+          {visible ? (
+            <View style={{ width, height: HEIGHT }}>
+              <Svg width={width} height={HEIGHT}>
+                {/* Defense-ready band */}
+                <Rect
+                  x={0}
+                  y={scoreY(100, BOX)}
+                  width={width}
+                  height={scoreY(READY, BOX) - scoreY(100, BOX)}
+                  fill={colors.duskTint}
+                  opacity={0.6}
                 />
-              ) : null,
-            )}
-          </Svg>
-        ) : null}
-        {/* Tick labels in the right gutter; text wears text tokens */}
-        {width
-          ? TICKS.filter((t) => t >= domain[0]).map((t) => (
-              <Text key={t} style={[styles.tick, { top: scaleY(t, domain, box) - 7 }]}>
-                {t}
-              </Text>
-            ))
-          : null}
-        {width ? (
-          <Text style={[styles.band, { top: scaleY(100, domain, box) + 3, left: box.left + 6 }]}>Defense-ready</Text>
-        ) : null}
+                {TICKS.map((t) => (
+                  <Line
+                    key={t}
+                    x1={0}
+                    x2={width}
+                    y1={scoreY(t, BOX)}
+                    y2={scoreY(t, BOX)}
+                    stroke={colors.border}
+                    strokeWidth={1}
+                  />
+                ))}
+                {cols.map((col, i) => (
+                  <Bar key={i} col={col} grown={grown} color={i === sel ? colors.duskInk : colors.dusk} />
+                ))}
+              </Svg>
+              {/* The picked column's value rides its top (the only number in the plot) */}
+              {c ? (
+                <Text style={[styles.value, { left: Math.min(Math.max(c.x + c.width / 2 - 20, 0), width - 40), top: c.y - 17 }]}>{s.score}</Text>
+              ) : null}
+              {/* Tap targets: the whole slot, taller and wider than the column */}
+              {cols.map((col, i) => (
+                <Pressable
+                  key={i}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: i === sel }}
+                  accessibilityLabel={`${MODE_LABELS[scored[i].mode]}, ${day(scored[i].createdAt)}, readiness ${scored[i].score}`}
+                  accessibilityHint="Shows this session above"
+                  onPress={() => setPicked(i)}
+                  style={[styles.hit, { left: (i * width) / cols.length, width: width / cols.length }]}
+                />
+              ))}
+            </View>
+          ) : null}
+        </ScrollView>
+        <View style={styles.gutter} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {TICKS.filter((t) => t > 0).map((t) => (
+            <Text key={t} style={[styles.tick, { top: scoreY(t, BOX) - 7 }]}>
+              {t}
+            </Text>
+          ))}
+        </View>
       </View>
 
-      <View style={styles.axis} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <View style={styles.key} accessible accessibilityLabel="Shaded band: defense-ready, 85 and up">
+        <View style={styles.swatch} />
+        <Text style={styles.meta}>Defense-ready, 85 and up</Text>
+      </View>
+      <View
+        style={styles.axis}
+        accessible
+        accessibilityLabel={`${scored.length} sessions from ${day(first.createdAt)} to ${day(last.createdAt)}. Best ${best}.`}
+      >
         <Text style={styles.meta}>{day(first.createdAt)}</Text>
         <Text style={styles.meta}>
           {scored.length} sessions · best {best}
@@ -194,6 +182,12 @@ export function TrendChart({ sessions, stage, children }: Props) {
       </View>
     </View>
   );
+}
+
+// One column, growing up from the baseline.
+function Bar({ col, grown, color }: { col: Column; grown: SharedValue<number>; color: string }) {
+  const growing = useAnimatedProps(() => ({ d: columnPath(col, grown.value) }));
+  return <AnimatedPath animatedProps={growing} d={columnPath(col)} fill={color} />;
 }
 
 // Fewer than two scored sessions: pebbles stepping up like the trend to come, Deemo on top (or the one score
@@ -230,17 +224,21 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  pressed: { opacity: 0.6 },
   card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
-  readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },
   readMeta: { ...type.bodyStrong, fontSize: 14 },
   deltaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   delta: { ...type.meta, fontFamily: fonts.body, fontSize: 12.5, color: colors.inkMuted },
-  plot: { height: HEIGHT },
+  open: { flexDirection: "row", alignItems: "center", minHeight: 44, paddingLeft: 8 },
+  openText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13.5, color: colors.duskLink },
+  plotRow: { flexDirection: "row", height: HEIGHT },
+  gutter: { width: GUTTER },
   tick: {
     position: "absolute",
     right: 0,
-    width: 26,
+    width: GUTTER - 4,
     textAlign: "right",
     fontFamily: fonts.mono,
     fontWeight: "400",
@@ -248,7 +246,18 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontVariant: ["tabular-nums"],
   },
-  band: { position: "absolute", fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.duskInk },
+  key: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  swatch: { width: 12, height: 8, borderRadius: 2, backgroundColor: colors.duskTint },
+  value: {
+    position: "absolute",
+    width: 40,
+    textAlign: "center",
+    fontFamily: fonts.mono,
+    fontWeight: "500",
+    fontSize: 11,
+    color: colors.ink,
+  },
+  hit: { position: "absolute", top: 0, bottom: 0 },
   empty: { alignItems: "center", paddingTop: 22 },
   pebbles: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
   pebbleScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
@@ -263,6 +272,6 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   emptyAction: { alignSelf: "stretch", marginTop: 16 },
-  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
+  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
   meta: { ...type.meta, fontFamily: fonts.body },
 });
