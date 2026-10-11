@@ -1,72 +1,195 @@
-import { useState, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
+import Animated, { useAnimatedProps, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
+import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
 
 import { Blob } from "@/components/blob";
 import { Deemo } from "@/components/deemo";
+import { Icon } from "@/components/icon";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
-import { colors, fonts, radius, type } from "@/theme";
-import { chartPoints, scoreY, segments, type Point } from "@/utils/chart";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
+import {
+  areaPath,
+  chartPoints,
+  linePath,
+  nearestIndex,
+  pathLength,
+  scaleY,
+  scoreDomain,
+  type Box,
+} from "@/utils/chart";
 
-const HEIGHT = 120;
+const HEIGHT = 150;
 const READY = 85; // "Defense-ready" band (addendum Q4)
-const TIP_W = 132;
+const TICKS = [50, 70, 85, 100]; // band edges
+const MAX_DOTS = 12; // past this, only the picked point gets a dot
+const BOX: Omit<Box, "width"> = { height: HEIGHT, left: 6, right: 30, top: 10, bottom: 10 };
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Readiness over time (plan F15, S-13), oldest to newest. Drawn with Views; the build has no SVG.
-// Tap a point for its score, stage and date (the newest is picked by the start). Fewer than two scored sessions
-// show the empty state instead (Empty below), with `children` as its action.
+// Readiness over time (plan F15, S-13), oldest to newest. One series, so no legend: the screen title names it.
+// The readout above the plot shows the picked session (the newest to start): its score, stage, date and the
+// change from the session before. Touch and drag along the plot to scrub; it snaps to sessions. The 85+ band is
+// a soft wash; gridlines are solid hairlines at the band edges. The line draws itself in once (still with reduce
+// motion). Fewer than two scored sessions show the empty state instead (Empty below), with `children` as its action.
 type Props = { sessions: SessionSummary[]; stage: string | null; children?: ReactNode };
 
 export function TrendChart({ sessions, stage, children }: Props) {
   const [width, setWidth] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  const plot = useRef<View>(null);
+  const plotX = useRef(0);
+  const reduced = useReducedMotion();
+
   const scored = sessions.filter((s) => s.score !== undefined).reverse();
-  const points = width ? chartPoints(scored.map((s) => s.score ?? 0), width, HEIGHT) : [];
+  const scores = scored.map((s) => s.score ?? 0);
+  const domain = scoreDomain(scores);
+  const box: Box = { ...BOX, width };
+  const points = width ? chartPoints(scores, domain, box) : [];
+  const length = pathLength(points);
   const sel = Math.min(picked ?? scored.length - 1, scored.length - 1);
-  const first = scored[0];
-  const last = scored[scored.length - 1];
-  const best = Math.max(...scored.map((s) => s.score ?? 0));
+
+  // Draw the line in once, when the plot first has a width.
+  const drawn = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    if (width && !reduced) drawn.value = withTiming(1, { duration: 700, easing: easeOut });
+  }, [width, reduced, drawn]);
+  const drawing = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - drawn.value) }));
+  const washing = useAnimatedProps(() => ({ fillOpacity: 0.1 * drawn.value }));
 
   if (scored.length < 2) return <Empty score={scored[0]?.score} stage={stage} action={children} />;
 
+  const first = scored[0];
+  const last = scored[scored.length - 1];
+  const best = Math.max(...scores);
+  const s = scored[sel];
+  const delta = sel > 0 ? scores[sel] - scores[sel - 1] : null;
+  const p = points[sel];
+
+  const scrub = (e: GestureResponderEvent) => {
+    if (points.length) setPicked(nearestIndex(points, e.nativeEvent.pageX - plotX.current));
+  };
+
   return (
     <View style={styles.card}>
-      <View style={styles.plot} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <View style={[styles.ready, { top: scoreY(READY, HEIGHT) }]} />
-        <Text style={[styles.readyLabel, { top: scoreY(READY, HEIGHT) - 15 }]}>{READY} · defense-ready</Text>
-        {segments(points).map((g, i) => (
-          <View
-            key={`s${i}`}
-            style={[
-              styles.segment,
-              { left: g.cx - g.length / 2, top: g.cy - 1, width: g.length, transform: [{ rotate: `${g.angle}deg` }] },
-            ]}
-          />
-        ))}
-        {points.map((p, i) => (
-          <Pressable
-            key={`p${i}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: i === sel }}
-            accessibilityLabel={`${day(scored[i].createdAt)}, ${MODE_LABELS[scored[i].mode]}, readiness ${scored[i].score}`}
-            onPress={() => setPicked(i)}
-            hitSlop={4}
-            style={[styles.hit, { left: p.x - 16, top: p.y - 16 }]}
-          >
-            <View style={[styles.dot, i === sel && styles.dotPicked]} />
-          </Pressable>
-        ))}
-        {points[sel] ? <Tip at={points[sel]} width={width} s={scored[sel]} /> : null}
+      {/* Readout: the picked session */}
+      <View style={styles.readout} accessibilityLiveRegion="polite">
+        <Text style={styles.score}>{s.score}</Text>
+        <View style={styles.flex}>
+          <Text style={styles.readMeta} numberOfLines={1}>
+            {MODE_LABELS[s.mode]} · {day(s.createdAt)}
+          </Text>
+          <View style={styles.deltaRow}>
+            {delta !== null && delta !== 0 ? (
+              <Icon name={delta > 0 ? "trending_up" : "trending_down"} size={16} color={colors.inkMuted} />
+            ) : null}
+            <Text style={styles.delta} numberOfLines={1}>
+              {delta === null
+                ? "First scored session here"
+                : delta === 0
+                  ? "Same as the session before"
+                  : `${delta > 0 ? "+" : "−"}${Math.abs(delta)} from the session before`}
+            </Text>
+          </View>
+        </View>
       </View>
+
       <View
-        style={styles.axis}
+        ref={plot}
+        style={styles.plot}
+        onLayout={(e) => {
+          setWidth(e.nativeEvent.layout.width);
+          plot.current?.measure((_x, _y, _w, _h, pageX) => (plotX.current = pageX));
+        }}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={(e) => {
+          plot.current?.measure((_x, _y, _w, _h, pageX) => (plotX.current = pageX));
+          scrub(e);
+        }}
+        onResponderMove={scrub}
         accessible
-        accessibilityLabel={`Readiness went from ${first.score} on ${day(first.createdAt)} to ${last.score} on ${day(last.createdAt)}. Best ${best}.`}
+        accessibilityRole="adjustable"
+        accessibilityLabel={`Readiness trend, ${scored.length} sessions. Went from ${first.score} on ${day(first.createdAt)} to ${last.score} on ${day(last.createdAt)}. Best ${best}.`}
+        accessibilityValue={{ text: `${s.score}, ${MODE_LABELS[s.mode]}, ${day(s.createdAt)}` }}
+        accessibilityActions={[{ name: "increment" }, { name: "decrement" }]}
+        onAccessibilityAction={(e) =>
+          setPicked(Math.max(0, Math.min(scored.length - 1, sel + (e.nativeEvent.actionName === "increment" ? 1 : -1))))
+        }
       >
+        {width ? (
+          <Svg width={width} height={HEIGHT}>
+            {/* Defense-ready band */}
+            <Rect
+              x={box.left}
+              y={scaleY(100, domain, box)}
+              width={width - box.left - box.right}
+              height={scaleY(READY, domain, box) - scaleY(100, domain, box)}
+              fill={colors.duskTint}
+              opacity={0.6}
+            />
+            {TICKS.filter((t) => t >= domain[0]).map((t) => (
+              <Line
+                key={t}
+                x1={box.left}
+                x2={width - box.right}
+                y1={scaleY(t, domain, box)}
+                y2={scaleY(t, domain, box)}
+                stroke={colors.border}
+                strokeWidth={1}
+              />
+            ))}
+            <AnimatedPath animatedProps={washing} d={areaPath(points, box)} fill={colors.dusk} fillOpacity={0.1} />
+            {/* Crosshair, once the student has touched the chart (the newest point needs no pointer) */}
+            {picked !== null ? (
+              <Line x1={p.x} x2={p.x} y1={box.top} y2={HEIGHT - box.bottom} stroke={colors.duskSoft} strokeWidth={1} />
+            ) : null}
+            <AnimatedPath
+              animatedProps={drawing}
+              d={linePath(points)}
+              stroke={colors.dusk}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeDasharray={[length, length]}
+              fill="none"
+            />
+            {points.map((q, i) =>
+              i === sel || points.length <= MAX_DOTS ? (
+                <Circle
+                  key={i}
+                  cx={q.x}
+                  cy={q.y}
+                  r={i === sel ? 6 : 4}
+                  fill={colors.dusk}
+                  stroke={colors.sand}
+                  strokeWidth={2}
+                />
+              ) : null,
+            )}
+          </Svg>
+        ) : null}
+        {/* Tick labels in the right gutter; text wears text tokens */}
+        {width
+          ? TICKS.filter((t) => t >= domain[0]).map((t) => (
+              <Text key={t} style={[styles.tick, { top: scaleY(t, domain, box) - 7 }]}>
+                {t}
+              </Text>
+            ))
+          : null}
+        {width ? (
+          <Text style={[styles.band, { top: scaleY(100, domain, box) + 3, left: box.left + 6 }]}>Defense-ready</Text>
+        ) : null}
+      </View>
+
+      <View style={styles.axis} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.meta}>{day(first.createdAt)}</Text>
-        <Text style={styles.meta}>Best {best}</Text>
+        <Text style={styles.meta}>
+          {scored.length} sessions · best {best}
+        </Text>
         <Text style={styles.meta}>{day(last.createdAt)}</Text>
       </View>
     </View>
@@ -105,49 +228,27 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
   );
 }
 
-// The picked point's details, above it (below when it sits near the top), kept inside the plot.
-function Tip({ at, width, s }: { at: Point; width: number; s: SessionSummary }) {
-  const left = Math.min(Math.max(at.x - TIP_W / 2, 0), Math.max(0, width - TIP_W));
-  const top = at.y > 44 ? at.y - 44 : at.y + 12;
-  return (
-    <View style={[styles.tip, { left, top }]} pointerEvents="none" accessibilityElementsHidden>
-      <Text style={styles.tipScore}>{s.score}</Text>
-      <Text style={styles.tipMeta} numberOfLines={1}>
-        {MODE_LABELS[s.mode]} · {day(s.createdAt)}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0 },
   card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
+  readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
+  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },
+  readMeta: { ...type.bodyStrong, fontSize: 14 },
+  deltaRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  delta: { ...type.meta, fontFamily: fonts.body, fontSize: 12.5, color: colors.inkMuted },
   plot: { height: HEIGHT },
-  ready: {
+  tick: {
     position: "absolute",
-    left: 0,
     right: 0,
-    height: 1,
-    borderTopWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.border,
+    width: 26,
+    textAlign: "right",
+    fontFamily: fonts.mono,
+    fontWeight: "400",
+    fontSize: 10,
+    color: colors.muted,
+    fontVariant: ["tabular-nums"],
   },
-  readyLabel: { position: "absolute", left: 0, fontFamily: fonts.mono, fontWeight: "500", fontSize: 10, color: colors.muted },
-  segment: { position: "absolute", height: 2, borderRadius: 1, backgroundColor: colors.dusk },
-  hit: { position: "absolute", width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dusk },
-  // The picked point grows and gets a ring in the card color, so it reads apart from the line.
-  dotPicked: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: colors.sand },
-  tip: {
-    position: "absolute",
-    width: TIP_W,
-    alignItems: "center",
-    backgroundColor: colors.paper,
-    borderRadius: radius.md,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-  },
-  tipScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 13, color: colors.ink },
-  tipMeta: { ...type.meta, fontSize: 10.5, fontFamily: fonts.body },
+  band: { position: "absolute", fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.duskInk },
   empty: { alignItems: "center", paddingTop: 22 },
   pebbles: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
   pebbleScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
