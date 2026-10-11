@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
+import { StartButton } from "@/components/start-button";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -16,6 +17,7 @@ import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
 import { GroupReadiness } from "./group-readiness";
 
+const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
 const MODE_INITIALS: Record<Mode, string> = { TITLE: "T", PRE_ORAL: "PO", FINAL: "F" };
 const MODE_BG: Record<Mode, string> = { TITLE: colors.sand, PRE_ORAL: colors.duskTint, FINAL: colors.sageTint };
 
@@ -103,20 +105,29 @@ export function Home() {
               </View>
             </View>
           </Skeleton>
-        ) : null}
+        ) : (
+          // No score yet: the same card, holding the place the score will take.
+          <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
+            <Blob width={76} height={66} color={colors.duskTint}>
+              <Icon name="insights" size={28} color={colors.duskIcon} />
+            </Blob>
+            <View style={styles.flex}>
+              <Text style={styles.lastBand}>No score yet</Text>
+              <Text style={styles.lastTip}>
+                {list.length
+                  ? "Answer at least one question and your score shows up here."
+                  : "Your readiness score shows up here after your first practice."}
+              </Text>
+            </View>
+          </View>
+        )}
 
-        <Pressable
-          accessibilityRole="button"
+        <StartButton
+          label={practiced ? "Start practice" : "Add your manuscript"}
+          icon={practiced ? "mic" : "upload_file"}
           onPress={() => router.push(practiced ? "/practice" : "/projects")}
-          style={({ pressed }) => [styles.start, pressed && styles.pressed]}
-        >
-          <Text style={[type.button, styles.startLabel]}>
-            {practiced ? "Start practice" : "Add your manuscript"}
-          </Text>
-          <Blob width={44} height={44}>
-            <Icon name={practiced ? "mic" : "upload_file"} size={22} color={colors.paper} filled />
-          </Blob>
-        </Pressable>
+          style={styles.start}
+        />
         {!practiced ? (
           <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
             <Text style={styles.sampleText}>Or practice with a sample paper</Text>
@@ -139,6 +150,25 @@ export function Home() {
                 </View>
               ))}
             </Skeleton>
+          </>
+        ) : !recent.length ? (
+          // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
+          <>
+            <Text style={[type.label, styles.section]}>GET STARTED</Text>
+            {STEPS.map((step, i) => {
+              const done = i === 0 && !!manuscript;
+              return (
+                <View key={step} style={styles.row} accessible accessibilityLabel={`${step}${done ? ", done" : ""}`}>
+                  <Icon
+                    name={done ? "check_circle" : "radio_button_unchecked"}
+                    size={22}
+                    color={done ? colors.sage : colors.muted}
+                    filled={done}
+                  />
+                  <Text style={[styles.rowTitle, styles.flex, done && styles.done]}>{step}</Text>
+                </View>
+              );
+            })}
           </>
         ) : recent.length ? (
           <>
@@ -199,18 +229,7 @@ const styles = StyleSheet.create({
   lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
   lastBand: { ...type.heading },
   lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },
-  start: {
-    height: 60,
-    marginTop: 10,
-    borderRadius: 30,
-    backgroundColor: colors.ink,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingLeft: 22,
-    paddingRight: 8,
-  },
-  startLabel: { flex: 1, color: colors.paper },
+  start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
   sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },
   pressed: { opacity: 0.85 },
@@ -220,5 +239,6 @@ const styles = StyleSheet.create({
   modeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   meta: { ...type.meta, marginTop: 2 },
+  done: { color: colors.muted, textDecorationLine: "line-through" },
   rowScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },
 });
