@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { StyleSheet, Text, View, type ViewStyle } from "react-native";
+import type { ViewStyle } from "react-native";
 import Animated, {
+  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -9,14 +10,44 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
 
-import { Blob } from "@/components/blob";
-import { colors, easeOut, fonts } from "@/theme";
+import { colors, easeOut } from "@/theme";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy";
 
 // L: onboarding hero. M: cards, empty states, waits. S: inline notes (no cheeks).
 const WIDTH = { l: 136, m: 76, s: 40 } as const;
+
+// Drawn in a 100 × 85 box (the body), padded so the hand, sparks and z's can reach outside it while the
+// component's layout footprint stays the body itself.
+const W = 100;
+const H = 85;
+const PAD = 14;
+
+// The brand pebble, CSS "58% 42% 52% 48% / 55% 50% 50% 45%", drawn exactly with elliptical corners.
+const BODY = (() => {
+  const [tl, tr, br, bl] = [
+    [0.58 * W, 0.55 * H],
+    [0.42 * W, 0.5 * H],
+    [0.52 * W, 0.5 * H],
+    [0.48 * W, 0.45 * H],
+  ];
+  return [
+    `M${tl[0]} 0`,
+    `A${tr[0]} ${tr[1]} 0 0 1 ${W} ${tr[1]}`,
+    `A${br[0]} ${br[1]} 0 0 1 ${W - br[0]} ${H}`,
+    `A${bl[0]} ${bl[1]} 0 0 1 0 ${H - bl[1]}`,
+    `A${tl[0]} ${tl[1]} 0 0 1 ${tl[0]} 0Z`,
+  ].join(" ");
+})();
+
+const EYE = { y: 31.5, dx: 17, rx: 7, ry: 9, pupil: 3.8 };
+const LENS = 15; // glasses: one round lens around each eye
+const INK = 3.2; // stroke width for glasses and face lines
+
+const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 type Props = {
   mood?: DeemoMood;
@@ -26,16 +57,13 @@ type Props = {
 };
 
 // Deemo, the app's guide (design D1–D5): the brand pebble in solid dusk with paper eyes, soft cheeks, a small
-// smile and big round glasses over its eyes. Flat fills only, every measure a fraction of the width, so one
-// drawing serves all three sizes. The body holds still; only the face and gestures move, and with reduce motion
-// everything holds still and the mood reads from shape. Decorative: screen readers read the words beside it.
+// smile and big round glasses. Flat fills only. The body holds still; only the face and gestures move, and with
+// reduce motion everything holds still and the mood reads from shape. Decorative: screen readers read the words
+// beside it.
 export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
   const w = WIDTH[size];
-  const h = Math.round(w * 0.853);
-  const top = mood === "sleepy" ? Math.round(w * 0.1) : 0; // room for the z's
+  const k = w / W; // px per unit
   const reduced = useReducedMotion();
-  const u = (f: number) => f * w;
-  const stroke = Math.max(1.5, u(0.032));
 
   // Blink every 4–7 s (randomized), 120 ms. Only open eyes blink.
   const lid = useSharedValue(1);
@@ -45,7 +73,7 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
     let t: ReturnType<typeof setTimeout>;
     const next = () => {
       t = setTimeout(() => {
-        lid.value = withSequence(withTiming(0.1, { duration: 60 }), withTiming(1, { duration: 60 }));
+        lid.value = withSequence(withTiming(0.08, { duration: 60 }), withTiming(1, { duration: 60 }));
         next();
       }, 4000 + Math.random() * 3000);
     };
@@ -53,7 +81,7 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
     return () => clearTimeout(t);
   }, [lid, opensEyes, reduced]);
 
-  // Cheer: one 300 ms hop, then still; the glasses perk up with it.
+  // Cheer: one 300 ms hop, then still.
   const hop = useSharedValue(0);
   useEffect(() => {
     if (reduced || mood !== "cheering") return;
@@ -81,241 +109,118 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
   }, [gaze, look, reduced]);
 
   const hopping = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }] }));
-  const blinking = useAnimatedStyle(() => ({ transform: [{ scaleY: lid.value }] }));
-  const shift = u(0.022); // plain number: worklets can't call u()
-  const pupil = useAnimatedStyle(() => ({ transform: [{ translateX: gaze.value * shift }] }));
-  const rocking = useAnimatedStyle(() => ({ transform: [{ rotate: `${wave.value}deg` }] }));
-
-  // Face positions, relative to the body box.
-  const eyeW = u(0.14);
-  const eyeH = u(0.18);
-  const eyeY = h * 0.37;
-  const eyeDX = u(0.17);
-  const mouthY = h * 0.64;
-  const tilt = mood === "encouraging" ? -8 : 0;
-
-  // Glasses ring the eyes, arms running back toward the edge of the head. Sleepy lets them slip down the nose.
-  const lens = u(0.3);
-  const bridge = 2 * eyeDX - lens;
-  const arm = u(0.12);
-  const glasses = mood === "sleepy" ? { lift: u(0.05), rotate: -6 } : { lift: 0, rotate: 0 };
-
-  const arc = (width: number, open: "up" | "down"): ViewStyle => ({
-    position: "absolute",
-    width,
-    height: width,
-    borderRadius: width / 2,
-    borderWidth: stroke,
-    borderColor: "transparent",
-    ...(open === "up" ? { borderBottomColor: colors.paper } : { borderTopColor: colors.paper }),
+  const eyeL = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
+  const eyeR = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
+  const pupilL = useAnimatedProps(() => ({
+    cx: 50 - EYE.dx + gaze.value * 2.2,
+    r: lid.value < 0.5 ? 0 : EYE.pupil,
+  }));
+  const pupilR = useAnimatedProps(() => ({
+    cx: 50 + EYE.dx + gaze.value * 2.2,
+    r: lid.value < 0.5 ? 0 : EYE.pupil,
+  }));
+  // The hand swings on a pivot at the shoulder, so its center travels an arc.
+  const hand = useAnimatedProps(() => {
+    const a = ((-50 - wave.value) * Math.PI) / 180;
+    return { cx: 93 + 14 * Math.cos(a), cy: 32 + 14 * Math.sin(a) };
   });
 
+  const tilt = mood === "encouraging" ? -8 : 0;
+  const slip = mood === "sleepy"; // glasses slide down the nose
+  const down = mood === "reading" ? 3 : 1.5; // pupils sit low; lower still when reading
+  const ex = [50 - EYE.dx, 50 + EYE.dx];
+  const line = { stroke: colors.paper, strokeWidth: INK, strokeLinecap: "round", fill: "none" } as const;
+
   return (
-    <View
-      style={[{ width: w, height: h + top, transform: [{ rotate: `${tilt}deg` }] }, style]}
+    <Animated.View
+      style={[{ width: w, height: H * k }, hopping, style]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
     >
-      <Animated.View style={[StyleSheet.absoluteFill, hopping]}>
-        <View style={{ position: "absolute", top, left: 0 }}>
-          <Blob width={w} height={h} />
-        </View>
+      <Svg
+        width={(W + 2 * PAD) * k}
+        height={(H + 2 * PAD) * k}
+        viewBox={`${-PAD} ${-PAD} ${W + 2 * PAD} ${H + 2 * PAD}`}
+        style={{ margin: -PAD * k }}
+      >
+        {mood === "waving" ? <AnimatedEllipse animatedProps={hand} rx={9} ry={8} fill={colors.dusk} /> : null}
 
-        <View style={{ position: "absolute", top, left: 0, width: w, height: h }}>
-          {/* Eyes */}
-          {[-1, 1].map((side) => {
-            const cx = w / 2 + side * eyeDX;
-            if (mood === "cheering") {
-              const aw = eyeW * 1.15;
-              return <View key={side} style={[arc(aw, "down"), { left: cx - aw / 2, top: eyeY - aw * 0.3 }]} />;
-            }
-            if (mood === "sleepy") {
-              return (
-                <View
-                  key={side}
-                  style={{
-                    position: "absolute",
-                    left: cx - eyeW / 2,
-                    top: eyeY + eyeH * 0.15,
-                    width: eyeW,
-                    height: stroke,
-                    borderRadius: stroke,
-                    backgroundColor: colors.paper,
-                  }}
-                />
-              );
-            }
-            const pupilD = u(0.075);
-            const down = mood === "reading" ? eyeH * 0.12 : 0;
-            return (
-              <Animated.View
-                key={side}
-                style={[
-                  {
-                    position: "absolute",
-                    left: cx - eyeW / 2,
-                    top: eyeY - eyeH / 2,
-                    width: eyeW,
-                    height: eyeH,
-                    borderRadius: eyeW / 2,
-                    backgroundColor: colors.paper,
-                    alignItems: "center",
-                    paddingTop: eyeH * 0.42 + down,
-                  },
-                  blinking,
-                ]}
-              >
-                <Animated.View
-                  style={[
-                    { width: pupilD, height: pupilD, borderRadius: pupilD / 2, backgroundColor: colors.duskInk },
-                    pupil,
-                  ]}
-                />
-              </Animated.View>
-            );
-          })}
+        <G rotation={tilt} origin="50, 45">
+          <Path d={BODY} fill={colors.dusk} />
 
           {/* Cheeks (not at S) */}
-          {size !== "s"
-            ? [-1, 1].map((side) => (
-                <View
-                  key={side}
-                  style={{
-                    position: "absolute",
-                    left: w / 2 + side * u(0.3) - u(0.06),
-                    top: mouthY - u(0.045),
-                    width: u(0.12),
-                    height: u(0.06),
-                    borderRadius: u(0.03),
-                    backgroundColor: colors.duskTint,
-                    opacity: 0.55,
-                  }}
-                />
-              ))
-            : null}
+          {size !== "s" ? (
+            <G fill={colors.duskTint} opacity={0.55}>
+              <Ellipse cx={20} cy={55} rx={6.5} ry={3.4} />
+              <Ellipse cx={80} cy={55} rx={6.5} ry={3.4} />
+            </G>
+          ) : null}
+
+          {/* Eyes */}
+          {mood === "cheering" ? (
+            ex.map((x) => <Path key={x} d={`M${x - 6} ${EYE.y + 2} Q${x} ${EYE.y - 6} ${x + 6} ${EYE.y + 2}`} {...line} />)
+          ) : mood === "sleepy" ? (
+            ex.map((x) => <Path key={x} d={`M${x - 6} ${EYE.y + 3} L${x + 6} ${EYE.y + 3}`} {...line} />)
+          ) : (
+            <>
+              <AnimatedEllipse animatedProps={eyeL} cx={ex[0]} cy={EYE.y} rx={EYE.rx} ry={EYE.ry} fill={colors.paper} />
+              <AnimatedEllipse animatedProps={eyeR} cx={ex[1]} cy={EYE.y} rx={EYE.rx} ry={EYE.ry} fill={colors.paper} />
+              <AnimatedCircle animatedProps={pupilL} cx={ex[0]} cy={EYE.y + down} r={EYE.pupil} fill={colors.duskInk} />
+              <AnimatedCircle animatedProps={pupilR} cx={ex[1]} cy={EYE.y + down} r={EYE.pupil} fill={colors.duskInk} />
+            </>
+          )}
+
+          {/* Glasses: two round lenses, a bridge, and arms back toward the edge of the head */}
+          <G
+            y={slip ? 4 : 0}
+            rotation={slip ? -6 : 0}
+            origin={`50, ${EYE.y}`}
+            stroke={colors.duskInk}
+            strokeWidth={INK}
+            strokeLinecap="round"
+            fill="none"
+          >
+            <Circle cx={ex[0]} cy={EYE.y} r={LENS} />
+            <Circle cx={ex[1]} cy={EYE.y} r={LENS} />
+            <Path d={`M${ex[0] + LENS} ${EYE.y - 1} Q50 ${EYE.y - 4} ${ex[1] - LENS} ${EYE.y - 1}`} />
+            <Path d={`M${ex[0] - LENS} ${EYE.y - 1} L5 ${EYE.y - 3}`} />
+            <Path d={`M${ex[1] + LENS} ${EYE.y - 1} L95 ${EYE.y - 3}`} />
+          </G>
 
           {/* Mouth */}
           {mood === "cheering" ? (
-            <View
-              style={{
-                position: "absolute",
-                left: w / 2 - u(0.08),
-                top: mouthY - u(0.03),
-                width: u(0.16),
-                height: u(0.08),
-                borderBottomLeftRadius: u(0.08),
-                borderBottomRightRadius: u(0.08),
-                backgroundColor: colors.paper,
-              }}
-            />
+            <Path d="M41 52 Q50 53 59 52 Q57 63 50 63 Q43 63 41 52Z" fill={colors.paper} />
           ) : mood === "sleepy" ? (
-            <View
-              style={{
-                position: "absolute",
-                left: w / 2 - u(0.035),
-                top: mouthY,
-                width: u(0.07),
-                height: stroke,
-                borderRadius: stroke,
-                backgroundColor: colors.paper,
-              }}
-            />
+            <Path d="M47 57 L53 57" {...line} />
           ) : (
-            <View style={[arc(u(0.16), "up"), { left: w / 2 - u(0.08), top: mouthY - u(0.13) }]} />
+            <Path d="M42 53 Q50 60 58 53" {...line} />
           )}
 
           {/* Reading: a page held in front */}
           {mood === "reading" ? (
-            <View
-              style={{
-                position: "absolute",
-                left: w / 2 - u(0.18),
-                top: h - u(0.2),
-                width: u(0.36),
-                height: u(0.22),
-                borderRadius: Math.max(2, u(0.03)),
-                backgroundColor: colors.paper,
-                padding: u(0.04),
-                gap: u(0.025),
-                transform: [{ rotate: "-6deg" }],
-              }}
-            >
-              {[0.85, 1, 0.6].map((f, i) => (
-                <View key={i} style={{ width: `${f * 100}%`, height: stroke, borderRadius: stroke, backgroundColor: colors.duskSoft }} />
-              ))}
-            </View>
+            <G rotation={-6} origin="50, 76">
+              <Rect x={31} y={65} width={38} height={24} rx={3} fill={colors.paper} />
+              <Path d="M36 72 H62 M36 77 H64 M36 82 H55" stroke={colors.duskSoft} strokeWidth={2.4} strokeLinecap="round" />
+            </G>
           ) : null}
-        </View>
+        </G>
 
-        {/* Glasses */}
-        <View
-          style={{
-            position: "absolute",
-            left: w / 2 - eyeDX - lens / 2 - arm,
-            top: top + eyeY - lens / 2 + glasses.lift,
-            flexDirection: "row",
-            alignItems: "center",
-            transform: [{ rotate: `${glasses.rotate}deg` }],
-          }}
-        >
-          <View style={{ width: arm, height: stroke, backgroundColor: colors.duskInk }} />
-          <View style={[styles.lens, { width: lens, height: lens, borderRadius: lens / 2, borderWidth: stroke }]} />
-          <View style={{ width: bridge, height: stroke, backgroundColor: colors.duskInk }} />
-          <View style={[styles.lens, { width: lens, height: lens, borderRadius: lens / 2, borderWidth: stroke }]} />
-          <View style={{ width: arm, height: stroke, backgroundColor: colors.duskInk }} />
-        </View>
-
-        {/* Waving: a little pebble hand */}
-        {mood === "waving" ? (
-          <Animated.View
-            style={[
-              {
-                position: "absolute",
-                left: w * 0.9,
-                top: top + h * 0.02,
-                transformOrigin: "left bottom",
-              },
-              rocking,
-            ]}
-          >
-            <Blob width={u(0.2)} height={u(0.17)} />
-          </Animated.View>
+        {/* Cheering: a few sparks. Sleepy: z z. */}
+        {mood === "cheering" ? (
+          <G fill={colors.duskSoft}>
+            <Circle cx={-6} cy={40} r={2.6} />
+            <Circle cx={104} cy={24} r={2.2} />
+            <Circle cx={107} cy={50} r={1.8} />
+          </G>
         ) : null}
-      </Animated.View>
-
-      {/* Cheering: a few sparks. Sleepy: z z. */}
-      {mood === "cheering"
-        ? [
-            [-0.06, 0.45, 0.05],
-            [1.0, 0.3, 0.04],
-            [1.04, 0.62, 0.035],
-          ].map(([x, y, d], i) => (
-            <View
-              key={i}
-              style={{
-                position: "absolute",
-                left: w * x,
-                top: top + h * y,
-                width: u(d),
-                height: u(d),
-                borderRadius: u(d) / 2,
-                backgroundColor: colors.duskSoft,
-              }}
-            />
-          ))
-        : null}
-      {mood === "sleepy" ? (
-        <>
-          <Text style={[styles.z, { left: w * 0.92, top: top - u(0.12), fontSize: Math.max(9, u(0.17)) }]}>z</Text>
-          <Text style={[styles.z, { left: w * 1.04, top: top + u(0.06), fontSize: Math.max(7, u(0.11)) }]}>z</Text>
-        </>
-      ) : null}
-    </View>
+        {mood === "sleepy" ? (
+          <G stroke={colors.duskInk} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" fill="none">
+            <Path d="M94 -8 H103 L94 2 H103" />
+            <Path d="M105 8 H110 L105 14 H110" strokeWidth={2} />
+          </G>
+        ) : null}
+      </Svg>
+    </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  lens: { borderColor: colors.duskInk },
-  z: { position: "absolute", fontFamily: fonts.display, fontWeight: "800", color: colors.duskInk },
-});
