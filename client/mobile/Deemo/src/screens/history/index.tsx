@@ -43,7 +43,9 @@ export function History() {
 
   return (
     <Screen scroll tabBar title="History" subtitle={trend(list)} onRefresh={sessions.refresh}>
-      <TrendChart sessions={list} />
+      {loaded && !error ? (
+        <TrendChart key={mode ?? "all"} sessions={list} stage={mode ? MODE_LABELS[mode] : null} />
+      ) : null}
       {all.length ? (
         <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>
           {FILTERS.map((f) => {
