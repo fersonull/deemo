@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
+import { StartButton } from "@/components/start-button";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -121,18 +122,12 @@ export function Home() {
           </View>
         )}
 
-        <Pressable
-          accessibilityRole="button"
+        <StartButton
+          label={practiced ? "Start practice" : "Add your manuscript"}
+          icon={practiced ? "mic" : "upload_file"}
           onPress={() => router.push(practiced ? "/practice" : "/projects")}
-          style={({ pressed }) => [styles.start, pressed && styles.pressed]}
-        >
-          <Text style={[type.button, styles.startLabel]}>
-            {practiced ? "Start practice" : "Add your manuscript"}
-          </Text>
-          <Blob width={44} height={44}>
-            <Icon name={practiced ? "mic" : "upload_file"} size={22} color={colors.paper} filled />
-          </Blob>
-        </Pressable>
+          style={styles.start}
+        />
         {!practiced ? (
           <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
             <Text style={styles.sampleText}>Or practice with a sample paper</Text>
@@ -234,18 +229,7 @@ const styles = StyleSheet.create({
   lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
   lastBand: { ...type.heading },
   lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },
-  start: {
-    height: 60,
-    marginTop: 10,
-    borderRadius: 30,
-    backgroundColor: colors.ink,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingLeft: 22,
-    paddingRight: 8,
-  },
-  startLabel: { flex: 1, color: colors.paper },
+  start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
   sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },
   pressed: { opacity: 0.85 },

@@ -31,6 +31,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
+- [x] **History empty states**: Start practice when there's nothing yet, a practice button for an empty stage filter, a retry hint when offline.
 - [x] **Home empty state**: "No score yet" card and a three-step "Get started" list for new students.
 - [x] **History chart details and empty state**: labelled defense-ready line, tap a point for its score/stage/date, best score; an empty state below two scored sessions.
 - [ ] **Remaining animations** (from the animation review):
