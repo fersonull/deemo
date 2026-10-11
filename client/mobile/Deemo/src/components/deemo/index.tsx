@@ -26,13 +26,13 @@ type Props = {
 };
 
 // Deemo, the app's guide (design D1–D5): the brand pebble in solid dusk with paper eyes, soft cheeks, a small
-// smile and round glasses pushed up on its head. Flat fills only, every measure a fraction of the width, so one
+// smile and big round glasses over its eyes. Flat fills only, every measure a fraction of the width, so one
 // drawing serves all three sizes. The body holds still; only the face and gestures move, and with reduce motion
 // everything holds still and the mood reads from shape. Decorative: screen readers read the words beside it.
 export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
   const w = WIDTH[size];
   const h = Math.round(w * 0.853);
-  const top = Math.round(w * 0.16); // room for the glasses above the head
+  const top = mood === "sleepy" ? Math.round(w * 0.1) : 0; // room for the z's
   const reduced = useReducedMotion();
   const u = (f: number) => f * w;
   const stroke = Math.max(1.5, u(0.032));
@@ -89,20 +89,16 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
   // Face positions, relative to the body box.
   const eyeW = u(0.14);
   const eyeH = u(0.18);
-  const eyeY = h * 0.4;
-  const eyeDX = u(0.135);
-  const mouthY = h * 0.6;
+  const eyeY = h * 0.37;
+  const eyeDX = u(0.17);
+  const mouthY = h * 0.64;
   const tilt = mood === "encouraging" ? -8 : 0;
 
-  // Glasses sit on top of the head like a pair pushed up from the eyes; the mood moves them as it moved the sprout.
-  const lens = u(0.22);
-  const bridge = u(0.06);
-  const glasses =
-    mood === "cheering"
-      ? { lift: -u(0.03), rotate: 0 }
-      : mood === "sleepy"
-        ? { lift: u(0.1), rotate: -14 }
-        : { lift: 0, rotate: -6 };
+  // Glasses ring the eyes, arms running back toward the edge of the head. Sleepy lets them slip down the nose.
+  const lens = u(0.3);
+  const bridge = 2 * eyeDX - lens;
+  const arm = u(0.12);
+  const glasses = mood === "sleepy" ? { lift: u(0.05), rotate: -6 } : { lift: 0, rotate: 0 };
 
   const arc = (width: number, open: "up" | "down"): ViewStyle => ({
     position: "absolute",
@@ -187,7 +183,7 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
                   key={side}
                   style={{
                     position: "absolute",
-                    left: w / 2 + side * u(0.25) - u(0.06),
+                    left: w / 2 + side * u(0.3) - u(0.06),
                     top: mouthY - u(0.045),
                     width: u(0.12),
                     height: u(0.06),
@@ -256,16 +252,18 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
         <View
           style={{
             position: "absolute",
-            left: w / 2 - lens - bridge / 2,
-            top: top - lens * 0.62 + glasses.lift,
+            left: w / 2 - eyeDX - lens / 2 - arm,
+            top: top + eyeY - lens / 2 + glasses.lift,
             flexDirection: "row",
             alignItems: "center",
             transform: [{ rotate: `${glasses.rotate}deg` }],
           }}
         >
+          <View style={{ width: arm, height: stroke, backgroundColor: colors.duskInk }} />
           <View style={[styles.lens, { width: lens, height: lens, borderRadius: lens / 2, borderWidth: stroke }]} />
           <View style={{ width: bridge, height: stroke, backgroundColor: colors.duskInk }} />
           <View style={[styles.lens, { width: lens, height: lens, borderRadius: lens / 2, borderWidth: stroke }]} />
+          <View style={{ width: arm, height: stroke, backgroundColor: colors.duskInk }} />
         </View>
 
         {/* Waving: a little pebble hand */}
