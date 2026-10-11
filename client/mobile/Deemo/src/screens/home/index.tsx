@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Blob } from "@/components/blob";
+import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -108,9 +109,7 @@ export function Home() {
         ) : (
           // No score yet: the same card, holding the place the score will take.
           <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
-            <Blob width={76} height={66} color={colors.duskTint}>
-              <Icon name="insights" size={28} color={colors.duskIcon} />
-            </Blob>
+            <Deemo />
             <View style={styles.flex}>
               <Text style={styles.lastBand}>No score yet</Text>
               <Text style={styles.lastTip}>

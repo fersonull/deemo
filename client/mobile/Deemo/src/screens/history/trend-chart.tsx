@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Blob } from "@/components/blob";
-import { Icon } from "@/components/icon";
+import { Deemo } from "@/components/deemo";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
@@ -73,8 +73,8 @@ export function TrendChart({ sessions, stage, children }: Props) {
   );
 }
 
-// Fewer than two scored sessions: pebbles stepping up like the trend to come, the biggest holding the trend icon
-// (or the one score so far), then what it takes to draw the line.
+// Fewer than two scored sessions: pebbles stepping up like the trend to come, Deemo on top (or the one score
+// so far), then what it takes to draw the line.
 function Empty({ score, stage, action }: { score?: number; stage: string | null; action?: ReactNode }) {
   const title = score !== undefined ? `${score} so far` : stage ? `No ${stage} scores yet` : "Your trend starts here";
   const note =
@@ -88,13 +88,13 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
       <View style={styles.pebbles} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Blob width={38} height={33} color={colors.duskTint} />
         <Blob width={52} height={45} color={colors.duskSoft} />
-        <Blob width={76} height={66}>
-          {score !== undefined ? (
+        {score !== undefined ? (
+          <Blob width={76} height={66}>
             <Text style={styles.pebbleScore}>{score}</Text>
-          ) : (
-            <Icon name="trending_up" size={30} color={colors.paper} />
-          )}
-        </Blob>
+          </Blob>
+        ) : (
+          <Deemo />
+        )}
       </View>
       <Text accessibilityRole="header" style={styles.emptyTitle}>
         {title}

@@ -10,6 +10,7 @@ import Animated, {
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
+import { Deemo } from "@/components/deemo";
 import { Screen } from "@/components/screen";
 import { colors, type } from "@/theme";
 
@@ -56,10 +57,17 @@ export default function Welcome() {
       </View>
 
       <View style={styles.hero}>
-        {i === 1 && <SpeakingRing />}
-        <Blob width={136} height={116}>
-          {last ? <Text style={styles.score}>70</Text> : <Dots />}
-        </Blob>
+        {/* Deemo greets and sends off; slide 2 introduces the panel, so it shows a speaking panelist instead. */}
+        {i === 1 ? (
+          <>
+            <SpeakingRing />
+            <Blob width={136} height={116}>
+              <Dots />
+            </Blob>
+          </>
+        ) : (
+          <Deemo key={i} size="l" mood={last ? "cheering" : "waving"} />
+        )}
       </View>
 
       <Text style={[type.display, styles.title]}>{slide.title}</Text>
@@ -113,7 +121,6 @@ const styles = StyleSheet.create({
   skip: { ...type.bodyStrong, color: colors.muted },
   hero: { height: 150, justifyContent: "center", alignItems: "flex-start" },
   ring: { position: "absolute", left: 0, opacity: 0.7 },
-  score: { ...type.display, fontSize: 46, lineHeight: 50, color: colors.paper },
   dots: { flexDirection: "row", gap: 10 },
   dot: { width: 13, height: 13, borderRadius: 7, backgroundColor: colors.paper },
   dotDim: { opacity: 0.6 },

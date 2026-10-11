@@ -2,6 +2,7 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
@@ -89,9 +90,11 @@ export function Projects() {
             </View>
           </Skeleton>
         ) : error ? (
-          <Text style={styles.note}>{"Can't reach the DEEMO server right now. Your projects will show up when it's back."}</Text>
+          <DeemoNote mood="sleepy">{"Can't reach the DEEMO server right now. Your projects will show up when it's back."}</DeemoNote>
         ) : loaded && list.length === 0 ? (
-          <Text style={styles.note}>No manuscripts yet. Until you add one, practice uses a sample paper.</Text>
+          <DeemoNote mood="waving" size="m">
+            No manuscripts yet. Until you add one, practice uses a sample paper.
+          </DeemoNote>
         ) : null}
       </View>
 
