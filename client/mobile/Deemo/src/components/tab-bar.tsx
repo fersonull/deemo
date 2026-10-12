@@ -6,8 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
-import { useProjects } from "@/hooks/use-projects";
-import { useSessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts } from "@/theme";
 
 type Props = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
@@ -22,15 +20,6 @@ const ICONS: Record<string, string> = {
 // Floating dark pill with Practice raised in the middle (design brief: Practice is the main action).
 export function TabBar({ state, descriptors, navigation }: Props) {
   const { bottom } = useSafeAreaInsets();
-  const sessionsDown = useSessions().error;
-  const projectsDown = useProjects().error;
-
-  // When the current tab is showing the full-screen offline state (components/offline.tsx), the bar steps aside so
-  // only the offline notice is visible. Profile has no offline state, so it keeps the bar.
-  const current = state.routes[state.index]?.name;
-  const offline =
-    ((current === "index" || current === "history") && sessionsDown) || (current === "projects" && projectsDown);
-  if (offline) return null;
 
   const tab = (route: (typeof state.routes)[number], index: number) => {
     const focused = state.index === index;

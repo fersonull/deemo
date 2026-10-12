@@ -9,7 +9,6 @@ import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
-import { Offline } from "@/components/offline";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -63,9 +62,6 @@ export function Home() {
 
   const open = (id: string) => router.push({ pathname: "/results", params: { id } });
   const refresh = usePullRefresh(refreshEverything);
-
-  // Offline: Deemo takes the whole screen; nothing else here would work.
-  if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
