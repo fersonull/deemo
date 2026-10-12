@@ -6,6 +6,7 @@ import Animated, { LinearTransition, useReducedMotion } from "react-native-reani
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
+import { CountUp } from "@/components/count-up";
 import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Fetching } from "@/components/fetching";
@@ -52,7 +53,6 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const group = mine.find((p) => s?.groupCode && p.group?.code === s.groupCode);
   const [error, setError] = useState("");
   const [upsell, setUpsell] = useState(false);
-  const [shown, setShown] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const reduced = useReducedMotion();
 
@@ -76,14 +76,6 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
       clearTimeout(timer);
     };
   }, [id, attempt]);
-
-  // The score counts up once, like the prototype's reveal.
-  const target = s?.report?.score ?? 0;
-  useEffect(() => {
-    if (!target) return;
-    const t = setInterval(() => setShown((v) => (v >= target ? (clearInterval(t), target) : Math.min(target, v + 2))), 24);
-    return () => clearInterval(t);
-  }, [target]);
 
   const close = () => (fromSession ? router.dismissAll() : router.back());
   const r = s?.report;
@@ -200,7 +192,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
               accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} percent, ${r.band}`}
             >
               <Text style={styles.score}>
-                {r.scored === false ? "–" : shown}
+                {/* the score counts up once, like the prototype's reveal; only CountUp re-renders */}
+                {r.scored === false ? "–" : <CountUp to={r.score} />}
                 {r.scored === false ? null : <Text style={styles.unit}>%</Text>}
               </Text>
               <View>

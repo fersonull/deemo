@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
+  cancelAnimation,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -113,6 +114,7 @@ function SpeakingRing() {
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = withRepeat(withTiming(1, { duration: 1600 }), -1, true);
+    return () => cancelAnimation(t);
   }, [t]);
   const ring = useAnimatedStyle(() => ({ transform: [{ scale: 1.1 + 0.08 * t.value }] }));
   return (

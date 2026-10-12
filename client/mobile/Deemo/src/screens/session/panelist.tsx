@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
+import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
 import { PANEL } from "@/constants";
@@ -78,6 +78,7 @@ function Pulse({ w, h }: { w: number; h: number }) {
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = withRepeat(withTiming(1, { duration: 1200 }), -1, true);
+    return () => cancelAnimation(t);
   }, [t]);
   const style = useAnimatedStyle(() => ({ transform: [{ scale: 1.12 + 0.1 * t.value }], opacity: 0.55 - 0.25 * t.value }));
   return (
@@ -91,10 +92,13 @@ function Mouth({ w, h }: { w: number; h: number }) {
   const t = useSharedValue(0);
   useEffect(() => {
     t.value = withRepeat(withTiming(1, { duration: 260 }), -1, true);
+    return () => cancelAnimation(t);
   }, [t]);
   const mw = Math.round(w * 0.13);
-  const style = useAnimatedStyle(() => ({ height: Math.max(3, w * 0.04 + w * 0.07 * t.value) }));
-  return <Animated.View style={[styles.mouth, { left: (w - mw) / 2, top: h * 0.64, width: mw, borderRadius: mw }, style]} />;
+  // Talk by scaling a full-height mouth (a transform, no layout pass each frame) between 4% and 11% of the width.
+  const full = w * 0.11;
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleY: Math.max(3 / full, (0.04 + 0.07 * t.value) / 0.11) }] }));
+  return <Animated.View style={[styles.mouth, { left: (w - mw) / 2, top: h * 0.64, width: mw, height: full, borderRadius: mw }, style]} />;
 }
 
 const styles = StyleSheet.create({
