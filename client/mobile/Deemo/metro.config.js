@@ -18,9 +18,12 @@ config.transformer = {
   publicEnvHash: createHash("sha256").update(publicEnv).digest("hex"),
 };
 
-// An EAS build without the server URL would ship an app that can only call localhost, which release builds refuse.
-if (process.env.EAS_BUILD && !process.env.EXPO_PUBLIC_API_URL) {
-  throw new Error("EXPO_PUBLIC_API_URL is not set for this EAS build. Add it to the build profile's environment.");
+// EAS Update exports run outside EAS Build; both must reject the localhost fallback.
+if ((process.env.EAS_BUILD || process.env.NODE_ENV === "production") && !process.env.EXPO_PUBLIC_API_URL) {
+  throw new Error("EXPO_PUBLIC_API_URL is not set. Select the EAS environment for this build or update.");
+}
+if (process.env.NODE_ENV === "production" && !process.env.EXPO_PUBLIC_API_URL.startsWith("https://")) {
+  throw new Error("EXPO_PUBLIC_API_URL must use HTTPS for release builds and updates.");
 }
 
 module.exports = config;
