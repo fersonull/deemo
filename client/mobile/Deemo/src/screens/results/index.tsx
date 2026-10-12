@@ -2,21 +2,25 @@ import * as Print from "expo-print";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import Animated, { useReducedMotion } from "react-native-reanimated";
+import Animated, { LinearTransition, useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Button } from "@/components/button";
+import { CountUp } from "@/components/count-up";
+import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
+import { PressableScale } from "@/components/pressable-scale";
 import { DIFFICULTY_LABELS, MODE_LABELS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Session } from "@/hooks/use-sessions";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { bandOf } from "@/utils/bands";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
 import { formula, reportHtml } from "@/utils/report-html";
@@ -28,10 +32,10 @@ import { Contradictions, Criteria, Fixes, Label, Locked, Question, ResponseTimes
 
 const POLL_MS = 2500;
 const BAND_RANGE: Record<string, string> = {
-  "Defense-ready": "85–100 band",
-  "Nearly ready": "70–84 band",
-  Developing: "50–69 band",
-  "Needs preparation": "Below 50",
+  "Defense-ready": "Readiness 85–100%",
+  "Nearly ready": "Readiness 70–84%",
+  Developing: "Readiness 50–69%",
+  "Needs preparation": "Readiness below 50%",
 };
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -49,7 +53,6 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const group = mine.find((p) => s?.groupCode && p.group?.code === s.groupCode);
   const [error, setError] = useState("");
   const [upsell, setUpsell] = useState(false);
-  const [shown, setShown] = useState(0);
   const [attempt, setAttempt] = useState(0);
   const reduced = useReducedMotion();
 
@@ -73,14 +76,6 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
       clearTimeout(timer);
     };
   }, [id, attempt]);
-
-  // The score counts up once, like the prototype's reveal.
-  const target = s?.report?.score ?? 0;
-  useEffect(() => {
-    if (!target) return;
-    const t = setInterval(() => setShown((v) => (v >= target ? (clearInterval(t), target) : Math.min(target, v + 2))), 24);
-    return () => clearInterval(t);
-  }, [target]);
 
   const close = () => (fromSession ? router.dismissAll() : router.back());
   const r = s?.report;
@@ -194,15 +189,29 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
             <View
               style={styles.scoreRow}
               accessible
-              accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} out of 100, ${r.band}`}
+              accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} percent, ${r.band}`}
             >
-              <Text style={styles.score}>{r.scored === false ? "–" : shown}</Text>
+              <Text style={styles.score}>
+                {/* the score counts up once, like the prototype's reveal; only CountUp re-renders */}
+                {r.scored === false ? "–" : <CountUp to={r.score} />}
+                {r.scored === false ? null : <Text style={styles.unit}>%</Text>}
+              </Text>
               <View>
-                <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
-                {BAND_RANGE[r.band] ? <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text> : null}
+                <Text style={[styles.band, r.scored !== false && { color: bandOf(r.score).ink }]}>{r.band.replace(" ", "\n")}.</Text>
+                {BAND_RANGE[r.band] ? (
+                  <View style={[styles.bandPill, { backgroundColor: bandOf(r.score).tint }]}>
+                    <Text style={[styles.bandRange, { color: bandOf(r.score).ink }]}>{BAND_RANGE[r.band]}</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
-            <Text style={styles.headline}>{r.headline}</Text>
+            {/* Deemo's note carries the headline; it cheers when the student is nearly ready (design D5). */}
+            <DeemoNote
+              mood={r.scored !== false && (r.band === "Defense-ready" || r.band === "Nearly ready") ? "cheering" : "encouraging"}
+              style={styles.headline}
+            >
+              {r.headline}
+            </DeemoNote>
             {r.scored === false ? null : (
               <Text style={styles.formula}>
                 {formula(r)}
@@ -260,9 +269,9 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
               </>
             ) : null}
 
-            <View style={styles.transcript}>
+            <Animated.View layout={LinearTransition.duration(200).easing(easeOut)} style={styles.transcript}>
               <Transcript lines={s.lines} count={r.answered} />
-            </View>
+            </Animated.View>
 
             {/* Actions, as in the prototype: weak topics, practice again / share with group, the adviser's PDF. */}
             <View style={styles.actions}>
@@ -272,37 +281,37 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 <>
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
-                    <Pressable
+                    <PressableScale
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
-                      style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                      style={[styles.action, styles.actionSand, styles.flexAction]}
                     >
                       <Text style={styles.actionText}>Practice again</Text>
-                    </Pressable>
+                    </PressableScale>
                     {group ? (
-                      <Pressable
+                      <PressableScale
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
-                        style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                        style={[styles.action, styles.actionSand, styles.flexAction]}
                       >
                         <Icon name="group" size={17} />
                         <Text style={styles.actionText}>Share with group</Text>
-                      </Pressable>
+                      </PressableScale>
                     ) : null}
                   </View>
                 </>
               )}
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}
                 disabled={exporting}
                 onPress={exportPdf}
-                style={({ pressed }) => [styles.action, styles.actionOutline, pressed && styles.pressed]}
+                style={[styles.action, styles.actionOutline]}
               >
                 <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} />
                 <Text style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
-              </Pressable>
+              </PressableScale>
               {exportError ? (
                 <Text style={styles.sub} accessibilityLiveRegion="polite">
                   {exportError}
@@ -372,11 +381,12 @@ const styles = StyleSheet.create({
     lineHeight: 92,
     letterSpacing: -4,
     color: colors.ink,
-    fontVariant: ["tabular-nums"],
   },
+  unit: { fontSize: 40, letterSpacing: -1 },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
-  bandRange: { ...type.meta, marginTop: 4 },
-  headline: { ...type.body, fontSize: 15, lineHeight: 22, marginTop: 10 },
+  bandPill: { alignSelf: "flex-start", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginTop: 6 },
+  bandRange: { ...type.meta, fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5 },
+  headline: { marginTop: 12 },
   formula: { fontFamily: fonts.mono, fontWeight: "400", fontSize: 11.5, lineHeight: 17, color: colors.muted, marginTop: 8 },
   stats: { flexDirection: "row", gap: 8, marginTop: 16 },
   stat: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
@@ -392,7 +402,6 @@ const styles = StyleSheet.create({
   flexAction: { flex: 1 },
   actionOutline: { borderWidth: 1.5, borderColor: colors.sand },
   actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
-  pressed: { opacity: 0.85 },
   sheetNote: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
   shareRow: {
     flexDirection: "row",

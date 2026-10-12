@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Icon } from "@/components/icon";
+import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { useProjects } from "@/hooks/use-projects";
 import { colors, radius, type } from "@/theme";
@@ -32,9 +33,11 @@ export function GroupReadiness() {
                   </Text>
                 ) : null}
               </View>
-              <Text style={m.score === undefined ? styles.note : styles.score}>
-                {m.score ?? (m.sharing ? "No score yet" : "Private")}
-              </Text>
+              {m.score !== undefined ? (
+                <Score value={m.score} style={styles.score} caption banded align="right" />
+              ) : (
+                <Text style={styles.note}>{m.sharing ? "No score yet" : "Private"}</Text>
+              )}
             </View>
           ))}
           <Text style={styles.note}>

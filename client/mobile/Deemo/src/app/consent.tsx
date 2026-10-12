@@ -1,12 +1,13 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { ZoomIn } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { session } from "@/hooks/use-session";
-import { colors, radius, type } from "@/theme";
+import { colors, easeOut, radius, type } from "@/theme";
 
 const ITEMS = [
   { icon: "description", text: "Your manuscript and voice are processed by Google's AI to run the panel." },
@@ -56,7 +57,12 @@ function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () =>
       style={styles.check}
     >
       <View style={[styles.box, checked && styles.boxOn]}>
-        {checked && <Icon name="check" size={18} color={colors.paper} />}
+        {/* The tick pops in from 0.6 (never from nothing), 160 ms */}
+        {checked && (
+          <Animated.View entering={ZoomIn.duration(160).easing(easeOut).withInitialValues({ transform: [{ scale: 0.6 }] })}>
+            <Icon name="check" size={18} color={colors.paper} />
+          </Animated.View>
+        )}
       </View>
       <Text style={styles.checkLabel}>{label}</Text>
     </Pressable>

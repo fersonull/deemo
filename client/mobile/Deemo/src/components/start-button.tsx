@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, Text, type ViewStyle } from "react-native";
+import { StyleSheet, Text, type ViewStyle } from "react-native";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
+import { PressableScale } from "@/components/pressable-scale";
 import { colors, type } from "@/theme";
 
 type Props = { label: string; icon?: string; onPress: () => void; style?: ViewStyle };
@@ -9,12 +10,12 @@ type Props = { label: string; icon?: string; onPress: () => void; style?: ViewSt
 // The prototype's "Start practice" pill: ink, with the panel's pebble holding the icon (Home, empty History).
 export function StartButton({ label, icon = "mic", onPress, style }: Props) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.start, style, pressed && styles.pressed]}>
+    <PressableScale accessibilityRole="button" onPress={onPress} style={[styles.start, style]}>
       <Text style={[type.button, styles.label]}>{label}</Text>
       <Blob width={44} height={44}>
         <Icon name={icon} size={22} color={colors.paper} filled />
       </Blob>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -30,5 +31,4 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   label: { flex: 1, color: colors.paper },
-  pressed: { opacity: 0.85 },
 });

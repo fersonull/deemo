@@ -1,19 +1,24 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { StyleSheet, Switch, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
+import { refreshEverything } from "@/hooks/refresh-everything";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { api } from "@/utils/api";
 import { initials } from "@/utils/initials";
 import { shareFile } from "@/utils/share-file";
+import { PressableScale } from "@/components/pressable-scale";
 
 const PLANS = {
   free: { name: "Free plan", desc: "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript." },
-  premium: { name: "Premium (demo)", desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report." },
+  premium: {
+    name: "Premium (demo)",
+    desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report, and a suited-up Deemo.",
+  },
 };
 
 // Profile (prototype profile screen): account, plan, the typed-answer setting, download and delete my data, sign out.
@@ -53,7 +58,7 @@ export function Profile() {
   };
 
   return (
-    <Screen scroll tabBar title="Profile">
+    <Screen scroll tabBar title="Profile" onRefresh={refreshEverything}>
       <View style={styles.account}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials(name, email)}</Text>
@@ -74,9 +79,9 @@ export function Profile() {
         <View style={styles.planHead}>
           <Text style={[styles.planName, styles.flex]}>{plan.name}</Text>
           {!premium ? (
-            <Pressable accessibilityRole="button" onPress={() => setSheet("upsell")} style={styles.upgrade}>
+            <PressableScale accessibilityRole="button" onPress={() => setSheet("upsell")} style={styles.upgrade}>
               <Text style={styles.upgradeText}>Upgrade</Text>
-            </Pressable>
+            </PressableScale>
           ) : null}
         </View>
         <Text style={styles.planDesc}>{plan.desc}</Text>
@@ -96,7 +101,7 @@ export function Profile() {
             thumbColor={colors.paper}
           />
         </View>
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityState={{ busy: downloading }}
           disabled={downloading}
@@ -109,13 +114,13 @@ export function Profile() {
               {downloadError || "Your manuscripts' summaries, transcripts and reports, as one file."}
             </Text>
           </View>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => setSheet("delete")} style={styles.row}>
+        </PressableScale>
+        <PressableScale accessibilityRole="button" onPress={() => setSheet("delete")} style={styles.row}>
           <Text style={[styles.rowLabel, styles.danger]}>Delete my data</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => void session.signOut()} style={styles.row}>
+        </PressableScale>
+        <PressableScale accessibilityRole="button" onPress={() => void session.signOut()} style={styles.row}>
           <Text style={styles.rowLabel}>Sign out</Text>
-        </Pressable>
+        </PressableScale>
       </View>
 
       <UpsellSheet
@@ -135,7 +140,7 @@ export function Profile() {
           }
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityState={{ disabled: deleting }}
           disabled={deleting}
@@ -143,7 +148,7 @@ export function Profile() {
           style={[styles.deleteButton, deleting && styles.dim]}
         >
           <Text style={styles.deleteText}>{deleting ? "Deleting…" : "Delete everything"}</Text>
-        </Pressable>
+        </PressableScale>
         <View style={styles.cancel}>
           <Button variant="secondary" label="Keep my data" onPress={() => setSheet(null)} disabled={deleting} />
         </View>

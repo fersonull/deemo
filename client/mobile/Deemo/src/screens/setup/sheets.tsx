@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
 import { DOMAINS, type Domain } from "@/constants";
 import { colors, radius, type } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 export function DomainSheet({
   visible,
@@ -24,7 +25,8 @@ export function DomainSheet({
         {DOMAINS.map((d) => {
           const selected = d === value;
           return (
-            <Pressable
+            <PressableScale
+              scaleTo={0.98}
               key={d}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
@@ -33,7 +35,7 @@ export function DomainSheet({
             >
               <Text style={[styles.domainText, selected && styles.onInk]}>{d}</Text>
               {selected && <Icon name="check" size={20} color={colors.paper} />}
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>

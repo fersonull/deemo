@@ -1,20 +1,29 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
+import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
+import { Offline } from "@/components/offline";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
-import { projects, useProjects } from "@/hooks/use-projects";
+import { refreshEverything } from "@/hooks/refresh-everything";
+import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
-import { sessions, useSessions } from "@/hooks/use-sessions";
+import { useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
+import { homeBrief } from "@/utils/home-brief";
+import { riseIn } from "@/utils/motion";
+
+import { TrendChart } from "../history/trend-chart";
+import { DeemoBrief } from "./deemo-brief";
 import { GroupReadiness } from "./group-readiness";
 
 const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
@@ -27,32 +36,36 @@ function greeting(hour: number) {
   return "Evening";
 }
 
-const reload = () => Promise.all([sessions.refresh(), projects.refresh()]);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Home (plan S-05, prototype home): greeting, the last readiness score, Start practice, recent sessions.
+// Home (plan S-05, prototype home): greeting, Deemo telling you where you stand (the last score on its sign, what it
+// means and what to work on), Start practice, the readiness chart (two scored sessions or more) and recent sessions. Sections rise in a beat apart
+// when they first appear.
 export function Home() {
   const { name, email } = useSession();
-  const { list, loaded } = useSessions();
+  const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
   const manuscript = mine.find((p) => p.id === projectId);
   // Until both lists arrive, assume a returning student: no "Add your manuscript" flash.
   const practiced = !!manuscript || list.length > 0 || !loaded || !projectsLoaded;
   const first = name?.trim().split(/\s+/)[0];
-  const last = list.find((s) => s.score !== undefined);
   const recent = list.slice(0, 3);
+  const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
+  const reduced = useReducedMotion();
 
   useFocusEffect(
     useCallback(() => {
-      void sessions.refresh();
-      void projects.refresh();
+      void refreshEverything(); // the account too, so a Premium change made elsewhere shows on return
     }, []),
   );
 
   const open = (id: string) => router.push({ pathname: "/results", params: { id } });
-  const refresh = usePullRefresh(reload);
+  const refresh = usePullRefresh(refreshEverything);
+
+  // Offline: Deemo takes the whole screen; nothing else here would work.
+  if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -65,61 +78,18 @@ export function Home() {
             <Text style={styles.avatarText}>{initials(name, email)}</Text>
           </View>
         </View>
-        {projectsLoaded ? (
-          <Text style={styles.sub}>
-            {manuscript
-              ? `Your panel has read ${manuscript.name}. Up for a round?`
-              : "Add your manuscript so the panel asks about your own study."}
-          </Text>
+        {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
+        {loaded && projectsLoaded ? (
+          <Animated.View entering={riseIn(60, reduced)}>
+            <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} />
+          </Animated.View>
         ) : (
-          <Skeleton label="Loading your manuscript">
-            <Skeleton.Bone width="80%" height={14} style={styles.subBone} />
-          </Skeleton>
-        )}
-
-        {last ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Last readiness ${last.score}, ${last.band}. Opens the report.`}
-            onPress={() => open(last.id)}
-            style={({ pressed }) => [styles.last, pressed && styles.pressed]}
-          >
-            <Blob width={76} height={66}>
-              <Text style={styles.lastScore}>{last.score}</Text>
-            </Blob>
-            <View style={styles.flex}>
-              <Text style={styles.lastBand}>{last.band}</Text>
-              <Text style={styles.lastTip} numberOfLines={2}>
-                {last.tip ?? `${MODE_LABELS[last.mode]} · ${day(last.createdAt)}`}
-              </Text>
-            </View>
-            <Icon name="chevron_right" size={20} color={colors.muted} />
-          </Pressable>
-        ) : !loaded ? (
-          <Skeleton label="Loading your last score">
-            <View style={styles.last}>
+          <Skeleton label="Loading">
+            <View style={styles.briefBones}>
               <Skeleton.Bone width={76} height={66} radius={30} />
-              <View style={[styles.flex, styles.bones]}>
-                <Skeleton.Bone width="55%" height={16} />
-                <Skeleton.Bone width="85%" height={12} />
-              </View>
+              <Skeleton.Bone width="70%" height={84} radius={18} />
             </View>
           </Skeleton>
-        ) : (
-          // No score yet: the same card, holding the place the score will take.
-          <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
-            <Blob width={76} height={66} color={colors.duskTint}>
-              <Icon name="insights" size={28} color={colors.duskIcon} />
-            </Blob>
-            <View style={styles.flex}>
-              <Text style={styles.lastBand}>No score yet</Text>
-              <Text style={styles.lastTip}>
-                {list.length
-                  ? "Answer at least one question and your score shows up here."
-                  : "Your readiness score shows up here after your first practice."}
-              </Text>
-            </View>
-          </View>
         )}
 
         <StartButton
@@ -135,6 +105,12 @@ export function Home() {
         ) : null}
 
         <GroupReadiness />
+        {charted ? (
+          <Animated.View entering={riseIn(120, reduced)}>
+            <Text style={[type.label, styles.section]}>YOUR READINESS</Text>
+            <TrendChart sessions={list} stage={null} compact />
+          </Animated.View>
+        ) : null}
         {!loaded ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
@@ -151,7 +127,7 @@ export function Home() {
               ))}
             </Skeleton>
           </>
-        ) : !recent.length ? (
+        ) : error ? null : !recent.length ? (
           // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
           <>
             <Text style={[type.label, styles.section]}>GET STARTED</Text>
@@ -173,25 +149,31 @@ export function Home() {
         ) : recent.length ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
-            {recent.map((s) => (
-              <Pressable
-                key={s.id}
-                accessibilityRole="button"
-                accessibilityHint="Opens the report"
-                onPress={() => open(s.id)}
-                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-              >
-                <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
-                  <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
-                </View>
-                <View style={styles.flex}>
-                  <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
-                  <Text style={styles.meta} numberOfLines={1}>
-                    {day(s.createdAt)} · {s.title}
-                  </Text>
-                </View>
-                <Text style={styles.rowScore}>{s.score ?? (s.status === "scoring" ? "…" : "–")}</Text>
-              </Pressable>
+            {recent.map((s, i) => (
+              <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
+                <PressableScale
+                  scaleTo={0.98}
+                  accessibilityRole="button"
+                  accessibilityHint="Opens the report"
+                  onPress={() => open(s.id)}
+                  style={[styles.row]}
+                >
+                  <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
+                    <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
+                  </View>
+                  <View style={styles.flex}>
+                    <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
+                    <Text style={styles.meta} numberOfLines={1}>
+                      {day(s.createdAt)} · {s.title}
+                    </Text>
+                  </View>
+                  {s.score !== undefined ? (
+                    <Score value={s.score} style={styles.rowScore} caption banded align="right" />
+                  ) : (
+                    <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+                  )}
+                </PressableScale>
+              </Animated.View>
             ))}
           </>
         ) : null}
@@ -201,6 +183,7 @@ export function Home() {
 }
 
 const styles = StyleSheet.create({
+  briefBones: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
   flex: { flex: 1, minWidth: 0 },
@@ -214,25 +197,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskInk },
-  sub: { ...type.body, color: colors.inkMuted, marginTop: 8 },
-  subBone: { marginTop: 12, marginBottom: 4 },
   bones: { gap: 8 },
-  last: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: colors.sand,
-    borderRadius: 24,
-    padding: 16,
-    marginTop: 18,
-  },
-  lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
-  lastBand: { ...type.heading },
-  lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },
   start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
   sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },
-  pressed: { opacity: 0.85 },
   section: { marginTop: 24, marginBottom: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, height: 58 },
   mode: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
@@ -240,5 +208,6 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   meta: { ...type.meta, marginTop: 2 },
   done: { color: colors.muted, textDecorationLine: "line-through" },
-  rowScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },
+  rowScore: { fontFamily: fonts.display, fontWeight: "700", fontSize: 18, letterSpacing: -0.3, color: colors.ink },
+  pending: { color: colors.muted },
 });

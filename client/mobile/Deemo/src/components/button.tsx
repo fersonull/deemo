@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
+import { PressableScale } from "@/components/pressable-scale";
 import { colors, radius, type } from "@/theme";
 
 type Props = {
@@ -8,27 +9,23 @@ type Props = {
   onPress: () => void;
   variant?: "primary" | "secondary";
   disabled?: boolean;
+  busy?: boolean; // working on it: stays put, reads as busy
   leading?: ReactNode;
 };
 
-export function Button({ label, onPress, variant = "primary", disabled, leading }: Props) {
+export function Button({ label, onPress, variant = "primary", disabled, busy, leading }: Props) {
   const primary = variant === "primary";
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled, busy }}
+      disabled={disabled || busy}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.base,
-        { backgroundColor: primary ? colors.ink : colors.sand },
-        disabled && styles.disabled,
-        pressed && styles.pressed,
-      ]}
+      style={[styles.base, { backgroundColor: primary ? colors.ink : colors.sand }, disabled && !busy && styles.disabled]}
     >
       {leading}
       <Text style={[type.button, { color: primary ? colors.paper : colors.ink }]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -42,5 +39,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   disabled: { opacity: 0.35 },
-  pressed: { opacity: 0.85 },
 });

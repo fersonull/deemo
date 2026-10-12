@@ -1,82 +1,200 @@
-import { useState, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  FadeIn,
+  useAnimatedProps,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from "react-native-reanimated";
+import Svg, { Line, Path } from "react-native-svg";
 
 import { Blob } from "@/components/blob";
+import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
+import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
-import { colors, fonts, radius, type } from "@/theme";
-import { chartPoints, scoreY, segments, type Point } from "@/utils/chart";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { bandOf, deltaTone } from "@/utils/bands";
+import { columnPath, columns, contentWidth, scoreY, type Box, type Column } from "@/utils/chart";
 
-const HEIGHT = 120;
 const READY = 85; // "Defense-ready" band (addendum Q4)
-const TIP_W = 132;
+const BOX: Box = { height: 0, top: 22, bottom: 1 }; // height per size; room above for the picked column's value
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Readiness over time (plan F15, S-13), oldest to newest. Drawn with Views; the build has no SVG.
-// Tap a point for its score, stage and date (the newest is picked by the start). Fewer than two scored sessions
-// show the empty state instead (Empty below), with `children` as its action.
-type Props = { sessions: SessionSummary[]; stage: string | null; children?: ReactNode };
+// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0 and filling the width,
+// colored by readiness band (sage, dusk, amber, clay; the picked one solid, the rest stepped back). Kept quiet: a
+// baseline, one hairline at 85 (defense-ready), the columns, and the picked one's value. One series, so no legend.
+// Tap a column to preview it in the readout above (score, stage, date, change since the session before) and open
+// its report; the newest is picked to start. Many sessions scroll sideways, starting at the newest. Columns grow in
+// once, a few ms apart (still with reduce motion). `compact` is the shorter Home version. Fewer than two scored
+// sessions show the empty state instead (Empty below), with `children` as its action; compact shows nothing then.
+type Props = { sessions: SessionSummary[]; stage: string | null; compact?: boolean; children?: ReactNode };
 
-export function TrendChart({ sessions, stage, children }: Props) {
-  const [width, setWidth] = useState(0);
+export function TrendChart({ sessions, stage, compact, children }: Props) {
+  const [visible, setVisible] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  const reduced = useReducedMotion();
+  const scroller = useRef<ScrollView>(null);
+  const atEnd = useRef(false);
+
+  const height = compact ? 112 : 150;
+  const box: Box = { ...BOX, height };
   const scored = sessions.filter((s) => s.score !== undefined).reverse();
-  const points = width ? chartPoints(scored.map((s) => s.score ?? 0), width, HEIGHT) : [];
+  const scores = scored.map((s) => s.score ?? 0);
+  const width = contentWidth(scored.length, visible);
+  const cols = visible ? columns(scores, width, box) : [];
   const sel = Math.min(picked ?? scored.length - 1, scored.length - 1);
+
+  // Grow the columns in once, when the plot first has a width.
+  const grown = useSharedValue(reduced ? 1 : 0);
+  useEffect(() => {
+    if (visible && !reduced) grown.value = withTiming(1, { duration: 600, easing: easeOut });
+  }, [visible, reduced, grown]);
+
+  if (scored.length < 2) return compact ? null : <Empty score={scored[0]?.score} stage={stage} action={children} />;
+
   const first = scored[0];
   const last = scored[scored.length - 1];
-  const best = Math.max(...scored.map((s) => s.score ?? 0));
-
-  if (scored.length < 2) return <Empty score={scored[0]?.score} stage={stage} action={children} />;
+  const s = scored[sel];
+  const delta = sel > 0 ? scores[sel] - scores[sel - 1] : null;
+  const c = cols[sel];
+  const readyY = scoreY(READY, box);
 
   return (
-    <View style={styles.card}>
-      <View style={styles.plot} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        <View style={[styles.ready, { top: scoreY(READY, HEIGHT) }]} />
-        <Text style={[styles.readyLabel, { top: scoreY(READY, HEIGHT) - 15 }]}>{READY} · defense-ready</Text>
-        {segments(points).map((g, i) => (
-          <View
-            key={`s${i}`}
-            style={[
-              styles.segment,
-              { left: g.cx - g.length / 2, top: g.cy - 1, width: g.length, transform: [{ rotate: `${g.angle}deg` }] },
-            ]}
-          />
-        ))}
-        {points.map((p, i) => (
-          <Pressable
-            key={`p${i}`}
-            accessibilityRole="button"
-            accessibilityState={{ selected: i === sel }}
-            accessibilityLabel={`${day(scored[i].createdAt)}, ${MODE_LABELS[scored[i].mode]}, readiness ${scored[i].score}`}
-            onPress={() => setPicked(i)}
-            hitSlop={4}
-            style={[styles.hit, { left: p.x - 16, top: p.y - 16 }]}
-          >
-            <View style={[styles.dot, i === sel && styles.dotPicked]} />
-          </Pressable>
-        ))}
-        {points[sel] ? <Tip at={points[sel]} width={width} s={scored[sel]} /> : null}
+    <View style={[styles.card, compact && styles.cardCompact]}>
+      {/* Readout: the picked session, with its report one tap away. It cross-fades when the pick changes. */}
+      <View style={styles.readout}>
+        <Animated.View key={sel} entering={FadeIn.duration(180)} style={styles.readoutText} accessibilityLiveRegion="polite">
+          <Score value={s.score!} style={compact ? { ...styles.score, ...styles.scoreCompact } : styles.score} />
+          <View style={styles.flex}>
+            <Text style={styles.readMeta} numberOfLines={1}>
+              {MODE_LABELS[s.mode]} · {day(s.createdAt)}
+            </Text>
+            {/* The change since the session before, in its color: up sage, down amber, level muted */}
+            {delta === null ? (
+              <Text style={styles.delta}>First one here</Text>
+            ) : (
+              <View style={styles.deltaRow}>
+                {delta ? <Icon name={deltaTone(delta).icon} size={14} color={deltaTone(delta).ink} /> : null}
+                <Text style={[styles.delta, styles.deltaStrong, { color: deltaTone(delta).ink }]} numberOfLines={1}>
+                  {delta === 0
+                    ? "Same as last time"
+                    : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "point" : "points"} since last`}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Animated.View>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={`Open the ${MODE_LABELS[s.mode]} report from ${day(s.createdAt)}`}
+          hitSlop={8}
+          onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
+          style={styles.open}
+        >
+          <Icon name="arrow_outward" size={18} color={colors.ink} />
+        </PressableScale>
       </View>
-      <View
-        style={styles.axis}
-        accessible
-        accessibilityLabel={`Readiness went from ${first.score} on ${day(first.createdAt)} to ${last.score} on ${day(last.createdAt)}. Best ${best}.`}
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ref={scroller}
+        style={{ height }}
+        onLayout={(e) => setVisible(e.nativeEvent.layout.width)}
+        // Start at the newest sessions, once; after that the student's own scrolling stays put.
+        onContentSizeChange={() => {
+          if (atEnd.current || !visible) return;
+          atEnd.current = true;
+          scroller.current?.scrollToEnd({ animated: false });
+        }}
       >
+        {visible ? (
+          <View style={{ width, height }}>
+            <Svg width={width} height={height}>
+              <Line x1={0} x2={width} y1={readyY} y2={readyY} stroke={colors.border} strokeWidth={1} />
+              <Line x1={0} x2={width} y1={height - box.bottom} y2={height - box.bottom} stroke={colors.border} strokeWidth={1} />
+              {cols.map((col, i) => (
+                <Bar
+                  key={i}
+                  col={col}
+                  grown={grown}
+                  delay={i}
+                  total={cols.length}
+                  color={bandOf(scores[i]).fill}
+                  faded={i !== sel}
+                />
+              ))}
+            </Svg>
+            <Text style={[styles.ready, { top: readyY - 15 }]}>85%</Text>
+            {/* The picked column's value rides its top (the only number in the plot) */}
+            {c ? (
+              <Text style={[styles.value, { left: Math.min(Math.max(c.x + c.width / 2 - 20, 0), width - 40), top: c.y - 18 }]}>
+                {s.score}%
+              </Text>
+            ) : null}
+            {/* Tap targets: the whole slot, taller and wider than the column */}
+            {cols.map((_, i) => (
+              <Pressable
+                key={i}
+                accessibilityRole="button"
+                accessibilityState={{ selected: i === sel }}
+                accessibilityLabel={`${MODE_LABELS[scored[i].mode]}, ${day(scored[i].createdAt)}, readiness ${scored[i].score} percent`}
+                accessibilityHint="Shows this session above"
+                onPress={() => setPicked(i)}
+                style={[styles.hit, { left: (i * width) / cols.length, width: width / cols.length }]}
+              />
+            ))}
+          </View>
+        ) : null}
+      </ScrollView>
+
+      <View style={styles.axis} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Text style={styles.meta}>{day(first.createdAt)}</Text>
-        <Text style={styles.meta}>Best {best}</Text>
         <Text style={styles.meta}>{day(last.createdAt)}</Text>
       </View>
+
     </View>
   );
 }
 
-// Fewer than two scored sessions: pebbles stepping up like the trend to come, the biggest holding the trend icon
-// (or the one score so far), then what it takes to draw the line.
+// One column, growing up from the baseline; neighbors start a beat apart (at most ~240 ms across the chart).
+function Bar({
+  col,
+  grown,
+  delay,
+  total,
+  color,
+  faded,
+}: {
+  col: Column;
+  grown: SharedValue<number>;
+  delay: number;
+  total: number;
+  color: string;
+  faded: boolean;
+}) {
+  const lag = Math.min(0.4, (delay / Math.max(1, total)) * 0.4);
+  const growing = useAnimatedProps(() => {
+    const t = Math.max(0, Math.min(1, (grown.value - lag) / (1 - lag)));
+    return { d: columnPath(col, t) };
+  });
+  // The picked column is solid; the rest step back so it stands out, still in their band's color.
+  return <AnimatedPath animatedProps={growing} d={columnPath(col)} fill={color} fillOpacity={faded ? 0.45 : 1} />;
+}
+
+// Fewer than two scored sessions: pebbles stepping up like the trend to come, Deemo on top (or the one score
+// so far), then what it takes to draw the line.
 function Empty({ score, stage, action }: { score?: number; stage: string | null; action?: ReactNode }) {
-  const title = score !== undefined ? `${score} so far` : stage ? `No ${stage} scores yet` : "Your trend starts here";
+  const title = score !== undefined ? `${score}% so far` : stage ? `No ${stage} scores yet` : "Your trend starts here";
   const note =
     score !== undefined
       ? "One more scored session and your trend line appears."
@@ -88,13 +206,13 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
       <View style={styles.pebbles} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Blob width={38} height={33} color={colors.duskTint} />
         <Blob width={52} height={45} color={colors.duskSoft} />
-        <Blob width={76} height={66}>
-          {score !== undefined ? (
-            <Text style={styles.pebbleScore}>{score}</Text>
-          ) : (
-            <Icon name="trending_up" size={30} color={colors.paper} />
-          )}
-        </Blob>
+        {score !== undefined ? (
+          <Blob width={76} height={66}>
+            <Score value={score} style={styles.pebbleScore} />
+          </Blob>
+        ) : (
+          <Deemo />
+        )}
       </View>
       <Text accessibilityRole="header" style={styles.emptyTitle}>
         {title}
@@ -105,49 +223,37 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
   );
 }
 
-// The picked point's details, above it (below when it sits near the top), kept inside the plot.
-function Tip({ at, width, s }: { at: Point; width: number; s: SessionSummary }) {
-  const left = Math.min(Math.max(at.x - TIP_W / 2, 0), Math.max(0, width - TIP_W));
-  const top = at.y > 44 ? at.y - 44 : at.y + 12;
-  return (
-    <View style={[styles.tip, { left, top }]} pointerEvents="none" accessibilityElementsHidden>
-      <Text style={styles.tipScore}>{s.score}</Text>
-      <Text style={styles.tipMeta} numberOfLines={1}>
-        {MODE_LABELS[s.mode]} · {day(s.createdAt)}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
+  flex: { flex: 1, minWidth: 0 },
   card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
-  plot: { height: HEIGHT },
-  ready: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 1,
-    borderTopWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.border,
-  },
-  readyLabel: { position: "absolute", left: 0, fontFamily: fonts.mono, fontWeight: "500", fontSize: 10, color: colors.muted },
-  segment: { position: "absolute", height: 2, borderRadius: 1, backgroundColor: colors.dusk },
-  hit: { position: "absolute", width: 32, height: 32, alignItems: "center", justifyContent: "center" },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dusk },
-  // The picked point grows and gets a ring in the card color, so it reads apart from the line.
-  dotPicked: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: colors.sand },
-  tip: {
-    position: "absolute",
-    width: TIP_W,
-    alignItems: "center",
+  cardCompact: { marginTop: 8, paddingBottom: 12 },
+  readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 6 },
+  readoutText: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },
+  scoreCompact: { fontSize: 32, lineHeight: 36 },
+  readMeta: { ...type.bodyStrong, fontSize: 14 },
+  deltaRow: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 2 },
+  deltaStrong: { fontWeight: "600", marginTop: 0 },
+  delta: { ...type.meta, fontFamily: fonts.body, fontSize: 12.5, color: colors.inkMuted, marginTop: 2 },
+  open: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.paper,
-    borderRadius: radius.md,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  tipScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 13, color: colors.ink },
-  tipMeta: { ...type.meta, fontSize: 10.5, fontFamily: fonts.body },
+  ready: { position: "absolute", left: 0, fontFamily: fonts.mono, fontWeight: "400", fontSize: 10, color: colors.muted },
+  value: {
+    position: "absolute",
+    width: 40,
+    textAlign: "center",
+    fontFamily: fonts.mono,
+    fontWeight: "500",
+    fontSize: 11,
+    color: colors.ink,
+  },
+  hit: { position: "absolute", top: 0, bottom: 0 },
   empty: { alignItems: "center", paddingTop: 22 },
   pebbles: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
   pebbleScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
@@ -162,6 +268,6 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   emptyAction: { alignSelf: "stretch", marginTop: 16 },
-  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
-  meta: { ...type.meta, fontFamily: fonts.body },
+  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
+  meta: { ...type.meta, fontFamily: fonts.body, fontSize: 11 },
 });

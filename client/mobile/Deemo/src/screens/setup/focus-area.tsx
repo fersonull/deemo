@@ -48,5 +48,5 @@ const styles = StyleSheet.create({
   card: { marginTop: 20 },
   note: { ...type.meta, lineHeight: 18, marginTop: 6 },
   input: { ...type.body, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 14, marginVertical: 10 },
-  error: { ...type.meta, color: colors.clay, marginTop: 8 },
+  error: { ...type.meta, color: colors.warnInk, marginTop: 8 },
 });

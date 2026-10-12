@@ -4,7 +4,10 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 
-import { colors } from "@/theme";
+import { colors, easeOut } from "@/theme";
+
+// iOS-like drawer curve: fast off the mark, long gentle settle.
+const DRAWER = Easing.bezier(0.32, 0.72, 0, 1);
 
 type Props = {
   visible: boolean;
@@ -12,8 +15,9 @@ type Props = {
   children: ReactNode;
 };
 
-// Bottom sheet from the prototype: the backdrop fades while the card slides up from the bottom
-// (and back down on close). Reanimated skips the motion when the system reduces it.
+// Bottom sheet from the prototype: the backdrop fades while the card slides up from the bottom on the drawer curve
+// (300 ms), and back down faster on close (200 ms, ease-out: it starts moving the moment you dismiss it).
+// Reanimated skips the motion when the system reduces it.
 export function Sheet({ visible, onClose, children }: Props) {
   const { bottom } = useSafeAreaInsets();
   const { height } = useWindowDimensions();
@@ -26,9 +30,9 @@ export function Sheet({ visible, onClose, children }: Props) {
 
   useEffect(() => {
     if (visible) {
-      progress.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) });
+      progress.value = withTiming(1, { duration: 300, easing: DRAWER });
     } else {
-      progress.value = withTiming(0, { duration: 220, easing: Easing.in(Easing.cubic) }, (done) => {
+      progress.value = withTiming(0, { duration: 200, easing: easeOut }, (done) => {
         if (done) scheduleOnRN(setMounted, false);
       });
     }
