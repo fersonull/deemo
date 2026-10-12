@@ -21,6 +21,7 @@ import { useSession } from "@/hooks/use-session";
 import { colors, easeOut } from "@/theme";
 
 import { PremiumBadge } from "./badge";
+import { Suit } from "./suit";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy" | "nervous";
 
@@ -73,7 +74,8 @@ export function Deemo({ mood: base = "idle", size = "m", look, startle, style }:
   const w = WIDTH[size];
   const k = w / W; // px per unit
   const reduced = useReducedMotion();
-  const { premium } = useSession(); // Premium students' Deemo wears a gold badge (not at S: too small to read)
+  const { premium } = useSession();
+  const suited = premium && size !== "s"; // Premium: Deemo suits up with a gold pin (not at S: too small to read)
 
   // Startle: shake the head (±6% of the width, ~420 ms) with a nervous face, then settle back to the given mood.
   // With reduce motion there's no shake, but the face still changes for a moment.
@@ -212,6 +214,7 @@ export function Deemo({ mood: base = "idle", size = "m", look, startle, style }:
 
         <G rotation={tilt} origin="50, 45">
           <Path d={BODY} fill={colors.dusk} />
+          {suited ? <Suit body={BODY} /> : null}
 
           {/* Cheeks (not at S) */}
           {size !== "s" ? (
@@ -263,7 +266,7 @@ export function Deemo({ mood: base = "idle", size = "m", look, startle, style }:
             <Path d="M42 53 Q50 60 58 53" {...line} />
           )}
 
-          {premium && size !== "s" ? <PremiumBadge still={reduced} /> : null}
+          {suited ? <PremiumBadge cx={72} cy={73} still={reduced} /> : null}
 
           {/* Reading: a page held in front */}
           {mood === "reading" ? (

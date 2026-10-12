@@ -20,7 +20,7 @@ function star(cx: number, cy: number, outer: number, inner: number) {
   );
 }
 
-// Deemo's Premium badge: a gold medal on a short ribbon, worn on the right of the body, in Deemo's 100 × 85 units.
+// Deemo's Premium badge: a gold medal on a short ribbon, pinned on the suit's right lapel, in Deemo's 100 × 85 units.
 // Now and then (every 6–9 s, never in a loop that runs every frame) a light glint sweeps across it and a tiny sparkle
 // flares, 700 ms in all. Between sweeps nothing animates. `still` (reduce motion) keeps it gold and quiet.
 export function PremiumBadge({ cx = 77, cy = 66, still }: { cx?: number; cy?: number; still?: boolean }) {
