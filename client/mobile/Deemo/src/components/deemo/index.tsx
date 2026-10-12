@@ -63,6 +63,7 @@ type Props = {
   size?: keyof typeof WIDTH;
   look?: "left" | "right"; // pupils drift toward the speech bubble
   startle?: boolean; // on mount: a quick head-shake with a nervous face, then back to `mood` (an error just happened)
+  suited?: boolean; // force the Premium suit on (a preview, like the upgrade sheet); by default it follows the plan
   style?: ViewStyle;
 };
 
@@ -70,12 +71,12 @@ type Props = {
 // smile and big round glasses. Flat fills only. The body holds still; only the face and gestures move, and with
 // reduce motion everything holds still and the mood reads from shape. Decorative: screen readers read the words
 // beside it.
-export function Deemo({ mood: base = "idle", size = "m", look, startle, style }: Props) {
+export function Deemo({ mood: base = "idle", size = "m", look, startle, suited: dressed, style }: Props) {
   const w = WIDTH[size];
   const k = w / W; // px per unit
   const reduced = useReducedMotion();
   const { premium } = useSession();
-  const suited = premium && size !== "s"; // Premium: Deemo suits up with a gold pin (not at S: too small to read)
+  const suited = (dressed ?? premium) && size !== "s"; // Premium: Deemo suits up with a gold pin (not at S: too small)
 
   // Startle: shake the head (±6% of the width, ~420 ms) with a nervous face, then settle back to the given mood.
   // With reduce motion there's no shake, but the face still changes for a moment.

@@ -15,7 +15,10 @@ import { PressableScale } from "@/components/pressable-scale";
 
 const PLANS = {
   free: { name: "Free plan", desc: "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript." },
-  premium: { name: "Premium (demo)", desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report." },
+  premium: {
+    name: "Premium (demo)",
+    desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report, and a suited-up Deemo.",
+  },
 };
 
 // Profile (prototype profile screen): account, plan, the typed-answer setting, download and delete my data, sign out.
