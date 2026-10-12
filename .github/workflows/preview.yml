@@ -26,11 +26,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: "npm" # or 'yarn' or 'pnpm'
+          node-version: 22
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
@@ -39,7 +43,7 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
-        run: npm install # or yarn install / pnpm install
+        run: bun install --frozen-lockfile # or yarn install / pnpm install
 
       # STRATEGY A: Heavy Native Build (Triggered manually from GitHub UI)
       - name: Build Native App (EAS Build)
@@ -49,4 +53,4 @@ jobs:
       # STRATEGY B: Light JS Update (Triggered automatically on push to your specific branch)
       - name: Update JS Bundle (EAS Update)
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.force_native_build == false) }}
-        run: eas update --channel preview --message "Auto-deployed from GitHub Actions (Commit ${{ github.sha }})" --non-interactive
+        run: eas update --channel preview --environment preview --platform android --message "Auto-deployed from GitHub Actions (Commit ${{ github.sha }})" --non-interactive
