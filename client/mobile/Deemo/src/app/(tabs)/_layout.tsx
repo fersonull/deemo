@@ -9,7 +9,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: "shift",
+        // animation: "shift",
         freezeOnBlur: true,
       }}
       tabBar={(props) => <TabBar {...props} />}
