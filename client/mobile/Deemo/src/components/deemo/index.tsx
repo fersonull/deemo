@@ -25,8 +25,8 @@ import { Suit } from "./suit";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy" | "nervous";
 
-// L: onboarding hero. M: cards, empty states, waits. S: inline notes (no cheeks).
-const WIDTH = { l: 136, m: 76, s: 40 } as const;
+// XL: full-screen states (offline). L: onboarding hero. M: cards, empty states, waits. S: inline notes (no cheeks).
+const WIDTH = { xl: 220, l: 136, m: 76, s: 40 } as const;
 
 // Drawn in a 100 × 85 box (the body), padded so the hand, sparks and z's can reach outside it while the
 // component's layout footprint stays the body itself.
