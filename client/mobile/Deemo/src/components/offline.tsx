@@ -12,7 +12,7 @@ import { riseIn } from "@/utils/motion";
 // The whole screen when the app can't get its data (Home, Projects, History): sleepy Deemo, large, filling the top;
 // what happened and what to do at the bottom; one Try again button. The screen's own buttons and lists stay hidden,
 // since none of them would work. It tells "no internet on the phone" apart from "the DEEMO server is down". A retry
-// that fails again makes Deemo shake its head before dozing off again.
+// that fails again makes Deemo shake its head before dozing off again. The tab bar hides while this shows (tab-bar.tsx).
 export function Offline({ onRetry }: { onRetry: () => Promise<unknown> }) {
   const net = useNetInfo();
   const reduced = useReducedMotion();
@@ -20,10 +20,12 @@ export function Offline({ onRetry }: { onRetry: () => Promise<unknown> }) {
   const [tries, setTries] = useState(0);
   const noInternet = net.isConnected === false || net.isInternetReachable === false;
 
+  // Deemo stays asleep while the button says "Trying…"; the attempt shows for at least half a second, so a fast
+  // failure doesn't flash between poses before the head-shake.
   const retry = async () => {
     setBusy(true);
     try {
-      await onRetry();
+      await Promise.all([onRetry(), new Promise((r) => setTimeout(r, 500))]);
     } finally {
       setBusy(false);
       setTries((n) => n + 1); // still here means it failed again
@@ -31,10 +33,10 @@ export function Offline({ onRetry }: { onRetry: () => Promise<unknown> }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.art} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Animated.View entering={FadeIn.duration(300)}>
-          <Deemo key={tries} size="xl" mood={busy ? "reading" : "sleepy"} startle={tries > 0 && !busy} />
+          <Deemo key={tries} size="xl" mood="sleepy" startle={tries > 0} />
         </Animated.View>
       </View>
       <Animated.View entering={riseIn(80, reduced)} style={styles.words} accessibilityLiveRegion="polite">
@@ -57,7 +59,7 @@ export function Offline({ onRetry }: { onRetry: () => Promise<unknown> }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.paper, paddingHorizontal: 22 },
   art: { flex: 1, alignItems: "center", justifyContent: "center" },
-  words: { paddingBottom: 120 }, // clears the floating tab bar
+  words: { paddingBottom: 24 }, // the tab bar is hidden here
   title: { ...type.hero },
   body: { ...type.body, fontSize: 15, lineHeight: 22, color: colors.inkMuted, marginTop: 10 },
   cta: { marginTop: 24 },
