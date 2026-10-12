@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { View, type DimensionValue, type ViewStyle } from "react-native";
 import Animated, {
+  cancelAnimation,
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -18,6 +19,7 @@ export function Skeleton({ label = "Loading", children }: { label?: string; chil
   const fade = useSharedValue(1);
   useEffect(() => {
     if (!reduced) fade.value = withRepeat(withTiming(0.5, { duration: 900, easing: Easing.inOut(Easing.sin) }), -1, true);
+    return () => cancelAnimation(fade); // endless: stop it when the list arrives
   }, [fade, reduced]);
   const style = useAnimatedStyle(() => ({ opacity: fade.value }));
   return (

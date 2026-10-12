@@ -1,24 +1,42 @@
-// Line chart geometry for plain Views (no SVG in the build): a point per score, and a segment between
-// neighbors as a rotated bar centered on its midpoint. Scores are 0–100; y grows downward.
+// Geometry for the History readiness columns (an SVG drawn in px). Scores are 0–100; y grows downward. Columns
+// always grow from 0: a cut baseline would misstate their heights.
 
-export type Point = { x: number; y: number };
-export type Segment = { cx: number; cy: number; length: number; angle: number }; // angle in degrees
+export type Box = { height: number; top: number; bottom: number };
+export type Column = { x: number; width: number; y: number; height: number };
 
-export function chartPoints(scores: number[], width: number, height: number, pad = 8): Point[] {
-  const yOf = (s: number) => pad + (1 - Math.min(100, Math.max(0, s)) / 100) * (height - 2 * pad);
-  if (scores.length === 1) return [{ x: width / 2, y: yOf(scores[0]) }];
-  const step = (width - 2 * pad) / Math.max(1, scores.length - 1);
-  return scores.map((s, i) => ({ x: pad + i * step, y: yOf(s) }));
-}
+export const MIN_SLOT = 22; // narrowest slot a column gets; past that the chart scrolls sideways
+const ROUND = 6; // rounded data end
 
-export function segments(points: Point[]): Segment[] {
-  return points.slice(1).map((b, i) => {
-    const a = points[i];
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    return { cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, length: Math.hypot(dx, dy), angle: (Math.atan2(dy, dx) * 180) / Math.PI };
+export const scoreY = (score: number, box: Box) =>
+  box.top + (1 - Math.min(100, Math.max(0, score)) / 100) * (box.height - box.top - box.bottom);
+
+// How wide the plot's content is: the visible width, or wider when the sessions need more room.
+export const contentWidth = (count: number, visible: number) => Math.max(visible, count * MIN_SLOT);
+
+// One column per score, oldest to newest, filling equal slots across `width` with a gap between neighbors
+// (a fifth of the slot, 6–16 px): two sessions make two wide columns, many make narrow ones.
+export const gapFor = (slot: number) => Math.min(16, Math.max(6, Math.round(slot * 0.2)));
+
+export function columns(scores: number[], width: number, box: Box): Column[] {
+  const slot = width / Math.max(1, scores.length);
+  const w = slot - gapFor(slot);
+  const floor = box.height - box.bottom;
+  return scores.map((s, i) => {
+    const y = scoreY(s, box);
+    return { x: i * slot + (slot - w) / 2, width: w, y, height: floor - y };
   });
 }
 
-// The y of a score line (e.g. the 85 "defense-ready" mark), on the same scale as the points.
-export const scoreY = (score: number, height: number, pad = 8) => pad + (1 - score / 100) * (height - 2 * pad);
+// A column with its top corners rounded and its base square, `grown` 0–1 of its full height.
+// Runs on the UI thread too (the grow-in animation), hence the worklet directive.
+export function columnPath(c: Column, grown = 1) {
+  "worklet";
+  const h = c.height * grown;
+  const r = Math.min(ROUND, c.width / 2, h);
+  const floor = c.y + c.height;
+  const top = floor - h;
+  return (
+    `M${c.x} ${floor} V${top + r} Q${c.x} ${top} ${c.x + r} ${top} ` +
+    `H${c.x + c.width - r} Q${c.x + c.width} ${top} ${c.x + c.width} ${top + r} V${floor} Z`
+  );
+}

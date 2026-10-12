@@ -33,6 +33,12 @@ export const colors = {
   sageTint: "#CBEFD6", // oklch(0.92 0.05 155)
   sageSoft: "#BEE2C9", // oklch(0.88 0.05 155)
 
-  // clay: destructive actions only (delete my data)
+  // gold: Premium only (Deemo's badge); never a status color
+  gold: "#D9A521", // oklch(0.75 0.14 85)
+  goldLight: "#F6DC86", // oklch(0.9 0.11 92)
+  goldInk: "#8C6310", // oklch(0.52 0.11 75)
+
+  // clay: destructive actions (delete my data), and the lowest readiness band outside a session (never in one)
   clay: "#944123", // oklch(0.48 0.12 40)
+  clayTint: "#F5DDD3", // oklch(0.92 0.04 40)
 } as const;

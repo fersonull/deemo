@@ -8,6 +8,7 @@ import { Sheet } from "@/components/sheet";
 import { DOMAINS, type Domain } from "@/constants";
 import { projects, type PickedFile, type Project } from "@/hooks/use-projects";
 import { colors, fonts, radius, type } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 const PDF = "application/pdf";
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -56,7 +57,9 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     <Sheet visible={visible} onClose={busy ? () => {} : onClose}>
       <Text style={styles.title}>Add your manuscript</Text>
 
-      <Pressable
+      <PressableScale
+
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityLabel={file ? `Chosen file ${file.name}. Choose another` : "Choose a PDF or DOCX"}
         disabled={busy}
@@ -74,7 +77,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
             {busy ? "Uploading…" : file ? mb(file.size) : `Up to ${MAX_MB} MB. Text-based PDFs work best.`}
           </Text>
         </View>
-      </Pressable>
+      </PressableScale>
 
       <View style={styles.field}>
         <Text style={styles.fieldLabel}>Project name</Text>
@@ -156,6 +159,6 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.ink },
   chipTextSelected: { color: colors.paper },
   hint: { ...type.meta, lineHeight: 17, marginTop: 6, paddingHorizontal: 4 },
-  error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 10, paddingHorizontal: 4 },
+  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
   cta: { marginTop: 16 },
 });

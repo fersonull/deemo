@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
@@ -10,6 +11,7 @@ import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
 import { projects, useProjects, type Analysis as AnalysisData } from "@/hooks/use-projects";
 import { colors, type } from "@/theme";
+import { riseIn } from "@/utils/motion";
 
 import { Reading } from "./reading";
 import { SummaryCard } from "./summary-card";
@@ -37,6 +39,9 @@ export function Analysis({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const reduced = useReducedMotion();
+  // Summary cards enter one after another: 40 ms apart, the first six only, so a long list never drags.
+  const stagger = (i: number) => riseIn(Math.min(i, 5) * 40, reduced);
 
   // Poll until the server finishes reading (or fails).
   useEffect(() => {
@@ -113,6 +118,7 @@ export function Analysis({ id }: { id: string }) {
 
   const a = project.analysis;
   const readOnly = !!project.group && !project.group.isOwner;
+  const cards = CARDS.filter((c) => c.k !== "results" || a.results.trim());
   const save = (edits: Partial<AnalysisData>) => projects.saveAnalysis(id, edits).then(() => {});
 
   const go = async () => {
@@ -137,30 +143,33 @@ export function Analysis({ id }: { id: string }) {
       </Text>
       {project.confirmedAt ? <GroupCard project={project} onLeft={back} /> : null}
       <View style={styles.cards}>
-        {CARDS.filter((c) => c.k !== "results" || a.results.trim()).map((c) => (
-          <SummaryCard
-            key={c.k}
-            readOnly={readOnly}
-            title={c.title}
-            body={a[c.k]}
-            unsure={a.unsure.includes(c.k)}
-            onSave={(text) => save({ [c.k]: text.trim() })}
-          />
+        {cards.map((c, i) => (
+          <Animated.View key={c.k} entering={stagger(i)}>
+            <SummaryCard
+              readOnly={readOnly}
+              title={c.title}
+              body={a[c.k]}
+              unsure={a.unsure.includes(c.k)}
+              onSave={(text) => save({ [c.k]: text.trim() })}
+            />
+          </Animated.View>
         ))}
-        <SummaryCard
-          title="KEY FACTS"
-          readOnly={readOnly}
-          list
-          body={a.facts.join("\n")}
-          onSave={(text) =>
-            save({
-              facts: text
-                .split("\n")
-                .map((l) => l.replace(/^[•\-\s]+/, "").trim())
-                .filter(Boolean),
-            })
-          }
-        />
+        <Animated.View entering={stagger(cards.length)}>
+          <SummaryCard
+            title="KEY FACTS"
+            readOnly={readOnly}
+            list
+            body={a.facts.join("\n")}
+            onSave={(text) =>
+              save({
+                facts: text
+                  .split("\n")
+                  .map((l) => l.replace(/^[•\-\s]+/, "").trim())
+                  .filter(Boolean),
+              })
+            }
+          />
+        </Animated.View>
       </View>
       <Text style={styles.factsNote}>Key facts are what the panel checks your answers against.</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}

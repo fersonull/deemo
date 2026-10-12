@@ -1,12 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Blob } from "@/components/blob";
+import { Deemo } from "@/components/deemo";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
 import { colors, type } from "@/theme";
 
 const PERKS = [
+  "Deemo suits up, with a shining gold pin",
   "Final Defense mode",
   "Up to 3 panelists at once",
   "More than one manuscript",
@@ -19,14 +20,23 @@ const PERKS = [
 export function UpsellSheet({ visible, onClose, onUpgrade }: { visible: boolean; onClose: () => void; onUpgrade: () => void }) {
   return (
     <Sheet visible={visible} onClose={onClose}>
-      <Blob width={62} height={54}>
-        <Icon name="workspace_premium" size={26} color={colors.paper} filled />
-      </Blob>
-      <Text style={styles.title}>Rehearse the whole defense</Text>
+      {/* A preview of Premium Deemo: suited up, pin shining */}
+      <View style={styles.head}>
+        <Deemo size="m" mood="cheering" suited />
+        <View style={styles.flex}>
+          <Text style={styles.title}>Rehearse the whole defense</Text>
+          <Text style={styles.sub}>And Deemo dresses for it.</Text>
+        </View>
+      </View>
       <View style={styles.perks}>
         {PERKS.map((p) => (
           <View key={p} style={styles.perk}>
-            <Icon name="check_circle" size={19} color={colors.duskIcon} />
+            {/* Deemo's perk wears the gold of the pin; the rest are plain checks */}
+            {p === PERKS[0] ? (
+              <Icon name="workspace_premium" size={19} color={colors.gold} filled />
+            ) : (
+              <Icon name="check_circle" size={19} color={colors.duskIcon} />
+            )}
             <Text style={type.body}>{p}</Text>
           </View>
         ))}
@@ -43,7 +53,10 @@ export function UpsellSheet({ visible, onClose, onUpgrade }: { visible: boolean;
 }
 
 const styles = StyleSheet.create({
-  title: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8, marginTop: 14 },
+  head: { flexDirection: "row", alignItems: "center", gap: 14 },
+  flex: { flex: 1, minWidth: 0 },
+  title: { ...type.title, fontSize: 24, lineHeight: 26, letterSpacing: -0.8 },
+  sub: { ...type.body, fontSize: 13.5, color: colors.inkMuted, marginTop: 4 },
   perks: { gap: 10, marginTop: 16 },
   perk: { flexDirection: "row", alignItems: "center", gap: 12 },
   upgrade: { marginTop: 20 },

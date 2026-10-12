@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
-import { Blob } from "@/components/blob";
+import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { colors, fonts, type } from "@/theme";
 
@@ -17,7 +16,7 @@ type Props = {
   children?: ReactNode; // e.g. session stats, under the subtitle
 };
 
-// A wait the server is working through (reading a manuscript, scoring a session): a breathing panel,
+// A wait the server is working through (reading a manuscript, scoring a session): Deemo reading,
 // steps that light up, and a progress bar. Progress is an estimate; the server only says "not yet".
 export function Working({ title, subtitle, since, expectedMs, steps, children }: Props) {
   const [now, setNow] = useState(Date.now);
@@ -26,26 +25,11 @@ export function Working({ title, subtitle, since, expectedMs, steps, children }:
     return () => clearInterval(t);
   }, []);
   const pct = Math.min(95, Math.max(3, ((now - since) / expectedMs) * 100));
-  const lit = Math.floor(now / 400) % 3;
-
-  const breath = useSharedValue(1);
-  useEffect(() => {
-    breath.value = withRepeat(withTiming(1.05, { duration: 1600, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [breath]);
-  const breathing = useAnimatedStyle(() => ({ transform: [{ scale: breath.value }] }));
 
   return (
     <View style={styles.wrap} accessibilityLiveRegion="polite">
       <View style={styles.art}>
-        <Animated.View style={breathing}>
-          <Blob width={110} height={96}>
-            <View style={styles.dots}>
-              {[0, 1, 2].map((i) => (
-                <View key={i} style={[styles.dot, { opacity: i === lit ? 1 : 0.45 }]} />
-              ))}
-            </View>
-          </Blob>
-        </Animated.View>
+        <Deemo mood="reading" />
       </View>
       <Text accessibilityRole="header" style={styles.title}>
         {title}
@@ -88,8 +72,6 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, paddingTop: 6 },
   flex: { flex: 1 },
   art: { height: 140, justifyContent: "center" },
-  dots: { flexDirection: "row", gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.paper },
   title: { ...type.title, marginTop: 12 },
   sub: { ...type.body, color: colors.inkMuted, marginTop: 10 },
   steps: { gap: 12, marginTop: 26 },

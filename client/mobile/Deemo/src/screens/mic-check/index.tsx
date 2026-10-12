@@ -1,8 +1,10 @@
 import { useNetInfo } from "@react-native-community/netinfo";
 import { router } from "expo-router";
 import { Linking, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
+import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { useEarphones } from "@/hooks/use-earphones";
@@ -42,6 +44,13 @@ export function MicCheck() {
       subtitle="Read this out loud, at the volume you'll use with the panel:"
     >
       <Text style={styles.script}>{'"Good evening, panel. My name is …, and this is our study."'}</Text>
+      {/* Deemo's tip (design D3); Deemo never goes into the room itself. */}
+      {earphones ? null : (
+        // Fades in after a beat, so it doesn't flash while connected earphones are still being detected.
+        <Animated.View entering={FadeIn.delay(600).duration(200)} style={styles.tip}>
+          <DeemoNote>Earphones in? They keep the panel from hearing itself.</DeemoNote>
+        </Animated.View>
+      )}
 
       {status === "denied" ? (
         <View style={styles.denied}>
@@ -81,6 +90,7 @@ export function MicCheck() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   script: { ...type.heading, fontSize: 21, lineHeight: 26, letterSpacing: -0.2, marginTop: 14 },
+  tip: { marginTop: 14 },
   meter: {
     height: 96,
     marginTop: 20,

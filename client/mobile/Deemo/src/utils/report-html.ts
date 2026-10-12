@@ -88,6 +88,7 @@ body { font-family: 'DM Sans', Roboto, sans-serif; color: ${colors.ink}; font-si
 .who b { color: ${colors.ink}; font-size: 10.5pt; }
 .hero { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
 .score { font-weight: 800; font-size: 54pt; line-height: 1; letter-spacing: -0.04em; }
+.score .unit { font-size: 28pt; letter-spacing: 0; }
 .band { font-weight: 800; font-size: 17pt; line-height: 1.05; }
 .formula, .mono { font-family: 'DM Mono', monospace; font-size: 8.5pt; color: ${colors.inkMuted}; }
 .stats { display: flex; gap: 8px; margin-top: 10px; }
@@ -120,7 +121,7 @@ p { margin: 2px 0 0; }
 </style></head><body>
 <div class="top"><div><div class="brand">DEEMO</div><div class="meta">Practice result, not an official evaluation.</div></div>
 <div class="who"><b>${esc(who.student)}</b><br>${esc(s.title)}<br>${esc(stage)} · ${esc(who.date)}</div></div>
-<div class="hero"><div class="score">${scored ? r.score : "–"}</div><div class="band">${esc(r.band)}</div></div>
+<div class="hero"><div class="score">${scored ? `${r.score}<span class="unit">%</span>` : "–"}</div><div class="band">${esc(r.band)}</div></div>
 <p>${esc(r.headline)}</p>
 ${scored ? `<div class="formula">${esc(formula(r))}</div>` : ""}
 <div class="stats"><div class="stat"><b>${formatTime(s.durationMs)}</b><span class="meta">length</span></div>

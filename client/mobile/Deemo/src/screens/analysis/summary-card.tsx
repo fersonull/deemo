@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   hint: { ...type.meta, marginTop: 6 },
-  error: { ...type.meta, color: colors.clay, marginTop: 6 },
+  error: { ...type.meta, color: colors.warnInk, marginTop: 6 },
   actions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 8 },
   cancel: { height: 38, paddingHorizontal: 14, borderRadius: 19, justifyContent: "center" },
   cancelText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.ink },

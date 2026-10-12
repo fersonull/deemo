@@ -1,0 +1,52 @@
+name: Preview App
+
+on:
+  push:
+    branches:
+      - "preview"
+
+  # Keeps the manual button option active for native builds
+  workflow_dispatch:
+    inputs:
+      force_native_build:
+        description: "Force a completely new native app build? (Required if native code/packages changed)"
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client/mobile/Deemo
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm" # or 'yarn' or 'pnpm'
+
+      - name: Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm install # or yarn install / pnpm install
+
+      # STRATEGY A: Heavy Native Build (Triggered manually from GitHub UI)
+      - name: Build Native App (EAS Build)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.force_native_build == true }}
+        run: eas build --platform all --profile preview --non-interactive
+
+      # STRATEGY B: Light JS Update (Triggered automatically on push to your specific branch)
+      - name: Update JS Bundle (EAS Update)
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.force_native_build == false) }}
+        run: eas update --channel preview --message "Auto-deployed from GitHub Actions (Commit ${{ github.sha }})" --non-interactive
