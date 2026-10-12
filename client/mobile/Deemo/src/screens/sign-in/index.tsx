@@ -1,26 +1,39 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-
-import { Icon } from "@/components/icon";
+import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
+import type { DeemoMood } from "@/components/deemo";
+import { DeemoNote } from "@/components/deemo-note";
+import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { authMessage, session } from "@/hooks/use-session";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { canCreate, confirmProblem, MIN_PASSWORD } from "@/utils/auth-form";
+import { riseIn } from "@/utils/motion";
 
-// Sign in (plan S-04): Google, or school email + password. Firebase Auth keeps the student signed in;
-// the root layout moves on once it reports the new user.
+// Sign in (plan S-04): Google, or school email + password; creating an account asks for the password twice.
+// Firebase Auth keeps the student signed in; the root layout moves on once it reports the new user.
+// Deemo sits at the top and does the talking: a hello, then whatever just happened (an error, a sent reset link).
+// Errors live there, near the top, so the keyboard never covers them; a mismatched confirmation shows under its field.
 export function SignIn() {
+  const reduced = useReducedMotion();
   const [creating, setCreating] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const [greeted, setGreeted] = useState(false); // Deemo waves once, then idles
   const [showPassword, setShowPassword] = useState(false);
+
+  const mismatch = creating ? confirmProblem(password, confirm) : null;
+  const ready = creating ? canCreate(email, password, confirm) : !!email.trim() && !!password;
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
+    setGreeted(true);
     setError("");
     setNote("");
     try {
@@ -32,20 +45,60 @@ export function SignIn() {
     }
   };
 
-  const submit = () => run(() => (creating ? session.createAccount(email, password) : session.signInWithEmail(email, password)));
+  const submit = () => {
+    if (!ready || busy) return;
+    void run(() => (creating ? session.createAccount(email, password) : session.signInWithEmail(email, password)));
+  };
 
   const reset = () =>
     run(async () => {
       await session.resetPassword(email);
-      setNote(`We sent a reset link to ${email.trim()}.`);
+      setNote(`I sent a reset link to ${email.trim()}. Check your inbox, then come back here.`);
     });
+
+  const switchMode = () => {
+    setCreating(!creating);
+    setConfirm("");
+    setError("");
+    setNote("");
+    setGreeted(true);
+  };
+
+  // What Deemo says, and how it looks saying it.
+  const [say, mood]: [string, DeemoMood] = busy
+    ? [creating ? "Setting up your account…" : "Checking your details…", "reading"]
+    : error
+      ? [error, "encouraging"]
+      : note
+        ? [note, "cheering"]
+        : creating
+          ? ["Hi, I'm Deemo. Make an account and your scores and history stay with you.", greeted ? "idle" : "waving"]
+          : ["Welcome back. Sign in and pick up where you left off.", greeted ? "idle" : "waving"];
+
+  const eye = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={showPassword ? "Hide passwords" : "Show passwords"}
+      hitSlop={10}
+      onPress={() => setShowPassword(!showPassword)}
+      style={styles.eye}
+    >
+      <Icon name={showPassword ? "visibility_off" : "visibility"} size={20} color={colors.inkMuted} />
+    </Pressable>
+  );
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-      <Screen
-        title={creating ? "Make your\naccount." : "Keep your\nsessions safe."}
-        subtitle="Sign in so your scores and history follow you."
-      >
+      <Screen scroll title={creating ? "Make your\naccount." : "Keep your\nsessions safe."}>
+        {/* Deemo's bubble: the words fade in when they change; screen readers hear each new message */}
+        <View style={styles.deemo} accessibilityLiveRegion="polite">
+          <Animated.View key={say} entering={FadeIn.duration(200).easing(easeOut)}>
+            <DeemoNote mood={mood} size="m">
+              {say}
+            </DeemoNote>
+          </Animated.View>
+        </View>
+
         <View style={styles.google}>
           <Button
             variant="secondary"
@@ -58,7 +111,7 @@ export function SignIn() {
 
         <View style={styles.or}>
           <View style={styles.rule} />
-          <Text style={type.meta}>or</Text>
+          <Text style={type.meta}>or with email</Text>
           <View style={styles.rule} />
         </View>
 
@@ -71,6 +124,7 @@ export function SignIn() {
           keyboardType="email-address"
           textContentType="emailAddress"
           returnKeyType="next"
+          invalid={!!error && /email/i.test(error)}
         />
         <Field
           label="Password"
@@ -78,54 +132,47 @@ export function SignIn() {
           onChangeText={setPassword}
           autoComplete={creating ? "new-password" : "current-password"}
           secureTextEntry={!showPassword}
-          returnKeyType="go"
-          onSubmitEditing={submit}
-          trailing={
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-              hitSlop={10}
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eye}
-            >
-              <Icon name={showPassword ? "visibility_off" : "visibility"} size={20} color={colors.inkMuted} />
-            </Pressable>
-          }
+          returnKeyType={creating ? "next" : "go"}
+          onSubmitEditing={creating ? undefined : submit}
+          invalid={!!error && /password/i.test(error)}
+          trailing={eye}
         />
-
-        {!creating ? (
+        {creating ? (
+          <Animated.View entering={riseIn(0, reduced)}>
+            <Text style={[styles.hint, password.length >= MIN_PASSWORD && styles.hintMet]}>
+              {password.length >= MIN_PASSWORD ? "✓ " : ""}At least {MIN_PASSWORD} characters
+            </Text>
+            <Field
+              label="Confirm password"
+              value={confirm}
+              onChangeText={setConfirm}
+              autoComplete="new-password"
+              secureTextEntry={!showPassword}
+              returnKeyType="go"
+              onSubmitEditing={submit}
+              invalid={!!mismatch}
+            />
+            {mismatch ? (
+              <Text style={styles.fieldError} accessibilityLiveRegion="polite">
+                {mismatch}
+              </Text>
+            ) : null}
+          </Animated.View>
+        ) : (
           <Pressable accessibilityRole="button" disabled={busy || !email.trim()} onPress={reset} style={styles.link}>
             <Text style={[styles.linkText, !email.trim() && styles.dim]}>Forgot password?</Text>
           </Pressable>
-        ) : null}
+        )}
 
-        {error ? (
-          <Text style={styles.error} accessibilityLiveRegion="polite">
-            {error}
-          </Text>
-        ) : null}
-        {note ? (
-          <Text style={styles.note} accessibilityLiveRegion="polite">
-            {note}
-          </Text>
-        ) : null}
-
-        <View style={styles.spacer} />
-        <Button
-          label={busy ? (creating ? "Creating your account…" : "Signing in…") : creating ? "Create account" : "Sign in"}
-          onPress={submit}
-          busy={busy}
-          disabled={!email.trim() || !password}
-        />
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            setCreating(!creating);
-            setError("");
-            setNote("");
-          }}
-          style={styles.switch}
-        >
+        <View style={styles.cta}>
+          <Button
+            label={busy ? (creating ? "Creating your account…" : "Signing in…") : creating ? "Create account" : "Sign in"}
+            onPress={submit}
+            busy={busy}
+            disabled={!ready}
+          />
+        </View>
+        <Pressable accessibilityRole="button" onPress={switchMode} style={styles.switch}>
           <Text style={styles.switchText}>{creating ? "Have an account? Sign in" : "New here? Create an account"}</Text>
         </Pressable>
       </Screen>
@@ -133,15 +180,21 @@ export function SignIn() {
   );
 }
 
-// A sand field that shows where you're typing: the border turns dusk while it has focus.
-function Field({ label, trailing, ...input }: { label: string; trailing?: React.ReactNode } & React.ComponentProps<typeof TextInput>) {
+// A sand field that shows where you're typing: the border turns dusk while it has focus, amber when it's wrong.
+function Field({
+  label,
+  trailing,
+  invalid,
+  ...input
+}: { label: string; trailing?: React.ReactNode; invalid?: boolean } & React.ComponentProps<typeof TextInput>) {
   const [focused, setFocused] = useState(false);
   return (
-    <View style={[styles.field, focused && styles.fieldFocused]}>
+    <View style={[styles.field, focused && styles.fieldFocused, invalid && styles.fieldInvalid]}>
       <View style={styles.flex}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <TextInput
           accessibilityLabel={label}
+          accessibilityHint={invalid ? "Needs a fix" : undefined}
           autoCapitalize="none"
           placeholderTextColor={colors.faint}
           style={styles.input}
@@ -157,7 +210,8 @@ function Field({ label, trailing, ...input }: { label: string; trailing?: React.
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  google: { marginTop: 28 },
+  deemo: { marginTop: 14, minHeight: 68 }, // room for two lines, so short and long messages don't shift the form
+  google: { marginTop: 16 },
   g: {
     width: 22,
     height: 22,
@@ -169,7 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.ink,
   },
-  or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 22, marginBottom: 16 },
+  or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, marginBottom: 14 },
   rule: { flex: 1, height: 1, backgroundColor: colors.border },
   field: {
     flexDirection: "row",
@@ -183,15 +237,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fieldFocused: { borderColor: colors.dusk },
+  fieldInvalid: { borderColor: colors.amber },
   eye: { width: 40, height: 40, alignItems: "center", justifyContent: "center", marginRight: -8 },
   fieldLabel: { ...type.meta, fontSize: 11, fontWeight: "500" },
   input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
+  hint: { ...type.meta, marginTop: -2, marginBottom: 10, paddingHorizontal: 4 },
+  hintMet: { color: colors.sageInk },
+  fieldError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: -2, paddingHorizontal: 4 },
   link: { alignSelf: "flex-end", height: 40, justifyContent: "center", paddingHorizontal: 4 },
   linkText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.duskLink },
   dim: { opacity: 0.4 },
-  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 4, paddingHorizontal: 4 },
-  note: { ...type.body, fontSize: 13, color: colors.sageInk, marginTop: 4, paddingHorizontal: 4 },
-  spacer: { flex: 1, minHeight: 16 },
+  cta: { marginTop: 18 },
   switch: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
   switchText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
 });
