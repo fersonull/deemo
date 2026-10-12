@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
 
-import { columnPath, columns, contentWidth, MIN_SLOT, scoreY, type Box } from "./chart";
+import { columnPath, columns, contentWidth, gapFor, MIN_SLOT, scoreY, type Box } from "./chart";
 
 const box: Box = { height: 120, top: 10, bottom: 10 };
 
@@ -13,13 +13,15 @@ test("scores map onto the plot from a 0 baseline; out-of-range scores are clampe
   expect(scoreY(-5, box)).toBe(110);
 });
 
-test("columns sit centered in equal slots, never wider than 18 px, and reach down to the baseline", () => {
+test("columns fill their slots, keep a gap between neighbors, and reach down to the baseline", () => {
   const [a, b] = columns([50, 100], 200, box);
-  expect(a).toEqual({ x: 41, width: 18, y: 60, height: 50 });
-  expect(b).toEqual({ x: 141, width: 18, y: 10, height: 100 });
+  expect(a).toEqual({ x: 8, width: 84, y: 60, height: 50 });
+  expect(b).toEqual({ x: 108, width: 84, y: 10, height: 100 });
   const narrow = columns([70, 70, 70, 70], 80, box);
-  expect(narrow[0].width).toBe(10);
-  expect(narrow[3].x).toBe(65);
+  expect(narrow[0].width).toBe(14);
+  expect(narrow[3].x).toBe(63);
+  expect(gapFor(400)).toBe(16);
+  expect(gapFor(10)).toBe(6);
 });
 
 test("the plot scrolls sideways only when the sessions need more room", () => {
@@ -29,7 +31,7 @@ test("the plot scrolls sideways only when the sessions need more room", () => {
 
 test("a column path rounds its top, keeps a square base, and grows from the baseline", () => {
   const c = { x: 0, width: 20, y: 60, height: 50 };
-  expect(columnPath(c)).toBe("M0 110 V64 Q0 60 4 60 H16 Q20 60 20 64 V110 Z");
-  expect(columnPath(c, 0.5)).toBe("M0 110 V89 Q0 85 4 85 H16 Q20 85 20 89 V110 Z");
+  expect(columnPath(c)).toBe("M0 110 V66 Q0 60 6 60 H14 Q20 60 20 66 V110 Z");
+  expect(columnPath(c, 0.5)).toBe("M0 110 V91 Q0 85 6 85 H14 Q20 85 20 91 V110 Z");
   expect(columnPath(c, 0)).toBe("M0 110 V110 Q0 110 0 110 H20 Q20 110 20 110 V110 Z");
 });

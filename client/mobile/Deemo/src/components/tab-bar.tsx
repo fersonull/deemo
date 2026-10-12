@@ -80,5 +80,6 @@ const styles = StyleSheet.create({
   },
   tab: { width: 56, height: 56, alignItems: "center", justifyContent: "center", gap: 2 },
   label: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10 },
-  practice: { transform: [{ translateY: -14 }] },
+  // Raised well above the row, so Practice reads as the main action rather than a fifth tab.
+  practice: { transform: [{ translateY: -26 }] },
 });

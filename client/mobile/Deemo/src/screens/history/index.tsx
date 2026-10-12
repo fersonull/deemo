@@ -8,6 +8,7 @@ import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { useSession } from "@/hooks/use-session";
@@ -104,9 +105,11 @@ export function History() {
                 {day(s.createdAt)} · {formatTime(s.durationMs)} · {s.title}
               </Text>
             </View>
-            <Text style={[styles.score, s.score === undefined && styles.pending]}>
-              {s.score ?? (s.status === "scoring" ? "…" : "–")}
-            </Text>
+            {s.score !== undefined ? (
+              <Score value={s.score} style={styles.score} caption align="right" />
+            ) : (
+              <Text style={[styles.score, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+            )}
           </PressableScale>
         ))}
         {!loaded ? (
@@ -143,6 +146,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
   mode: { ...type.heading, fontSize: 16 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
-  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, color: colors.ink, fontVariant: ["tabular-nums"] },
+  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 26, letterSpacing: -0.6, color: colors.ink },
   pending: { color: colors.muted },
 });

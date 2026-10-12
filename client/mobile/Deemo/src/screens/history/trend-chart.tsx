@@ -15,6 +15,7 @@ import { Blob } from "@/components/blob";
 import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
@@ -27,7 +28,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0. Kept quiet: a
+// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0 and filling the width. Kept quiet: a
 // baseline, one hairline at 85 (defense-ready), the columns, and the picked one's value. One series, so no legend.
 // Tap a column to preview it in the readout above (score, stage, date, change since the session before) and open
 // its report; the newest is picked to start. Many sessions scroll sideways, starting at the newest. Columns grow in
@@ -70,7 +71,7 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
       {/* Readout: the picked session, with its report one tap away. It cross-fades when the pick changes. */}
       <View style={styles.readout}>
         <Animated.View key={sel} entering={FadeIn.duration(180)} style={styles.readoutText} accessibilityLiveRegion="polite">
-          <Text style={[styles.score, compact && styles.scoreCompact]}>{s.score}</Text>
+          <Score value={s.score!} style={compact ? { ...styles.score, ...styles.scoreCompact } : styles.score} />
           <View style={styles.flex}>
             <Text style={styles.readMeta} numberOfLines={1}>
               {MODE_LABELS[s.mode]} · {day(s.createdAt)}
@@ -81,7 +82,7 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
               <View style={styles.deltaRow}>
                 {delta ? <Icon name={delta > 0 ? "arrow_upward" : "arrow_downward"} size={13} color={colors.inkMuted} /> : null}
                 <Text style={styles.delta} numberOfLines={1}>
-                  {delta === 0 ? "Same as last time" : `${Math.abs(delta)} since last`}
+                  {delta === 0 ? "Same as last time" : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "point" : "points"} since last`}
                 </Text>
               </View>
             )}
@@ -120,11 +121,11 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
                 <Bar key={i} col={col} grown={grown} delay={i} total={cols.length} color={i === sel ? colors.duskInk : colors.dusk} />
               ))}
             </Svg>
-            <Text style={[styles.ready, { top: readyY - 15 }]}>85</Text>
+            <Text style={[styles.ready, { top: readyY - 15 }]}>85%</Text>
             {/* The picked column's value rides its top (the only number in the plot) */}
             {c ? (
               <Text style={[styles.value, { left: Math.min(Math.max(c.x + c.width / 2 - 20, 0), width - 40), top: c.y - 18 }]}>
-                {s.score}
+                {s.score}%
               </Text>
             ) : null}
             {/* Tap targets: the whole slot, taller and wider than the column */}
@@ -133,7 +134,7 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
                 key={i}
                 accessibilityRole="button"
                 accessibilityState={{ selected: i === sel }}
-                accessibilityLabel={`${MODE_LABELS[scored[i].mode]}, ${day(scored[i].createdAt)}, readiness ${scored[i].score}`}
+                accessibilityLabel={`${MODE_LABELS[scored[i].mode]}, ${day(scored[i].createdAt)}, readiness ${scored[i].score} percent`}
                 accessibilityHint="Shows this session above"
                 onPress={() => setPicked(i)}
                 style={[styles.hit, { left: (i * width) / cols.length, width: width / cols.length }]}
@@ -176,7 +177,7 @@ function Bar({
 // Fewer than two scored sessions: pebbles stepping up like the trend to come, Deemo on top (or the one score
 // so far), then what it takes to draw the line.
 function Empty({ score, stage, action }: { score?: number; stage: string | null; action?: ReactNode }) {
-  const title = score !== undefined ? `${score} so far` : stage ? `No ${stage} scores yet` : "Your trend starts here";
+  const title = score !== undefined ? `${score}% so far` : stage ? `No ${stage} scores yet` : "Your trend starts here";
   const note =
     score !== undefined
       ? "One more scored session and your trend line appears."
@@ -190,7 +191,7 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
         <Blob width={52} height={45} color={colors.duskSoft} />
         {score !== undefined ? (
           <Blob width={76} height={66}>
-            <Text style={styles.pebbleScore}>{score}</Text>
+            <Score value={score} style={styles.pebbleScore} />
           </Blob>
         ) : (
           <Deemo />

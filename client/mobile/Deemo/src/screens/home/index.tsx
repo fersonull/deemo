@@ -11,6 +11,7 @@ import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -97,12 +98,12 @@ export function Home() {
           <PressableScale
             scaleTo={0.98}
             accessibilityRole="button"
-            accessibilityLabel={`Last readiness ${last.score}, ${last.band}. Opens the report.`}
+            accessibilityLabel={`Last readiness ${last.score} percent, ${last.band}. Opens the report.`}
             onPress={() => open(last.id)}
             style={[styles.last]}
           >
             <Blob width={76} height={66}>
-              <Text style={styles.lastScore}>{last.score}</Text>
+              <Score value={last.score!} style={styles.lastScore} />
             </Blob>
             <View style={styles.flex}>
               <Text style={styles.lastBand}>{last.band}</Text>
@@ -217,7 +218,11 @@ export function Home() {
                       {day(s.createdAt)} · {s.title}
                     </Text>
                   </View>
-                  <Text style={styles.rowScore}>{s.score ?? (s.status === "scoring" ? "…" : "–")}</Text>
+                  {s.score !== undefined ? (
+                    <Score value={s.score} style={styles.rowScore} caption align="right" />
+                  ) : (
+                    <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+                  )}
                 </PressableScale>
               </Animated.View>
             ))}
@@ -255,7 +260,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginTop: 18,
   },
-  lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
+  lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 26, letterSpacing: -0.8, color: colors.paper },
   lastBand: { ...type.heading },
   lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },
   start: { marginTop: 10 },
@@ -268,5 +273,6 @@ const styles = StyleSheet.create({
   rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   meta: { ...type.meta, marginTop: 2 },
   done: { color: colors.muted, textDecorationLine: "line-through" },
-  rowScore: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },
+  rowScore: { fontFamily: fonts.display, fontWeight: "700", fontSize: 18, letterSpacing: -0.3, color: colors.ink },
+  pending: { color: colors.muted },
 });

@@ -5,8 +5,7 @@ export type Box = { height: number; top: number; bottom: number };
 export type Column = { x: number; width: number; y: number; height: number };
 
 export const MIN_SLOT = 22; // narrowest slot a column gets; past that the chart scrolls sideways
-const MAX_BAR = 18; // slim columns: they never fill their slot
-const ROUND = 4; // rounded data end
+const ROUND = 6; // rounded data end
 
 export const scoreY = (score: number, box: Box) =>
   box.top + (1 - Math.min(100, Math.max(0, score)) / 100) * (box.height - box.top - box.bottom);
@@ -14,10 +13,13 @@ export const scoreY = (score: number, box: Box) =>
 // How wide the plot's content is: the visible width, or wider when the sessions need more room.
 export const contentWidth = (count: number, visible: number) => Math.max(visible, count * MIN_SLOT);
 
-// One column per score, oldest to newest, centered in equal slots across `width`.
+// One column per score, oldest to newest, filling equal slots across `width` with a gap between neighbors
+// (a fifth of the slot, 6–16 px): two sessions make two wide columns, many make narrow ones.
+export const gapFor = (slot: number) => Math.min(16, Math.max(6, Math.round(slot * 0.2)));
+
 export function columns(scores: number[], width: number, box: Box): Column[] {
   const slot = width / Math.max(1, scores.length);
-  const w = Math.min(MAX_BAR, Math.round(slot * 0.5));
+  const w = slot - gapFor(slot);
   const floor = box.height - box.bottom;
   return scores.map((s, i) => {
     const y = scoreY(s, box);

@@ -30,10 +30,10 @@ import { Contradictions, Criteria, Fixes, Label, Locked, Question, ResponseTimes
 
 const POLL_MS = 2500;
 const BAND_RANGE: Record<string, string> = {
-  "Defense-ready": "85–100 band",
-  "Nearly ready": "70–84 band",
-  Developing: "50–69 band",
-  "Needs preparation": "Below 50",
+  "Defense-ready": "Readiness 85–100%",
+  "Nearly ready": "Readiness 70–84%",
+  Developing: "Readiness 50–69%",
+  "Needs preparation": "Readiness below 50%",
 };
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -196,9 +196,12 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
             <View
               style={styles.scoreRow}
               accessible
-              accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} out of 100, ${r.band}`}
+              accessibilityLabel={r.scored === false ? "Not scored" : `Readiness ${r.score} percent, ${r.band}`}
             >
-              <Text style={styles.score}>{r.scored === false ? "–" : shown}</Text>
+              <Text style={styles.score}>
+                {r.scored === false ? "–" : shown}
+                {r.scored === false ? null : <Text style={styles.unit}>%</Text>}
+              </Text>
               <View>
                 <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
                 {BAND_RANGE[r.band] ? <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text> : null}
@@ -381,6 +384,7 @@ const styles = StyleSheet.create({
     letterSpacing: -4,
     color: colors.ink,
   },
+  unit: { fontSize: 40, letterSpacing: -1 },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
   bandRange: { ...type.meta, marginTop: 4 },
   headline: { marginTop: 12 },
