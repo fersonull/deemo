@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import { Deemo, type DeemoMood } from "@/components/deemo";
@@ -6,16 +7,17 @@ import { colors, radius, type } from "@/theme";
 type Props = {
   mood?: DeemoMood;
   size?: "m" | "s";
-  children: string;
+  children: ReactNode; // words; nest <Text> for bold or colored parts
+  holding?: { value: number; color: string };
   style?: ViewStyle;
 };
 
 // "Deemo says" (design D3): Deemo beside a flat sand bubble, looking at it. The words are real text, so screen
 // readers read the bubble, not the character. Scripted lines only: at most two sentences, no exclamation marks.
-export function DeemoNote({ mood = "idle", size = "s", children, style }: Props) {
+export function DeemoNote({ mood = "idle", size = "s", children, holding, style }: Props) {
   return (
     <View style={[styles.row, style]}>
-      <Deemo mood={mood} size={size} look="right" />
+      <Deemo mood={mood} size={size} look="right" holding={holding} />
       <View style={styles.bubble}>
         <Text style={styles.text}>{children}</Text>
       </View>

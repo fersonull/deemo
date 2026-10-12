@@ -4,9 +4,6 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Blob } from "@/components/blob";
-import { Deemo } from "@/components/deemo";
-import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -20,11 +17,11 @@ import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
-import { bandOf } from "@/utils/bands";
+import { homeBrief } from "@/utils/home-brief";
 import { riseIn } from "@/utils/motion";
 
 import { TrendChart } from "../history/trend-chart";
-import { DeemoTip } from "./deemo-tip";
+import { DeemoBrief } from "./deemo-brief";
 import { GroupReadiness } from "./group-readiness";
 
 const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
@@ -41,8 +38,8 @@ const reload = () => Promise.all([sessions.refresh(), projects.refresh()]);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Home (plan S-05, prototype home): greeting, Deemo's tip, Start practice, then your readiness (the last score card
-// until there are two scored sessions, the chart after that) and recent sessions. Sections rise in a beat apart
+// Home (plan S-05, prototype home): greeting, Deemo telling you where you stand (the last score on its sign, what it
+// means and what to work on), Start practice, the readiness chart (two scored sessions or more) and recent sessions. Sections rise in a beat apart
 // when they first appear.
 export function Home() {
   const { name, email } = useSession();
@@ -53,7 +50,6 @@ export function Home() {
   // Until both lists arrive, assume a returning student: no "Add your manuscript" flash.
   const practiced = !!manuscript || list.length > 0 || !loaded || !projectsLoaded;
   const first = name?.trim().split(/\s+/)[0];
-  const last = list.find((s) => s.score !== undefined);
   const recent = list.slice(0, 3);
   const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
   const reduced = useReducedMotion();
@@ -79,69 +75,18 @@ export function Home() {
             <Text style={styles.avatarText}>{initials(name, email)}</Text>
           </View>
         </View>
-        {projectsLoaded ? (
-          <Text style={styles.sub}>
-            {manuscript
-              ? `Your panel has read ${manuscript.name}. Up for a round?`
-              : "Add your manuscript so the panel asks about your own study."}
-          </Text>
+        {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
+        {loaded && projectsLoaded ? (
+          <Animated.View entering={riseIn(60, reduced)}>
+            <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} />
+          </Animated.View>
         ) : (
-          <Skeleton label="Loading your manuscript">
-            <Skeleton.Bone width="80%" height={14} style={styles.subBone} />
-          </Skeleton>
-        )}
-
-        <Animated.View entering={riseIn(60, reduced)}>
-          <DeemoTip />
-        </Animated.View>
-
-        {charted ? null : last ? (
-          <PressableScale
-            scaleTo={0.98}
-            accessibilityRole="button"
-            accessibilityLabel={`Last readiness ${last.score} percent, ${last.band}. Opens the report.`}
-            onPress={() => open(last.id)}
-            style={[styles.last]}
-          >
-            <Blob width={76} height={66}>
-              <Score value={last.score!} style={styles.lastScore} />
-            </Blob>
-            <View style={styles.flex}>
-              <Text style={[styles.lastBand, { color: bandOf(last.score!).ink }]}>{last.band}</Text>
-              <Text style={styles.lastTip} numberOfLines={2}>
-                {last.tip ?? `${MODE_LABELS[last.mode]} · ${day(last.createdAt)}`}
-              </Text>
-            </View>
-            <Icon name="chevron_right" size={20} color={colors.muted} />
-          </PressableScale>
-        ) : !loaded ? (
-          <Skeleton label="Loading your last score">
-            <View style={styles.last}>
+          <Skeleton label="Loading">
+            <View style={styles.briefBones}>
               <Skeleton.Bone width={76} height={66} radius={30} />
-              <View style={[styles.flex, styles.bones]}>
-                <Skeleton.Bone width="55%" height={16} />
-                <Skeleton.Bone width="85%" height={12} />
-              </View>
+              <Skeleton.Bone width="70%" height={84} radius={18} />
             </View>
           </Skeleton>
-        ) : error ? (
-          // Offline: say so, rather than "No score yet" to a student who has scores.
-          <DeemoNote mood="sleepy" style={styles.offline}>
-            {"Can't reach the DEEMO server right now. Pull down to try again."}
-          </DeemoNote>
-        ) : (
-          // No score yet: the same card, holding the place the score will take.
-          <View style={styles.last} accessible accessibilityLabel="No readiness score yet">
-            <Deemo />
-            <View style={styles.flex}>
-              <Text style={styles.lastBand}>No score yet</Text>
-              <Text style={styles.lastTip}>
-                {list.length
-                  ? "Answer at least one question and your score shows up here."
-                  : "Your readiness score shows up here after your first practice."}
-              </Text>
-            </View>
-          </View>
         )}
 
         <StartButton
@@ -235,7 +180,7 @@ export function Home() {
 }
 
 const styles = StyleSheet.create({
-  offline: { marginTop: 18 },
+  briefBones: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
   flex: { flex: 1, minWidth: 0 },
@@ -249,21 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskInk },
-  sub: { ...type.body, color: colors.inkMuted, marginTop: 8 },
-  subBone: { marginTop: 12, marginBottom: 4 },
   bones: { gap: 8 },
-  last: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: colors.sand,
-    borderRadius: 24,
-    padding: 16,
-    marginTop: 18,
-  },
-  lastScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 26, letterSpacing: -0.8, color: colors.paper },
-  lastBand: { ...type.heading },
-  lastTip: { ...type.body, fontSize: 13, lineHeight: 18, color: colors.inkMuted, marginTop: 3 },
   start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
   sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },

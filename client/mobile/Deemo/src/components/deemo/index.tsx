@@ -14,10 +14,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
+import Svg, { Circle, Ellipse, G, Path, Rect, Text as SvgText, TSpan } from "react-native-svg";
 
 import { touchPoint } from "@/hooks/touch-point";
-import { colors, easeOut } from "@/theme";
+import { colors, easeOut, fonts } from "@/theme";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy";
 
@@ -58,6 +58,7 @@ type Props = {
   mood?: DeemoMood;
   size?: keyof typeof WIDTH;
   look?: "left" | "right"; // pupils drift toward the speech bubble
+  holding?: { value: number; color: string }; // a paper sign with a score on it, held in front (Home)
   style?: ViewStyle;
 };
 
@@ -65,7 +66,7 @@ type Props = {
 // smile and big round glasses. Flat fills only. The body holds still; only the face and gestures move, and with
 // reduce motion everything holds still and the mood reads from shape. Decorative: screen readers read the words
 // beside it.
-export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
+export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props) {
   const w = WIDTH[size];
   const k = w / W; // px per unit
   const reduced = useReducedMotion();
@@ -234,8 +235,31 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
             <Path d="M42 53 Q50 60 58 53" {...line} />
           )}
 
+          {/* Holding: a score on a paper sign, gripped by two pebble hands (it replaces the reading page) */}
+          {holding ? (
+            <G rotation={-4} origin="50, 78">
+              {/* outlined, so the part below the body still reads as a sign against the paper page */}
+              <Rect x={22} y={62} width={56} height={31} rx={6} fill={colors.paper} stroke={colors.duskInk} strokeWidth={2.2} />
+              <SvgText
+                x={50}
+                y={86}
+                textAnchor="middle"
+                fontFamily={fonts.display}
+                fontWeight="800"
+                fontSize={22}
+                letterSpacing={-0.6}
+                fill={holding.color}
+              >
+                {holding.value}
+                <TSpan fontSize={12}>%</TSpan>
+              </SvgText>
+              <Circle cx={23} cy={68} r={5.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
+              <Circle cx={77} cy={68} r={5.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
+            </G>
+          ) : null}
+
           {/* Reading: a page held in front */}
-          {mood === "reading" ? (
+          {mood === "reading" && !holding ? (
             <G rotation={-6} origin="50, 76">
               <Rect x={31} y={65} width={38} height={24} rx={3} fill={colors.paper} />
               <Path d="M36 72 H62 M36 77 H64 M36 82 H55" stroke={colors.duskSoft} strokeWidth={2.4} strokeLinecap="round" />
