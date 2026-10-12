@@ -35,8 +35,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "bun" # or 'yarn' or 'pnpm'
-          cache-dependency-path: "client/mobile/Deemo/bun.lock"
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
