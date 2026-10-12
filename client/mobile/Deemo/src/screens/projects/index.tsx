@@ -9,6 +9,7 @@ import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { PressableScale } from "@/components/pressable-scale";
+import { Offline } from "@/components/offline";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
@@ -45,6 +46,9 @@ export function Projects() {
   );
 
   const open = (p: Project) => router.push({ pathname: "/analysis", params: { id: p.id } });
+
+  // Offline: Deemo takes the whole screen; nothing else here would work.
+  if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
     <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
@@ -96,8 +100,6 @@ export function Projects() {
               ))}
             </View>
           </Skeleton>
-        ) : error ? (
-          <DeemoNote mood="sleepy">{"Can't reach the DEEMO server right now. Your projects will show up when it's back."}</DeemoNote>
         ) : loaded && list.length === 0 ? (
           <DeemoNote mood="waving" size="m">
             No manuscripts yet. Until you add one, practice uses a sample paper.

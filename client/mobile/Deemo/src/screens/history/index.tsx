@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
+import { Offline } from "@/components/offline";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { refreshEverything } from "@/hooks/refresh-everything";
@@ -51,6 +52,9 @@ export function History() {
       void sessions.refresh();
     }, []),
   );
+
+  // Offline: Deemo takes the whole screen; nothing else here would work.
+  if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
     <Screen scroll tabBar title="History" onRefresh={refreshEverything}>
@@ -128,8 +132,6 @@ export function History() {
               ))}
             </View>
           </Skeleton>
-        ) : error ? (
-          <DeemoNote mood="sleepy">{"Can't reach the DEEMO server right now. Pull down to try again."}</DeemoNote>
         ) : null}
       </View>
     </Screen>
