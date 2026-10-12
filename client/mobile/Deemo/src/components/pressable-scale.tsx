@@ -14,8 +14,19 @@ type Props = Omit<PressableProps, "style" | "children"> & {
 };
 
 // A Pressable that answers a press: a quick squeeze (100 ms in, 160 ms back, ease-out) so the app feels like it
-// heard the tap. With reduce motion it dims a little instead of moving.
-export function PressableScale({ style, scaleTo = 0.97, onPressIn, onPressOut, disabled, children, ...rest }: Props) {
+// heard the tap. With reduce motion it dims a little instead of moving. Its transform is the squeeze, so don't give
+// it a transform in `style` (it would be replaced); wrap it instead.
+export function PressableScale({ entering, ...props }: Props) {
+  // An entering animation runs on a wrapper: on the Pressable itself it would fight the press transform.
+  if (!entering) return <Pressed {...props} />;
+  return (
+    <Animated.View entering={entering}>
+      <Pressed {...props} />
+    </Animated.View>
+  );
+}
+
+function Pressed({ style, scaleTo = 0.97, onPressIn, onPressOut, disabled, children, ...rest }: Omit<Props, "entering">) {
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
   const feedback = useAnimatedStyle(() =>

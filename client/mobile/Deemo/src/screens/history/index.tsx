@@ -106,7 +106,7 @@ export function History() {
               </Text>
             </View>
             {s.score !== undefined ? (
-              <Score value={s.score} style={styles.score} caption align="right" />
+              <Score value={s.score} style={styles.score} caption banded align="right" />
             ) : (
               <Text style={[styles.score, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
             )}

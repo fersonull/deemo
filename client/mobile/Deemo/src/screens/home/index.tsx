@@ -20,6 +20,7 @@ import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
+import { bandOf } from "@/utils/bands";
 import { riseIn } from "@/utils/motion";
 
 import { TrendChart } from "../history/trend-chart";
@@ -106,7 +107,7 @@ export function Home() {
               <Score value={last.score!} style={styles.lastScore} />
             </Blob>
             <View style={styles.flex}>
-              <Text style={styles.lastBand}>{last.band}</Text>
+              <Text style={[styles.lastBand, { color: bandOf(last.score!).ink }]}>{last.band}</Text>
               <Text style={styles.lastTip} numberOfLines={2}>
                 {last.tip ?? `${MODE_LABELS[last.mode]} · ${day(last.createdAt)}`}
               </Text>
@@ -219,7 +220,7 @@ export function Home() {
                     </Text>
                   </View>
                   {s.score !== undefined ? (
-                    <Score value={s.score} style={styles.rowScore} caption align="right" />
+                    <Score value={s.score} style={styles.rowScore} caption banded align="right" />
                   ) : (
                     <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
                   )}

@@ -19,6 +19,7 @@ import { Score } from "@/components/score";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { BAND_KEY, bandOf, deltaTone } from "@/utils/bands";
 import { columnPath, columns, contentWidth, scoreY, type Box, type Column } from "@/utils/chart";
 
 const READY = 85; // "Defense-ready" band (addendum Q4)
@@ -28,7 +29,8 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0 and filling the width. Kept quiet: a
+// Readiness per session (plan F15, S-13): one column each, oldest to newest, growing from 0 and filling the width,
+// colored by readiness band (sage, dusk, amber, clay; the picked one solid, the rest stepped back). Kept quiet: a
 // baseline, one hairline at 85 (defense-ready), the columns, and the picked one's value. One series, so no legend.
 // Tap a column to preview it in the readout above (score, stage, date, change since the session before) and open
 // its report; the newest is picked to start. Many sessions scroll sideways, starting at the newest. Columns grow in
@@ -76,16 +78,22 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
             <Text style={styles.readMeta} numberOfLines={1}>
               {MODE_LABELS[s.mode]} · {day(s.createdAt)}
             </Text>
-            {delta === null ? (
-              <Text style={styles.delta}>First one here</Text>
-            ) : (
-              <View style={styles.deltaRow}>
-                {delta ? <Icon name={delta > 0 ? "arrow_upward" : "arrow_downward"} size={13} color={colors.inkMuted} /> : null}
-                <Text style={styles.delta} numberOfLines={1}>
-                  {delta === 0 ? "Same as last time" : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "point" : "points"} since last`}
-                </Text>
+            {/* Status at a glance: the band, and the change since the session before, each in its color */}
+            <View style={styles.pills}>
+              <View style={[styles.pill, { backgroundColor: bandOf(s.score!).tint }]}>
+                <Text style={[styles.pillText, { color: bandOf(s.score!).ink }]}>{bandOf(s.score!).name}</Text>
               </View>
-            )}
+              {delta === null ? (
+                <Text style={styles.delta}>First one here</Text>
+              ) : (
+                <View style={[styles.pill, { backgroundColor: deltaTone(delta).tint }]}>
+                  {delta ? <Icon name={deltaTone(delta).icon} size={12} color={deltaTone(delta).ink} /> : null}
+                  <Text style={[styles.pillText, { color: deltaTone(delta).ink }]} numberOfLines={1}>
+                    {delta === 0 ? "Same as last" : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "pt" : "pts"}`}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
         </Animated.View>
         <PressableScale
@@ -118,7 +126,15 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
               <Line x1={0} x2={width} y1={readyY} y2={readyY} stroke={colors.border} strokeWidth={1} />
               <Line x1={0} x2={width} y1={height - box.bottom} y2={height - box.bottom} stroke={colors.border} strokeWidth={1} />
               {cols.map((col, i) => (
-                <Bar key={i} col={col} grown={grown} delay={i} total={cols.length} color={i === sel ? colors.duskInk : colors.dusk} />
+                <Bar
+                  key={i}
+                  col={col}
+                  grown={grown}
+                  delay={i}
+                  total={cols.length}
+                  color={bandOf(scores[i]).fill}
+                  faded={i !== sel}
+                />
               ))}
             </Svg>
             <Text style={[styles.ready, { top: readyY - 15 }]}>85%</Text>
@@ -148,6 +164,17 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
         <Text style={styles.meta}>{day(first.createdAt)}</Text>
         <Text style={styles.meta}>{day(last.createdAt)}</Text>
       </View>
+      {/* What the colors mean (the full chart; on Home the readout's band pill says it) */}
+      {compact ? null : (
+        <View style={styles.key} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {BAND_KEY.map((b) => (
+            <View key={b.name} style={styles.keyItem}>
+              <View style={[styles.keyDot, { backgroundColor: b.fill }]} />
+              <Text style={styles.meta}>{b.short}</Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -159,19 +186,22 @@ function Bar({
   delay,
   total,
   color,
+  faded,
 }: {
   col: Column;
   grown: SharedValue<number>;
   delay: number;
   total: number;
   color: string;
+  faded: boolean;
 }) {
   const lag = Math.min(0.4, (delay / Math.max(1, total)) * 0.4);
   const growing = useAnimatedProps(() => {
     const t = Math.max(0, Math.min(1, (grown.value - lag) / (1 - lag)));
     return { d: columnPath(col, t) };
   });
-  return <AnimatedPath animatedProps={growing} d={columnPath(col)} fill={color} />;
+  // The picked column is solid; the rest step back so it stands out, still in their band's color.
+  return <AnimatedPath animatedProps={growing} d={columnPath(col)} fill={color} fillOpacity={faded ? 0.45 : 1} />;
 }
 
 // Fewer than two scored sessions: pebbles stepping up like the trend to come, Deemo on top (or the one score
@@ -215,7 +245,12 @@ const styles = StyleSheet.create({
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },
   scoreCompact: { fontSize: 32, lineHeight: 36 },
   readMeta: { ...type.bodyStrong, fontSize: 14 },
-  deltaRow: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 2 },
+  pills: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
+  pill: { flexDirection: "row", alignItems: "center", gap: 2, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  pillText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5 },
+  key: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
+  keyItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+  keyDot: { width: 8, height: 8, borderRadius: 4 },
   delta: { ...type.meta, fontFamily: fonts.body, fontSize: 12.5, color: colors.inkMuted, marginTop: 2 },
   open: {
     width: 40,

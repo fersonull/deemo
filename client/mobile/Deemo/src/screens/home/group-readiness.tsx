@@ -34,7 +34,7 @@ export function GroupReadiness() {
                 ) : null}
               </View>
               {m.score !== undefined ? (
-                <Score value={m.score} style={styles.score} caption align="right" />
+                <Score value={m.score} style={styles.score} caption banded align="right" />
               ) : (
                 <Text style={styles.note}>{m.sharing ? "No score yet" : "Private"}</Text>
               )}

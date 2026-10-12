@@ -19,6 +19,7 @@ import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Session } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { bandOf } from "@/utils/bands";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
 import { formula, reportHtml } from "@/utils/report-html";
@@ -203,8 +204,12 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 {r.scored === false ? null : <Text style={styles.unit}>%</Text>}
               </Text>
               <View>
-                <Text style={styles.band}>{r.band.replace(" ", "\n")}.</Text>
-                {BAND_RANGE[r.band] ? <Text style={styles.bandRange}>{BAND_RANGE[r.band]}</Text> : null}
+                <Text style={[styles.band, r.scored !== false && { color: bandOf(r.score).ink }]}>{r.band.replace(" ", "\n")}.</Text>
+                {BAND_RANGE[r.band] ? (
+                  <View style={[styles.bandPill, { backgroundColor: bandOf(r.score).tint }]}>
+                    <Text style={[styles.bandRange, { color: bandOf(r.score).ink }]}>{BAND_RANGE[r.band]}</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
             {/* Deemo's note carries the headline; it cheers when the student is nearly ready (design D5). */}
@@ -386,7 +391,8 @@ const styles = StyleSheet.create({
   },
   unit: { fontSize: 40, letterSpacing: -1 },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
-  bandRange: { ...type.meta, marginTop: 4 },
+  bandPill: { alignSelf: "flex-start", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginTop: 6 },
+  bandRange: { ...type.meta, fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5 },
   headline: { marginTop: 12 },
   formula: { fontFamily: fonts.mono, fontWeight: "400", fontSize: 11.5, lineHeight: 17, color: colors.muted, marginTop: 8 },
   stats: { flexDirection: "row", gap: 8, marginTop: 16 },

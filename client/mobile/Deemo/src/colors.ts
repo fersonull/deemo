@@ -33,6 +33,7 @@ export const colors = {
   sageTint: "#CBEFD6", // oklch(0.92 0.05 155)
   sageSoft: "#BEE2C9", // oklch(0.88 0.05 155)
 
-  // clay: destructive actions only (delete my data)
+  // clay: destructive actions (delete my data), and the lowest readiness band outside a session (never in one)
   clay: "#944123", // oklch(0.48 0.12 40)
+  clayTint: "#F5DDD3", // oklch(0.92 0.04 40)
 } as const;

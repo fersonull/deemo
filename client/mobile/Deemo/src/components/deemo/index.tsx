@@ -1,17 +1,22 @@
 import { useEffect } from "react";
 import type { ViewStyle } from "react-native";
 import Animated, {
+  measure,
   useAnimatedProps,
+  useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
+  withSpring,
   withRepeat,
   withSequence,
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
 
+import { touchPoint } from "@/hooks/touch-point";
 import { colors, easeOut } from "@/theme";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy";
@@ -106,22 +111,49 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
     );
   }, [wave, handShown, mood, reduced]);
 
-  // Look: pupils drift toward the bubble.
-  const gaze = useSharedValue(0);
+  // Look: at rest the pupils drift toward the bubble (`look`). While the student touches the screen they follow
+  // the finger, measured live from where Deemo sits (so scrolling doesn't throw them off), and a moment after the
+  // finger lifts they drift back. With reduce motion they stay at rest.
+  const body = useAnimatedRef<Animated.View>();
+  const restX = look === "right" ? 2.2 : look === "left" ? -2.2 : 0;
+  const gazeX = useSharedValue(restX);
+  const gazeY = useSharedValue(0);
   useEffect(() => {
-    const to = look === "right" ? 1 : look === "left" ? -1 : 0;
-    gaze.value = reduced ? to : withTiming(to, { duration: 400, easing: easeOut });
-  }, [gaze, look, reduced]);
+    gazeX.value = reduced ? restX : withTiming(restX, { duration: 400, easing: easeOut });
+  }, [gazeX, restX, reduced]);
+  useAnimatedReaction(
+    () => touchPoint.value,
+    (t, prev) => {
+      if (reduced || !prev || t.at === prev.at) return;
+      const spring = { damping: 18, stiffness: 160 };
+      if (!t.down) {
+        gazeX.set(withDelay(900, withSpring(restX, spring)));
+        gazeY.set(withDelay(900, withSpring(0, spring)));
+        return;
+      }
+      const m = measure(body);
+      if (!m) return;
+      const dx = t.x - (m.pageX + m.width / 2);
+      const dy = t.y - (m.pageY + m.height * 0.37);
+      const len = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(1, len / 120); // close touches look a little, far ones all the way
+      gazeX.set(withSpring((dx / len) * reach * 2.8, spring));
+      gazeY.set(withSpring((dy / len) * reach * 2.4, spring));
+    },
+  );
 
   const hopping = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }] }));
   const eyeL = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
   const eyeR = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
+  const down = mood === "reading" ? 3 : 1.5; // pupils sit low; lower still when reading
   const pupilL = useAnimatedProps(() => ({
-    cx: 50 - EYE.dx + gaze.value * 2.2,
+    cx: 50 - EYE.dx + gazeX.value,
+    cy: EYE.y + Math.min(4.5, down + gazeY.value), // stays inside the eye
     r: lid.value < 0.5 ? 0 : EYE.pupil,
   }));
   const pupilR = useAnimatedProps(() => ({
-    cx: 50 + EYE.dx + gaze.value * 2.2,
+    cx: 50 + EYE.dx + gazeX.value,
+    cy: EYE.y + Math.min(4.5, down + gazeY.value), // stays inside the eye
     r: lid.value < 0.5 ? 0 : EYE.pupil,
   }));
   // The hand swings on a pivot at the shoulder, so its center travels an arc.
@@ -132,12 +164,12 @@ export function Deemo({ mood = "idle", size = "m", look, style }: Props) {
 
   const tilt = mood === "encouraging" ? -8 : 0;
   const slip = mood === "sleepy"; // glasses slide down the nose
-  const down = mood === "reading" ? 3 : 1.5; // pupils sit low; lower still when reading
   const ex = [50 - EYE.dx, 50 + EYE.dx];
   const line = { stroke: colors.paper, strokeWidth: INK, strokeLinecap: "round", fill: "none" } as const;
 
   return (
     <Animated.View
+      ref={body}
       style={[{ width: w, height: H * k }, hopping, style]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
