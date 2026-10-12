@@ -5,7 +5,7 @@ export type Box = { height: number; top: number; bottom: number };
 export type Column = { x: number; width: number; y: number; height: number };
 
 export const MIN_SLOT = 22; // narrowest slot a column gets; past that the chart scrolls sideways
-const MAX_BAR = 24; // columns never fill their slot
+const MAX_BAR = 18; // slim columns: they never fill their slot
 const ROUND = 4; // rounded data end
 
 export const scoreY = (score: number, box: Box) =>
@@ -17,7 +17,7 @@ export const contentWidth = (count: number, visible: number) => Math.max(visible
 // One column per score, oldest to newest, centered in equal slots across `width`.
 export function columns(scores: number[], width: number, box: Box): Column[] {
   const slot = width / Math.max(1, scores.length);
-  const w = Math.min(MAX_BAR, Math.round(slot * 0.6));
+  const w = Math.min(MAX_BAR, Math.round(slot * 0.5));
   const floor = box.height - box.bottom;
   return scores.map((s, i) => {
     const y = scoreY(s, box);

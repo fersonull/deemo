@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 import { DeemoNote } from "@/components/deemo-note";
 import { Screen } from "@/components/screen";
@@ -13,6 +14,7 @@ import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions, type SessionSummary } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+import { riseIn } from "@/utils/motion";
 
 import { TrendChart } from "./trend-chart";
 
@@ -37,6 +39,7 @@ const FILTERS: { label: string; mode: Mode | null }[] = [
 
 // History (plan S-13): readiness over time, filterable by defense stage; tap a row for its report.
 export function History() {
+  const reduced = useReducedMotion();
   const { list: all, loaded, error } = useSessions();
   const [mode, setMode] = useState<Mode | null>(null);
   const list = mode ? all.filter((s) => s.mode === mode) : all;
@@ -85,9 +88,10 @@ export function History() {
         </View>
       ) : null}
       <View style={styles.list}>
-        {list.map((s) => (
+        {list.map((s, i) => (
           <PressableScale
             scaleTo={0.98}
+            entering={riseIn(Math.min(i, 5) * 40, reduced)}
             key={s.id}
             accessibilityRole="button"
             accessibilityHint="Opens the report"

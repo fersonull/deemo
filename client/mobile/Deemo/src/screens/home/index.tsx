@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Blob } from "@/components/blob";
@@ -18,6 +19,10 @@ import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
+import { riseIn } from "@/utils/motion";
+
+import { TrendChart } from "../history/trend-chart";
+import { DeemoTip } from "./deemo-tip";
 import { GroupReadiness } from "./group-readiness";
 
 const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
@@ -34,7 +39,9 @@ const reload = () => Promise.all([sessions.refresh(), projects.refresh()]);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-// Home (plan S-05, prototype home): greeting, the last readiness score, Start practice, recent sessions.
+// Home (plan S-05, prototype home): greeting, Deemo's tip, Start practice, then your readiness (the last score card
+// until there are two scored sessions, the chart after that) and recent sessions. Sections rise in a beat apart
+// when they first appear.
 export function Home() {
   const { name, email } = useSession();
   const { list, loaded, error } = useSessions();
@@ -46,6 +53,8 @@ export function Home() {
   const first = name?.trim().split(/\s+/)[0];
   const last = list.find((s) => s.score !== undefined);
   const recent = list.slice(0, 3);
+  const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
+  const reduced = useReducedMotion();
 
   useFocusEffect(
     useCallback(() => {
@@ -80,7 +89,11 @@ export function Home() {
           </Skeleton>
         )}
 
-        {last ? (
+        <Animated.View entering={riseIn(60, reduced)}>
+          <DeemoTip />
+        </Animated.View>
+
+        {charted ? null : last ? (
           <PressableScale
             scaleTo={0.98}
             accessibilityRole="button"
@@ -142,6 +155,12 @@ export function Home() {
         ) : null}
 
         <GroupReadiness />
+        {charted ? (
+          <Animated.View entering={riseIn(120, reduced)}>
+            <Text style={[type.label, styles.section]}>YOUR READINESS</Text>
+            <TrendChart sessions={list} stage={null} compact />
+          </Animated.View>
+        ) : null}
         {!loaded ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
@@ -180,26 +199,27 @@ export function Home() {
         ) : recent.length ? (
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
-            {recent.map((s) => (
-              <PressableScale
-                scaleTo={0.98}
-                key={s.id}
-                accessibilityRole="button"
-                accessibilityHint="Opens the report"
-                onPress={() => open(s.id)}
-                style={[styles.row]}
-              >
-                <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
-                  <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
-                </View>
-                <View style={styles.flex}>
-                  <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
-                  <Text style={styles.meta} numberOfLines={1}>
-                    {day(s.createdAt)} · {s.title}
-                  </Text>
-                </View>
-                <Text style={styles.rowScore}>{s.score ?? (s.status === "scoring" ? "…" : "–")}</Text>
-              </PressableScale>
+            {recent.map((s, i) => (
+              <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
+                <PressableScale
+                  scaleTo={0.98}
+                  accessibilityRole="button"
+                  accessibilityHint="Opens the report"
+                  onPress={() => open(s.id)}
+                  style={[styles.row]}
+                >
+                  <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
+                    <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
+                  </View>
+                  <View style={styles.flex}>
+                    <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
+                    <Text style={styles.meta} numberOfLines={1}>
+                      {day(s.createdAt)} · {s.title}
+                    </Text>
+                  </View>
+                  <Text style={styles.rowScore}>{s.score ?? (s.status === "scoring" ? "…" : "–")}</Text>
+                </PressableScale>
+              </Animated.View>
             ))}
           </>
         ) : null}

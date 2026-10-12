@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -13,6 +14,7 @@ import { Button } from "@/components/button";
 import { Deemo } from "@/components/deemo";
 import { Screen } from "@/components/screen";
 import { colors, type } from "@/theme";
+import { riseIn } from "@/utils/motion";
 
 const SLIDES = [
   {
@@ -45,6 +47,7 @@ export default function Welcome() {
   const [i, setI] = useState(0);
   const last = i === SLIDES.length - 1;
   const slide = SLIDES[i];
+  const reduced = useReducedMotion();
 
   return (
     <Screen>
@@ -70,13 +73,16 @@ export default function Welcome() {
         )}
       </View>
 
-      <Text style={[type.display, styles.title]}>{slide.title}</Text>
+      {/* Each slide's words rise in: the title, then the bullets 50 ms apart. */}
+      <Animated.Text key={`t${i}`} entering={riseIn(0, reduced)} style={[type.display, styles.title]}>
+        {slide.title}
+      </Animated.Text>
       <View style={styles.bullets}>
-        {slide.bullets.map((b) => (
-          <View key={b} style={styles.bullet}>
+        {slide.bullets.map((b, k) => (
+          <Animated.View key={b} entering={riseIn(80 + k * 50, reduced)} style={styles.bullet}>
             <View style={styles.bulletDot} />
             <Text style={styles.bulletText}>{b}</Text>
-          </View>
+          </Animated.View>
         ))}
       </View>
 

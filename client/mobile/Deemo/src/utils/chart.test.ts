@@ -13,13 +13,13 @@ test("scores map onto the plot from a 0 baseline; out-of-range scores are clampe
   expect(scoreY(-5, box)).toBe(110);
 });
 
-test("columns sit centered in equal slots, never wider than 24 px, and reach down to the baseline", () => {
+test("columns sit centered in equal slots, never wider than 18 px, and reach down to the baseline", () => {
   const [a, b] = columns([50, 100], 200, box);
-  expect(a).toEqual({ x: 38, width: 24, y: 60, height: 50 });
-  expect(b).toEqual({ x: 138, width: 24, y: 10, height: 100 });
+  expect(a).toEqual({ x: 41, width: 18, y: 60, height: 50 });
+  expect(b).toEqual({ x: 141, width: 18, y: 10, height: 100 });
   const narrow = columns([70, 70, 70, 70], 80, box);
-  expect(narrow[0].width).toBe(12);
-  expect(narrow[3].x).toBe(64);
+  expect(narrow[0].width).toBe(10);
+  expect(narrow[3].x).toBe(65);
 });
 
 test("the plot scrolls sideways only when the sessions need more room", () => {

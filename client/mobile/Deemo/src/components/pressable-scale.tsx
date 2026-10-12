@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 
@@ -9,6 +9,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type Props = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
   scaleTo?: number; // 0.97 for buttons, 0.98 for wide rows and cards
+  entering?: ComponentProps<typeof AnimatedPressable>["entering"]; // e.g. a list's stagger
   children?: ReactNode;
 };
 

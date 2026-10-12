@@ -1,6 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useReducedMotion } from "react-native-reanimated";
 
 import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
@@ -12,6 +13,7 @@ import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
+import { riseIn } from "@/utils/motion";
 
 import { UploadSheet } from "./upload-sheet";
 import { JoinSheet } from "./join-sheet";
@@ -27,6 +29,7 @@ function describe(p: Project): { icon: string; meta: string } {
 
 // Owned and joined manuscripts share the same project list (addendum Q10).
 export function Projects() {
+  const reduced = useReducedMotion();
   const { projects: list, loaded, error } = useProjects();
   const { projectId } = usePracticeSetup();
   const { premium } = useSession();
@@ -45,12 +48,13 @@ export function Projects() {
   return (
     <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={projects.refresh}>
       <View style={styles.list}>
-        {list.map((p) => {
+        {list.map((p, i) => {
           const active = p.id === projectId;
           const { icon, meta } = describe(p);
           return (
             <PressableScale
               scaleTo={0.98}
+              entering={riseIn(Math.min(i, 5) * 40, reduced)}
               key={p.id}
               accessibilityRole="button"
               accessibilityHint="Opens the manuscript summary"
