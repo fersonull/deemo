@@ -1,12 +1,13 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
+import { PressableScale } from "@/components/pressable-scale";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -48,12 +49,13 @@ export function Projects() {
           const active = p.id === projectId;
           const { icon, meta } = describe(p);
           return (
-            <Pressable
+            <PressableScale
+              scaleTo={0.98}
               key={p.id}
               accessibilityRole="button"
               accessibilityHint="Opens the manuscript summary"
               onPress={() => open(p)}
-              style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+              style={[styles.card]}
             >
               <View style={[styles.tile, p.group && styles.shared]}>
                 <Icon name={p.group ? "group" : icon} size={21} color={p.status === "failed" ? colors.clay : colors.duskIcon} />
@@ -72,7 +74,7 @@ export function Projects() {
                   <Text style={[styles.meta, styles.flex]}>{p.group ? `Shared · ${p.domain}` : meta}</Text>
                 </View>
               </View>
-            </Pressable>
+            </PressableScale>
           );
         })}
         {!loaded ? (
@@ -98,24 +100,26 @@ export function Projects() {
         ) : null}
       </View>
 
-      <Pressable
+      <PressableScale
+
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
         onPress={() => setSheet(locked ? "upsell" : "upload")}
-        style={({ pressed }) => [styles.add, pressed && styles.pressed]}
+        style={[styles.add]}
       >
         <Icon name={locked ? "lock" : "upload_file"} size={21} color={colors.duskLink} />
         <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
-      </Pressable>
+      </PressableScale>
       {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
-      <Pressable accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
+      <PressableScale scaleTo={0.98} accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
         <Icon name="group_add" size={22} color={colors.duskIcon} />
         <View style={styles.flex}>
           <Text style={styles.cardTitle}>Join with a code</Text>
           <Text style={styles.meta}>6 characters, from your group leader</Text>
         </View>
         <Icon name="chevron_right" size={20} color={colors.muted} />
-      </Pressable>
+      </PressableScale>
       <JoinSheet
         visible={sheet === "join"}
         onClose={() => setSheet(null)}
@@ -159,7 +163,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     backgroundColor: colors.sand,
   },
-  pressed: { opacity: 0.85 },
   tile: {
     width: 42,
     height: 42,

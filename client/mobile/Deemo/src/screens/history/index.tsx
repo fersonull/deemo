@@ -6,6 +6,7 @@ import { DeemoNote } from "@/components/deemo-note";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
+import { PressableScale } from "@/components/pressable-scale";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { useSession } from "@/hooks/use-session";
@@ -85,12 +86,13 @@ export function History() {
       ) : null}
       <View style={styles.list}>
         {list.map((s) => (
-          <Pressable
+          <PressableScale
+            scaleTo={0.98}
             key={s.id}
             accessibilityRole="button"
             accessibilityHint="Opens the report"
             onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
-            style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+            style={[styles.row]}
           >
             <View style={styles.flex}>
               <Text style={styles.mode}>{MODE_LABELS[s.mode]}</Text>
@@ -101,7 +103,7 @@ export function History() {
             <Text style={[styles.score, s.score === undefined && styles.pending]}>
               {s.score ?? (s.status === "scoring" ? "…" : "–")}
             </Text>
-          </Pressable>
+          </PressableScale>
         ))}
         {!loaded ? (
           <Skeleton label="Loading your sessions">
@@ -135,7 +137,6 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   chipTextSelected: { color: colors.paper },
   row: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
-  pressed: { opacity: 0.85 },
   mode: { ...type.heading, fontSize: 16 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, color: colors.ink, fontVariant: ["tabular-nums"] },

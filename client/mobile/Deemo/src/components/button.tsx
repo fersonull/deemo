@@ -1,50 +1,31 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
+import { StyleSheet, Text } from "react-native";
 
-import { colors, easeOut, radius, type } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
+import { colors, radius, type } from "@/theme";
 
 type Props = {
   label: string;
   onPress: () => void;
   variant?: "primary" | "secondary";
   disabled?: boolean;
+  busy?: boolean; // working on it: stays put, reads as busy
   leading?: ReactNode;
 };
 
-export function Button({ label, onPress, variant = "primary", disabled, leading }: Props) {
+export function Button({ label, onPress, variant = "primary", disabled, busy, leading }: Props) {
   const primary = variant === "primary";
-  // Press feedback: a quick squeeze to 0.97 that eases back on release. Reduce motion dims instead.
-  const reduced = useReducedMotion();
-  const scale = useSharedValue(1);
-  const squeezing = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const to = (v: number, duration: number) => {
-    if (!reduced) scale.set(withTiming(v, { duration, easing: easeOut }));
-  };
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
+      accessibilityState={{ disabled, busy }}
+      disabled={disabled || busy}
       onPress={onPress}
-      onPressIn={() => to(0.97, 100)}
-      onPressOut={() => to(1, 160)}
+      style={[styles.base, { backgroundColor: primary ? colors.ink : colors.sand }, disabled && !busy && styles.disabled]}
     >
-      {({ pressed }) => (
-        <Animated.View
-          style={[
-            styles.base,
-            { backgroundColor: primary ? colors.ink : colors.sand },
-            disabled && styles.disabled,
-            pressed && reduced && styles.pressed,
-            squeezing,
-          ]}
-        >
-          {leading}
-          <Text style={[type.button, { color: primary ? colors.paper : colors.ink }]}>{label}</Text>
-        </Animated.View>
-      )}
-    </Pressable>
+      {leading}
+      <Text style={[type.button, { color: primary ? colors.paper : colors.ink }]}>{label}</Text>
+    </PressableScale>
   );
 }
 
@@ -58,5 +39,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   disabled: { opacity: 0.35 },
-  pressed: { opacity: 0.85 },
 });

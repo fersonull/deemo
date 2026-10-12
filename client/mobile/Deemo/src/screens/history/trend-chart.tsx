@@ -13,6 +13,7 @@ import Svg, { Line, Path, Rect } from "react-native-svg";
 import { Blob } from "@/components/blob";
 import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
+import { PressableScale } from "@/components/pressable-scale";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
@@ -84,16 +85,16 @@ export function TrendChart({ sessions, stage, children }: Props) {
             </Text>
           </View>
         </View>
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel={`Open the ${MODE_LABELS[s.mode]} report from ${day(s.createdAt)}`}
           hitSlop={8}
           onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
-          style={({ pressed }) => [styles.open, pressed && styles.pressed]}
+          style={[styles.open]}
         >
           <Text style={styles.openText}>Report</Text>
           <Icon name="chevron_right" size={18} color={colors.duskLink} />
-        </Pressable>
+        </PressableScale>
       </View>
 
       <View style={styles.plotRow}>
@@ -224,7 +225,6 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  pressed: { opacity: 0.6 },
   card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
   readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },

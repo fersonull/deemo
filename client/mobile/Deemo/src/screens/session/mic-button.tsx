@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { colors } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 const WAVE = [0.6, 1, 0.75, 0.5, 0.9];
 
@@ -19,7 +20,8 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
   const ring = useAnimatedStyle(() => ({ transform: [{ scale: 1.08 + lvl.value * 0.3 }], opacity: active ? 0.5 : 0 }));
 
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.95}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !active }}
@@ -43,7 +45,7 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
           )}
         </Blob>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

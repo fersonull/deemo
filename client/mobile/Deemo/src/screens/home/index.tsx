@@ -9,6 +9,7 @@ import { DeemoNote } from "@/components/deemo-note";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
+import { PressableScale } from "@/components/pressable-scale";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -80,11 +81,12 @@ export function Home() {
         )}
 
         {last ? (
-          <Pressable
+          <PressableScale
+            scaleTo={0.98}
             accessibilityRole="button"
             accessibilityLabel={`Last readiness ${last.score}, ${last.band}. Opens the report.`}
             onPress={() => open(last.id)}
-            style={({ pressed }) => [styles.last, pressed && styles.pressed]}
+            style={[styles.last]}
           >
             <Blob width={76} height={66}>
               <Text style={styles.lastScore}>{last.score}</Text>
@@ -96,7 +98,7 @@ export function Home() {
               </Text>
             </View>
             <Icon name="chevron_right" size={20} color={colors.muted} />
-          </Pressable>
+          </PressableScale>
         ) : !loaded ? (
           <Skeleton label="Loading your last score">
             <View style={styles.last}>
@@ -179,12 +181,13 @@ export function Home() {
           <>
             <Text style={[type.label, styles.section]}>RECENT</Text>
             {recent.map((s) => (
-              <Pressable
+              <PressableScale
+                scaleTo={0.98}
                 key={s.id}
                 accessibilityRole="button"
                 accessibilityHint="Opens the report"
                 onPress={() => open(s.id)}
-                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+                style={[styles.row]}
               >
                 <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
                   <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
@@ -196,7 +199,7 @@ export function Home() {
                   </Text>
                 </View>
                 <Text style={styles.rowScore}>{s.score ?? (s.status === "scoring" ? "…" : "–")}</Text>
-              </Pressable>
+              </PressableScale>
             ))}
           </>
         ) : null}
@@ -238,7 +241,6 @@ const styles = StyleSheet.create({
   start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
   sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },
-  pressed: { opacity: 0.85 },
   section: { marginTop: 24, marginBottom: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, height: 58 },
   mode: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },

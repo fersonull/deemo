@@ -15,6 +15,7 @@ import { useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+import { PressableScale } from "@/components/pressable-scale";
 
 import { MicButton } from "./mic-button";
 import { Panelist, type PanelistStatus } from "./panelist";
@@ -119,9 +120,9 @@ export function Session() {
               {time}
             </Text>
           </View>
-          <Pressable accessibilityRole="button" onPress={askEnd} style={styles.endBtn}>
+          <PressableScale accessibilityRole="button" onPress={askEnd} style={styles.endBtn}>
             <Text style={styles.endText}>End</Text>
-          </Pressable>
+          </PressableScale>
         </View>
 
         {s.reconnecting && (
@@ -167,16 +168,16 @@ export function Session() {
               onSubmitEditing={send}
               accessibilityLabel="Typed answer"
             />
-            <Pressable accessibilityRole="button" accessibilityLabel="Send answer" onPress={send} style={styles.sendBtn}>
+            <PressableScale accessibilityRole="button" accessibilityLabel="Send answer" onPress={send} style={styles.sendBtn}>
               <Icon name="arrow_upward" size={20} color={colors.paper} />
-            </Pressable>
+            </PressableScale>
           </View>
         )}
 
         <View style={styles.bottom}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Pause" disabled={s.phase === "ending"} onPress={pause} style={styles.round}>
+          <PressableScale accessibilityRole="button" accessibilityLabel="Pause" disabled={s.phase === "ending"} onPress={pause} style={styles.round}>
             <Icon name="pause" size={26} filled />
-          </Pressable>
+          </PressableScale>
           <View style={styles.micCol}>
             <MicButton
               active={studentTurn}
@@ -188,7 +189,7 @@ export function Session() {
             <Text style={styles.micLabel}>{micLabel}</Text>
           </View>
           {allowTyping ? (
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Type an answer instead"
               accessibilityState={{ expanded: typing }}
@@ -197,7 +198,7 @@ export function Session() {
               style={[styles.round, typing && { backgroundColor: colors.duskTint }]}
             >
               <Icon name="keyboard" size={24} />
-            </Pressable>
+            </PressableScale>
           ) : (
             <View style={styles.roundSpacer} /> // keeps the mic centered
           )}

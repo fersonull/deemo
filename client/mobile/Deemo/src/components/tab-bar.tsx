@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
 import { colors, fonts } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 type Props = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
 
@@ -45,7 +46,8 @@ export function TabBar({ state, descriptors, navigation }: Props) {
   return (
     <View style={[styles.bar, { bottom: 12 + bottom }]}>
       {state.routes.slice(0, 2).map((r, i) => tab(r, i))}
-      <Pressable
+      <PressableScale
+        scaleTo={0.95}
         accessibilityRole="button"
         accessibilityLabel="Start practice"
         onPress={() => router.push("/practice")}
@@ -57,7 +59,7 @@ export function TabBar({ state, descriptors, navigation }: Props) {
             <Icon name="mic" size={28} color={colors.paper} filled />
           </Blob>
         </Blob>
-      </Pressable>
+      </PressableScale>
       {state.routes.slice(2).map((r, i) => tab(r, i + 2))}
     </View>
   );

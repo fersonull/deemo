@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { Icon } from "@/components/icon";
+
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { authMessage, session } from "@/hooks/use-session";
@@ -15,6 +17,7 @@ export function SignIn() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -59,14 +62,35 @@ export function SignIn() {
           <View style={styles.rule} />
         </View>
 
-        <Field label="School email" value={email} onChangeText={setEmail} autoComplete="email" keyboardType="email-address" />
+        <Field
+          label="School email"
+          value={email}
+          onChangeText={setEmail}
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          textContentType="emailAddress"
+          returnKeyType="next"
+        />
         <Field
           label="Password"
           value={password}
           onChangeText={setPassword}
           autoComplete={creating ? "new-password" : "current-password"}
-          secureTextEntry
+          secureTextEntry={!showPassword}
+          returnKeyType="go"
           onSubmitEditing={submit}
+          trailing={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+              hitSlop={10}
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eye}
+            >
+              <Icon name={showPassword ? "visibility_off" : "visibility"} size={20} color={colors.inkMuted} />
+            </Pressable>
+          }
         />
 
         {!creating ? (
@@ -87,7 +111,12 @@ export function SignIn() {
         ) : null}
 
         <View style={styles.spacer} />
-        <Button label={creating ? "Create account" : "Sign in"} onPress={submit} disabled={busy || !email.trim() || !password} />
+        <Button
+          label={busy ? (creating ? "Creating your account…" : "Signing in…") : creating ? "Create account" : "Sign in"}
+          onPress={submit}
+          busy={busy}
+          disabled={!email.trim() || !password}
+        />
         <Pressable
           accessibilityRole="button"
           onPress={() => {
@@ -104,17 +133,24 @@ export function SignIn() {
   );
 }
 
-function Field({ label, ...input }: { label: string } & React.ComponentProps<typeof TextInput>) {
+// A sand field that shows where you're typing: the border turns dusk while it has focus.
+function Field({ label, trailing, ...input }: { label: string; trailing?: React.ReactNode } & React.ComponentProps<typeof TextInput>) {
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        accessibilityLabel={label}
-        autoCapitalize="none"
-        placeholderTextColor={colors.faint}
-        style={styles.input}
-        {...input}
-      />
+    <View style={[styles.field, focused && styles.fieldFocused]}>
+      <View style={styles.flex}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        <TextInput
+          accessibilityLabel={label}
+          autoCapitalize="none"
+          placeholderTextColor={colors.faint}
+          style={styles.input}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          {...input}
+        />
+      </View>
+      {trailing}
     </View>
   );
 }
@@ -135,13 +171,25 @@ const styles = StyleSheet.create({
   },
   or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 22, marginBottom: 16 },
   rule: { flex: 1, height: 1, backgroundColor: colors.border },
-  field: { backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16, marginBottom: 8 },
+  field: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.sand,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    paddingVertical: 9,
+    paddingHorizontal: 15,
+    marginBottom: 8,
+  },
+  fieldFocused: { borderColor: colors.dusk },
+  eye: { width: 40, height: 40, alignItems: "center", justifyContent: "center", marginRight: -8 },
   fieldLabel: { ...type.meta, fontSize: 11, fontWeight: "500" },
   input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
   link: { alignSelf: "flex-end", height: 40, justifyContent: "center", paddingHorizontal: 4 },
   linkText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.duskLink },
   dim: { opacity: 0.4 },
-  error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 4, paddingHorizontal: 4 },
+  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 4, paddingHorizontal: 4 },
   note: { ...type.body, fontSize: 13, color: colors.sageInk, marginTop: 4, paddingHorizontal: 4 },
   spacer: { flex: 1, minHeight: 16 },
   switch: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },

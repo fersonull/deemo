@@ -1,10 +1,11 @@
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
+import { PressableScale } from "@/components/pressable-scale";
 import type { Rubric } from "@/hooks/use-projects";
 import { colors, radius, type } from "@/theme";
 import { api } from "@/utils/api";
@@ -47,12 +48,13 @@ export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void })
 
   return (
     <View>
-      <Pressable
+      <PressableScale
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Choose a PDF, Word file or photo of your panel's rubric"
         disabled={busy}
         onPress={pick}
-        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+        style={[styles.card]}
       >
         <View style={styles.tile}>
           {busy ? (
@@ -69,7 +71,7 @@ export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void })
             {busy ? "Usually a few seconds; up to a minute when the AI is busy." : "PDF, Word or a photo. It replaces the default criteria."}
           </Text>
         </View>
-      </Pressable>
+      </PressableScale>
 
       {error ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
@@ -102,7 +104,6 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: "rgba(42,36,32,0.18)",
   },
-  pressed: { opacity: 0.85 },
   tile: {
     width: 44,
     height: 44,

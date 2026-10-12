@@ -1,10 +1,11 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
 import { PANEL } from "@/constants";
 import type { Phase, Question, QuestionType } from "@/live/types";
 import { colors, fonts, type } from "@/theme";
+import { riseIn } from "@/utils/motion";
 
 // Question-Type Indicator (plan F9): label + icon, never color alone.
 const TYPES: Record<QuestionType, { label: string; icon: string }> = {
@@ -35,11 +36,12 @@ export function QuestionCard({ phase, question, closing, count, followUpLimit, o
           : (question?.text ?? "");
   const size = text.length > 170 ? [17, 22] : text.length > 110 ? [19, 24] : [21, 25];
   const asker = question ? PANEL[question.panelist % count] : null;
+  const reduced = useReducedMotion();
 
   return (
     <Animated.View
       key={showQuestion ? `${question.number}.${question.followUp}` : phase}
-      entering={FadeInDown.duration(350)}
+      entering={riseIn(0, reduced)} // each new question rises in, 250 ms ease-out
       style={styles.card}
     >
       {showQuestion && (

@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
 import { Button } from "@/components/button";
 import { colors, easeOut, fonts, type } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 type Props = { time: string; onResume: () => void; onEnd: () => void };
 
@@ -29,9 +30,9 @@ export function PausedOverlay({ time, onResume, onEnd }: Props) {
       </Text>
       <View style={styles.actions}>
         <Button label="Resume" onPress={onResume} />
-        <Pressable accessibilityRole="button" onPress={onEnd} style={styles.end}>
+        <PressableScale accessibilityRole="button" onPress={onEnd} style={styles.end}>
           <Text style={[type.button, styles.endText]}>End session</Text>
-        </Pressable>
+        </PressableScale>
       </View>
     </Animated.View>
   );

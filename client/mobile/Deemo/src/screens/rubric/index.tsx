@@ -84,6 +84,7 @@ export function Rubric() {
                   accessibilityLabel={`Lower ${c.name}`}
                   disabled={readOnly || busy || c.weight <= 0}
                   onPress={() => nudge(i, -STEP)}
+                  hitSlop={6}
                   style={[styles.step, c.weight <= 0 && styles.dim]}
                 >
                   <Text style={styles.stepText}>−</Text>
@@ -96,6 +97,7 @@ export function Rubric() {
                   accessibilityLabel={`Raise ${c.name}`}
                   disabled={readOnly || busy || c.weight >= max}
                   onPress={() => nudge(i, STEP)}
+                  hitSlop={6}
                   style={[styles.step, c.weight >= max && styles.dim]}
                 >
                   <Text style={styles.stepText}>+</Text>

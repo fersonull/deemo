@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -12,6 +12,7 @@ import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, radius, type } from "@/theme";
+import { PressableScale } from "@/components/pressable-scale";
 
 import { Segmented } from "./segmented";
 import { DomainSheet } from "./sheets";
@@ -24,7 +25,7 @@ const MODES: { value: Mode; desc: string }[] = [
 ];
 
 const FEEDBACK = [
-  { coach: true, label: "Coach", desc: "Gentle hints as you go" },
+  { coach: true, label: "Coach", desc: "Flags answers that don't match your paper" },
   { coach: false, label: "Panel", desc: "Realistic. No hints at all" },
 ];
 
@@ -46,7 +47,34 @@ export function Setup() {
 
   return (
     <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
-      <Pressable
+      <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.modes}>
+        {MODES.map((m) => {
+          const locked = m.value === "FINAL" && !premium;
+          const selected = setup.mode === m.value;
+          const fg = selected ? colors.paper : colors.ink;
+          return (
+            <PressableScale
+              scaleTo={0.98}
+              key={m.value}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected }}
+              accessibilityHint={locked ? "Premium" : undefined}
+              onPress={() => (locked ? upsell() : practiceSetup.set({ mode: m.value }))}
+              style={[styles.mode, selected && styles.inkCard]}
+            >
+              <View style={styles.flex}>
+                <Text style={[type.heading, { color: fg }]}>{MODE_LABELS[m.value]}</Text>
+                <Text style={[styles.desc, { color: fg }]}>{m.desc}</Text>
+              </View>
+              <Icon name={locked ? "lock" : selected ? "radio_button_checked" : "radio_button_unchecked"} color={fg} />
+            </PressableScale>
+          );
+        })}
+      </View>
+
+      <Text style={[type.label, styles.section]}>PRACTICING WITH</Text>
+      <PressableScale
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
         onPress={() => router.push("/projects")}
@@ -68,8 +96,9 @@ export function Setup() {
         <View style={styles.change}>
           <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
         </View>
-      </Pressable>
-      <Pressable
+      </PressableScale>
+      <PressableScale
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Change the rubric weights"
         onPress={() => router.push("/rubric")}
@@ -93,10 +122,12 @@ export function Setup() {
         <View style={styles.change}>
           <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
         </View>
-      </Pressable>
-      <Pressable
+      </PressableScale>
+      <PressableScale
+        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Change domain"
+        hitSlop={6}
         onPress={() => setSheet("domain")}
         style={styles.domain}
       >
@@ -107,31 +138,7 @@ export function Setup() {
         <View style={styles.change}>
           <Text style={styles.changeText}>Change</Text>
         </View>
-      </Pressable>
-
-      <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.modes}>
-        {MODES.map((m) => {
-          const locked = m.value === "FINAL" && !premium;
-          const selected = setup.mode === m.value;
-          const fg = selected ? colors.paper : colors.ink;
-          return (
-            <Pressable
-              key={m.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-              accessibilityHint={locked ? "Premium" : undefined}
-              onPress={() => (locked ? upsell() : practiceSetup.set({ mode: m.value }))}
-              style={[styles.mode, selected && styles.inkCard]}
-            >
-              <View style={styles.flex}>
-                <Text style={[type.heading, { color: fg }]}>{MODE_LABELS[m.value]}</Text>
-                <Text style={[styles.desc, { color: fg }]}>{m.desc}</Text>
-              </View>
-              <Icon name={locked ? "lock" : selected ? "radio_button_checked" : "radio_button_unchecked"} color={fg} />
-            </Pressable>
-          );
-        })}
-      </View>
+      </PressableScale>
 
       <Text style={[type.label, styles.section]}>PANELISTS</Text>
       <Segmented
@@ -176,7 +183,8 @@ export function Setup() {
           const selected = setup.coach === f.coach;
           const fg = selected ? colors.paper : colors.ink;
           return (
-            <Pressable
+            <PressableScale
+              scaleTo={0.98}
               key={f.label}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
@@ -185,7 +193,7 @@ export function Setup() {
             >
               <Text style={[type.heading, styles.fbLabel, { color: fg }]}>{f.label}</Text>
               <Text style={[styles.desc, styles.fbDesc, { color: fg }]}>{f.desc}</Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -218,7 +226,6 @@ export function Setup() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   manuscript: {
-    marginTop: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

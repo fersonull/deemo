@@ -12,6 +12,7 @@ import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
+import { PressableScale } from "@/components/pressable-scale";
 import { DIFFICULTY_LABELS, MODE_LABELS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
@@ -279,37 +280,37 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 <>
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
-                    <Pressable
+                    <PressableScale
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
-                      style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                      style={[styles.action, styles.actionSand, styles.flexAction]}
                     >
                       <Text style={styles.actionText}>Practice again</Text>
-                    </Pressable>
+                    </PressableScale>
                     {group ? (
-                      <Pressable
+                      <PressableScale
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
-                        style={({ pressed }) => [styles.action, styles.actionSand, styles.flexAction, pressed && styles.pressed]}
+                        style={[styles.action, styles.actionSand, styles.flexAction]}
                       >
                         <Icon name="group" size={17} />
                         <Text style={styles.actionText}>Share with group</Text>
-                      </Pressable>
+                      </PressableScale>
                     ) : null}
                   </View>
                 </>
               )}
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}
                 disabled={exporting}
                 onPress={exportPdf}
-                style={({ pressed }) => [styles.action, styles.actionOutline, pressed && styles.pressed]}
+                style={[styles.action, styles.actionOutline]}
               >
                 <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} />
                 <Text style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
-              </Pressable>
+              </PressableScale>
               {exportError ? (
                 <Text style={styles.sub} accessibilityLiveRegion="polite">
                   {exportError}
@@ -379,7 +380,6 @@ const styles = StyleSheet.create({
     lineHeight: 92,
     letterSpacing: -4,
     color: colors.ink,
-    fontVariant: ["tabular-nums"],
   },
   band: { ...type.title, fontSize: 26, lineHeight: 27 },
   bandRange: { ...type.meta, marginTop: 4 },
@@ -399,7 +399,6 @@ const styles = StyleSheet.create({
   flexAction: { flex: 1 },
   actionOutline: { borderWidth: 1.5, borderColor: colors.sand },
   actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
-  pressed: { opacity: 0.85 },
   sheetNote: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
   shareRow: {
     flexDirection: "row",
