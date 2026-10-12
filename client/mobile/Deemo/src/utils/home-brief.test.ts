@@ -42,6 +42,14 @@ test("offline", () => {
   expect(briefText(b)).toContain("can't reach the DEEMO server");
 });
 
+test("Deemo's face follows the band", () => {
+  const mood = (score: number) => homeBrief([s("a", score)], null, false).mood;
+  expect(mood(92)).toBe("cheering");
+  expect(mood(75)).toBe("idle");
+  expect(mood(55)).toBe("encouraging");
+  expect(mood(5)).toBe("nervous");
+});
+
 test("no exclamation marks", () => {
   for (const b of [homeBrief([], null, false), homeBrief([s("a", 99, "Speak slower")], null, false)])
     expect(briefText(b)).not.toContain("!");

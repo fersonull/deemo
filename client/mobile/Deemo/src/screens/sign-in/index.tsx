@@ -15,6 +15,7 @@ import { riseIn } from "@/utils/motion";
 // Sign in (plan S-04): Google, or school email + password; creating an account asks for the password twice.
 // Firebase Auth keeps the student signed in; the root layout moves on once it reports the new user.
 // Deemo sits at the top and does the talking: a hello, then whatever just happened (an error, a sent reset link).
+// An error makes Deemo shake its head with a nervous face for a moment before it settles back.
 // Errors live there, near the top, so the keyboard never covers them; a mismatched confirmation shows under its field.
 export function SignIn() {
   const reduced = useReducedMotion();
@@ -68,7 +69,7 @@ export function SignIn() {
   const [say, mood]: [string, DeemoMood] = busy
     ? [creating ? "Setting up your account…" : "Checking your details…", "reading"]
     : error
-      ? [error, "encouraging"]
+      ? [error, "idle"] // after a startled shake (below), Deemo settles back to its usual face
       : note
         ? [note, "cheering"]
         : creating
@@ -93,7 +94,7 @@ export function SignIn() {
         {/* Deemo's bubble: the words fade in when they change; screen readers hear each new message */}
         <View style={styles.deemo} accessibilityLiveRegion="polite">
           <Animated.View key={say} entering={FadeIn.duration(200).easing(easeOut)}>
-            <DeemoNote mood={mood} size="m">
+            <DeemoNote mood={mood} size="m" startle={!!error && !busy}>
               {say}
             </DeemoNote>
           </Animated.View>

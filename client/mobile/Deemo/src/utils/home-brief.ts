@@ -68,7 +68,8 @@ export function homeBrief(sessions: Session[], manuscript: string | null, offlin
 
   return {
     parts,
-    mood: score >= 85 ? "cheering" : score >= 70 ? "idle" : "encouraging",
+    // The face follows the band: cheering, a calm smile, an encouraging tilt, a nervous wobble.
+    mood: score >= 85 ? "cheering" : score >= 70 ? "idle" : score >= 50 ? "encouraging" : "nervous",
     holding: { value: score, color: band.ink },
     openId: last.id,
   };

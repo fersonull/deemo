@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ViewStyle } from "react-native";
 import Animated, {
   measure,
@@ -19,7 +19,7 @@ import Svg, { Circle, Ellipse, G, Path, Rect, Text as SvgText, TSpan } from "rea
 import { touchPoint } from "@/hooks/touch-point";
 import { colors, easeOut, fonts } from "@/theme";
 
-export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy";
+export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy" | "nervous";
 
 // L: onboarding hero. M: cards, empty states, waits. S: inline notes (no cheeks).
 const WIDTH = { l: 136, m: 76, s: 40 } as const;
@@ -29,6 +29,7 @@ const WIDTH = { l: 136, m: 76, s: 40 } as const;
 const W = 100;
 const H = 85;
 const PAD = 14;
+const HELD = 34; // extra room under the body for a held score
 
 // The brand pebble, CSS "58% 42% 52% 48% / 55% 50% 50% 45%", drawn exactly with elliptical corners.
 const BODY = (() => {
@@ -58,7 +59,8 @@ type Props = {
   mood?: DeemoMood;
   size?: keyof typeof WIDTH;
   look?: "left" | "right"; // pupils drift toward the speech bubble
-  holding?: { value: number; color: string }; // a paper sign with a score on it, held in front (Home)
+  holding?: { value: number; color: string }; // a score held up under the body, in big digits (Home)
+  startle?: boolean; // on mount: a quick head-shake with a nervous face, then back to `mood` (an error just happened)
   style?: ViewStyle;
 };
 
@@ -66,10 +68,32 @@ type Props = {
 // smile and big round glasses. Flat fills only. The body holds still; only the face and gestures move, and with
 // reduce motion everything holds still and the mood reads from shape. Decorative: screen readers read the words
 // beside it.
-export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props) {
+export function Deemo({ mood: base = "idle", size = "m", look, holding, startle, style }: Props) {
   const w = WIDTH[size];
   const k = w / W; // px per unit
   const reduced = useReducedMotion();
+
+  // Startle: shake the head (±6% of the width, ~420 ms) with a nervous face, then settle back to the given mood.
+  // With reduce motion there's no shake, but the face still changes for a moment.
+  const [startled, setStartled] = useState(!!startle);
+  const mood: DeemoMood = startled ? "nervous" : base;
+  const shake = useSharedValue(0);
+  useEffect(() => {
+    if (!startle) return;
+    if (!reduced) {
+      const a = 0.06 * w;
+      shake.value = withSequence(
+        withTiming(-a, { duration: 50 }),
+        withTiming(a, { duration: 70 }),
+        withTiming(-a * 0.75, { duration: 70 }),
+        withTiming(a * 0.5, { duration: 70 }),
+        withTiming(-a * 0.25, { duration: 70 }),
+        withTiming(0, { duration: 90, easing: easeOut }),
+      );
+    }
+    const t = setTimeout(() => setStartled(false), 700);
+    return () => clearTimeout(t);
+  }, [startle, reduced, shake, w]);
 
   // Blink every 4–7 s (randomized), 120 ms. Only open eyes blink.
   const lid = useSharedValue(1);
@@ -143,7 +167,7 @@ export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props
     },
   );
 
-  const hopping = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }] }));
+  const hopping = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }, { translateX: shake.value }] }));
   const eyeL = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
   const eyeR = useAnimatedProps(() => ({ ry: EYE.ry * lid.value }));
   const down = mood === "reading" ? 3 : 1.5; // pupils sit low; lower still when reading
@@ -163,7 +187,8 @@ export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props
     return { cx: 93 + 14 * Math.cos(a), cy: 32 + 14 * Math.sin(a), opacity: handShown.value };
   });
 
-  const tilt = mood === "encouraging" ? -8 : 0;
+  const tilt = mood === "encouraging" ? -8 : mood === "nervous" ? 4 : 0;
+  const below = holding ? HELD : 0;
   const slip = mood === "sleepy"; // glasses slide down the nose
   const ex = [50 - EYE.dx, 50 + EYE.dx];
   const line = { stroke: colors.paper, strokeWidth: INK, strokeLinecap: "round", fill: "none" } as const;
@@ -171,15 +196,15 @@ export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props
   return (
     <Animated.View
       ref={body}
-      style={[{ width: w, height: H * k }, hopping, style]}
+      style={[{ width: w, height: (H + below) * k }, hopping, style]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
     >
       <Svg
         width={(W + 2 * PAD) * k}
-        height={(H + 2 * PAD) * k}
-        viewBox={`${-PAD} ${-PAD} ${W + 2 * PAD} ${H + 2 * PAD}`}
+        height={(H + below + 2 * PAD) * k}
+        viewBox={`${-PAD} ${-PAD} ${W + 2 * PAD} ${H + below + 2 * PAD}`}
         style={{ margin: -PAD * k }}
       >
         {mood === "waving" ? <AnimatedEllipse animatedProps={hand} rx={9} ry={8} fill={colors.dusk} /> : null}
@@ -231,41 +256,49 @@ export function Deemo({ mood = "idle", size = "m", look, holding, style }: Props
             <Path d="M41 52 Q50 53 59 52 Q57 63 50 63 Q43 63 41 52Z" fill={colors.paper} />
           ) : mood === "sleepy" ? (
             <Path d="M47 57 L53 57" {...line} />
+          ) : mood === "nervous" ? (
+            <Path d="M41 56 Q44 52.5 47 56 Q50 59.5 53 56 Q56 52.5 59 56" {...line} />
           ) : (
             <Path d="M42 53 Q50 60 58 53" {...line} />
           )}
 
-          {/* Holding: a score on a paper sign, gripped by two pebble hands (it replaces the reading page) */}
-          {holding ? (
-            <G rotation={-4} origin="50, 78">
-              {/* outlined, so the part below the body still reads as a sign against the paper page */}
-              <Rect x={22} y={62} width={56} height={31} rx={6} fill={colors.paper} stroke={colors.duskInk} strokeWidth={2.2} />
-              <SvgText
-                x={50}
-                y={86}
-                textAnchor="middle"
-                fontFamily={fonts.display}
-                fontWeight="800"
-                fontSize={22}
-                letterSpacing={-0.6}
-                fill={holding.color}
-              >
-                {holding.value}
-                <TSpan fontSize={12}>%</TSpan>
-              </SvgText>
-              <Circle cx={23} cy={68} r={5.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
-              <Circle cx={77} cy={68} r={5.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
-            </G>
-          ) : null}
-
           {/* Reading: a page held in front */}
-          {mood === "reading" && !holding ? (
+          {mood === "reading" ? (
             <G rotation={-6} origin="50, 76">
               <Rect x={31} y={65} width={38} height={24} rx={3} fill={colors.paper} />
               <Path d="M36 72 H62 M36 77 H64 M36 82 H55" stroke={colors.duskSoft} strokeWidth={2.4} strokeLinecap="round" />
             </G>
           ) : null}
         </G>
+
+        {/* Holding: the score in big digits under the body, gripped at its sides by two pebble hands. It stays
+            upright when Deemo tilts, so it's always easy to read. */}
+        {holding ? (
+          <G>
+            <SvgText
+              x={50}
+              y={H + 29}
+              textAnchor="middle"
+              fontFamily={fonts.display}
+              fontWeight="800"
+              fontSize={38}
+              letterSpacing={-1.2}
+              fill={holding.color}
+            >
+              {holding.value}
+              <TSpan fontSize={20} letterSpacing={0}>
+                %
+              </TSpan>
+            </SvgText>
+            <Circle cx={22} cy={H + 17} r={6.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
+            <Circle cx={78} cy={H + 17} r={6.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
+          </G>
+        ) : null}
+
+        {/* Nervous: a small sweat drop at the temple */}
+        {mood === "nervous" ? (
+          <Path d="M91 14 Q95 21 91 24 Q87 21 91 14Z" fill={colors.duskSoft} />
+        ) : null}
 
         {/* Cheering: a few sparks. Sleepy: z z. */}
         {mood === "cheering" ? (
