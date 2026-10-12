@@ -34,6 +34,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
 - [x] **EAS builds pick up a changed server URL** (Metro cache keyed on `EXPO_PUBLIC_*`; EAS build fails without `EXPO_PUBLIC_API_URL`).
+- [x] **Preview OTA updates use the preview API environment:** confirmed the served runtime-1.0.0 bundle had localhost; update commands now include `--environment preview --platform android`, preview build environment is explicit, and Metro rejects missing/HTTP release URLs. Three regression tests pass (58 total); TypeScript and lint pass. **Pending:** uncommitted on `preview`; publish a replacement update and verify offline → online recovery on the phone without clearing data.
 - [x] **Offline screen**: built, then removed on request (in-list sleepy notes and pull to refresh instead); API calls retry with a forced sign-in token refresh.
 - [x] **History empty states**: Start practice when there's nothing yet, a practice button for an empty stage filter, a retry hint when offline.
 - [x] **Home empty state**: "No score yet" card and a three-step "Get started" list for new students.

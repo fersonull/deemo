@@ -53,4 +53,4 @@ jobs:
       # STRATEGY B: Light JS Update (Triggered automatically on push to your specific branch)
       - name: Update JS Bundle (EAS Update)
         if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.force_native_build == false) }}
-        run: eas update --channel preview --message "Auto-deployed from GitHub Actions (Commit ${{ github.sha }})" --non-interactive
+        run: eas update --channel preview --environment preview --platform android --message "Auto-deployed from GitHub Actions (Commit ${{ github.sha }})" --non-interactive
