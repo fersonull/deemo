@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useReducedMotion } from "react-native-reanimated";
+import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { DeemoNote } from "@/components/deemo-note";
 import { Screen } from "@/components/screen";
@@ -12,24 +12,16 @@ import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { useSession } from "@/hooks/use-session";
-import { sessions, useSessions, type SessionSummary } from "@/hooks/use-sessions";
+import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
+import { historySummary } from "@/utils/history-summary";
 import { riseIn } from "@/utils/motion";
 
 import { TrendChart } from "./trend-chart";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-function trend(list: SessionSummary[]) {
-  const scored = list.filter((s) => s.score !== undefined);
-  if (!list.length) return "No practice yet.";
-  if (scored.length < 2) return scored.length ? "One scored session so far." : "No scored sessions yet.";
-  const diff = (scored[0].score ?? 0) - (scored[scored.length - 1].score ?? 0);
-  if (diff > 0) return `Up ${diff} points since your first session.`;
-  if (diff < 0) return `Down ${-diff} points since your first session. Keep practicing the flagged topics.`;
-  return "Level with your first session.";
-}
 
 const FILTERS: { label: string; mode: Mode | null }[] = [
   { label: "All", mode: null },
@@ -45,6 +37,7 @@ export function History() {
   const [mode, setMode] = useState<Mode | null>(null);
   const list = mode ? all.filter((s) => s.mode === mode) : all;
   const { premium } = useSession();
+  const summary = historySummary(list, mode ? MODE_LABELS[mode] : null);
 
   // From an empty stage filter: open Setup on that stage. Final stays behind Setup's Premium lock on Free.
   const practiceStage = (m: Mode) => {
@@ -59,7 +52,15 @@ export function History() {
   );
 
   return (
-    <Screen scroll tabBar title="History" subtitle={trend(list)} onRefresh={sessions.refresh}>
+    <Screen scroll tabBar title="History" onRefresh={sessions.refresh}>
+      {/* Deemo sums up the trend (it changes with the stage filter; the words fade in when they change) */}
+      {loaded && !error ? (
+        <Animated.View key={summary.text} entering={FadeIn.duration(220)} style={styles.summary}>
+          <DeemoNote mood={summary.mood} size="m">
+            {summary.text}
+          </DeemoNote>
+        </Animated.View>
+      ) : null}
       {loaded && !error ? (
         <TrendChart key={mode ?? "all"} sessions={list} stage={mode ? MODE_LABELS[mode] : null}>
           {/* The empty card's action: start practicing, or practice the filtered stage. */}
@@ -135,6 +136,7 @@ export function History() {
 }
 
 const styles = StyleSheet.create({
+  summary: { marginTop: 14 },
   flex: { flex: 1, minWidth: 0 },
   list: { gap: 8, marginTop: 14 },
   bones: { gap: 8 },

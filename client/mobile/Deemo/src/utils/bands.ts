@@ -18,8 +18,6 @@ export function bandOf(score: number): Band {
   return band;
 }
 
-export const BAND_KEY: Band[] = BANDS.map(({ from: _from, ...b }) => b);
-
 // A change between two sessions: up is good (sage), down is a nudge (amber, never red), level is neutral.
 export function deltaTone(delta: number) {
   if (delta > 0) return { ink: colors.sageInk, tint: colors.sageTint, icon: "arrow_upward" };

@@ -19,7 +19,7 @@ import { Score } from "@/components/score";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
-import { BAND_KEY, bandOf, deltaTone } from "@/utils/bands";
+import { bandOf, deltaTone } from "@/utils/bands";
 import { columnPath, columns, contentWidth, scoreY, type Box, type Column } from "@/utils/chart";
 
 const READY = 85; // "Defense-ready" band (addendum Q4)
@@ -78,22 +78,19 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
             <Text style={styles.readMeta} numberOfLines={1}>
               {MODE_LABELS[s.mode]} · {day(s.createdAt)}
             </Text>
-            {/* Status at a glance: the band, and the change since the session before, each in its color */}
-            <View style={styles.pills}>
-              <View style={[styles.pill, { backgroundColor: bandOf(s.score!).tint }]}>
-                <Text style={[styles.pillText, { color: bandOf(s.score!).ink }]}>{bandOf(s.score!).name}</Text>
+            {/* The change since the session before, in its color: up sage, down amber, level muted */}
+            {delta === null ? (
+              <Text style={styles.delta}>First one here</Text>
+            ) : (
+              <View style={styles.deltaRow}>
+                {delta ? <Icon name={deltaTone(delta).icon} size={14} color={deltaTone(delta).ink} /> : null}
+                <Text style={[styles.delta, styles.deltaStrong, { color: deltaTone(delta).ink }]} numberOfLines={1}>
+                  {delta === 0
+                    ? "Same as last time"
+                    : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "point" : "points"} since last`}
+                </Text>
               </View>
-              {delta === null ? (
-                <Text style={styles.delta}>First one here</Text>
-              ) : (
-                <View style={[styles.pill, { backgroundColor: deltaTone(delta).tint }]}>
-                  {delta ? <Icon name={deltaTone(delta).icon} size={12} color={deltaTone(delta).ink} /> : null}
-                  <Text style={[styles.pillText, { color: deltaTone(delta).ink }]} numberOfLines={1}>
-                    {delta === 0 ? "Same as last" : `${Math.abs(delta)} ${Math.abs(delta) === 1 ? "pt" : "pts"}`}
-                  </Text>
-                </View>
-              )}
-            </View>
+            )}
           </View>
         </Animated.View>
         <PressableScale
@@ -164,17 +161,7 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
         <Text style={styles.meta}>{day(first.createdAt)}</Text>
         <Text style={styles.meta}>{day(last.createdAt)}</Text>
       </View>
-      {/* What the colors mean (the full chart; on Home the readout's band pill says it) */}
-      {compact ? null : (
-        <View style={styles.key} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {BAND_KEY.map((b) => (
-            <View key={b.name} style={styles.keyItem}>
-              <View style={[styles.keyDot, { backgroundColor: b.fill }]} />
-              <Text style={styles.meta}>{b.short}</Text>
-            </View>
-          ))}
-        </View>
-      )}
+
     </View>
   );
 }
@@ -245,12 +232,8 @@ const styles = StyleSheet.create({
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 40, lineHeight: 44, letterSpacing: -1.4, color: colors.ink },
   scoreCompact: { fontSize: 32, lineHeight: 36 },
   readMeta: { ...type.bodyStrong, fontSize: 14 },
-  pills: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 },
-  pill: { flexDirection: "row", alignItems: "center", gap: 2, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  pillText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5 },
-  key: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 10 },
-  keyItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-  keyDot: { width: 8, height: 8, borderRadius: 4 },
+  deltaRow: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 2 },
+  deltaStrong: { fontWeight: "600", marginTop: 0 },
   delta: { ...type.meta, fontFamily: fonts.body, fontSize: 12.5, color: colors.inkMuted, marginTop: 2 },
   open: {
     width: 40,
