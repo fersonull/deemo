@@ -12,9 +12,10 @@ import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
-import { projects, useProjects } from "@/hooks/use-projects";
+import { refreshEverything } from "@/hooks/refresh-everything";
+import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
-import { sessions, useSessions } from "@/hooks/use-sessions";
+import { useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { initials } from "@/utils/initials";
 import { homeBrief } from "@/utils/home-brief";
@@ -34,7 +35,6 @@ function greeting(hour: number) {
   return "Evening";
 }
 
-const reload = () => Promise.all([sessions.refresh(), projects.refresh()]);
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
@@ -56,13 +56,12 @@ export function Home() {
 
   useFocusEffect(
     useCallback(() => {
-      void sessions.refresh();
-      void projects.refresh();
+      void refreshEverything(); // the account too, so a Premium change made elsewhere shows on return
     }, []),
   );
 
   const open = (id: string) => router.push({ pathname: "/results", params: { id } });
-  const refresh = usePullRefresh(reload);
+  const refresh = usePullRefresh(refreshEverything);
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>

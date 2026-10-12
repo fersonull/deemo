@@ -118,6 +118,7 @@ export function SignIn() {
 
         <Field
           label="School email"
+          placeholder="juan.delacruz@school.edu.ph"
           value={email}
           onChangeText={setEmail}
           autoComplete="email"
@@ -129,6 +130,7 @@ export function SignIn() {
         />
         <Field
           label="Password"
+          placeholder={creating ? "At least 6 characters" : "Your password"}
           value={password}
           onChangeText={setPassword}
           autoComplete={creating ? "new-password" : "current-password"}
@@ -145,6 +147,7 @@ export function SignIn() {
             </Text>
             <Field
               label="Confirm password"
+              placeholder="Type it again"
               value={confirm}
               onChangeText={setConfirm}
               autoComplete="new-password"

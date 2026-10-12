@@ -79,6 +79,18 @@ export function authMessage(e: unknown): string {
 }
 
 export const session = {
+  // Re-read the account record (Premium, typed answers, consent) from the server, so changes made elsewhere, such as
+  // an edit in the Firestore console, show up on pull to refresh. Signed out or offline: keep what we have.
+  async refresh() {
+    if (!store.get().signedIn) return;
+    try {
+      const me = await api<Me>("/me");
+      store.set({ premium: me.premium, allowTyping: me.allowTyping, consentAt: me.consentAt ?? store.get().consentAt });
+    } catch {
+      // The lists report being offline; the account keeps its last known state.
+    }
+  },
+
   // Saved on the account, so it follows the student; the switch flips right away and rolls back on failure.
   async setAllowTyping(allowTyping: boolean) {
     store.set({ allowTyping });

@@ -11,6 +11,7 @@ import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
+import { refreshEverything } from "@/hooks/refresh-everything";
 import { useSession } from "@/hooks/use-session";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, radius, type } from "@/theme";
@@ -52,7 +53,7 @@ export function History() {
   );
 
   return (
-    <Screen scroll tabBar title="History" onRefresh={sessions.refresh}>
+    <Screen scroll tabBar title="History" onRefresh={refreshEverything}>
       {/* Deemo sums up the trend (it changes with the stage filter; the words fade in when they change) */}
       {loaded && !error ? (
         <Animated.View key={summary.text} entering={FadeIn.duration(220)} style={styles.summary}>

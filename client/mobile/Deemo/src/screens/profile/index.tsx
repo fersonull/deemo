@@ -5,6 +5,7 @@ import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
+import { refreshEverything } from "@/hooks/refresh-everything";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { api } from "@/utils/api";
@@ -54,7 +55,7 @@ export function Profile() {
   };
 
   return (
-    <Screen scroll tabBar title="Profile">
+    <Screen scroll tabBar title="Profile" onRefresh={refreshEverything}>
       <View style={styles.account}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials(name, email)}</Text>

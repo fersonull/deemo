@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { PressableScale } from "@/components/pressable-scale";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
+import { refreshEverything } from "@/hooks/refresh-everything";
 import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
@@ -46,7 +47,7 @@ export function Projects() {
   const open = (p: Project) => router.push({ pathname: "/analysis", params: { id: p.id } });
 
   return (
-    <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={projects.refresh}>
+    <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
       <View style={styles.list}>
         {list.map((p, i) => {
           const active = p.id === projectId;
