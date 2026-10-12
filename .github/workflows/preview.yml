@@ -17,6 +17,11 @@ on:
 jobs:
   preview:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: client/mobile/Deemo
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm' # or 'yarn' or 'pnpm'
+          cache: "npm" # or 'yarn' or 'pnpm'
 
       - name: Setup Expo
         uses: expo/expo-github-action@v8
