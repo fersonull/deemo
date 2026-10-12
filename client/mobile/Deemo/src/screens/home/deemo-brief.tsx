@@ -5,20 +5,34 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { PressableScale } from "@/components/pressable-scale";
+import { Score } from "@/components/score";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
 import { briefText, type Brief } from "@/utils/home-brief";
 
-// Deemo, the informer, at the top of Home: holding the last score on a sign, and saying what it means in a bubble
-// with the important parts in bold (the band and the change in their status colors). Tap it to open that report.
-// The words fade in when they change (a new score, going offline).
+// Deemo, the informer, at the top of Home. The bubble leads with the last score as a big headline (number and band in
+// the band's color, where it's easy to see), then at most three lines on what changed and what to work on, important
+// parts in bold. Deemo's face follows the score. Tap it to open that report. The words fade in when they change.
 export function DeemoBrief({ brief }: { brief: Brief }) {
   const { openId } = brief;
   const body = (
     <>
-      <Deemo mood={brief.mood} holding={brief.holding} look="right" />
+      <Deemo mood={brief.mood} look="right" />
       <View style={styles.bubble}>
         <View style={styles.tail} />
-        <Animated.Text key={briefText(brief)} entering={FadeIn.duration(220).easing(easeOut)} style={styles.text}>
+        {brief.headline ? (
+          <View style={styles.headline}>
+            <Score value={brief.headline.score} style={{ ...styles.score, color: brief.headline.color }} />
+            <Text style={[styles.band, { color: brief.headline.color }]} numberOfLines={2}>
+              {brief.headline.band}
+            </Text>
+          </View>
+        ) : null}
+        <Animated.Text
+          key={briefText(brief)}
+          entering={FadeIn.duration(220).easing(easeOut)}
+          style={styles.text}
+          numberOfLines={3}
+        >
           {brief.parts.map((p, i) =>
             p.strong ? (
               <Text key={i} style={[styles.strong, p.color ? { color: p.color } : null]}>
@@ -74,7 +88,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
     transform: [{ rotate: "45deg" }],
   },
-  text: { ...type.body, fontSize: 14.5, lineHeight: 21, color: colors.inkSoft },
+  headline: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 36, lineHeight: 40, letterSpacing: -1.2 },
+  band: { flex: 1, fontFamily: fonts.display, fontWeight: "700", fontSize: 16, lineHeight: 19 },
+  text: { ...type.body, fontSize: 14, lineHeight: 20, color: colors.inkSoft },
   strong: { fontFamily: fonts.body, fontWeight: "700", color: colors.ink },
   more: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 8 },
   moreText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12.5, color: colors.duskLink },

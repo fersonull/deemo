@@ -14,10 +14,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
-import Svg, { Circle, Ellipse, G, Path, Rect, Text as SvgText, TSpan } from "react-native-svg";
+import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
 
 import { touchPoint } from "@/hooks/touch-point";
-import { colors, easeOut, fonts } from "@/theme";
+import { colors, easeOut } from "@/theme";
 
 export type DeemoMood = "idle" | "cheering" | "reading" | "encouraging" | "waving" | "sleepy" | "nervous";
 
@@ -29,7 +29,6 @@ const WIDTH = { l: 136, m: 76, s: 40 } as const;
 const W = 100;
 const H = 85;
 const PAD = 14;
-const HELD = 34; // extra room under the body for a held score
 
 // The brand pebble, CSS "58% 42% 52% 48% / 55% 50% 50% 45%", drawn exactly with elliptical corners.
 const BODY = (() => {
@@ -59,7 +58,6 @@ type Props = {
   mood?: DeemoMood;
   size?: keyof typeof WIDTH;
   look?: "left" | "right"; // pupils drift toward the speech bubble
-  holding?: { value: number; color: string }; // a score held up under the body, in big digits (Home)
   startle?: boolean; // on mount: a quick head-shake with a nervous face, then back to `mood` (an error just happened)
   style?: ViewStyle;
 };
@@ -68,7 +66,7 @@ type Props = {
 // smile and big round glasses. Flat fills only. The body holds still; only the face and gestures move, and with
 // reduce motion everything holds still and the mood reads from shape. Decorative: screen readers read the words
 // beside it.
-export function Deemo({ mood: base = "idle", size = "m", look, holding, startle, style }: Props) {
+export function Deemo({ mood: base = "idle", size = "m", look, startle, style }: Props) {
   const w = WIDTH[size];
   const k = w / W; // px per unit
   const reduced = useReducedMotion();
@@ -188,7 +186,6 @@ export function Deemo({ mood: base = "idle", size = "m", look, holding, startle,
   });
 
   const tilt = mood === "encouraging" ? -8 : mood === "nervous" ? 4 : 0;
-  const below = holding ? HELD : 0;
   const slip = mood === "sleepy"; // glasses slide down the nose
   const ex = [50 - EYE.dx, 50 + EYE.dx];
   const line = { stroke: colors.paper, strokeWidth: INK, strokeLinecap: "round", fill: "none" } as const;
@@ -196,15 +193,15 @@ export function Deemo({ mood: base = "idle", size = "m", look, holding, startle,
   return (
     <Animated.View
       ref={body}
-      style={[{ width: w, height: (H + below) * k }, hopping, style]}
+      style={[{ width: w, height: H * k }, hopping, style]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       pointerEvents="none"
     >
       <Svg
         width={(W + 2 * PAD) * k}
-        height={(H + below + 2 * PAD) * k}
-        viewBox={`${-PAD} ${-PAD} ${W + 2 * PAD} ${H + below + 2 * PAD}`}
+        height={(H + 2 * PAD) * k}
+        viewBox={`${-PAD} ${-PAD} ${W + 2 * PAD} ${H + 2 * PAD}`}
         style={{ margin: -PAD * k }}
       >
         {mood === "waving" ? <AnimatedEllipse animatedProps={hand} rx={9} ry={8} fill={colors.dusk} /> : null}
@@ -270,30 +267,6 @@ export function Deemo({ mood: base = "idle", size = "m", look, holding, startle,
             </G>
           ) : null}
         </G>
-
-        {/* Holding: the score in big digits under the body, gripped at its sides by two pebble hands. It stays
-            upright when Deemo tilts, so it's always easy to read. */}
-        {holding ? (
-          <G>
-            <SvgText
-              x={50}
-              y={H + 29}
-              textAnchor="middle"
-              fontFamily={fonts.display}
-              fontWeight="800"
-              fontSize={38}
-              letterSpacing={-1.2}
-              fill={holding.color}
-            >
-              {holding.value}
-              <TSpan fontSize={20} letterSpacing={0}>
-                %
-              </TSpan>
-            </SvgText>
-            <Circle cx={22} cy={H + 17} r={6.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
-            <Circle cx={78} cy={H + 17} r={6.5} fill={colors.dusk} stroke={colors.duskInk} strokeWidth={1.6} />
-          </G>
-        ) : null}
 
         {/* Nervous: a small sweat drop at the temple */}
         {mood === "nervous" ? (

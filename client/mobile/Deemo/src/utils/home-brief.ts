@@ -3,16 +3,18 @@ import { MODE_LABELS, type Mode } from "@/constants";
 
 import { bandOf, deltaTone } from "./bands";
 
-// What Deemo tells the student on Home, from what we know about them. Deemo is the informer: the last score sits on
-// the sign Deemo holds, and the bubble says what it means and what to do next. Parts marked `strong` are bold;
-// `color` tints the ones that carry a status (the band, the change). Design D3: plain words, no exclamation marks.
+// What Deemo tells the student on Home, from what we know about them. Deemo is the informer: the bubble leads with
+// the last score as a big headline (number and band, in the band's color), then a short line on what changed and
+// what to work on next. Parts marked `strong` are bold; `color` tints the ones that carry a status (the change).
+// Design D3: plain words, no exclamation marks.
 
 export type Part = { text: string; strong?: boolean; color?: string };
-export type Brief = { parts: Part[]; mood: DeemoMood; holding?: { value: number; color: string }; openId?: string };
+export type Headline = { score: number; band: string; color: string };
+export type Brief = { parts: Part[]; mood: DeemoMood; headline?: Headline; openId?: string };
 
 type Session = { id: string; mode: Mode; score?: number; band?: string; tip?: string };
 
-const MAX_TIP = 80;
+const MAX_TIP = 60;
 const clip = (s: string) => (s.length > MAX_TIP ? `${s.slice(0, MAX_TIP - 1).trimEnd()}…` : s);
 const points = (n: number) => `${n} ${n === 1 ? "point" : "points"}`;
 
@@ -48,29 +50,22 @@ export function homeBrief(sessions: Session[], manuscript: string | null, offlin
 
   const score = last.score!;
   const band = bandOf(score);
-  const parts: Part[] = [
-    { text: "Your last " },
-    { text: MODE_LABELS[last.mode], strong: true },
-    { text: " scored " },
-    { text: `${score}%`, strong: true, color: band.ink },
-    { text: ", " },
-    { text: last.band ?? band.name, strong: true, color: band.ink },
-  ];
+  // The headline carries the score and band, so the words stay short: the stage, the change, the next fix.
+  const parts: Part[] = [{ text: "Your last " }, { text: MODE_LABELS[last.mode], strong: true }];
   const before = scored[1]?.score;
   if (before !== undefined && before !== score) {
     const diff = score - before;
     parts.push({ text: ", " }, { text: `${diff > 0 ? "up" : "down"} ${points(Math.abs(diff))}`, strong: true, color: deltaTone(diff).ink });
-    parts.push({ text: " from the one before" });
   }
   parts.push({ text: ". " });
-  if (last.tip) parts.push({ text: "Next, work on " }, { text: clip(last.tip), strong: true });
-  else parts.push({ text: "Open the report to see what to fix next." });
+  if (last.tip) parts.push({ text: "Next: " }, { text: clip(last.tip), strong: true });
+  else parts.push({ text: "Open the report to see what to fix." });
 
   return {
     parts,
+    headline: { score, band: last.band ?? band.name, color: band.ink },
     // The face follows the band: cheering, a calm smile, an encouraging tilt, a nervous wobble.
     mood: score >= 85 ? "cheering" : score >= 70 ? "idle" : score >= 50 ? "encouraging" : "nervous",
-    holding: { value: score, color: band.ink },
     openId: last.id,
   };
 }
