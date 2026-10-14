@@ -2,12 +2,13 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
+import { tabBarSpace } from "@/components/tab-bar";
 import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
 import { Offline } from "@/components/offline";
@@ -44,6 +45,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // when they first appear.
 export function Home() {
   const { name, email, avatar, premium } = useSession();
+  const { bottom } = useSafeAreaInsets();
   const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
@@ -69,7 +71,7 @@ export function Home() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.scroll} refreshControl={refresh}>
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: tabBarSpace(bottom) }]} refreshControl={refresh}>
         <View style={styles.head}>
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
@@ -183,7 +185,7 @@ export function Home() {
 const styles = StyleSheet.create({
   briefBones: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
   safe: { flex: 1, backgroundColor: colors.paper },
-  scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
+  scroll: { paddingHorizontal: 20, paddingTop: 14 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   bones: { gap: 8 },

@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon } from "@/components/icon";
+import { tabBarSpace } from "@/components/tab-bar";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { colors, type } from "@/theme";
 
@@ -19,6 +20,7 @@ type Props = {
 const idle = async () => {};
 
 export function Screen({ title, subtitle, onBack, scroll, tabBar, onRefresh, children }: Props) {
+  const { bottom } = useSafeAreaInsets();
   const refresh = usePullRefresh(onRefresh ?? idle);
   const body = (
     <>
@@ -45,7 +47,7 @@ export function Screen({ title, subtitle, onBack, scroll, tabBar, onRefresh, chi
         <ScrollView
           keyboardShouldPersistTaps="handled" // buttons work on the first tap while the keyboard is up
           refreshControl={onRefresh ? refresh : undefined}
-          contentContainerStyle={[styles.scroll, { paddingTop: onBack ? 0 : 14, paddingBottom: tabBar ? 120 : 24 }]}
+          contentContainerStyle={[styles.scroll, { paddingTop: onBack ? 0 : 14, paddingBottom: tabBar ? tabBarSpace(bottom) : 24 }]}
         >
           {body}
         </ScrollView>

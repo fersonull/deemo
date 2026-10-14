@@ -1,3 +1,4 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { router, type Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -11,6 +12,12 @@ import { useSessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts } from "@/theme";
 
 type Props = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
+
+const BAR = 70;
+const FADE = 48; // how far above the bar the content starts to fade
+
+// Bottom padding for a tab's scrolling content, so its last row can scroll fully clear of the bar and its fade.
+export const tabBarSpace = (bottomInset: number) => FADE + BAR + 12 + bottomInset;
 
 const ICONS: Record<string, string> = {
   index: "home",
@@ -54,12 +61,23 @@ export function TabBar({ state, descriptors, navigation }: Props) {
     );
   };
 
+  // Content scrolling under the floating bar fades into the paper instead of being cut off by it: clear above, mostly
+  // paper by the bar's top edge, solid paper behind the bar and the gesture area. Touches pass through.
+  const fadeHeight = tabBarSpace(bottom);
   return (
-    <View style={[styles.bar, { bottom: 12 + bottom }]}>
-      {state.routes.slice(0, 2).map((r, i) => tab(r, i))}
-      <PracticeButton />
-      {state.routes.slice(2).map((r, i) => tab(r, i + 2))}
-    </View>
+    <>
+      <LinearGradient
+        pointerEvents="none"
+        colors={[`${colors.paper}00`, `${colors.paper}D9`, colors.paper]}
+        locations={[0, FADE / fadeHeight, 1]}
+        style={[styles.fade, { height: fadeHeight }]}
+      />
+      <View style={[styles.bar, { bottom: 12 + bottom }]}>
+        {state.routes.slice(0, 2).map((r, i) => tab(r, i))}
+        <PracticeButton />
+        {state.routes.slice(2).map((r, i) => tab(r, i + 2))}
+      </View>
+    </>
   );
 }
 
@@ -95,11 +113,12 @@ function PracticeButton() {
 }
 
 const styles = StyleSheet.create({
+  fade: { position: "absolute", left: 0, right: 0, bottom: 0 },
   bar: {
     position: "absolute",
     left: 12,
     right: 12,
-    height: 70,
+    height: BAR,
     borderRadius: 35,
     backgroundColor: colors.ink,
     flexDirection: "row",
