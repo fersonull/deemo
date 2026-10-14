@@ -33,7 +33,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
 - [x] **Email verification after email/password sign-up**: "Check your inbox" screen (auto-check, resend with cooldown, use a different email); the server only serves verified emails.
 - [x] **GitHub issues #9, #8, #7**: full-width Domain row in Setup, Upload / Join above the Projects list, project name follows a re-picked file. Committed on `dev`.
-- [x] **GitHub issues #3 + #2**: OpenAI backup removed; Gemini chain 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. Merged into `dev`; real-use check pending.
+- [x] **GitHub issues #3 + #2**: OpenAI backup removed; Gemini chain 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. Merged into `dev`; checked in real use.
 - [x] **GitHub issues #5, #4**: kept as is (user decision 2026-10-14): the summary stays editable, and members may practice with their own manuscripts.
 - [x] **Names for email/password accounts**: name on Create account, editable in Profile, current names on Group readiness. Merged into `dev`, phone-checked.
 - [x] **DiceBear avatars** (notionists in brand colors, initials fallback), **saved per account with a picker in Profile**, and a **compact Group readiness** card with member faces. Merged into `dev`, phone-checked.
@@ -65,7 +65,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 ## Housekeeping
 
 - [x] Register agent-device MCP in Codex using the existing global installation; verify initialization and tool discovery (59 tools).
-- [ ] Stray local branch `setup-firebase-auth` (not created during this work): delete if unused.
+- [x] Stray branches cleaned up (user).
 
 ## Done
 
