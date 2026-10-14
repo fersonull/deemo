@@ -1,16 +1,27 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, Share, StyleSheet, Switch, Text, View } from "react-native";
+import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/button";
+import { PressableScale } from "@/components/pressable-scale";
 import { Sheet } from "@/components/sheet";
 import { Icon } from "@/components/icon";
-import { projects, type Project } from "@/hooks/use-projects";
+import { projects, useProjects, type Project } from "@/hooks/use-projects";
 import { colors, fonts, radius, type } from "@/theme";
 
+const FACE = 32;
+const SHOWN = 4; // faces before "+n": the stack shares a row with the code chip and the share button
+
+// Your capstone group, compact (the analysis screen): the join code with a share button, the members as a stack of
+// faces (from the same /groups data as Home's Group readiness), the share-my-score switch and a small leave link.
+// On sand, like Group readiness, so the dusk faces carry the color.
 export function GroupCard({ project, onLeft }: { project: Project; onLeft: () => void }) {
+  const { groups } = useProjects();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
   const group = project.group;
+  const members = groups.find((g) => g.code === group?.code)?.members ?? [];
+  const extra = members.length - SHOWN;
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
     setError("");
@@ -30,18 +41,53 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
       </View>
       {group ? (
         <>
+          <View style={styles.codeRow}>
+            <View style={styles.codeChip}>
+              <Text selectable accessibilityLabel={`Join code ${group.code.split("").join(" ")}`} style={styles.code}>
+                {group.code}
+              </Text>
+            </View>
+            <PressableScale
+              scaleTo={0.92}
+              accessibilityRole="button"
+              accessibilityLabel="Share the join code"
+              onPress={() =>
+                void Share.share({ message: `Join our capstone group on DEEMO with the code ${group.code}.` }).catch(() => {})
+              }
+              style={styles.iconButton}
+            >
+              <Icon name="share" size={18} color={colors.duskInk} />
+            </PressableScale>
+            {members.length ? (
+              <View
+                style={styles.stack}
+                accessible
+                accessibilityLabel={`${members.length} ${members.length === 1 ? "member" : "members"}: ${members
+                  .map((m) => (m.isYou ? "you" : m.name))
+                  .join(", ")}`}
+              >
+                {members.slice(0, SHOWN).map((m, i) => (
+                  <View key={i} style={[styles.face, i > 0 && styles.overlap, { zIndex: SHOWN - i }]}>
+                    <Avatar seed={m.avatar} name={m.name} size={FACE} premium={m.premium} />
+                  </View>
+                ))}
+                {extra > 0 ? (
+                  <View style={[styles.face, styles.overlap, styles.more]}>
+                    <Text style={styles.moreText}>+{extra}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
           <Text style={styles.note}>
             {group.isOwner
-              ? "Give this code to your teammates. Anyone with it can join and read the manuscript."
+              ? "Anyone with this code can join and read the manuscript."
               : "Your leader keeps the shared manuscript and rubric up to date."}
           </Text>
-          <Text selectable accessibilityLabel={`Join code ${group.code.split("").join(" ")}`} style={styles.code}>
-            {group.code}
-          </Text>
-          <View style={styles.row}>
+          <View style={[styles.row, styles.share]}>
             <View style={styles.flex}>
-              <Text style={type.bodyStrong}>Share with group</Text>
-              <Text style={styles.note}>Show my latest readiness score. My transcript and report stay private.</Text>
+              <Text style={type.bodyStrong}>Share my latest score</Text>
+              <Text style={styles.note}>Transcripts and reports stay private.</Text>
             </View>
             <Switch
               accessibilityLabel="Share my latest score with group"
@@ -52,7 +98,13 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               thumbColor={colors.paper}
             />
           </View>
-          <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirm(true)} style={styles.action}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={busy}
+            hitSlop={8}
+            onPress={() => setConfirm(true)}
+            style={styles.leave}
+          >
             <Text style={styles.link}>{group.isOwner ? "Stop sharing this project" : "Leave group"}</Text>
           </Pressable>
           <Sheet visible={confirm} onClose={() => !busy && setConfirm(false)}>
@@ -99,19 +151,22 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
   );
 }
 const styles = StyleSheet.create({
-  card: { padding: 16, marginTop: 18, borderRadius: radius.xl, backgroundColor: colors.duskTint },
+  card: { paddingVertical: 14, paddingHorizontal: 16, marginTop: 18, borderRadius: radius.xl, backgroundColor: colors.sand },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   flex: { flex: 1 },
   note: { ...type.body, fontSize: 13, lineHeight: 19, color: colors.inkMuted, marginTop: 6 },
-  code: {
-    fontFamily: fonts.mono,
-    fontSize: 28,
-    letterSpacing: 5,
-    color: colors.duskInk,
-    marginVertical: 16,
-    textAlign: "center",
-  },
+  codeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
+  codeChip: { height: 40, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.paper, justifyContent: "center" },
+  code: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 20, letterSpacing: 3, color: colors.duskInk },
+  iconButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  stack: { flex: 1, flexDirection: "row", justifyContent: "flex-end" },
+  face: { borderRadius: FACE / 2 + 2, borderWidth: 2, borderColor: colors.sand },
+  overlap: { marginLeft: -10 },
+  more: { width: FACE + 4, height: FACE + 4, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
+  moreText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.inkMuted },
+  share: { marginTop: 12 },
   action: { marginTop: 14, minHeight: 44, justifyContent: "center" },
-  link: { ...type.button, fontSize: 13, textAlign: "center", color: colors.ink },
-  error: { ...type.meta, color: colors.clay, marginTop: 8 },
+  leave: { alignSelf: "center", minHeight: 40, justifyContent: "center", marginTop: 4 },
+  link: { ...type.button, fontSize: 13, textAlign: "center", color: colors.inkMuted },
+  error: { ...type.meta, color: colors.warnInk, marginTop: 8 },
 });
