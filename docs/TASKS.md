@@ -34,7 +34,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Email verification after email/password sign-up**: "Check your inbox" screen (auto-check, resend with cooldown, use a different email); the server only serves verified emails.
 - [x] **GitHub issues #9, #8, #7**: full-width Domain row in Setup, Upload / Join above the Projects list, project name follows a re-picked file. Committed on `dev`.
 - [x] **GitHub issues #3 + #2**: OpenAI backup removed; Gemini chain 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. Merged into `dev`; real-use check pending.
-- [ ] **GitHub issues #5, #4**: need the user's decision (read-only summary; what "the group's manuscript" means).
+- [x] **GitHub issues #5, #4**: kept as is (user decision 2026-10-14): the summary stays editable, and members may practice with their own manuscripts.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
