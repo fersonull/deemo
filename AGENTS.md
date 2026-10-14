@@ -7,7 +7,7 @@ Specs: `docs/DEEMO_Mobile_App_Plan.md`. Start here: `docs/HANDOFF.md` (current s
 ## Layout
 
 - `client/mobile/Deemo/` — Expo app (Expo Router, TypeScript). Expo-specific rules: `client/mobile/Deemo/AGENTS.md`.
-- `server/` — Bun + Express (TypeScript, run directly by Bun).
+- `server/` — Bun + Express (TypeScript, run directly by Bun), Prisma 7 + PostgreSQL. Domain-driven: `src/modules/<identity|manuscripts|groups|practice|scoring>/{domain,application,infrastructure,http}`, shared kernel in `src/shared/` (config, prisma, errors, zod `validate`, `rate-limit`, auth, `ai/gemini`), wiring in `src/app.ts`.
 - `docs/` — product plan, addendum, design pointer.
 
 ## Commands
@@ -23,16 +23,18 @@ bunx tsc --noEmit && bunx expo lint && bunx expo-doctor
 
 # server
 bun run dev                 # watch mode, :3000 (PORT env)
-bunx tsc --noEmit
+bun run db:migrate          # apply/create migrations (Prisma 7; pinned, v8 is a different toolchain)
+bun run db:studio           # browse the database
+bunx tsc --noEmit && bun test src
 ```
 
 Server env: copy `server/.env.example` to `server/.env` (Bun loads it automatically).
 
 Live sessions need the server: `bun run dev` in `server/`, then `adb reverse tcp:3000 tcp:3000` (the app defaults to `http://localhost:3000`; set `EXPO_PUBLIC_API_URL` to use Wi-Fi instead). `EXPO_PUBLIC_LIVE_ENGINE=mock` swaps in the scripted panel for UI work without the server.
 
-Firebase: the app signs in with React Native Firebase Auth (email/password, Google via `react-native-nitro-google-signin`) and sends its ID token as `Authorization: Bearer` (`src/utils/api.ts`). The server verifies it (`server/src/firebase.ts`) and is the only one touching Firestore: `users/{uid}` (consent, simulated premium) with `projects` and `sessions` subcollections (`server/src/store.ts`). Free-tier limits are enforced on the server. Config files stay out of git: `client/mobile/Deemo/google-services.json` and the service-account key at `FIREBASE_SERVICE_ACCOUNT` in `server/.env`.
+Firebase (sign-in only): the app signs in with React Native Firebase Auth (email/password, Google via `react-native-nitro-google-signin`) and sends its ID token as `Authorization: Bearer` (`src/utils/api.ts`). Data: PostgreSQL through Prisma (`server/prisma/schema.prisma`, `DATABASE_URL`); only the server touches it. Every signed-in route runs the gates in `server/src/modules/identity/http/gates.ts` (`protect`: token, verified email, user sync, not being deleted; plus `requireConsent` on AI routes and `requirePremium`). The Firebase user and the `users` row stay in sync: Firebase → row on each request (email, verification, first name), row → Firebase when the name changes (`PATCH /me`) or the account is deleted. Plan limits live in `identity/domain/plan.ts`; requests and AI replies are checked with zod; rate limits are counted in Postgres (`shared/rate-limit.ts`). Config files stay out of git: `client/mobile/Deemo/google-services.json`, the service-account key at `FIREBASE_SERVICE_ACCOUNT` and `DATABASE_URL` in `server/.env`.
 
-Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first; the next model takes over on a rate limit, quota cap, hang or outage, and a struggling model sits out 5 minutes; Flash first, then Flash-Lite; Gemini only; PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`. Scoring: `server/src/sessions.ts` (Flash for levels and feedback) and `server/src/scoring.ts` (the readiness math, tested).
+Analysis: `server/src/modules/manuscripts/application/read-documents.ts` with `server/src/shared/ai/gemini.ts` (`FLASH_MODELS`: a fallback chain, best first; the next model takes over on a rate limit, quota cap, hang or outage, and a struggling model sits out 5 minutes; Flash first, then Flash-Lite; Gemini only; PDF sent as-is, DOCX via `mammoth`); the confirmed analysis replaces the sample paper in the panel prompt when a session sends `projectId`. Scoring: `server/src/modules/scoring/` (`application/sessions.ts` asks Flash for levels and feedback; `domain/scoring.ts` is the readiness math, tested).
 
 ## Workflow rules
 
@@ -47,7 +49,7 @@ Analysis: `server/src/analysis.ts` (`FLASH_MODELS`: a fallback chain, best first
 - `src/components/` — reusable UI, kebab-case files, one named export each; a big component becomes a folder with `index.tsx`.
 - `src/screens/<name>/` — screen bodies that route files render; private sub-components stay in that folder.
 - `src/hooks/`, `src/utils/` (tests next to the file: `x.test.ts`), `src/theme.ts`, `src/constants.ts`.
-- `src/live/`: the live-session engine. The pure `reducer.ts` consumes events shaped like Gemini Live messages and tool calls (`types.ts`). `GeminiEngine` talks to Gemini Live over the token-locked WebSocket (manual turns: the student taps done), and `MockEngine` plays a scripted defense through the same `LiveEngine` interface. The panel prompt, tools and model constant live in `server/src/panel.ts`. Tests: `bun test src`.
+- `src/live/`: the live-session engine. The pure `reducer.ts` consumes events shaped like Gemini Live messages and tool calls (`types.ts`). `GeminiEngine` talks to Gemini Live over the token-locked WebSocket (manual turns: the student taps done), and `MockEngine` plays a scripted defense through the same `LiveEngine` interface. The panel prompt, tools and model constant live in `server/src/modules/practice/domain/panel.ts`. Tests: `bun test src`.
 - `StyleSheet.create` at the bottom of the component file. Import via `@/*` (→ `src/*`).
 - Platform splits: `.android.tsx` / `.web.tsx` with a default file always present.
 - Never hand-edit `android/` / `ios/`; configure via `app.json` and config plugins.
