@@ -14,7 +14,8 @@ import { colors } from "@/theme";
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { ready, signedIn } = useSession();
+  const { ready, signedIn, verified } = useSession();
+  const inside = signedIn && verified; // email sign-ups wait on verify-email until they tap the link
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -22,12 +23,12 @@ export default function RootLayout() {
 
   // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out.
   useEffect(() => {
-    if (signedIn) void projects.refresh();
+    if (inside) void projects.refresh();
     else {
       projects.reset();
       sessions.reset();
     }
-  }, [signedIn]);
+  }, [inside]);
 
   if (!ready) return null;
 
@@ -49,7 +50,10 @@ export default function RootLayout() {
           <Stack.Screen name="consent" />
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
-        <Stack.Protected guard={signedIn}>
+        <Stack.Protected guard={signedIn && !verified}>
+          <Stack.Screen name="verify-email" options={{ gestureEnabled: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={inside}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="analysis" />
           <Stack.Screen name="practice" />

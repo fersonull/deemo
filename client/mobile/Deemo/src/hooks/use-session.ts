@@ -2,7 +2,10 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
+  getIdToken,
   onAuthStateChanged,
+  reload,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithCredential,
   signInWithEmailAndPassword,
@@ -22,6 +25,8 @@ import { createStore } from "@/utils/store";
 const store = createStore({
   ready: false, // Firebase has reported whether someone is already signed in
   signedIn: false,
+  verified: false, // email confirmed (Google accounts always are); email sign-ups wait on the verify-email screen
+  verifySentAt: 0, // when this device last sent a verification link (ms), for the resend cooldown
   email: null as string | null,
   name: null as string | null, // Google display name, if any
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
@@ -37,16 +42,8 @@ type Me = { premium: boolean; allowTyping: boolean; consentAt?: string };
 const patchMe = (body: object) =>
   api<Me>("/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
-// Sign-in survives restarts: the first callback says whether someone is still signed in.
-onAuthStateChanged(getAuth(), async (user) => {
-  store.set({
-    ready: true,
-    signedIn: !!user,
-    email: user?.email ?? null,
-    name: user?.displayName ?? null,
-    ...(!user && { premium: false, allowTyping: true }),
-  });
-  if (!user) return;
+// The account record lives on the server, which only serves verified emails (server/src/firebase.ts).
+async function loadAccount() {
   try {
     // Consent was given before there was an account to record it on.
     const me = store.get().consentAt
@@ -56,6 +53,19 @@ onAuthStateChanged(getAuth(), async (user) => {
   } catch {
     // Offline or server down: the account record loads on the next sign-in.
   }
+}
+
+// Sign-in survives restarts: the first callback says whether someone is still signed in.
+onAuthStateChanged(getAuth(), async (user) => {
+  store.set({
+    ready: true,
+    signedIn: !!user,
+    verified: !!user?.emailVerified,
+    email: user?.email ?? null,
+    name: user?.displayName ?? null,
+    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0 }),
+  });
+  if (user?.emailVerified) await loadAccount();
 });
 
 let googleReady = false;
@@ -112,7 +122,34 @@ export const session = {
 
   signInWithEmail: (email: string, password: string) => signInWithEmailAndPassword(getAuth(), email.trim(), password),
 
-  createAccount: (email: string, password: string) => createUserWithEmailAndPassword(getAuth(), email.trim(), password),
+  // A new email account gets a verification link right away; the root layout then shows the verify-email screen.
+  async createAccount(email: string, password: string) {
+    const { user } = await createUserWithEmailAndPassword(getAuth(), email.trim(), password);
+    await sendEmailVerification(user)
+      .then(() => store.set({ verifySentAt: Date.now() }))
+      .catch(() => {}); // the verify-email screen can resend it
+  },
+
+  async resendVerification() {
+    const user = getAuth().currentUser;
+    if (!user) return;
+    await sendEmailVerification(user);
+    store.set({ verifySentAt: Date.now() });
+  },
+
+  // Has the student tapped the link yet? Firebase only knows after a reload. Once verified, a fresh ID token carries
+  // email_verified to the server, then the account record loads and the root layout lets them in.
+  async checkVerified() {
+    const user = getAuth().currentUser;
+    if (!user) return false;
+    await reload(user);
+    const fresh = getAuth().currentUser;
+    if (!fresh?.emailVerified) return false;
+    await getIdToken(fresh, true);
+    await loadAccount();
+    store.set({ verified: true });
+    return true;
+  },
 
   resetPassword: (email: string) => sendPasswordResetEmail(getAuth(), email.trim()),
 
