@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
@@ -81,14 +82,17 @@ export function TabBar({ state, descriptors, navigation }: Props) {
   );
 }
 
-// Practice, raised above the row. A press makes it glow like the mic in a session: a soft dusk halo swells out
-// behind it (120 ms in, 260 ms out). With reduce motion the halo only fades.
+const GLOW = 132; // the glow's diameter, well past the button so its edge fades out over the bar and the page
+
+// Practice, raised above the row. A press makes it glow like the mic in a session: a soft dusk light swells out
+// behind it and fades to nothing at its edge, the same smooth falloff as the fade above the bar (a radial gradient,
+// no hard rim). Quick in (120 ms), slow out (450 ms). With reduce motion the glow only fades.
 function PracticeButton() {
   const reduced = useReducedMotion();
   const glow = useSharedValue(0);
   const halo = useAnimatedStyle(() => ({
-    opacity: 0.75 * glow.value,
-    transform: [{ scale: reduced ? 1.15 : 1 + 0.22 * glow.value }],
+    opacity: glow.value,
+    transform: [{ scale: reduced ? 1 : 0.8 + 0.25 * glow.value }],
   }));
   return (
     <Pressable
@@ -96,11 +100,20 @@ function PracticeButton() {
       accessibilityLabel="Start practice"
       onPress={() => router.push("/practice")}
       onPressIn={() => glow.set(withTiming(1, { duration: 120, easing: easeOut }))}
-      onPressOut={() => glow.set(withTiming(0, { duration: 260, easing: easeOut }))}
+      onPressOut={() => glow.set(withTiming(0, { duration: 450, easing: easeOut }))}
       style={styles.practice}
     >
-      <Animated.View style={[StyleSheet.absoluteFill, styles.center, halo]}>
-        <Blob width={78} height={70} color={colors.duskSoft} />
+      <Animated.View pointerEvents="none" style={[styles.glow, halo]}>
+        <Svg width={GLOW} height={GLOW}>
+          <Defs>
+            <RadialGradient id="practiceGlow" cx="50%" cy="50%" r="50%">
+              <Stop offset="0.35" stopColor={colors.dusk} stopOpacity={0.7} />
+              <Stop offset="0.6" stopColor={colors.duskSoft} stopOpacity={0.45} />
+              <Stop offset="1" stopColor={colors.duskSoft} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx={GLOW / 2} cy={GLOW / 2} r={GLOW / 2} fill="url(#practiceGlow)" />
+        </Svg>
       </Animated.View>
       {/* paper halo = the prototype's 6px box-shadow ring */}
       <Blob width={78} height={70} color={colors.paper}>
@@ -130,5 +143,6 @@ const styles = StyleSheet.create({
   label: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10 },
   // Raised well above the row, so Practice reads as the main action rather than a fifth tab.
   practice: { transform: [{ translateY: -26 }] },
-  center: { alignItems: "center", justifyContent: "center" },
+  // Centered on the button and larger than it; the button's own box doesn't clip it.
+  glow: { position: "absolute", width: GLOW, height: GLOW, left: (78 - GLOW) / 2, top: (70 - GLOW) / 2 },
 });
