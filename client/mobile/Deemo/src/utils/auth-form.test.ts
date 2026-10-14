@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
 
-import { canCreate, confirmProblem } from "./auth-form";
+import { canCreate, cleanName, confirmProblem } from "./auth-form";
 
 test("the confirmation stays quiet while it's empty, matching, or still being typed", () => {
   expect(confirmProblem("secret1", "")).toBeNull();
@@ -15,8 +15,15 @@ test("a wrong confirmation is flagged", () => {
 });
 
 test("an account needs an email, 6+ characters, and a matching confirmation", () => {
-  expect(canCreate("a@b.edu", "secret1", "secret1")).toBe(true);
-  expect(canCreate(" ", "secret1", "secret1")).toBe(false);
-  expect(canCreate("a@b.edu", "short", "short")).toBe(false);
-  expect(canCreate("a@b.edu", "secret1", "secret2")).toBe(false);
+  expect(canCreate("Juan", "a@b.edu", "secret1", "secret1")).toBe(true);
+  expect(canCreate("  ", "a@b.edu", "secret1", "secret1")).toBe(false); // a name is required
+  expect(canCreate("Juan", " ", "secret1", "secret1")).toBe(false);
+  expect(canCreate("Juan", "a@b.edu", "short", "short")).toBe(false);
+  expect(canCreate("Juan", "a@b.edu", "secret1", "secret2")).toBe(false);
+});
+
+test("names are trimmed, single-spaced and capped", () => {
+  expect(cleanName("  Juan   Dela  Cruz ")).toBe("Juan Dela Cruz");
+  expect(cleanName("x".repeat(80))).toHaveLength(60);
+  expect(cleanName("   ")).toBe("");
 });

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { StyleSheet, Switch, Text, View } from "react-native";
+import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/button";
+import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
@@ -9,6 +10,7 @@ import { refreshEverything } from "@/hooks/refresh-everything";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { api } from "@/utils/api";
+import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { initials } from "@/utils/initials";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
@@ -21,11 +23,14 @@ const PLANS = {
   },
 };
 
-// Profile (prototype profile screen): account, plan, the typed-answer setting, download and delete my data, sign out.
+// Profile (prototype profile screen): account (tap to set your name), plan, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
   const { name, email, premium, allowTyping } = useSession();
-  const [sheet, setSheet] = useState<"upsell" | "delete" | null>(null);
+  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | null>(null);
+  const [draft, setDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
@@ -40,6 +45,25 @@ export function Profile() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't delete your data. Try again.");
       setDeleting(false);
+    }
+  };
+
+  const editName = () => {
+    setDraft(name ?? "");
+    setNameError("");
+    setSheet("name");
+  };
+
+  const saveName = async () => {
+    setSavingName(true);
+    setNameError("");
+    try {
+      await session.setName(draft);
+      setSheet(null);
+    } catch {
+      setNameError("Couldn't save your name. Check your connection and try again.");
+    } finally {
+      setSavingName(false);
     }
   };
 
@@ -59,7 +83,13 @@ export function Profile() {
 
   return (
     <Screen scroll tabBar title="Profile" onRefresh={refreshEverything}>
-      <View style={styles.account}>
+      <PressableScale
+        scaleTo={0.98}
+        accessibilityRole="button"
+        accessibilityHint={name ? "Change your name" : "Add your name"}
+        onPress={editName}
+        style={styles.account}
+      >
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials(name, email)}</Text>
         </View>
@@ -71,9 +101,12 @@ export function Profile() {
             <Text style={styles.meta} numberOfLines={1}>
               {email}
             </Text>
+          ) : !name ? (
+            <Text style={[styles.meta, styles.addName]}>Add your name</Text>
           ) : null}
         </View>
-      </View>
+        <Icon name="edit" size={18} color={colors.muted} />
+      </PressableScale>
 
       <View style={styles.plan}>
         <View style={styles.planHead}>
@@ -132,6 +165,40 @@ export function Profile() {
         }}
       />
 
+      <Sheet visible={sheet === "name"} onClose={() => !savingName && setSheet(null)}>
+        <Text style={styles.sheetTitle}>Your name</Text>
+        <Text style={styles.sheetBody}>Deemo greets you by it, and your group sees it next to your score.</Text>
+        <View style={styles.field}>
+          <TextInput
+            value={draft}
+            onChangeText={setDraft}
+            placeholder="Juan Dela Cruz"
+            placeholderTextColor={colors.faint}
+            autoCapitalize="words"
+            autoComplete="name"
+            autoFocus
+            maxLength={MAX_NAME}
+            returnKeyType="done"
+            onSubmitEditing={() => cleanName(draft) && void saveName()}
+            accessibilityLabel="Your name"
+            style={styles.input}
+          />
+        </View>
+        {nameError ? (
+          <Text style={styles.nameError} accessibilityLiveRegion="polite">
+            {nameError}
+          </Text>
+        ) : null}
+        <View style={styles.saveName}>
+          <Button
+            label={savingName ? "Saving…" : "Save"}
+            onPress={saveName}
+            busy={savingName}
+            disabled={savingName || !cleanName(draft) || cleanName(draft) === name}
+          />
+        </View>
+      </Sheet>
+
       <Sheet visible={sheet === "delete"} onClose={() => !deleting && setSheet(null)}>
         <Text style={styles.sheetTitle}>Delete all your data?</Text>
         <Text style={styles.sheetBody}>
@@ -159,7 +226,12 @@ export function Profile() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  account: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
+  account: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18, paddingRight: 4 },
+  addName: { color: colors.duskLink, fontWeight: "600" },
+  field: { marginTop: 16, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
+  input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
+  nameError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
+  saveName: { marginTop: 16 },
   avatar: {
     width: 56,
     height: 56,

@@ -10,6 +10,7 @@ import {
   signInWithCredential,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
 } from "@react-native-firebase/auth";
 import {
   GoogleOneTapSignIn,
@@ -19,6 +20,7 @@ import {
 } from "react-native-nitro-google-signin";
 
 import { api } from "@/utils/api";
+import { cleanName } from "@/utils/auth-form";
 import { createStore } from "@/utils/store";
 
 // The signed-in student (Firebase Auth) and their account record on the server (consent, simulated tier).
@@ -28,7 +30,7 @@ const store = createStore({
   verified: false, // email confirmed (Google accounts always are); email sign-ups wait on the verify-email screen
   verifySentAt: 0, // when this device last sent a verification link (ms), for the resend cooldown
   email: null as string | null,
-  name: null as string | null, // Google display name, if any
+  name: null as string | null, // Firebase display name: from Google, or typed at sign-up or in Profile
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
   premium: false, // simulated freemium (addendum Q1)
@@ -122,12 +124,24 @@ export const session = {
 
   signInWithEmail: (email: string, password: string) => signInWithEmailAndPassword(getAuth(), email.trim(), password),
 
-  // A new email account gets a verification link right away; the root layout then shows the verify-email screen.
-  async createAccount(email: string, password: string) {
+  // A new email account gets the student's name (Google accounts come with one) and a verification link right away;
+  // the root layout then shows the verify-email screen.
+  async createAccount(name: string, email: string, password: string) {
     const { user } = await createUserWithEmailAndPassword(getAuth(), email.trim(), password);
+    await this.setName(name).catch(() => {}); // Profile can set it later
     await sendEmailVerification(user)
       .then(() => store.set({ verifySentAt: Date.now() }))
       .catch(() => {}); // the verify-email screen can resend it
+  },
+
+  // Saved on the Firebase account, where Google's name lives too, so the server sees it for group members. The local
+  // user object doesn't refresh itself, so the store gets the new name directly.
+  async setName(raw: string) {
+    const user = getAuth().currentUser;
+    const name = cleanName(raw);
+    if (!user || !name) return;
+    await updateProfile(user, { displayName: name });
+    store.set({ name });
   },
 
   async resendVerification() {

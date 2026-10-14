@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
-import { db } from "./firebase";
+import type { UserRecord } from "firebase-admin/auth";
+import { db, getAuth } from "./firebase";
 import { DEFAULT_WEIGHTS } from "./scoring";
 import { store, type Project } from "./store";
 
@@ -223,9 +224,14 @@ export async function groupReadiness(uid: string) {
     joined.docs.map(async (doc) => {
       const g = doc.data() as Group;
       const project = await store.get(g.ownerUid, g.projectId);
+      // Current names, so a name set after joining (Profile) shows up; the one saved at join is the fallback.
+      const { users } = await getAuth()
+        .getUsers(g.members.map((m) => ({ uid: m.uid })))
+        .catch(() => ({ users: [] as UserRecord[] }));
+      const nameOf = (m: Member) => users.find((u) => u.uid === m.uid)?.displayName?.trim().slice(0, 60) || m.name;
       const members = await Promise.all(
         g.members.map(async (m) => {
-          const base = { name: m.name, isYou: m.uid === uid, sharing: m.shareScore };
+          const base = { name: nameOf(m), isYou: m.uid === uid, sharing: m.shareScore };
           if (!m.shareScore) return base;
           const scores = await userRef(m.uid)
             .collection("sessions")
