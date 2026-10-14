@@ -30,6 +30,7 @@ _Last updated: 2026-10-12_
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-14 | **Owl Deemo study** (no app change yet): Deemo redrawn as an owl from the user's reference, in the app's tokens (dusk body, paper belly, duskInk outlines, amber beak/feet/tassel); A with the cap, B also keeping the round glasses. Waiting for the user to pick before replacing `components/deemo/`. | `docs/design/owl/` (`make-owl.ts` → SVGs, `owl-sheet.html/png`) |
 | 2026-10-12 | **Confirmed localhost came from the served preview OTA bundle**, not the rebuilt APK's EAS environment. Preview update commands now select `--environment preview --platform android`; Metro prevents missing/HTTP release API URLs; regression tests added. 58 tests, TypeScript and lint pass. No native changes; replacement update still needs publishing and phone verification. | `.github/workflows/preview.yml`, `client/mobile/Deemo/{.eas/workflows/preview.yml,eas.json,metro.config.js,metro.config.test.ts}`; `preview`, uncommitted |
 | 2026-10-12 | **Offline screen restored** (the reconnect failure was the preview OTA bundle's localhost URL, not the screen): full-screen sleepy Deemo, Try again, auto-retry on reconnect, "Details:" line, tab bar hidden. JS only. | `claude/serene-gauss-9dqxrj` |
 | 2026-10-12 | **Offline screen removed** (on request, reverted in the row above). | `claude/serene-gauss-9dqxrj` |
