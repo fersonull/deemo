@@ -1,0 +1,7 @@
+{
+  "name": "deemo-diagrams",
+  "private": true,
+  "dependencies": {
+    "elkjs": "0.9.3"
+  }
+}
