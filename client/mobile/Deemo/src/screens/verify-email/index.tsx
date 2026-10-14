@@ -5,7 +5,6 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { Button } from "@/components/button";
 import type { DeemoMood } from "@/components/deemo";
 import { DeemoNote } from "@/components/deemo-note";
-import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { authMessage, session, useSession } from "@/hooks/use-session";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
@@ -14,9 +13,9 @@ const COOLDOWN = 60; // seconds between links (Firebase throttles faster resends
 const POLL_MS = 5000;
 
 const STEPS = [
-  { icon: "mail", text: "Open the email from DEEMO. Check Spam or Promotions if it isn't in your inbox." },
-  { icon: "link", text: "Tap the verification link. It opens in your browser." },
-  { icon: "arrow_back", text: "Come back here. DEEMO lets you in on its own." },
+  "Open the email from DEEMO. Check Spam or Promotions if it isn't in your inbox.",
+  "Tap the verification link. It opens in your browser.",
+  "Come back here. DEEMO lets you in on its own.",
 ];
 
 // Verify your email (after an email + password sign-up, or signing in to an account that never verified).
@@ -102,10 +101,9 @@ export function VerifyEmail() {
 
       <View style={styles.steps}>
         {STEPS.map((s, i) => (
-          <View key={s.icon} style={styles.step}>
+          <View key={i} style={styles.step}>
             <Text style={styles.num}>{i + 1}</Text>
-            <Text style={styles.stepText}>{s.text}</Text>
-            <Icon name={s.icon} size={20} color={colors.duskIcon} />
+            <Text style={styles.stepText}>{s}</Text>
           </View>
         ))}
       </View>
