@@ -22,7 +22,9 @@ function describe(m: Member) {
 }
 
 // Group readiness on Home, compact: one face per member with their latest scored practice under it. More members
-// than fit scroll sideways.
+// than fit scroll sideways. The card sits on warm sand like the rest of Home; the dusk tints belong to the faces, so
+// they carry the color, and a "Nearly ready" (dusk) score still reads as a band. Secondary text is inkMuted, since
+// muted falls under 4.5:1 on sand.
 export function GroupReadiness() {
   const { groups } = useProjects();
   return (
@@ -61,7 +63,7 @@ export function GroupReadiness() {
                 ) : m.sharing ? (
                   <Text style={styles.none}>–</Text>
                 ) : (
-                  <Icon name="lock" size={14} color={colors.muted} />
+                  <Icon name="lock" size={14} color={colors.inkMuted} />
                 )}
               </View>
             ))}
@@ -75,18 +77,18 @@ export function GroupReadiness() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.duskTint, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
+  card: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
   head: { flexDirection: "row", alignItems: "center", gap: 8 },
   flex: { flex: 1 },
   settings: { flexDirection: "row", alignItems: "center", minHeight: 32 },
   link: { ...type.bodyStrong, fontSize: 13, color: colors.duskLink },
-  title: { ...type.meta, marginTop: 2 },
+  title: { ...type.meta, color: colors.inkMuted, marginTop: 2 },
   members: { gap: 6, paddingTop: 12, paddingBottom: 2 },
   member: { width: 62, alignItems: "center" },
   ring: { borderRadius: 26, borderWidth: 2, borderColor: colors.paper },
   name: { fontFamily: fonts.body, fontWeight: "500", fontSize: 12, color: colors.inkMuted, marginTop: 5, maxWidth: 62 },
   you: { fontWeight: "600", color: colors.ink },
   score: { fontFamily: fonts.body, fontWeight: "700", fontSize: 15, lineHeight: 19 },
-  none: { fontFamily: fonts.body, fontWeight: "600", fontSize: 15, lineHeight: 19, color: colors.muted },
-  note: { ...type.meta, fontSize: 11, marginTop: 8 },
+  none: { fontFamily: fonts.body, fontWeight: "600", fontSize: 15, lineHeight: 19, color: colors.inkMuted },
+  note: { ...type.meta, fontSize: 11.5, color: colors.inkMuted, marginTop: 8 },
 });
