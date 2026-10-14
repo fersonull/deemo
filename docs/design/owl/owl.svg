@@ -6,6 +6,7 @@
       <path d="M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z" fill="#5A66C7"/>
       <ellipse cx="200" cy="298" rx="68" ry="42" fill="#F7F3EC"/>
       <path d="M172 288 Q180 296 188 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M192 288 Q200 296 208 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M212 288 Q220 296 228 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M182 306 Q190 314 198 306" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M202 306 Q210 314 218 306" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M192 324 Q200 332 208 324" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/>
+      
       <path d="M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z" fill="none" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
       <path d="M200 170 C178 144 116 144 112 200 C108 250 160 268 200 248 C240 268 292 250 288 200 C284 144 222 144 200 170 Z" fill="#DCE3FF"/>
       <ellipse cx="116" cy="246" rx="15" ry="8.5" fill="#F5DDD3" opacity="0.9"/>
@@ -20,7 +21,6 @@
       <circle cx="230.2" cy="212.12" r="2.55" fill="#F7F3EC"/>
       
       <path d="M191 238 Q200 233 209 238 Q205 249 200 253 Q195 249 191 238 Z" fill="#EBB353" stroke="#6C4302" stroke-width="3" stroke-linejoin="round"/>
-      
       
       <g transform="translate(0 0) rotate(0 102 246)"><path d="M96 236 C70 252 64 292 82 308 C100 300 112 278 112 254 Z" fill="#4D57B7" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M90 268 Q86 284 90 298" fill="none" stroke="#343996" stroke-opacity="0.4" stroke-width="3.5" stroke-linecap="round"/></g><g transform="translate(0 0) rotate(0 298 246)"><path d="M304 236 C330 252 336 292 318 308 C300 300 288 278 288 254 Z" fill="#4D57B7" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M310 268 Q314 284 310 298" fill="none" stroke="#343996" stroke-opacity="0.4" stroke-width="3.5" stroke-linecap="round"/></g>
       <g transform="translate(0 0) rotate(-6 200 112)">

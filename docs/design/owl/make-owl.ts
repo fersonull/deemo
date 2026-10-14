@@ -104,14 +104,40 @@ function wings(mood: Mood) {
   }
 }
 
-function medal() {
-  return `<g>
-    <path d="M190 296 L184 320 L193 315 L198 324 L202 300Z" fill="${c.goldInk}"/>
-    <path d="M210 296 L216 320 L207 315 L202 324 L198 300Z" fill="${c.gold}"/>
-    <circle cx="200" cy="296" r="14" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="3"/>
-    <circle cx="200" cy="296" r="8.5" fill="none" stroke="${c.goldLight}" stroke-width="2"/>
-    <path d="M210 280 Q211 285 216 286 Q211 287 210 292 Q209 287 204 286 Q209 285 210 280Z" fill="${c.goldLight}"/>
-  </g>`;
+function star(cx: number, cy: number, outer: number, inner: number) {
+  return (
+    Array.from({ length: 10 }, (_, i) => {
+      const r = i % 2 ? inner : outer;
+      const a = (Math.PI / 5) * i - Math.PI / 2;
+      return `${i ? "L" : "M"}${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
+    }).join(" ") + "Z"
+  );
+}
+
+// Premium, as in the app today: a dark dusk jacket clipped to the body, lighter lapels, a paper shirt V,
+// a gold bow tie at the collar, and the gold star medal on a ribbon pinned on the right lapel.
+let clipId = 0;
+function suit() {
+  const id = `suit${clipId++}`;
+  const top = 262; // just under the face
+  const bx = 238, by = 300; // the medal
+  return `<defs><clipPath id="${id}"><path d="${BODY}"/></clipPath></defs>
+    <g clip-path="url(#${id})">
+      <rect x="60" y="${top}" width="280" height="100" fill="${c.duskInk}"/>
+      <path d="M170 ${top} L184 ${top} L200 344 L190 344Z" fill="${c.duskIcon}"/>
+      <path d="M230 ${top} L216 ${top} L200 344 L210 344Z" fill="${c.duskIcon}"/>
+      <path d="M184 ${top} L216 ${top} L200 330Z" fill="${c.paper}"/>
+      <circle cx="200" cy="300" r="3" fill="${c.duskInk}"/><circle cx="200" cy="316" r="3" fill="${c.duskInk}"/>
+    </g>
+    <path d="M200 ${top + 6} L184 ${top - 2} L184 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M200 ${top + 6} L216 ${top - 2} L216 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="196" y="${top + 1.5}" width="8" height="9" rx="2.5" fill="${c.goldInk}"/>
+    <path d="M${bx - 7} ${by + 3} L${bx - 10} ${by + 17} L${bx - 4} ${by + 13} L${bx - 1} ${by + 18} L${bx + 1} ${by + 5}Z" fill="${c.goldInk}"/>
+    <path d="M${bx + 7} ${by + 3} L${bx + 10} ${by + 17} L${bx + 4} ${by + 13} L${bx + 1} ${by + 18} L${bx - 1} ${by + 5}Z" fill="${c.gold}"/>
+    <circle cx="${bx}" cy="${by}" r="11" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.4"/>
+    <circle cx="${bx}" cy="${by}" r="7" fill="none" stroke="${c.goldLight}" stroke-width="1.4" opacity="0.8"/>
+    <path d="${star(bx, by, 5, 2.3)}" fill="${c.goldLight}"/>
+    <path d="M${bx + 10} ${by - 16} Q${bx + 10.7} ${by - 11.7} ${bx + 15} ${by - 11} Q${bx + 10.7} ${by - 10.3} ${bx + 10} ${by - 6} Q${bx + 9.3} ${by - 10.3} ${bx + 5} ${by - 11} Q${bx + 9.3} ${by - 11.7} ${bx + 10} ${by - 16}Z" fill="${c.goldLight}"/>`;
 }
 
 export function owl(mood: Mood = "idle", { premium = false, size = 220 } = {}) {
@@ -126,14 +152,14 @@ export function owl(mood: Mood = "idle", { premium = false, size = 220 } = {}) {
     <g transform="rotate(${tilt} 200 230)">
       <path d="${BODY}" fill="${c.dusk}"/>
       <ellipse cx="200" cy="298" rx="68" ry="42" fill="${c.paper}"/>
-      ${reading ? "" : premium ? scallop(166, 296) + scallop(234, 296) + scallop(172, 316) + scallop(228, 316) : scallop(180, 288) + scallop(200, 288) + scallop(220, 288) + scallop(190, 306) + scallop(210, 306) + scallop(200, 324)}
+      ${reading || premium ? "" : scallop(180, 288) + scallop(200, 288) + scallop(220, 288) + scallop(190, 306) + scallop(210, 306) + scallop(200, 324)}
+      ${premium ? suit() : ""}
       <path d="${BODY}" fill="none" ${stroke()}/>
       <path d="${FACE}" fill="${c.duskTint}"/>
       <ellipse cx="116" cy="246" rx="15" ry="8.5" fill="${c.clayTint}" opacity="0.9"/>
       <ellipse cx="284" cy="246" rx="15" ry="8.5" fill="${c.clayTint}" opacity="0.9"/>
       ${eyes(mood)}
       ${beak(mood)}
-      ${premium && !reading ? medal() : ""}
       ${extras(mood)}
       ${wings(mood)}
       ${cap(mood)}
@@ -163,18 +189,20 @@ writeFileSync(
   h1{font:700 30px "Bricolage Grotesque",system-ui,sans-serif;margin:32px 40px 0;letter-spacing:-0.5px}
   h2{font:600 13px "DM Sans",system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;color:${c.inkMuted};margin:28px 40px 0}
   p.sub{margin:6px 40px 0;color:${c.inkMuted};font-size:15px}
-  .grid{display:grid;grid-template-columns:repeat(4,220px);gap:22px 30px;padding:18px 40px 0}
+  .grid{display:grid;grid-template-columns:repeat(5,200px);gap:22px 30px;padding:18px 40px 0}
   figure{margin:0;text-align:center}
   figcaption{margin-top:6px;font-size:13px;color:${c.inkMuted}}
   .sizes{display:flex;align-items:flex-end;gap:36px;padding:16px 40px 36px}
   .sizes figure figcaption{font-size:12px}
 </style>
 <h1>Deemo, the owl: every state</h1>
-<p class="sub">Black cap, no ear tufts, rounder and softer. Same moods the app uses today; Premium swaps the suit for a gold medal.</p>
+<p class="sub">Black cap, no ear tufts, rounder and softer. Same moods the app uses today; Premium keeps today's suit, bow tie and shining gold medal.</p>
 <h2>Moods</h2>
 <div class="grid">
-${MOODS.map(([m, l]) => tile(l, owl(m))).join("\n")}
-${tile("Premium: gold medal (shines now and then)", owl("idle", { premium: true }))}
+${MOODS.map(([m, l]) => tile(l, owl(m, { size: 200 }))).join("\n")}
+${tile("Premium: suit, bow tie, gold medal", owl("idle", { premium: true, size: 200 }))}
+${tile("Premium, waving", owl("waving", { premium: true, size: 200 }))}
+${tile("Premium, cheering", owl("cheering", { premium: true, size: 200 }))}
 </div>
 <h2>Sizes in the app</h2>
 <div class="sizes">
