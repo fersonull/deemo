@@ -117,24 +117,24 @@ function star(cx: number, cy: number, outer: number, inner: number) {
 // Premium, as in the app today: a dark dusk jacket clipped to the body, lighter lapels, a paper shirt V,
 // a gold bow tie at the collar, and the gold star medal on a ribbon pinned on the right lapel.
 let clipId = 0;
-function suit(tone: "dusk" | "black" = "dusk") {
+function suit(tone: "dusk" | "black" = "black") {
   const jacket = tone === "black" ? c.ink : c.duskInk;
   const lapel = tone === "black" ? c.inkSoft : c.duskIcon;
   const id = `suit${clipId++}`;
-  const top = 288; // below the face and cheeks
-  const bx = 236, by = 318; // the medal
+  const top = 262; // below the face and cheeks
+  const bx = 236, by = 302; // the medal
   return `<defs><clipPath id="${id}"><path d="${BODY}"/></clipPath></defs>
     <g clip-path="url(#${id})">
       <rect x="60" y="${top}" width="280" height="100" fill="${jacket}"/>
       <path d="M170 ${top} L184 ${top} L200 344 L190 344Z" fill="${lapel}"/>
       <path d="M230 ${top} L216 ${top} L200 344 L210 344Z" fill="${lapel}"/>
-      <path d="M184 ${top} L216 ${top} L200 338Z" fill="${c.paper}"/>
-      <circle cx="200" cy="316" r="2.6" fill="${jacket}"/><circle cx="200" cy="328" r="2.6" fill="${jacket}"/>
+      <path d="M184 ${top} L216 ${top} L200 330Z" fill="${c.paper}"/>
+      <circle cx="200" cy="300" r="3" fill="${jacket}"/><circle cx="200" cy="316" r="3" fill="${jacket}"/>
     </g>
     <path d="M200 ${top + 6} L184 ${top - 2} L184 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
     <path d="M200 ${top + 6} L216 ${top - 2} L216 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
     <rect x="196" y="${top + 1.5}" width="8" height="9" rx="2.5" fill="${c.goldInk}"/>
-    <g transform="translate(${bx} ${by}) scale(1.35) translate(${-bx} ${-by})">
+    <g transform="translate(${bx} ${by}) scale(1.6) translate(${-bx} ${-by})">
     <path d="M${bx - 7} ${by + 3} L${bx - 10} ${by + 17} L${bx - 4} ${by + 13} L${bx - 1} ${by + 18} L${bx + 1} ${by + 5}Z" fill="${c.goldInk}"/>
     <path d="M${bx + 7} ${by + 3} L${bx + 10} ${by + 17} L${bx + 4} ${by + 13} L${bx + 1} ${by + 18} L${bx - 1} ${by + 5}Z" fill="${c.gold}"/>
     <circle cx="${bx}" cy="${by}" r="11" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.4"/>
@@ -144,7 +144,7 @@ function suit(tone: "dusk" | "black" = "dusk") {
     </g>`;
 }
 
-export function owl(mood: Mood = "idle", { premium = false, size = 220, tone = "dusk" as "dusk" | "black" } = {}) {
+export function owl(mood: Mood = "idle", { premium = false, size = 220, tone = "black" as "dusk" | "black" } = {}) {
   const tilt = mood === "encouraging" ? -6 : mood === "nervous" ? 3 : 0;
   const reading = mood === "reading";
   const scallop = (x: number, y: number) =>
@@ -200,20 +200,13 @@ writeFileSync(
   .sizes figure figcaption{font-size:12px}
 </style>
 <h1>Deemo, the owl: every state</h1>
-<p class="sub">Black cap, no ear tufts, rounder and softer. Same moods the app uses today; Premium keeps today's suit, bow tie and shining gold medal.</p>
+<p class="sub">Black cap, no ear tufts, rounder and softer. Same moods the app uses today; Premium wears a black suit, a gold bow tie and a big shining gold medal.</p>
 <h2>Moods</h2>
 <div class="grid">
 ${MOODS.map(([m, l]) => tile(l, owl(m, { size: 200 }))).join("\n")}
 ${tile("Premium: suit, bow tie, gold medal", owl("idle", { premium: true, size: 200 }))}
 ${tile("Premium, waving", owl("waving", { premium: true, size: 200 }))}
 ${tile("Premium, cheering", owl("cheering", { premium: true, size: 200 }))}
-</div>
-<h2>Suit colour: default dusk vs black</h2>
-<div class="grid" style="grid-template-columns:repeat(4,200px)">
-${tile("Default (dusk)", owl("idle", { premium: true, size: 200 }))}
-${tile("Black", owl("idle", { premium: true, size: 200, tone: "black" }))}
-${tile("Default (dusk), cheering", owl("cheering", { premium: true, size: 200 }))}
-${tile("Black, cheering", owl("cheering", { premium: true, size: 200, tone: "black" }))}
 </div>
 <h2>Sizes in the app</h2>
 <div class="sizes">
