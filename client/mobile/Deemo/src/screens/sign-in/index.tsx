@@ -9,10 +9,10 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { authMessage, session } from "@/hooks/use-session";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
-import { canCreate, confirmProblem, MIN_PASSWORD } from "@/utils/auth-form";
+import { canCreate, confirmProblem, MAX_NAME, MIN_PASSWORD } from "@/utils/auth-form";
 import { riseIn } from "@/utils/motion";
 
-// Sign in (plan S-04): Google, or school email + password; creating an account asks for the password twice.
+// Sign in (plan S-04): Google, or school email + password; creating an account asks for a name and the password twice.
 // Firebase Auth keeps the student signed in; the root layout moves on once it reports the new user.
 // Deemo sits at the top and does the talking: a hello, then whatever just happened (an error, a sent reset link).
 // An error makes Deemo shake its head with a nervous face for a moment before it settles back.
@@ -20,6 +20,7 @@ import { riseIn } from "@/utils/motion";
 export function SignIn() {
   const reduced = useReducedMotion();
   const [creating, setCreating] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -30,7 +31,7 @@ export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
 
   const mismatch = creating ? confirmProblem(password, confirm) : null;
-  const ready = creating ? canCreate(email, password, confirm) : !!email.trim() && !!password;
+  const ready = creating ? canCreate(name, email, password, confirm) : !!email.trim() && !!password;
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -48,7 +49,7 @@ export function SignIn() {
 
   const submit = () => {
     if (!ready || busy) return;
-    void run(() => (creating ? session.createAccount(email, password) : session.signInWithEmail(email, password)));
+    void run(() => (creating ? session.createAccount(name, email, password) : session.signInWithEmail(email, password)));
   };
 
   const reset = () =>
@@ -116,6 +117,21 @@ export function SignIn() {
           <View style={styles.rule} />
         </View>
 
+        {creating ? (
+          <Animated.View entering={riseIn(0, reduced)}>
+            <Field
+              label="Your name"
+              placeholder="Juan Dela Cruz"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoComplete="name"
+              textContentType="name"
+              maxLength={MAX_NAME}
+              returnKeyType="next"
+            />
+          </Animated.View>
+        ) : null}
         <Field
           label="School email"
           placeholder="juan.delacruz@school.edu.ph"

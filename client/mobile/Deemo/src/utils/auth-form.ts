@@ -10,6 +10,11 @@ export function confirmProblem(password: string, confirm: string): string | null
   return "Passwords don't match.";
 }
 
-export function canCreate(email: string, password: string, confirm: string) {
-  return !!email.trim() && password.length >= MIN_PASSWORD && password === confirm;
+// The name Deemo greets the student by and teammates see in a group: single-spaced, at most 60 characters (the
+// server's limit for group member names).
+export const MAX_NAME = 60;
+export const cleanName = (name: string) => name.trim().replace(/\s+/g, " ").slice(0, MAX_NAME);
+
+export function canCreate(name: string, email: string, password: string, confirm: string) {
+  return !!cleanName(name) && !!email.trim() && password.length >= MIN_PASSWORD && password === confirm;
 }
