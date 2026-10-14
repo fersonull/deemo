@@ -92,7 +92,7 @@ export function Profile() {
           accessibilityHint="Pick your look"
           onPress={() => setSheet("avatar")}
         >
-          <Avatar seed={avatar} name={name} email={email} size={56} />
+          <Avatar seed={avatar} name={name} email={email} size={56} premium={premium} />
           <View style={styles.avatarBadge}>
             <Icon name="edit" size={12} color={colors.paper} />
           </View>
@@ -181,6 +181,7 @@ export function Profile() {
         visible={sheet === "avatar"}
         onClose={() => setSheet(null)}
         current={avatar}
+        premium={premium}
         name={name}
         email={email}
       />

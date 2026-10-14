@@ -229,13 +229,20 @@ export async function groupReadiness(uid: string) {
         .getUsers(g.members.map((m) => ({ uid: m.uid })))
         .catch(() => ({ users: [] as UserRecord[] }));
       const nameOf = (m: Member) => users.find((u) => u.uid === m.uid)?.displayName?.trim().slice(0, 60) || m.name;
-      // Each member's chosen face (users/{uid}.avatar), one batched read.
+      // Each member's chosen face (users/{uid}.avatar) and plan (Premium wears a gold ring), one batched read.
       const records = await db.getAll(...g.members.map((m) => userRef(m.uid)));
       const avatarOf = (m: Member) =>
         (records.find((r) => r.id === m.uid)?.get("avatar") as string | undefined) ?? defaultAvatar(m.uid);
+      const premiumOf = (m: Member) => records.find((r) => r.id === m.uid)?.get("premium") === true;
       const members = await Promise.all(
         g.members.map(async (m) => {
-          const base = { name: nameOf(m), avatar: avatarOf(m), isYou: m.uid === uid, sharing: m.shareScore };
+          const base = {
+            name: nameOf(m),
+            avatar: avatarOf(m),
+            premium: premiumOf(m),
+            isYou: m.uid === uid,
+            sharing: m.shareScore,
+          };
           if (!m.shareScore) return base;
           const scores = await userRef(m.uid)
             .collection("sessions")

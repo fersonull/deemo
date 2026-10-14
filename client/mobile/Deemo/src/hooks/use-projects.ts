@@ -52,7 +52,7 @@ export type GroupReadiness = {
   code: string;
   projectId: string;
   title: string;
-  members: { name: string; avatar: string; isYou: boolean; sharing: boolean; score?: number; mode?: string; createdAt?: string }[];
+  members: { name: string; avatar: string; premium: boolean; isYou: boolean; sharing: boolean; score?: number; mode?: string; createdAt?: string }[];
 };
 const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false });
 let generation = 0;

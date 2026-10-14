@@ -15,7 +15,7 @@ const firstName = (m: Member) => (m.isYou ? "You" : m.name.trim().split(/\s+/)[0
 
 // What a screen reader hears for one member: who, then their latest score, or why there isn't one.
 function describe(m: Member) {
-  const who = m.isYou ? `${m.name} (you)` : m.name;
+  const who = `${m.name}${m.isYou ? " (you)" : ""}${m.premium ? ", Premium" : ""}`;
   if (m.score === undefined) return `${who}, ${m.sharing ? "no score yet" : "keeps scores private"}`;
   const when = new Date(m.createdAt!).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `${who}, ${m.score} percent readiness, ${bandOf(m.score).name}, ${MODE_LABELS[m.mode as Mode] ?? m.mode}, ${when}`;
@@ -53,7 +53,7 @@ export function GroupReadiness() {
             {g.members.map((m, i) => (
               <View key={i} style={styles.member} accessible accessibilityLabel={describe(m)}>
                 <View style={styles.ring}>
-                  <Avatar seed={m.avatar} name={m.name} size={44} />
+                  <Avatar seed={m.avatar} name={m.name} size={44} premium={m.premium} />
                 </View>
                 <Text style={[styles.name, m.isYou && styles.you]} numberOfLines={1}>
                   {firstName(m)}

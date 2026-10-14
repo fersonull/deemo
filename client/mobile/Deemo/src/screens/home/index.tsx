@@ -43,7 +43,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // means and what to work on), Start practice, the readiness chart (two scored sessions or more) and recent sessions. Sections rise in a beat apart
 // when they first appear.
 export function Home() {
-  const { name, email, avatar } = useSession();
+  const { name, email, avatar, premium } = useSession();
   const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
@@ -74,7 +74,7 @@ export function Home() {
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
           </Text>
-          <Avatar seed={avatar} name={name} email={email} size={42} />
+          <Avatar seed={avatar} name={name} email={email} size={42} premium={premium} />
         </View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (

@@ -13,14 +13,21 @@ import { pageOfFaces } from "@/utils/avatar";
 const TILE = 64 + 2 * (3 + 2.5); // avatar + padding + ring
 const GAP = 10;
 
-type Props = { visible: boolean; onClose: () => void; current: string | null; name: string | null; email: string | null };
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  current: string | null;
+  premium: boolean;
+  name: string | null;
+  email: string | null;
+};
 
 const PAGES = 500; // plenty of faces; a bound keeps random pages reusable from the cache
 
 // Pick your look: the current face first, then a page of faces; tap one to preview it big. ‹ › turn the page (keeping
 // the picked face), Randomize jumps to a random page and picks a face on it. Pages are fixed (utils/avatar.ts), so
 // reopening, or going back to a page, costs no downloads.
-export function AvatarSheet({ visible, onClose, current, name, email }: Props) {
+export function AvatarSheet({ visible, onClose, current, premium, name, email }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [picked, setPicked] = useState(current);
   const [saving, setSaving] = useState(false);
@@ -71,7 +78,7 @@ export function AvatarSheet({ visible, onClose, current, name, email }: Props) {
       <Text style={styles.body}>Your group sees it next to your score.</Text>
 
       <View style={styles.preview}>
-        <Avatar seed={picked} name={name} email={email} size={112} />
+        <Avatar seed={picked} name={name} email={email} size={112} premium={premium} />
       </View>
 
       <View accessibilityRole="radiogroup" accessibilityLabel="Faces" style={styles.grid}>
