@@ -20,7 +20,7 @@ export function avatarUrl(seed: string) {
   return `https://api.dicebear.com/10.x/notionists/png?${Object.entries(q).map(([k, v]) => `${k}=${v}`).join("&")}`;
 }
 
-// FNV-1a, 32-bit, as 8 hex characters: the same shape as the server's default seed (server/src/store.ts).
+// FNV-1a, 32-bit, as 8 hex characters: the same shape as the server's default seed (server/src/modules/identity/domain/account.ts).
 function fnv(s: string) {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);

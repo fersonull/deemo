@@ -33,7 +33,7 @@ export const PANEL = [
 // DEEMO server. Default works over USB with `adb reverse tcp:3000 tcp:3000`; set EXPO_PUBLIC_API_URL for Wi-Fi.
 export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
-// Default defense rubric (addendum Q5). Mirrors server/src/scoring.ts CRITERIA; weights in percent.
+// Default defense rubric (addendum Q5). Mirrors server/src/modules/scoring/domain/scoring.ts CRITERIA; weights in percent.
 export const RUBRIC = [
   { name: "Content Mastery", desc: "Knows the study inside out" },
   { name: "Reasoning & Justification", desc: "Justifies the choices made" },

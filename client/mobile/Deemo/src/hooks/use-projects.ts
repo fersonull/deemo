@@ -5,7 +5,7 @@ import { practiceSetup } from "@/hooks/use-practice-setup";
 import { api } from "@/utils/api";
 import { createStore } from "@/utils/store";
 
-// Mirrors server/src/store.ts. The server keeps projects; the app only caches the list.
+// Mirrors server/src/modules/manuscripts/domain/manuscript.ts. The server keeps projects; the app only caches the list.
 export type Analysis = {
   title: string;
   problem: string;
@@ -19,7 +19,7 @@ export type Analysis = {
   unsure: string[];
 };
 
-// The panel's own rubric (plan F3), replacing the default five criteria. Mirrors server/src/scoring.ts.
+// The panel's own rubric (plan F3), replacing the default five criteria. Mirrors server/src/modules/manuscripts/domain/rubric.ts.
 export type RubricCriterion = {
   name: string;
   desc: string;

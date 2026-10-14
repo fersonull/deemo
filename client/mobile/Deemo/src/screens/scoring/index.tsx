@@ -13,7 +13,7 @@ import { riseIn } from "@/utils/motion";
 
 const POLL_MS = 2500;
 
-// What the server does while scoring (server/src/sessions.ts); usually 5–20 s.
+// What the server does while scoring (server/src/modules/scoring/application/sessions.ts); usually 5–20 s.
 export const SCORING_STEPS: Step[] = [
   ["Reading your answers", 15],
   ["Checking them against your manuscript", 40],

@@ -4,7 +4,7 @@ import type { LiveState } from "@/live/types";
 import { api } from "@/utils/api";
 import { createStore } from "@/utils/store";
 
-// Mirrors server/src/sessions.ts. Reports are scored on the server; the app submits and reads them.
+// Mirrors server/src/modules/scoring/domain/session.ts. Reports are scored on the server; the app submits and reads them.
 type Severity = "LOW" | "MEDIUM" | "HIGH";
 
 export type SessionTurn = {

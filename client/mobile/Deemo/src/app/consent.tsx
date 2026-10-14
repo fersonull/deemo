@@ -6,8 +6,9 @@ import Animated, { ZoomIn } from "react-native-reanimated";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
-import { session } from "@/hooks/use-session";
+import { session, useSession } from "@/hooks/use-session";
 import { colors, easeOut, radius, type } from "@/theme";
+import { ApiError } from "@/utils/api";
 
 const ITEMS = [
   { icon: "description", text: "Your manuscript and voice are processed by Google's AI to run the panel." },
@@ -16,9 +17,31 @@ const ITEMS = [
   { icon: "delete", text: "You can delete everything any time from Profile." },
 ];
 
+// Before sign-in (kept on the device, then recorded on the new account), or for a signed-in account that has no
+// consent on record yet (recorded right away; the root layout then moves on to the app).
 export default function Consent() {
+  const { signedIn } = useSession();
   const [adult, setAdult] = useState(false);
   const [agree, setAgree] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const accept = async () => {
+    if (!signedIn) {
+      session.consent();
+      router.push("/sign-in");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      await session.acceptConsent();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't save your consent. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Screen title={"Before you\npractice."} subtitle="What happens to your work, in plain words.">
@@ -34,14 +57,12 @@ export default function Consent() {
       <Check checked={adult} onToggle={() => setAdult(!adult)} label="I am 18 years old or older." />
       <Check checked={agree} onToggle={() => setAgree(!agree)} label="I understand and agree to how my data is used." />
       <View style={styles.cta}>
-        <Button
-          label="Continue"
-          disabled={!(adult && agree)}
-          onPress={() => {
-            session.consent();
-            router.push("/sign-in");
-          }}
-        />
+        {error ? (
+          <Text style={styles.error} accessibilityLiveRegion="polite">
+            {error}
+          </Text>
+        ) : null}
+        <Button label={busy ? "Saving…" : "Continue"} busy={busy} disabled={!(adult && agree) || busy} onPress={accept} />
       </View>
     </Screen>
   );
@@ -69,6 +90,7 @@ function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () =>
 }
 
 const styles = StyleSheet.create({
+  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginBottom: 10, textAlign: "center" },
   items: { gap: 8, marginTop: 20 },
   item: {
     flexDirection: "row",
