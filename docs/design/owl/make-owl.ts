@@ -121,15 +121,15 @@ function suit(tone: "dusk" | "black" = "dusk") {
   const jacket = tone === "black" ? c.ink : c.duskInk;
   const lapel = tone === "black" ? c.inkSoft : c.duskIcon;
   const id = `suit${clipId++}`;
-  const top = 274; // below the face and cheeks
-  const bx = 238, by = 310; // the medal
+  const top = 288; // below the face and cheeks
+  const bx = 236, by = 318; // the medal
   return `<defs><clipPath id="${id}"><path d="${BODY}"/></clipPath></defs>
     <g clip-path="url(#${id})">
       <rect x="60" y="${top}" width="280" height="100" fill="${jacket}"/>
       <path d="M170 ${top} L184 ${top} L200 344 L190 344Z" fill="${lapel}"/>
       <path d="M230 ${top} L216 ${top} L200 344 L210 344Z" fill="${lapel}"/>
-      <path d="M184 ${top} L216 ${top} L200 330Z" fill="${c.paper}"/>
-      <circle cx="200" cy="308" r="3" fill="${jacket}"/><circle cx="200" cy="322" r="3" fill="${jacket}"/>
+      <path d="M184 ${top} L216 ${top} L200 338Z" fill="${c.paper}"/>
+      <circle cx="200" cy="316" r="2.6" fill="${jacket}"/><circle cx="200" cy="328" r="2.6" fill="${jacket}"/>
     </g>
     <path d="M200 ${top + 6} L184 ${top - 2} L184 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
     <path d="M200 ${top + 6} L216 ${top - 2} L216 ${top + 14}Z" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="2.5" stroke-linejoin="round"/>
