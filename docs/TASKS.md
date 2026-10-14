@@ -33,7 +33,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
 - [x] **Email verification after email/password sign-up**: "Check your inbox" screen (auto-check, resend with cooldown, use a different email); the server only serves verified emails.
 - [x] **GitHub issues #9, #8, #7**: full-width Domain row in Setup, Upload / Join above the Projects list, project name follows a re-picked file. Committed on `dev`.
-- [ ] **GitHub issues #3 + #2**: remove the OpenAI backup; Gemini Flash-Lite as the analysis fallback (own branch).
+- [x] **GitHub issues #3 + #2**: OpenAI backup removed; Gemini chain 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. **Pending:** user test on `feat/flash-lite-fallback`, then merge into `dev`.
 - [ ] **GitHub issues #5, #4**: need the user's decision (read-only summary; what "the group's manuscript" means).
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
@@ -57,7 +57,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
 - [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
 - [ ] **Delimitations:** simulated payments, no adviser dashboard (Q1, Q2).
-- [ ] **Privacy notice / Chapter 3:** name OpenAI as the backup processor for analysis, rubric reading and scoring (only for students who agreed to consent 2026-10.2), alongside Google. The live voice panel stays Gemini-only.
+- [ ] **Privacy notice / Chapter 3:** Google (Gemini) is the only AI processor, for the live panel, analysis, rubric reading and scoring (the OpenAI backup was removed, consent 2026-10.3).
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 
 ## Housekeeping
@@ -77,7 +77,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 | S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, length, Coach/Panel feedback, manuscript, scoring |
 | S-10 Live session (F6–F13, F13a) | Gemini Live voice panel through an ephemeral token; adaptive questions from the manuscript; follow-up limit enforced in code; question-type chips; live transcript; contradiction flags; answer timing; pause/resume; reconnect; up to 3 personas, one voice; typed-answer fallback; noise gate and platform noise suppression |
 | S-11 Paused | Pause overlay, timers frozen |
-| Model fallback | Analysis and scoring try gemini-3.8 → 3.7 → 3.6 → 3.5 Flash; each report and analysis records which model answered |
+| Model fallback | Analysis and scoring try gemini-3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite; each report and analysis records which model answered |
 | S-12 Report (F14) | Readiness score with its formula, top fixes, verified contradictions, rubric breakdown, response times, per-question feedback and stronger answers, transcript; Premium gating |
 | S-13 History (F15) | Readiness trend chart, stage filters |
 | S-14 Subscription (F18) | Simulated Premium (demo upgrade); free-tier limits enforced on the server |

@@ -43,7 +43,7 @@ If true, list every scored criterion on the form, in the form's order (at most $
 type Input = { bytes: Uint8Array; type: typeof PDF | typeof DOCX | typeof JPEG | typeof PNG };
 type Read = { name: string; desc: string; points: number; scorable: boolean; level1: string; level3: string; level5: string };
 
-export async function buildRubric({ bytes, type }: Input, source: string, backup = false): Promise<Rubric> {
+export async function buildRubric({ bytes, type }: Input, source: string): Promise<Rubric> {
   let doc;
   if (type === DOCX) {
     const text = await mammoth
@@ -69,7 +69,7 @@ export async function buildRubric({ bytes, type }: Input, source: string, backup
         thinkingConfig: { thinkingLevel: "low" },
       },
     },
-    { timeoutMs: 25_000, backup },
+    { timeoutMs: 25_000 },
   );
   const r = JSON.parse(text) as { isRubric: boolean; notRubricReason: string; criteria: Read[] };
   if (!r.isRubric) throw new Rejected(r.notRubricReason || "This doesn't look like a defense rubric.");
