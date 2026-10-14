@@ -22,11 +22,15 @@ export type Authed = Request & { uid: string };
 export async function requireUser(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.match(/^Bearer (.+)$/)?.[1];
   if (!token) return void res.status(401).json({ error: "Sign in first." });
+  let user;
   try {
     // checkRevoked: a deleted, disabled or signed-out-everywhere account stops working at once, not when its token expires.
-    (req as Authed).uid = (await getAuth().verifyIdToken(token, true)).uid;
-    next();
+    user = await getAuth().verifyIdToken(token, true);
   } catch {
-    res.status(401).json({ error: "Your sign-in expired. Sign in again." });
+    return void res.status(401).json({ error: "Your sign-in expired. Sign in again." });
   }
+  // Email + password accounts must tap the verification link first (Google accounts arrive verified).
+  if (user.email && !user.email_verified) return void res.status(403).json({ error: "Verify your email first." });
+  (req as Authed).uid = user.uid;
+  next();
 }
