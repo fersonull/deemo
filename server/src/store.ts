@@ -68,13 +68,29 @@ export function collection<T extends Item>(name: string) {
 export const store = collection<Project>("projects");
 
 // The account record (plan §13): consent and the simulated tier (addendum Q1). Set only by the server.
-export type UserRecord = { premium: boolean; allowTyping: boolean; consentAt?: string; consentVersion?: string };
+// `avatar` is the DiceBear seed the student picked (the app draws the face); without one, a default from the account
+// ID, so teammates see the same face the student does.
+export type UserRecord = {
+  premium: boolean;
+  allowTyping: boolean;
+  avatar: string;
+  consentAt?: string;
+  consentVersion?: string;
+};
+
+// FNV-1a, 32-bit, of the uid: a stable default face that doesn't expose the uid to DiceBear or teammates.
+export function defaultAvatar(uid: string) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < uid.length; i++) h = Math.imul(h ^ uid.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+export const validAvatar = (v: unknown): v is string => typeof v === "string" && /^[a-z0-9]{1,32}$/.test(v);
 
 
 export const users = {
   async get(uid: string): Promise<UserRecord> {
     const d = await db.collection("users").doc(uid).get();
-    return { premium: false, allowTyping: true, ...(d.data() as Partial<UserRecord> | undefined) };
+    return { premium: false, allowTyping: true, avatar: defaultAvatar(uid), ...(d.data() as Partial<UserRecord> | undefined) };
   },
   async update(uid: string, patch: Partial<UserRecord>) {
     await db.collection("users").doc(uid).set(patch, { merge: true });

@@ -5,7 +5,7 @@ import { buildRubric } from "./rubric";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, weakTopics, type Session } from "./sessions";
-import { type Analysis, type Project, store, users } from "./store";
+import { type Analysis, type Project, store, users, validAvatar } from "./store";
 import { db } from "./firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { parseRubric } from "./scoring";
@@ -73,12 +73,16 @@ app.get("/me/export", async (req, res) => {
 // Consent (recorded after sign-in, with the version the student agreed to) and the simulated upgrade.
 app.patch("/me", async (req, res) => {
   const uid = uidOf(req);
-  const body = (req.body ?? {}) as { consentVersion?: unknown; premium?: unknown; allowTyping?: unknown };
+  const body = (req.body ?? {}) as { consentVersion?: unknown; premium?: unknown; allowTyping?: unknown; avatar?: unknown };
   if (typeof body.consentVersion === "string")
     await users.update(uid, { consentVersion: body.consentVersion.slice(0, 20), consentAt: new Date().toISOString() });
   // ponytail: demo toggle, no payments (addendum Q1).
   if (body.premium === true) await users.update(uid, { premium: true });
   if (typeof body.allowTyping === "boolean") await users.update(uid, { allowTyping: body.allowTyping });
+  if (body.avatar !== undefined) {
+    if (!validAvatar(body.avatar)) return void res.status(400).json({ error: "That avatar isn't valid." });
+    await users.update(uid, { avatar: body.avatar });
+  }
   res.json(await users.get(uid));
 });
 

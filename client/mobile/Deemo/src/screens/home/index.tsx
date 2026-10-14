@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -18,7 +19,6 @@ import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
 import { useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
-import { initials } from "@/utils/initials";
 import { homeBrief } from "@/utils/home-brief";
 import { riseIn } from "@/utils/motion";
 
@@ -43,7 +43,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // means and what to work on), Start practice, the readiness chart (two scored sessions or more) and recent sessions. Sections rise in a beat apart
 // when they first appear.
 export function Home() {
-  const { name, email } = useSession();
+  const { name, email, avatar } = useSession();
   const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
@@ -74,9 +74,7 @@ export function Home() {
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
           </Text>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials(name, email)}</Text>
-          </View>
+          <Avatar seed={avatar} name={name} email={email} size={42} />
         </View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (
@@ -188,15 +186,6 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 120 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.duskTint,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskInk },
   bones: { gap: 8 },
   start: { marginTop: 10 },
   sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },

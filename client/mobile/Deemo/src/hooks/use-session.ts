@@ -29,6 +29,7 @@ const store = createStore({
   signedIn: false,
   verified: false, // email confirmed (Google accounts always are); email sign-ups wait on the verify-email screen
   verifySentAt: 0, // when this device last sent a verification link (ms), for the resend cooldown
+  avatar: null as string | null, // DiceBear seed from the account record (utils/avatar.ts)
   email: null as string | null,
   name: null as string | null, // Firebase display name: from Google, or typed at sign-up or in Profile
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
@@ -39,7 +40,14 @@ const store = createStore({
 // The consent text's version, recorded on the account. 2026-10.3: Google's AI only (the OpenAI backup was removed).
 export const CONSENT_VERSION = "2026-10.3";
 
-type Me = { premium: boolean; allowTyping: boolean; consentAt?: string };
+type Me = { premium: boolean; allowTyping: boolean; avatar: string; consentAt?: string };
+
+const fromMe = (me: Me) => ({
+  premium: me.premium,
+  allowTyping: me.allowTyping,
+  avatar: me.avatar,
+  consentAt: me.consentAt ?? store.get().consentAt,
+});
 
 const patchMe = (body: object) =>
   api<Me>("/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -51,7 +59,7 @@ async function loadAccount() {
     const me = store.get().consentAt
       ? await patchMe({ consentVersion: CONSENT_VERSION })
       : await api<Me>("/me");
-    store.set({ premium: me.premium, allowTyping: me.allowTyping, consentAt: me.consentAt ?? store.get().consentAt });
+    store.set(fromMe(me));
   } catch {
     // Offline or server down: the account record loads on the next sign-in.
   }
@@ -65,7 +73,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     verified: !!user?.emailVerified,
     email: user?.email ?? null,
     name: user?.displayName ?? null,
-    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0 }),
+    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0, avatar: null }),
   });
   if (user?.emailVerified) await loadAccount();
 });
@@ -96,8 +104,7 @@ export const session = {
   async refresh() {
     if (!store.get().signedIn) return;
     try {
-      const me = await api<Me>("/me");
-      store.set({ premium: me.premium, allowTyping: me.allowTyping, consentAt: me.consentAt ?? store.get().consentAt });
+      store.set(fromMe(await api<Me>("/me")));
     } catch {
       // The lists report being offline; the account keeps its last known state.
     }
@@ -111,6 +118,11 @@ export const session = {
     } catch {
       store.set({ allowTyping: !allowTyping });
     }
+  },
+
+  // The face the student picked in Profile; saved on the account so teammates see it too.
+  async setAvatar(avatar: string) {
+    store.set({ avatar: (await patchMe({ avatar })).avatar });
   },
 
   // Delete my data (addendum Q9): the server removes everything and the sign-in account; then sign out here.
