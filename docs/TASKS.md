@@ -28,6 +28,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) becomes the whole rubric, replacing the five defaults: its own criteria, weights from its points, level anchors from its descriptors. Criteria needing the paper or a live demo are listed but not scored. Saved on the project (shared with the group); "Back to the default rubric" undoes it.
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
+- [x] **Deemo as an owl** (replaces the pebble): every mood, Premium suit and medal, new app icon (needs a native rebuild).
 - [x] **Deemo, the guide** (design D1–D5, glasses instead of the sprout; SVG + Reanimated, needs a native rebuild): component, moods and motion; Welcome, Home and History empty states, Projects notes, reading waits.
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).

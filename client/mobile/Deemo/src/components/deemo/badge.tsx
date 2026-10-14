@@ -20,10 +20,20 @@ function star(cx: number, cy: number, outer: number, inner: number) {
   );
 }
 
-// Deemo's Premium badge: a gold medal on a short ribbon, pinned on the suit's right lapel, in Deemo's 100 × 85 units.
+// Deemo's Premium badge: a gold medal on a short ribbon, pinned on the suit's right lapel (drawn at r 9, then scaled).
 // Now and then (every 6–9 s, never in a loop that runs every frame) a light glint sweeps across it and a tiny sparkle
 // flares, 700 ms in all. Between sweeps nothing animates. `still` (reduce motion) keeps it gold and quiet.
-export function PremiumBadge({ cx = 77, cy = 66, still }: { cx?: number; cy?: number; still?: boolean }) {
+export function PremiumBadge({
+  cx = 77,
+  cy = 66,
+  scale = 1,
+  still,
+}: {
+  cx?: number;
+  cy?: number;
+  scale?: number; // drawn at r 9 units; the owl wears it at about twice that
+  still?: boolean;
+}) {
   const clip = `badge${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const shine = useSharedValue(0);
 
@@ -48,7 +58,7 @@ export function PremiumBadge({ cx = 77, cy = 66, still }: { cx?: number; cy?: nu
 
   const r = 9;
   return (
-    <G>
+    <G scale={scale} origin={`${cx}, ${cy}`}>
       <Defs>
         <ClipPath id={clip}>
           <Circle cx={cx} cy={cy} r={r} />

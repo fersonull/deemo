@@ -1,34 +1,37 @@
 import { useId } from "react";
-import { ClipPath, Defs, G, Path, Rect } from "react-native-svg";
+import { Circle, ClipPath, Defs, G, Path, Rect } from "react-native-svg";
 
 import { colors } from "@/theme";
 
-// Deemo's Premium suit, in its 100 × 85 units: a dark dusk jacket over the lower body (clipped to the pebble, so
-// it follows the outline), lapels in a lighter dusk, a white shirt V, and a gold bow tie at the collar.
-// Flat fills only, like the rest of Deemo. The Premium badge is pinned on the right lapel (see badge.tsx).
-export function Suit({ body }: { body: string }) {
+// The owl's body outline (same as index.tsx), for clipping the jacket to it.
+const BODY =
+  "M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z";
+
+// Deemo's Premium suit, in the owl's units: a black jacket over the lower body from just under the cheeks (clipped
+// to the outline), dark grey lapels, a paper shirt V with two buttons, and a gold bow tie at the collar. Flat fills
+// only, like the rest of Deemo. The Premium medal is pinned on the right lapel (see badge.tsx).
+export function Suit() {
   const clip = `suit${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  const top = 63; // just under the mouth and cheeks
+  const top = 262;
+  const tie = { fill: colors.gold, stroke: colors.goldInk, strokeWidth: 2.5, strokeLinejoin: "round" } as const;
   return (
     <G>
       <Defs>
         <ClipPath id={clip}>
-          <Path d={body} />
+          <Path d={BODY} />
         </ClipPath>
       </Defs>
       <G clipPath={`url(#${clip})`}>
-        {/* jacket */}
-        <Rect x={0} y={top} width={100} height={30} fill={colors.duskInk} />
-        {/* lapels: a lighter band along each side of the V */}
-        <Path d={`M34 ${top} L42 ${top} L50 84 L45 84Z`} fill={colors.duskIcon} />
-        <Path d={`M66 ${top} L58 ${top} L50 84 L55 84Z`} fill={colors.duskIcon} />
-        {/* shirt */}
-        <Path d={`M42 ${top} L58 ${top} L50 80Z`} fill={colors.paper} />
+        <Rect x={60} y={top} width={280} height={100} fill={colors.ink} />
+        <Path d={`M170 ${top} L184 ${top} L200 344 L190 344Z`} fill={colors.inkSoft} />
+        <Path d={`M230 ${top} L216 ${top} L200 344 L210 344Z`} fill={colors.inkSoft} />
+        <Path d={`M184 ${top} L216 ${top} L200 330Z`} fill={colors.paper} />
+        <Circle cx={200} cy={300} r={3} fill={colors.ink} />
+        <Circle cx={200} cy={316} r={3} fill={colors.ink} />
       </G>
-      {/* bow tie at the collar */}
-      <Path d={`M50 ${top + 3} L42 ${top - 1} L42 ${top + 7}Z`} fill={colors.gold} stroke={colors.goldInk} strokeWidth={1} strokeLinejoin="round" />
-      <Path d={`M50 ${top + 3} L58 ${top - 1} L58 ${top + 7}Z`} fill={colors.gold} stroke={colors.goldInk} strokeWidth={1} strokeLinejoin="round" />
-      <Rect x={48} y={top + 0.8} width={4} height={4.4} rx={1.2} fill={colors.goldInk} />
+      <Path d={`M200 ${top + 6} L184 ${top - 2} L184 ${top + 14}Z`} {...tie} />
+      <Path d={`M200 ${top + 6} L216 ${top - 2} L216 ${top + 14}Z`} {...tie} />
+      <Rect x={196} y={top + 1.5} width={8} height={9} rx={2.5} fill={colors.goldInk} />
     </G>
   );
 }
