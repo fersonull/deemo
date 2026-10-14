@@ -1,97 +1,183 @@
-// Draft of Deemo as an owl (study before any app change). Run `bun make-owl.ts`, then open owl-sheet.html.
-// Colors are the app's tokens (client/mobile/Deemo/src/colors.ts).
+// Draft of Deemo as an owl (study before any app change). Run `bun make-owl.ts` here, then open owl-sheet.html.
+// Colors are the app's tokens (client/mobile/Deemo/src/colors.ts); the cap is ink, the darkest token.
 import { writeFileSync } from "fs";
 
 const c = {
-  paper: "#F7F3EC", dusk: "#5A66C7", duskIcon: "#4D57B7", duskInk: "#343996", duskTint: "#DCE3FF",
-  duskSoft: "#CFD6F3", amber: "#EBB353", amberInk: "#6C4302", ink: "#2A2420",
+  paper: "#F7F3EC", sand: "#EDE5D8", ink: "#2A2420", inkSoft: "#3E3731", inkMuted: "#5E554D",
+  dusk: "#5A66C7", duskIcon: "#4D57B7", duskInk: "#343996", duskTint: "#DCE3FF", duskSoft: "#CFD6F3",
+  amber: "#EBB353", amberInk: "#6C4302", clayTint: "#F5DDD3",
+  gold: "#D9A521", goldLight: "#F6DC86", goldInk: "#8C6310",
 };
 const S = 6; // outline width
 
-const BODY =
-  "M200 100 C298 100 326 152 322 208 C318 266 302 304 270 330 C246 350 154 350 130 330 C98 304 82 266 78 208 C74 152 102 100 200 100 Z";
+type Mood = "idle" | "waving" | "cheering" | "reading" | "encouraging" | "sleepy" | "nervous";
 
-function owl({ glasses = false, cap = true } = {}) {
+// A round little owl: one body, a big face, short wings, a black mortarboard.
+const BODY = "M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z";
+const FACE = "M200 170 C178 144 116 144 112 200 C108 250 160 268 200 248 C240 268 292 250 288 200 C284 144 222 144 200 170 Z";
+const WING_L = "M96 236 C70 252 64 292 82 308 C100 300 112 278 112 254 Z";
+const WING_R = "M304 236 C330 252 336 292 318 308 C300 300 288 278 288 254 Z";
+const SHOULDER_L = "102 246";
+const SHOULDER_R = "298 246";
+
+const stroke = (w = S) => `stroke="${c.duskInk}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
+
+function eyes(mood: Mood) {
+  const at = [160, 240];
+  if (mood === "cheering")
+    return at.map((x) => `<path d="M${x - 22} 212 Q${x} 184 ${x + 22} 212" fill="none" ${stroke(7)}/>`).join("");
+  if (mood === "sleepy")
+    return at.map((x) => `<path d="M${x - 22} 204 Q${x} 220 ${x + 22} 204" fill="none" ${stroke(7)}/>`).join("");
+  const r = mood === "nervous" ? 33 : 32;
+  const pr = mood === "nervous" ? 10 : 17;
+  const dy = mood === "reading" ? 9 : 2;
+  return at
+    .map((x, i) => {
+      const dx = mood === "reading" ? 0 : i ? -3 : 3;
+      return `<circle cx="${x}" cy="204" r="${r}" fill="${c.paper}" ${stroke(S - 1)}/>
+      <circle cx="${x + dx}" cy="${204 + dy}" r="${pr}" fill="${c.duskInk}"/>
+      <circle cx="${x + dx + pr * 0.38}" cy="${204 + dy - pr * 0.42}" r="${pr * 0.36}" fill="${c.paper}"/>
+      <circle cx="${x + dx - pr * 0.4}" cy="${204 + dy + pr * 0.36}" r="${pr * 0.15}" fill="${c.paper}"/>
+      ${mood === "encouraging" ? `<path d="M${x - 20} 160 Q${x} 150 ${x + 20} 160" fill="none" ${stroke(5)}/><path d="M${x - 30} 222 Q${x} 246 ${x + 30} 222 L${x + 34} 240 L${x - 34} 240 Z" fill="${c.duskTint}"/><path d="M${x - 28} 222 Q${x} 242 ${x + 28} 222" fill="none" ${stroke(S - 1)}/>` : ""}`;
+    })
+    .join("");
+}
+
+function beak(mood: Mood) {
+  if (mood === "cheering" || mood === "waving")
+    return `<path d="M190 237 Q200 233 210 237 Q206 244 200 246 Q194 244 190 237 Z" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M194 248 Q200 258 206 248 Z" fill="${c.amberInk}"/>`;
+  if (mood === "nervous")
+    return `<path d="M192 238 Q200 234 208 238 Q204 248 200 251 Q196 248 192 238 Z" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M186 262 Q191 257 196 262 Q201 267 206 262 Q211 257 214 262" fill="none" ${stroke(3.5)}/>`;
+  return `<path d="M191 238 Q200 233 209 238 Q205 249 200 253 Q195 249 191 238 Z" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3" stroke-linejoin="round"/>`;
+}
+
+function wing(side: "l" | "r", angle = 0, dx = 0, dy = 0) {
+  const d = side === "l" ? WING_L : WING_R;
+  const o = side === "l" ? SHOULDER_L : SHOULDER_R;
+  const f = side === "l" ? "M90 268 Q86 284 90 298" : "M310 268 Q314 284 310 298";
+  return `<g transform="translate(${dx} ${dy}) rotate(${angle} ${o})"><path d="${d}" fill="${c.duskIcon}" ${stroke()}/><path d="${f}" fill="none" stroke="${c.duskInk}" stroke-opacity="0.4" stroke-width="3.5" stroke-linecap="round"/></g>`;
+}
+
+function cap(mood: Mood) {
+  const tilt = mood === "sleepy" ? -14 : mood === "nervous" ? 4 : -6;
+  const drop = mood === "sleepy" ? 14 : mood === "cheering" ? -6 : 0;
+  return `<g transform="translate(0 ${drop}) rotate(${tilt} 200 112)">
+    <path d="M148 114 Q200 102 252 114 L248 136 Q200 126 152 136 Z" fill="${c.ink}" stroke="${c.ink}" stroke-width="${S}" stroke-linejoin="round"/>
+    <path d="M200 68 L286 96 L200 124 L114 96 Z" fill="${c.ink}" stroke="${c.ink}" stroke-width="${S}" stroke-linejoin="round"/>
+    <path d="M200 76 L262 96 L200 116 L138 96 Z" fill="${c.inkSoft}"/>
+    <path d="M200 96 Q246 94 280 100 L280 134" fill="none" stroke="${c.amber}" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="200" cy="96" r="6" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="2.5"/>
+    <rect x="273" y="130" width="14" height="22" rx="5" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3"/>
+  </g>`;
+}
+
+function extras(mood: Mood) {
+  if (mood === "sleepy")
+    return `<text x="300" y="120" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="40" fill="${c.duskInk}">z</text>
+      <text x="330" y="88" font-family="Bricolage Grotesque, system-ui, sans-serif" font-weight="800" font-size="28" fill="${c.duskInk}" opacity="0.7">z</text>`;
+  if (mood === "nervous")
+    return `<path d="M112 140 Q100 162 104 172 Q110 182 120 176 Q128 168 112 140 Z" fill="${c.duskTint}" stroke="${c.duskIcon}" stroke-width="3.5" stroke-linejoin="round"/>
+      <path d="M130 162 Q150 156 170 166 M230 166 Q250 156 270 162" fill="none" ${stroke(5)}/>`;
+  if (mood === "cheering") {
+    const spark = (x: number, y: number, r: number) =>
+      `<path d="M${x} ${y - r} Q${x + r * 0.15} ${y - r * 0.15} ${x + r} ${y} Q${x + r * 0.15} ${y + r * 0.15} ${x} ${y + r} Q${x - r * 0.15} ${y + r * 0.15} ${x - r} ${y} Q${x - r * 0.15} ${y - r * 0.15} ${x} ${y - r}Z" fill="${c.amber}"/>`;
+    return spark(70, 120, 14) + spark(334, 104, 11) + spark(352, 160, 8);
+  }
+  if (mood === "reading")
+    return `<g transform="rotate(-4 200 300)">
+      <rect x="146" y="262" width="108" height="72" rx="8" fill="${c.paper}" stroke="${c.inkMuted}" stroke-width="3.5"/>
+      <path d="M162 282 H238 M162 296 H230 M162 310 H214" stroke="${c.duskSoft}" stroke-width="5" stroke-linecap="round"/>
+    </g>`;
+  return "";
+}
+
+function wings(mood: Mood) {
+  switch (mood) {
+    case "waving": return wing("l") + wing("r", -135, 26, -18);
+    case "cheering": return wing("l", 128) + wing("r", -128);
+    case "reading": return wing("l", -38) + wing("r", 38);
+    case "encouraging": return wing("l") + wing("r", -100, 18, -4);
+    case "nervous": return wing("l", -22) + wing("r", 22);
+    default: return wing("l") + wing("r");
+  }
+}
+
+function medal() {
+  return `<g>
+    <path d="M190 296 L184 320 L193 315 L198 324 L202 300Z" fill="${c.goldInk}"/>
+    <path d="M210 296 L216 320 L207 315 L202 324 L198 300Z" fill="${c.gold}"/>
+    <circle cx="200" cy="296" r="14" fill="${c.gold}" stroke="${c.goldInk}" stroke-width="3"/>
+    <circle cx="200" cy="296" r="8.5" fill="none" stroke="${c.goldLight}" stroke-width="2"/>
+    <path d="M210 280 Q211 285 216 286 Q211 287 210 292 Q209 287 204 286 Q209 285 210 280Z" fill="${c.goldLight}"/>
+  </g>`;
+}
+
+export function owl(mood: Mood = "idle", { premium = false, size = 220 } = {}) {
+  const tilt = mood === "encouraging" ? -6 : mood === "nervous" ? 3 : 0;
+  const reading = mood === "reading";
   const scallop = (x: number, y: number) =>
-    `<path d="M${x - 9} ${y} Q${x} ${y + 9} ${x + 9} ${y}" fill="none" stroke="${c.duskIcon}" stroke-opacity="0.55" stroke-width="4" stroke-linecap="round"/>`;
-  const eye = (x: number, look: number) => `
-    <circle cx="${x}" cy="182" r="29" fill="${c.paper}" stroke="${c.duskInk}" stroke-width="${S - 1}"/>
-    <circle cx="${x + look}" cy="186" r="13.5" fill="${c.duskInk}"/>
-    <circle cx="${x + look + 5}" cy="180" r="4.6" fill="${c.paper}"/>`;
-  return `
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="40 40 360 340" width="360" height="340">
-    <ellipse cx="200" cy="362" rx="96" ry="10" fill="${c.duskSoft}"/>
-    <!-- ear tufts, behind the head -->
-    <path d="M108 146 Q90 112 84 84 Q122 94 154 116 Z" fill="${c.duskIcon}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-    <path d="M292 146 Q310 112 316 84 Q278 94 246 116 Z" fill="${c.duskIcon}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-    <!-- hand on hip (viewer's left) -->
-    <path d="M96 226 C64 240 52 282 66 300 C80 314 104 306 114 292 Z" fill="${c.duskIcon}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-    <!-- body -->
-    <path d="${BODY}" fill="${c.dusk}"/>
-    <ellipse cx="200" cy="290" rx="76" ry="54" fill="${c.paper}"/>
-    ${scallop(172, 270)}${scallop(200, 270)}${scallop(228, 270)}
-    ${scallop(186, 294)}${scallop(214, 294)}
-    ${scallop(200, 318)}
-    <path d="${BODY}" fill="none" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-    <!-- face disc -->
-    <path d="M200 150 C176 124 122 126 117 174 C114 214 150 238 184 226 L200 244 L216 226 C250 238 286 214 283 174 C278 126 224 124 200 150 Z" fill="${c.duskTint}"/>
-    <!-- brows: two soft feather strokes -->
-    <path d="M140 146 Q160 136 184 146" fill="none" stroke="${c.duskInk}" stroke-width="5" stroke-linecap="round"/>
-    <path d="M216 146 Q240 136 260 146" fill="none" stroke="${c.duskInk}" stroke-width="5" stroke-linecap="round"/>
-    ${eye(162, 3)}${eye(238, -3)}
-    ${glasses ? `
-    <circle cx="162" cy="182" r="37" fill="none" stroke="${c.duskInk}" stroke-width="${S}"/>
-    <circle cx="238" cy="182" r="37" fill="none" stroke="${c.duskInk}" stroke-width="${S}"/>
-    <path d="M190 172 Q200 166 210 172" fill="none" stroke="${c.duskInk}" stroke-width="${S}" stroke-linecap="round"/>
-    <path d="M125 178 L96 172 M275 178 L304 172" stroke="${c.duskInk}" stroke-width="${S - 1}" stroke-linecap="round"/>` : ""}
-    <!-- cheeks and beak -->
-    <ellipse cx="120" cy="226" rx="12" ry="7" fill="${c.duskSoft}" opacity="0.85"/>
-    <ellipse cx="280" cy="226" rx="12" ry="7" fill="${c.duskSoft}" opacity="0.85"/>
-    <path d="M187 221 Q200 216 213 221 Q207 238 200 248 Q193 238 187 221 Z" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3.5" stroke-linejoin="round"/>
-    <!-- waving wing (viewer's right) -->
-    <path d="M308 262 C326 246 336 222 340 196 L344 150 Q351 141 358 150 L361 168 Q369 160 375 169 L376 187 Q384 183 388 192 C390 216 381 238 363 253 C347 266 327 270 308 262 Z" fill="${c.duskIcon}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-    <path d="M352 168 Q348 202 330 238 M370 188 Q364 216 344 248" fill="none" stroke="${c.duskInk}" stroke-opacity="0.45" stroke-width="3.5" stroke-linecap="round"/>
-    <!-- feet -->
-    ${[168, 232].map((x) => [-12, 0, 12].map((d) => `<ellipse cx="${x + d * 0.9}" cy="352" rx="6.5" ry="10" transform="rotate(${d * 1.8} ${x + d * 0.9} 352)" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3.5"/>`).join("")).join("")}
-    ${cap ? `
-    <!-- mortarboard -->
-    <g transform="translate(0 12) rotate(-5 200 96)">
-      <path d="M144 106 Q200 92 256 106 L252 130 Q200 118 148 130 Z" fill="${c.duskInk}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-      <path d="M200 52 L294 82 L200 112 L106 82 Z" fill="${c.duskInk}" stroke="${c.duskInk}" stroke-width="${S}" stroke-linejoin="round"/>
-      <path d="M200 60 L270 82 L200 104 L130 82 Z" fill="${c.duskIcon}"/>
-      <path d="M200 82 Q250 80 288 86 L288 120" fill="none" stroke="${c.amber}" stroke-width="4" stroke-linecap="round"/>
-      <circle cx="200" cy="82" r="6" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="2.5"/>
-      <rect x="281" y="116" width="14" height="24" rx="5" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3"/>
-    </g>` : ""}
+    `<path d="M${x - 8} ${y} Q${x} ${y + 8} ${x + 8} ${y}" fill="none" stroke="${c.duskIcon}" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 40 340 330" width="${size}" height="${(size * 330) / 340}">
+    <ellipse cx="200" cy="356" rx="${mood === "cheering" ? 74 : 92}" ry="9" fill="${c.duskSoft}"/>
+    <g transform="translate(0 ${mood === "cheering" ? -10 : 0})">
+    ${[176, 224].map((x) => [-11, 0, 11].map((d) => `<ellipse cx="${x + d * 0.9}" cy="345" rx="5.5" ry="8" transform="rotate(${d * 1.8} ${x + d * 0.9} 345)" fill="${c.amber}" stroke="${c.amberInk}" stroke-width="3"/>`).join("")).join("")}
+    <g transform="rotate(${tilt} 200 230)">
+      <path d="${BODY}" fill="${c.dusk}"/>
+      <ellipse cx="200" cy="298" rx="68" ry="42" fill="${c.paper}"/>
+      ${reading ? "" : premium ? scallop(166, 296) + scallop(234, 296) + scallop(172, 316) + scallop(228, 316) : scallop(180, 288) + scallop(200, 288) + scallop(220, 288) + scallop(190, 306) + scallop(210, 306) + scallop(200, 324)}
+      <path d="${BODY}" fill="none" ${stroke()}/>
+      <path d="${FACE}" fill="${c.duskTint}"/>
+      <ellipse cx="116" cy="246" rx="15" ry="8.5" fill="${c.clayTint}" opacity="0.9"/>
+      <ellipse cx="284" cy="246" rx="15" ry="8.5" fill="${c.clayTint}" opacity="0.9"/>
+      ${eyes(mood)}
+      ${beak(mood)}
+      ${premium && !reading ? medal() : ""}
+      ${extras(mood)}
+      ${wings(mood)}
+      ${cap(mood)}
+    </g>
+    </g>
   </svg>`;
 }
 
-const card = (label: string, svg: string) =>
-  `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
+const MOODS: [Mood, string][] = [
+  ["idle", "Idle: calm, looking out"],
+  ["waving", "Waving: hello"],
+  ["cheering", "Cheering: a hop, wings up"],
+  ["reading", "Reading: working on your paper"],
+  ["encouraging", "Encouraging: head tilt, a nudge"],
+  ["sleepy", "Sleepy: offline"],
+  ["nervous", "Nervous: low score, errors"],
+];
 
-writeFileSync("owl.svg", owl().trim());
-writeFileSync("owl-glasses.svg", owl({ glasses: true }).trim());
+const tile = (label: string, svg: string) => `<figure>${svg}<figcaption>${label}</figcaption></figure>`;
+
+writeFileSync("owl.svg", owl("idle"));
 writeFileSync(
   "owl-sheet.html",
-  `<!doctype html><meta charset="utf-8"><title>Deemo owl study</title>
+  `<!doctype html><meta charset="utf-8"><title>Deemo owl states</title>
 <style>
   body{margin:0;background:${c.paper};font-family:"DM Sans",system-ui,sans-serif;color:${c.ink}}
-  main{display:flex;gap:28px;padding:36px 40px 28px;align-items:flex-end}
   h1{font:700 30px "Bricolage Grotesque",system-ui,sans-serif;margin:32px 40px 0;letter-spacing:-0.5px}
-  p.sub{margin:6px 40px 0;color:#5E554D;font-size:15px}
+  h2{font:600 13px "DM Sans",system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;color:${c.inkMuted};margin:28px 40px 0}
+  p.sub{margin:6px 40px 0;color:${c.inkMuted};font-size:15px}
+  .grid{display:grid;grid-template-columns:repeat(4,220px);gap:22px 30px;padding:18px 40px 0}
   figure{margin:0;text-align:center}
-  figure svg{width:420px;height:397px}
-  figcaption{margin-top:8px;font-size:14px;color:#5E554D}
-  .sw{display:flex;gap:10px;margin:0 40px 32px}
-  .sw span{display:flex;align-items:center;gap:6px;font-size:12px;color:#5E554D}
-  .sw i{width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid rgba(42,36,32,.12)}
+  figcaption{margin-top:6px;font-size:13px;color:${c.inkMuted}}
+  .sizes{display:flex;align-items:flex-end;gap:36px;padding:16px 40px 36px}
+  .sizes figure figcaption{font-size:12px}
 </style>
-<h1>Deemo, the owl</h1>
-<p class="sub">A study before the app changes. Same tokens as the app: dusk body, paper belly, duskInk outlines, amber beak, feet and tassel.</p>
-<main>
-${card("A. Owl with the cap (as in the reference)", owl())}
-${card("B. Same owl, keeping Deemo's round glasses", owl({ glasses: true }))}
-</main>
-<div class="sw">${Object.entries({ dusk: c.dusk, duskIcon: c.duskIcon, duskInk: c.duskInk, duskTint: c.duskTint, duskSoft: c.duskSoft, paper: c.paper, amber: c.amber, amberInk: c.amberInk })
-    .map(([k, v]) => `<span><i style="background:${v}"></i>${k}</span>`).join("")}</div>`,
+<h1>Deemo, the owl: every state</h1>
+<p class="sub">Black cap, no ear tufts, rounder and softer. Same moods the app uses today; Premium swaps the suit for a gold medal.</p>
+<h2>Moods</h2>
+<div class="grid">
+${MOODS.map(([m, l]) => tile(l, owl(m))).join("\n")}
+${tile("Premium: gold medal (shines now and then)", owl("idle", { premium: true }))}
+</div>
+<h2>Sizes in the app</h2>
+<div class="sizes">
+${([["XL 220", 220], ["L 136", 136], ["M 76", 76], ["S 40", 40]] as const).map(([l, s]) => tile(l, owl("idle", { size: s }))).join("\n")}
+</div>`,
 );
