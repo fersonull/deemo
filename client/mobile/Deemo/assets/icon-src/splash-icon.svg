@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="18 18 72 72"><defs>
+  <radialGradient id="bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#DCE3FF"/><stop offset="1" stop-color="#CFD6F3"/></radialGradient>
+  <radialGradient id="body" cx="42%" cy="30%" r="75%"><stop offset="0" stop-color="#6E79D3"/><stop offset="0.55" stop-color="#5A66C7"/><stop offset="1" stop-color="#4D57B7"/></radialGradient>
+  <radialGradient id="face" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#EEF1FF"/><stop offset="1" stop-color="#DCE3FF"/></radialGradient>
+  <radialGradient id="eye" cx="45%" cy="38%" r="65%"><stop offset="0.6" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F7F3EC"/></radialGradient>
+  <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E3731"/><stop offset="1" stop-color="#2A2420"/></linearGradient>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs><clipPath id="sq"><rect x="18" y="18" width="72" height="72" rx="16"/></clipPath><g clip-path="url(#sq)"><rect x="-10" y="-10" width="200" height="200" fill="url(#bg)"/><g transform="translate(54 62) scale(0.3) translate(-200 -204)">
+  <path d="M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z" fill="url(#body)"/>
+  <path d="M200 170 C178 144 116 144 112 200 C108 250 160 268 200 248 C240 268 292 250 288 200 C284 144 222 144 200 170 Z" fill="url(#face)"/>
+  <ellipse cx="118" cy="250" rx="17" ry="9.5" fill="#F5DDD3" opacity="0.95"/>
+  <ellipse cx="282" cy="250" rx="17" ry="9.5" fill="#F5DDD3" opacity="0.95"/>
+  <g transform="translate(160 204) scale(1.18) translate(-160 -204)">
+    <circle cx="160" cy="209" r="38" fill="#4D57B7" opacity="0.35" filter="url(#soft)"/>
+    <circle cx="160" cy="204" r="36" fill="#5A66C7"/>
+    <circle cx="160" cy="204" r="30" fill="url(#eye)"/>
+    <circle cx="164" cy="207" r="17" fill="#343996"/>
+    <circle cx="170.5" cy="199.5" r="6.4" fill="#FFFFFF"/>
+    <circle cx="157.2" cy="213.4" r="2.8" fill="#FFFFFF"/>
+  </g><g transform="translate(240 204) scale(1.18) translate(-240 -204)">
+    <circle cx="240" cy="209" r="38" fill="#4D57B7" opacity="0.35" filter="url(#soft)"/>
+    <circle cx="240" cy="204" r="36" fill="#5A66C7"/>
+    <circle cx="240" cy="204" r="30" fill="url(#eye)"/>
+    <circle cx="236" cy="207" r="17" fill="#343996"/>
+    <circle cx="242.5" cy="199.5" r="6.4" fill="#FFFFFF"/>
+    <circle cx="229.2" cy="213.4" r="2.8" fill="#FFFFFF"/>
+  </g>
+  <path d="M190 240 Q200 234 210 240 Q206 252 200 257 Q194 252 190 240 Z" fill="#EBB353"/>
+  <path d="M193 243 Q200 240 207 243" fill="none" stroke="#F6DC86" stroke-width="2.5" stroke-linecap="round"/>
+  <g transform="translate(-4 10) rotate(-10 200 112) translate(200 112) scale(0.92) translate(-200 -112)">
+  <ellipse cx="200" cy="140" rx="70" ry="10" fill="#343996" opacity="0.35" filter="url(#soft)"/>
+  <path d="M146 112 Q200 98 254 112 L250 138 Q200 126 150 138 Z" fill="#2A2420"/>
+  <path d="M200 60 L296 92 L200 124 L104 92 Z" fill="url(#cap)"/>
+  <path d="M200 70 L268 92 L200 114 L132 92 Z" fill="#3E3731" opacity="0.6"/>
+  <path d="M200 92 Q252 90 288 96 L290 132" fill="none" stroke="#EBB353" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="200" cy="92" r="7" fill="#EBB353"/>
+  <circle cx="290" cy="136" r="9" fill="#EBB353"/>
+</g></g></g></svg>

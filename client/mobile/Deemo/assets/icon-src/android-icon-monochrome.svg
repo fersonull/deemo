@@ -1,6 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 108 108"><g transform="translate(54 54) scale(0.27) translate(-200 -170)"><g stroke="#000" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none">
-  <circle cx="160" cy="204" r="32"/><circle cx="240" cy="204" r="32"/>
-  <path d="M191 238 Q200 233 209 238 Q205 249 200 253 Q195 249 191 238 Z"/>
-  <g transform="rotate(-6 200 112)"><path d="M200 68 L286 96 L200 124 L114 96 Z"/><path d="M152 118 L152 136 Q200 126 248 136 L248 118"/><path d="M280 100 L280 140"/></g>
-  </g>
-  <circle cx="163" cy="206" r="17" fill="#000"/><circle cx="237" cy="206" r="17" fill="#000"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 108 108"><defs>
+  <radialGradient id="bg" cx="50%" cy="38%" r="75%"><stop offset="0" stop-color="#DCE3FF"/><stop offset="1" stop-color="#CFD6F3"/></radialGradient>
+  <radialGradient id="body" cx="42%" cy="30%" r="75%"><stop offset="0" stop-color="#6E79D3"/><stop offset="0.55" stop-color="#5A66C7"/><stop offset="1" stop-color="#4D57B7"/></radialGradient>
+  <radialGradient id="face" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#EEF1FF"/><stop offset="1" stop-color="#DCE3FF"/></radialGradient>
+  <radialGradient id="eye" cx="45%" cy="38%" r="65%"><stop offset="0.6" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F7F3EC"/></radialGradient>
+  <linearGradient id="cap" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E3731"/><stop offset="1" stop-color="#2A2420"/></linearGradient>
+  <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs><g transform="translate(54 62) scale(0.3) translate(-200 -204)"><g fill="#000">
+  <g transform="translate(160 204) scale(1.18) translate(-160 -204)"><path fill-rule="evenodd" d="M124 204 a36 36 0 1 0 72 0 a36 36 0 1 0 -72 0 Z M132 204 a28 28 0 1 1 56 0 a28 28 0 1 1 -56 0 Z"/><circle cx="164" cy="207" r="17"/></g><g transform="translate(240 204) scale(1.18) translate(-240 -204)"><path fill-rule="evenodd" d="M204 204 a36 36 0 1 0 72 0 a36 36 0 1 0 -72 0 Z M212 204 a28 28 0 1 1 56 0 a28 28 0 1 1 -56 0 Z"/><circle cx="236" cy="207" r="17"/></g>
+  <path d="M190 240 Q200 234 210 240 Q206 252 200 257 Q194 252 190 240 Z"/>
+  <g transform="translate(-4 10) rotate(-10 200 112) translate(200 112) scale(0.92) translate(-200 -112)"><path d="M200 60 L296 92 L200 124 L104 92 Z"/><path d="M146 112 Q200 98 254 112 L250 138 Q200 126 150 138 Z"/><path d="M286 96 h8 v40 h-8 Z"/></g>
+</g></g></svg>
