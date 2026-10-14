@@ -1,68 +1,92 @@
 import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+
+import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
-import { useProjects } from "@/hooks/use-projects";
-import { colors, radius, type } from "@/theme";
+import { useProjects, type GroupReadiness as Group } from "@/hooks/use-projects";
+import { colors, fonts, radius, type } from "@/theme";
+import { bandOf } from "@/utils/bands";
 
+type Member = Group["members"][number];
+
+const firstName = (m: Member) => (m.isYou ? "You" : m.name.trim().split(/\s+/)[0] || "Member");
+
+// What a screen reader hears for one member: who, then their latest score, or why there isn't one.
+function describe(m: Member) {
+  const who = m.isYou ? `${m.name} (you)` : m.name;
+  if (m.score === undefined) return `${who}, ${m.sharing ? "no score yet" : "keeps scores private"}`;
+  const when = new Date(m.createdAt!).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return `${who}, ${m.score} percent readiness, ${bandOf(m.score).name}, ${MODE_LABELS[m.mode as Mode] ?? m.mode}, ${when}`;
+}
+
+// Group readiness on Home, compact: one face per member with their latest scored practice under it. More members
+// than fit scroll sideways.
 export function GroupReadiness() {
   const { groups } = useProjects();
   return (
     <>
       {groups.map((g) => (
         <View key={g.code} style={styles.card}>
-          <View style={styles.row}>
-            <Icon name="group" color={colors.duskIcon} />
-            <Text style={type.heading}>Group readiness</Text>
+          <View style={styles.head}>
+            <Icon name="group" size={20} color={colors.duskIcon} />
+            <Text style={[type.heading, styles.flex]}>Group readiness</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Group and sharing settings"
+              hitSlop={8}
+              onPress={() => router.push({ pathname: "/analysis", params: { id: g.projectId } })}
+              style={styles.settings}
+            >
+              <Text style={styles.link}>Settings</Text>
+              <Icon name="chevron_right" size={16} color={colors.duskLink} />
+            </Pressable>
           </View>
-          <Text style={styles.note} numberOfLines={2}>
+          <Text style={styles.title} numberOfLines={1}>
             {g.title}
           </Text>
-          {g.members.map((m, i) => (
-            <View key={i} style={styles.member}>
-              <View style={styles.flex}>
-                <Text style={type.bodyStrong}>
-                  {m.name}
-                  {m.isYou ? " (you)" : ""}
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.members}>
+            {g.members.map((m, i) => (
+              <View key={i} style={styles.member} accessible accessibilityLabel={describe(m)}>
+                <View style={styles.ring}>
+                  <Avatar seed={m.avatar} name={m.name} size={44} />
+                </View>
+                <Text style={[styles.name, m.isYou && styles.you]} numberOfLines={1}>
+                  {firstName(m)}
                 </Text>
                 {m.score !== undefined ? (
-                  <Text style={type.meta}>
-                    {MODE_LABELS[m.mode as Mode] ?? m.mode} ·{" "}
-                    {new Date(m.createdAt!).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </Text>
-                ) : null}
+                  <Score value={m.score} style={styles.score} banded />
+                ) : m.sharing ? (
+                  <Text style={styles.none}>–</Text>
+                ) : (
+                  <Icon name="lock" size={14} color={colors.muted} />
+                )}
               </View>
-              {m.score !== undefined ? (
-                <Score value={m.score} style={styles.score} caption banded align="right" />
-              ) : (
-                <Text style={styles.note}>{m.sharing ? "No score yet" : "Private"}</Text>
-              )}
-            </View>
-          ))}
-          <Text style={styles.note}>
-            Each score is from that member’s latest scored practice. Sessions may use different settings.
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push({ pathname: "/analysis", params: { id: g.projectId } })}
-            style={styles.action}
-          >
-            <Text style={styles.link}>Group & sharing settings</Text>
-            <Icon name="chevron_right" size={18} color={colors.duskLink} />
-          </Pressable>
+            ))}
+          </ScrollView>
+
+          <Text style={styles.note}>Latest scored practice each; settings may differ.</Text>
         </View>
       ))}
     </>
   );
 }
+
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.duskTint, borderRadius: radius.xl, padding: 16, marginTop: 20 },
-  row: { flexDirection: "row", alignItems: "center", gap: 10 },
-  member: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 14 },
+  card: { backgroundColor: colors.duskTint, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
+  head: { flexDirection: "row", alignItems: "center", gap: 8 },
   flex: { flex: 1 },
-  note: { ...type.meta, lineHeight: 18, marginTop: 4 },
-  score: { ...type.heading, color: colors.duskInk, fontSize: 24 },
-  action: { minHeight: 44, marginTop: 8, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  settings: { flexDirection: "row", alignItems: "center", minHeight: 32 },
   link: { ...type.bodyStrong, fontSize: 13, color: colors.duskLink },
+  title: { ...type.meta, marginTop: 2 },
+  members: { gap: 6, paddingTop: 12, paddingBottom: 2 },
+  member: { width: 62, alignItems: "center" },
+  ring: { borderRadius: 26, borderWidth: 2, borderColor: colors.paper },
+  name: { fontFamily: fonts.body, fontWeight: "500", fontSize: 12, color: colors.inkMuted, marginTop: 5, maxWidth: 62 },
+  you: { fontWeight: "600", color: colors.ink },
+  score: { fontFamily: fonts.body, fontWeight: "700", fontSize: 15, lineHeight: 19 },
+  none: { fontFamily: fonts.body, fontWeight: "600", fontSize: 15, lineHeight: 19, color: colors.muted },
+  note: { ...type.meta, fontSize: 11, marginTop: 8 },
 });

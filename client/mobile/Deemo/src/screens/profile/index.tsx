@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
+import { Avatar } from "@/components/avatar";
+import { AvatarSheet } from "./avatar-sheet";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
@@ -11,7 +13,6 @@ import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { api } from "@/utils/api";
 import { cleanName, MAX_NAME } from "@/utils/auth-form";
-import { initials } from "@/utils/initials";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
 
@@ -23,11 +24,11 @@ const PLANS = {
   },
 };
 
-// Profile (prototype profile screen): account (tap to set your name), plan, the typed-answer setting, download and delete my data, sign out.
+// Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
-  const { name, email, premium, allowTyping } = useSession();
-  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | null>(null);
+  const { name, email, avatar, premium, allowTyping } = useSession();
+  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | null>(null);
   const [draft, setDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
@@ -83,30 +84,41 @@ export function Profile() {
 
   return (
     <Screen scroll tabBar title="Profile" onRefresh={refreshEverything}>
-      <PressableScale
-        scaleTo={0.98}
-        accessibilityRole="button"
-        accessibilityHint={name ? "Change your name" : "Add your name"}
-        onPress={editName}
-        style={styles.account}
-      >
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials(name, email)}</Text>
-        </View>
-        <View style={styles.flex}>
-          <Text style={styles.name} numberOfLines={1}>
-            {name ?? email ?? "Signed in"}
-          </Text>
-          {name && email ? (
-            <Text style={styles.meta} numberOfLines={1}>
-              {email}
+      <View style={styles.account}>
+        <PressableScale
+          scaleTo={0.95}
+          accessibilityRole="button"
+          accessibilityLabel="Your avatar"
+          accessibilityHint="Pick your look"
+          onPress={() => setSheet("avatar")}
+        >
+          <Avatar seed={avatar} name={name} email={email} size={56} />
+          <View style={styles.avatarBadge}>
+            <Icon name="edit" size={12} color={colors.paper} />
+          </View>
+        </PressableScale>
+        <PressableScale
+          scaleTo={0.98}
+          accessibilityRole="button"
+          accessibilityHint={name ? "Change your name" : "Add your name"}
+          onPress={editName}
+          style={styles.nameRow}
+        >
+          <View style={styles.flex}>
+            <Text style={styles.name} numberOfLines={1}>
+              {name ?? email ?? "Signed in"}
             </Text>
-          ) : !name ? (
-            <Text style={[styles.meta, styles.addName]}>Add your name</Text>
-          ) : null}
-        </View>
-        <Icon name="edit" size={18} color={colors.muted} />
-      </PressableScale>
+            {name && email ? (
+              <Text style={styles.meta} numberOfLines={1}>
+                {email}
+              </Text>
+            ) : !name ? (
+              <Text style={[styles.meta, styles.addName]}>Add your name</Text>
+            ) : null}
+          </View>
+          <Icon name="edit" size={18} color={colors.muted} />
+        </PressableScale>
+      </View>
 
       <View style={styles.plan}>
         <View style={styles.planHead}>
@@ -163,6 +175,14 @@ export function Profile() {
           void session.upgrade();
           setSheet(null);
         }}
+      />
+
+      <AvatarSheet
+        visible={sheet === "avatar"}
+        onClose={() => setSheet(null)}
+        current={avatar}
+        name={name}
+        email={email}
       />
 
       <Sheet visible={sheet === "name"} onClose={() => !savingName && setSheet(null)}>
@@ -227,20 +247,25 @@ export function Profile() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   account: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18, paddingRight: 4 },
+  nameRow: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56 },
+  avatarBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.paper,
+    backgroundColor: colors.dusk,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   addName: { color: colors.duskLink, fontWeight: "600" },
   field: { marginTop: 16, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
   input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
   nameError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
   saveName: { marginTop: 16 },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.duskTint,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontFamily: fonts.display, fontWeight: "700", fontSize: 20, color: colors.duskInk },
   name: { ...type.heading, fontSize: 18 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
