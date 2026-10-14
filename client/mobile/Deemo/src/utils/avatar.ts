@@ -20,6 +20,18 @@ export function avatarUrl(seed: string) {
   return `https://api.dicebear.com/10.x/notionists/png?${Object.entries(q).map(([k, v]) => `${k}=${v}`).join("&")}`;
 }
 
-// Fresh faces for the picker: 8 random hex characters each, the same shape as the server's default.
-export const randomSeeds = (n: number) =>
-  Array.from({ length: n }, () => Math.floor(Math.random() * 0x100000000).toString(16).padStart(8, "0"));
+// FNV-1a, 32-bit, as 8 hex characters: the same shape as the server's default seed (server/src/store.ts).
+function fnv(s: string) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+// The picker's faces come in fixed pages, the same for everyone, so a page seen once is served from the image cache
+// on every later visit; only pages never seen before are downloaded. `keep` (the current or picked face) goes first
+// and isn't repeated.
+export const PAGE_SIZE = 8; // under DiceBear's 10 PNGs/second
+export function pageOfFaces(page: number, keep: string | null) {
+  const deal = Array.from({ length: PAGE_SIZE + 1 }, (_, i) => fnv(`deal-${page}-${i}`)).filter((s) => s !== keep);
+  return [...(keep ? [keep] : []), ...deal.slice(0, keep ? PAGE_SIZE : PAGE_SIZE + 1)];
+}

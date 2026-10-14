@@ -8,23 +8,27 @@ import { PressableScale } from "@/components/pressable-scale";
 import { Sheet } from "@/components/sheet";
 import { session } from "@/hooks/use-session";
 import { colors, type } from "@/theme";
-import { randomSeeds } from "@/utils/avatar";
+import { pageOfFaces } from "@/utils/avatar";
 
 const TILE = 64 + 2 * (3 + 2.5); // avatar + padding + ring
 const GAP = 10;
 
 type Props = { visible: boolean; onClose: () => void; current: string | null; name: string | null; email: string | null };
 
-// Pick your look: the current face first, then fresh ones; tap one to preview it big, "More faces" deals a new set.
-// ponytail: 8 new faces per deal keeps a deal under DiceBear's 10 PNGs/second limit.
+// Pick your look: the current face first, then a page of faces; tap one to preview it big, "More faces" turns to the
+// next page (keeping the picked face). Pages are fixed (utils/avatar.ts), so reopening costs no downloads.
 export function AvatarSheet({ visible, onClose, current, name, email }: Props) {
   const [options, setOptions] = useState<string[]>([]);
   const [picked, setPicked] = useState(current);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [wasVisible, setWasVisible] = useState(false);
+  const [page, setPage] = useState(0);
 
-  const deal = (keep: string | null) => setOptions([...(keep ? [keep] : []), ...randomSeeds(keep ? 8 : 9)]);
+  const turnTo = (n: number, keep: string | null) => {
+    setPage(n);
+    setOptions(pageOfFaces(n, keep));
+  };
 
   // Each opening starts from the current face and a fresh deal (reset while rendering, React's pattern for this).
   if (visible !== wasVisible) {
@@ -32,7 +36,7 @@ export function AvatarSheet({ visible, onClose, current, name, email }: Props) {
     if (visible) {
       setPicked(current);
       setError("");
-      deal(current);
+      turnTo(0, current);
     }
   }
 
@@ -89,7 +93,7 @@ export function AvatarSheet({ visible, onClose, current, name, email }: Props) {
           variant="secondary"
           label="More faces"
           leading={<Icon name="shuffle" size={18} color={colors.ink} />}
-          onPress={() => deal(picked)}
+          onPress={() => turnTo(page + 1, picked)}
           disabled={saving}
         />
         <Button
