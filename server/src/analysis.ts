@@ -3,9 +3,16 @@ import mammoth from "mammoth";
 import type { Analysis } from "./store";
 
 // Document Logic Analysis (plan F2, addendum B3): a regular Flash model, before the session.
-// Flash models for analysis and scoring, best first; the next one takes over when one is rate-limited, over quota
-// or unavailable (addendum B3: model names change often, check the Models page before changing this list).
-export const FLASH_MODELS = ["models/gemini-3.8-flash", "models/gemini-3.7-flash", "models/gemini-3.6-flash", "models/gemini-3.5-flash"];
+// Gemini models for analysis and scoring, best first; the next one takes over when one is rate-limited, over quota or
+// unavailable. Flash first for accuracy, then Flash-Lite, which is rarely busy when Flash is (GitHub #2). Only distinct
+// models: gemini-3.7-flash and gemini-3.5-flash now just route to 3.8 and 3.6 (ai.google.dev/gemini-api/docs/models,
+// Oct 2026). Model names change often; check that page before changing this list.
+export const FLASH_MODELS = [
+  "models/gemini-3.8-flash",
+  "models/gemini-3.6-flash",
+  "models/gemini-3.5-flash-lite",
+  "models/gemini-3.1-flash-lite", // shuts down 2027-05-07
+];
 
 export const MAX_BYTES = 20 * 1024 * 1024; // Gemini's inline request limit
 export const PDF = "application/pdf";
@@ -61,7 +68,7 @@ Use the manuscript's own numbers and names. Never invent or assume anything. If 
 type Input = { bytes: Uint8Array; type: string };
 
 // The file only lives in this call: a PDF goes to Gemini as-is (it reads scanned pages too), a DOCX as its text.
-export async function analyzeManuscript({ bytes, type }: Input, backup = false): Promise<Analysis> {
+export async function analyzeManuscript({ bytes, type }: Input): Promise<Analysis> {
   let doc;
   if (type === PDF) {
     doc = { inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } };
@@ -77,13 +84,10 @@ export async function analyzeManuscript({ bytes, type }: Input, backup = false):
     doc = { text };
   }
 
-  const { text, model } = await generateJson(
-    {
-      contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
-      generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0.2 },
-    },
-    { backup },
-  );
+  const { text, model } = await generateJson({
+    contents: [{ role: "user", parts: [doc, { text: PROMPT }] }],
+    generationConfig: { responseMimeType: "application/json", responseJsonSchema: SCHEMA, temperature: 0.2 },
+  });
   const { isManuscript, notManuscriptReason, ...analysis } = JSON.parse(text) as Analysis & {
     isManuscript: boolean;
     notManuscriptReason: string;
@@ -95,117 +99,61 @@ export async function analyzeManuscript({ bytes, type }: Input, backup = false):
 // Every Flash model in the chain was rate-limited, over quota or unavailable.
 export class Busy extends Error {}
 
-// Backup when every Gemini model is down: OpenAI, only with OPENAI_API_KEY set and only for students who agreed to it
-// (consent 2026-10.2 or later, see BACKUP_CONSENT). Luna is OpenAI's "high-volume" tier, Sol the stronger fallback
-// (developers.openai.com/api/docs/models, Oct 2026). Model names change often: OPENAI_MODELS overrides the default.
-// The live panel has no backup; it needs Gemini Live.
-const OPENAI_MODELS = (process.env.OPENAI_MODELS ?? "gpt-6-luna,gpt-6.1-sol")
-  .split(",")
-  .map((m) => m.trim())
-  .filter(Boolean);
-
 type Part = { text?: string; inlineData?: { mimeType: string; data: string } };
 export type FlashRequest = {
   contents: { role: string; parts: Part[] }[];
   generationConfig: { responseJsonSchema?: object; thinkingConfig?: { thinkingLevel?: string } } & Record<string, unknown>;
 };
-
-// The same request for OpenAI's Responses API: the same parts (PDFs as files, photos as images) and the same schema.
-export function toOpenAI(model: string, req: FlashRequest) {
-  const content = req.contents
-    .flatMap((c) => c.parts)
-    .map((p) =>
-      p.inlineData?.mimeType === PDF
-        ? { type: "input_file", filename: "document.pdf", file_data: `data:${PDF};base64,${p.inlineData.data}` }
-        : p.inlineData
-          ? { type: "input_image", image_url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` }
-          : { type: "input_text", text: p.text ?? "" },
-    );
-  const schema = req.generationConfig.responseJsonSchema;
-  return {
-    model,
-    input: [{ role: "user", content }],
-    text: { format: schema ? { type: "json_schema", name: "result", schema, strict: false } : { type: "json_object" } },
-    ...(req.generationConfig.thinkingConfig?.thinkingLevel === "low" && { reasoning: { effort: "low" } }),
-    store: false, // nothing kept on OpenAI's side beyond their abuse-monitoring window
-  };
-}
-
-type Attempt = { provider: "gemini" | "openai"; id: string; url: string; headers: Record<string, string>; body: object };
 type GeminiReply = { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-type OpenAIReply = { output?: { content?: { type: string; text?: string }[] }[] };
 
-const replyText = (provider: Attempt["provider"], json: unknown) =>
-  provider === "gemini"
-    ? ((json as GeminiReply).candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "")
-    : ((json as OpenAIReply).output ?? [])
-        .flatMap((o) => o.content ?? [])
-        .filter((c) => c.type === "output_text")
-        .map((c) => c.text ?? "")
-        .join("");
+// Flash-Lite thinks at "minimal" unless told otherwise; Google suggests more thinking for accuracy, so a request that
+// doesn't set a level gets "medium" there. Flash's own default is already medium.
+export const forModel = (model: string, req: FlashRequest): FlashRequest =>
+  model.includes("flash-lite") && !req.generationConfig.thinkingConfig?.thinkingLevel
+    ? { ...req, generationConfig: { ...req.generationConfig, thinkingConfig: { thinkingLevel: "medium" } } }
+    : req;
 
-// One Flash call: the first model that answers wins, Gemini's in FLASH_MODELS order, then OpenAI's if allowed. A rate
-// limit, quota cap (each model has its own), overload, hang or retired model moves on to the next one; a bad key skips
-// the rest of that provider. A model that just timed out or said it's busy sits out for a few minutes, so the next
-// request doesn't wait on it again. If every model is sitting out, all are tried anyway.
+// One Flash call: the first model that answers wins, in FLASH_MODELS order. A rate limit, quota cap (each model has its
+// own), overload, hang or retired model moves on to the next one; a bad key stops at once. A model that just timed out
+// or said it's busy sits out for a few minutes, so the next request doesn't wait on it again. If every model is sitting
+// out, all are tried anyway.
 const COOLDOWN_MS = 5 * 60_000;
 const coolingUntil = new Map<string, number>();
 
-export async function generateJson(
-  req: FlashRequest,
-  { timeoutMs = 120_000, backup = false } = {},
-): Promise<{ text: string; model: string }> {
-  const attempts: Attempt[] = [
-    ...FLASH_MODELS.map((model) => ({
-      provider: "gemini" as const,
-      id: model.replace("models/", ""),
-      url: `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`,
-      headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
-      body: req,
-    })),
-    ...(backup && process.env.OPENAI_API_KEY
-      ? OPENAI_MODELS.map((model) => ({
-          provider: "openai" as const,
-          id: `openai/${model}`,
-          url: "https://api.openai.com/v1/responses",
-          headers: { authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-          body: toOpenAI(model, req),
-        }))
-      : []),
-  ];
+export async function generateJson(req: FlashRequest, { timeoutMs = 120_000 } = {}): Promise<{ text: string; model: string }> {
   let busy = false;
   let last = "";
-  const deadKey = new Set<Attempt["provider"]>();
   const now = Date.now();
-  const ready = attempts.filter((a) => (coolingUntil.get(a.id) ?? 0) <= now);
-  const coolDown = (id: string) => coolingUntil.set(id, Date.now() + COOLDOWN_MS);
-  for (const a of ready.length ? ready : attempts) {
-    if (deadKey.has(a.provider)) continue;
-    const r = await fetch(a.url, {
+  const ready = FLASH_MODELS.filter((m) => (coolingUntil.get(m) ?? 0) <= now);
+  const coolDown = (m: string) => coolingUntil.set(m, Date.now() + COOLDOWN_MS);
+  for (const model of ready.length ? ready : FLASH_MODELS) {
+    const id = model.replace("models/", "");
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent`, {
       method: "POST",
-      headers: { ...a.headers, "content-type": "application/json" },
-      body: JSON.stringify(a.body),
+      headers: { "x-goog-api-key": process.env.GEMINI_API_KEY ?? "", "content-type": "application/json" },
+      body: JSON.stringify(forModel(model, req)),
       signal: AbortSignal.timeout(timeoutMs),
     }).catch((err: Error) => err);
     if (r instanceof Error) {
       // A hung or dropped request (seen under high demand) would otherwise block the upload or the report.
-      last = `${a.id}: ${r.name === "TimeoutError" ? "timed out" : r.message}`;
+      last = `${id}: ${r.name === "TimeoutError" ? "timed out" : r.message}`;
       busy = true;
-      coolDown(a.id);
+      coolDown(model);
       console.warn("flash fallback:", last);
       continue;
     }
     if (r.ok) {
-      const text = replyText(a.provider, await r.json());
-      if (text) return { text, model: a.id };
-      last = `${a.id}: empty response`;
+      const json = (await r.json()) as GeminiReply;
+      const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+      if (text) return { text, model: id };
+      last = `${id}: empty response`;
       continue;
     }
-    last = `${a.id} ${r.status}: ${(await r.text()).slice(0, 200)}`;
-    if (r.status === 401 || r.status === 403) deadKey.add(a.provider); // that key is the problem; its other models would fail too
+    last = `${id} ${r.status}: ${(await r.text()).slice(0, 200)}`;
+    if (r.status === 401 || r.status === 403) break; // the key is the problem; every other model would fail too
     if (r.status === 429 || r.status === 503) {
       busy = true;
-      coolDown(a.id);
+      coolDown(model);
     }
     console.warn("flash fallback:", last);
   }

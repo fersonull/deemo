@@ -11,7 +11,6 @@ import { colors, easeOut, radius, type } from "@/theme";
 
 const ITEMS = [
   { icon: "description", text: "Your manuscript and voice are processed by Google's AI to run the panel." },
-  { icon: "swap_horiz", text: "If Google's AI is down, OpenAI may read your manuscript, rubric or answers instead." },
   { icon: "mic_off", text: "No audio is recorded. Only the text transcript is kept." },
   { icon: "lock", text: "Your sessions are private. Share them with your group only if you choose." },
   { icon: "delete", text: "You can delete everything any time from Profile." },

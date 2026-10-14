@@ -5,7 +5,7 @@ import { buildRubric } from "./rubric";
 import { type Authed, getAuth, requireUser } from "./firebase";
 import { DOMAINS, LIVE_MODEL, LOCKED_FIELDS, liveSetup, parseSetup } from "./panel";
 import { parseSession, scoreSession, sessions, weakTopics, type Session } from "./sessions";
-import { type Analysis, type Project, allowsBackup, store, users } from "./store";
+import { type Analysis, type Project, store, users } from "./store";
 import { db } from "./firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { parseRubric } from "./scoring";
@@ -128,7 +128,7 @@ app.post("/projects", express.raw({ type: "multipart/form-data", limit: MAX_BYTE
   // Only if it still exists: the student may have deleted it while it was being read.
   const finish = async (patch: Partial<Project>) =>
     (await store.get(uid, project.id)) && store.put(uid, { ...project, ...patch });
-  analyzeManuscript({ bytes, type }, allowsBackup(await users.get(uid))).then(
+  analyzeManuscript({ bytes, type }).then(
     (analysis) => finish({ status: "ready", analysis }),
     (err) => {
       if (!(err instanceof Rejected)) console.error("analysis", project.id, err);
@@ -211,7 +211,7 @@ app.post("/rubric/map", express.raw({ type: "multipart/form-data", limit: 11_000
   const type = sniffDocOrImage(bytes);
   if (!type) return void res.status(415).json({ error: "Only PDF, DOCX, JPG or PNG files." });
   try {
-    res.json(await buildRubric({ bytes, type }, file.name, allowsBackup(await users.get(uidOf(req)))));
+    res.json(await buildRubric({ bytes, type }, file.name));
   } catch (err) {
     if (err instanceof Rejected) return void res.status(422).json({ error: err.message });
     if (err instanceof Busy) return void res.status(503).json({ error: BUSY });

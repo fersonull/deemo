@@ -70,9 +70,6 @@ export const store = collection<Project>("projects");
 // The account record (plan §13): consent and the simulated tier (addendum Q1). Set only by the server.
 export type UserRecord = { premium: boolean; allowTyping: boolean; consentAt?: string; consentVersion?: string };
 
-// The consent text that names OpenAI as the backup AI. Versions are "YYYY-MM[.n]", so later ones compare greater.
-export const BACKUP_CONSENT = "2026-10.2";
-export const allowsBackup = (u: UserRecord) => !!u.consentVersion && u.consentVersion >= BACKUP_CONSENT;
 
 export const users = {
   async get(uid: string): Promise<UserRecord> {
