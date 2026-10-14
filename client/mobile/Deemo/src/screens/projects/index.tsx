@@ -52,6 +52,27 @@ export function Projects() {
 
   return (
     <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
+      {/* Actions first, so a long list never pushes them out of reach. */}
+      <PressableScale
+        scaleTo={0.98}
+        accessibilityRole="button"
+        accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
+        onPress={() => setSheet(locked ? "upsell" : "upload")}
+        style={[styles.add]}
+      >
+        <Icon name={locked ? "lock" : "upload_file"} size={21} color={colors.duskLink} />
+        <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
+      </PressableScale>
+      {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
+      <PressableScale scaleTo={0.98} accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
+        <Icon name="group_add" size={22} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={styles.cardTitle}>Join with a code</Text>
+          <Text style={styles.meta}>6 characters, from your group leader</Text>
+        </View>
+        <Icon name="chevron_right" size={20} color={colors.muted} />
+      </PressableScale>
+
       <View style={styles.list}>
         {list.map((p, i) => {
           const active = p.id === projectId;
@@ -107,26 +128,6 @@ export function Projects() {
         ) : null}
       </View>
 
-      <PressableScale
-
-        scaleTo={0.98}
-        accessibilityRole="button"
-        accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
-        onPress={() => setSheet(locked ? "upsell" : "upload")}
-        style={[styles.add]}
-      >
-        <Icon name={locked ? "lock" : "upload_file"} size={21} color={colors.duskLink} />
-        <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
-      </PressableScale>
-      {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
-      <PressableScale scaleTo={0.98} accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
-        <Icon name="group_add" size={22} color={colors.duskIcon} />
-        <View style={styles.flex}>
-          <Text style={styles.cardTitle}>Join with a code</Text>
-          <Text style={styles.meta}>6 characters, from your group leader</Text>
-        </View>
-        <Icon name="chevron_right" size={20} color={colors.muted} />
-      </PressableScale>
       <JoinSheet
         visible={sheet === "join"}
         onClose={() => setSheet(null)}
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4, marginTop: 8 },
   add: {
     height: 58,
-    marginTop: 12,
+    marginTop: 18,
     borderRadius: radius.xl,
     borderWidth: 2,
     borderStyle: "dashed",

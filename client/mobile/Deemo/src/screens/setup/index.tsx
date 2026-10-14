@@ -127,14 +127,16 @@ export function Setup() {
         scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Change domain"
-        hitSlop={6}
         onPress={() => setSheet("domain")}
-        style={styles.domain}
+        style={[styles.manuscript, styles.rubricRow]}
       >
-        <Icon name="category" size={16} color={colors.duskIcon} />
-        <Text style={styles.domainText}>
-          Domain: <Text style={styles.domainValue}>{setup.domain}</Text>
-        </Text>
+        <Icon name="category" size={20} color={colors.duskIcon} />
+        <View style={styles.flex}>
+          <Text style={type.label}>DOMAIN</Text>
+          <Text style={styles.manuscriptName} numberOfLines={1}>
+            {setup.domain}
+          </Text>
+        </View>
         <View style={styles.change}>
           <Text style={styles.changeText}>Change</Text>
         </View>
@@ -238,20 +240,6 @@ const styles = StyleSheet.create({
   manuscriptName: { ...type.bodyStrong, marginTop: 2 },
   nameBone: { marginTop: 6, marginBottom: 2 },
   rubricRow: { marginTop: 8 },
-  domain: {
-    alignSelf: "flex-start",
-    marginTop: 12,
-    minHeight: 36,
-    borderRadius: 18,
-    backgroundColor: colors.sand,
-    paddingLeft: 12,
-    paddingRight: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  domainText: { ...type.body, fontSize: 12.5, fontWeight: "500" },
-  domainValue: { fontWeight: "600" },
   change: { height: 26, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, justifyContent: "center" },
   changeText: { ...type.meta, fontWeight: "600", color: colors.ink },
   modes: { gap: 8, marginTop: 18 },

@@ -15,6 +15,7 @@ const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 const MAX_MB = 20; // server/src/analysis.ts MAX_BYTES
 
 const mb = (bytes?: number) => (bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : "");
+const nameFrom = (f: PickedFile | null) => (f ? f.name.replace(/\.(pdf|docx)$/i, "").replace(/[_-]+/g, " ") : "");
 
 type Props = { visible: boolean; onClose: () => void; onUploaded: (p: Project) => void };
 
@@ -31,8 +32,9 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     if (r.canceled) return;
     const f = r.assets[0];
     setError(f.size && f.size > MAX_MB * 1024 * 1024 ? `That file is over ${MAX_MB} MB.` : "");
+    // Follow the new file unless the student typed their own name.
+    if (!name.trim() || name === nameFrom(file)) setName(nameFrom(f));
     setFile(f);
-    if (!name) setName(f.name.replace(/\.(pdf|docx)$/i, "").replace(/[_-]+/g, " "));
   };
 
   const read = async () => {

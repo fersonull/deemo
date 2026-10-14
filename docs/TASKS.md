@@ -32,6 +32,9 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Deemo, the guide** (design D1–D5, glasses instead of the sprout; SVG + Reanimated, needs a native rebuild): component, moods and motion; Welcome, Home and History empty states, Projects notes, reading waits.
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
 - [x] **Email verification after email/password sign-up**: "Check your inbox" screen (auto-check, resend with cooldown, use a different email); the server only serves verified emails.
+- [x] **GitHub issues #9, #8, #7**: full-width Domain row in Setup, Upload / Join above the Projects list, project name follows a re-picked file. Committed on `dev`.
+- [ ] **GitHub issues #3 + #2**: remove the OpenAI backup; Gemini Flash-Lite as the analysis fallback (own branch).
+- [ ] **GitHub issues #5, #4**: need the user's decision (read-only summary; what "the group's manuscript" means).
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
