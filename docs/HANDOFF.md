@@ -34,6 +34,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Fewer requests on navigation**: `src/utils/fresh.ts` (`freshFor`) lets `projects.refresh()` and `sessions.refresh()` reuse a list loaded in the last 60 s and share an in-flight load; they always reload while something is analyzing/scoring, after a new session or rescore, and on pull to refresh (`refresh(true)`). Home no longer re-reads `/me` on every visit; the root layout re-reads it when the app returns to the foreground. JS only. | see git log |
+| 2026-10-16 | **Request log**: the server prints one line per finished request (time, method, path without query, status, ms, user ID when signed in); never bodies or headers. | `server/src/app.ts` |
 | 2026-10-16 | **ERD reads straight left to right**: columns centred on one middle line (ELK `SIMPLE` node placement, free ordering within columns) instead of stepping down-right; 5244×3124 px, shorter than before. Re-insert Figure 3 from `docs/diagrams/DEEMO-figure-3-erd.png`. | see git log |
 | 2026-10-15 | **Deck: wheel walks slide 10 steps**: on the step list slide, mouse wheel down/up moves to the next/previous step (clamped, one step per 400 ms so trackpads don't skip, stops the auto-cycle). Other slides ignore the wheel. | `client/web/presentation/js/deck.js`; `dev` |
 | 2026-10-15 | **Deck: mouse navigation**: right click anywhere = next slide, left click = previous (context menu suppressed). Clicks on buttons/links (arrows, slide 10 steps) keep their own action; touch taps are ignored (touch uses swipe). | `client/web/presentation/js/deck.js`; `dev` |
@@ -117,6 +119,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 Older history: `git log dev`.
 
 ## Gotchas
+
+- **Screen data is cached for 60 s:** focus refreshes skip the server if the list loaded under a minute ago (`freshFor` in `src/utils/fresh.ts`). After a server-side change the app makes itself, call `refresh(true)` or `invalidate` the store's freshness, or the change shows up only after a minute or a pull to refresh.
 
 - **Presentation deck:** the phone's screens bake fonts into canvas textures, so `screens.js` waits on `document.fonts.load` first; fonts come from Google Fonts, so offline the screens and slides fall back to system fonts (libraries are vendored, fonts are not). The WebGL loop and GSAP both run on rAF: in a hidden browser tab or the hidden Claude preview pane nothing animates and freshly loaded slides look blank until a frame runs (screenshots force one). To update three.js, rebuild `vendor/three.js` from an entry that does `export * from 'three'` plus the `RoomEnvironment` addon. Slot sizes in `styles.css` decide the phone's size and position; poses live in `POSES` in `js/phone.js`. Deemo's lines and moods are the `data-say`/`data-deemo` attributes on each slide; if the app's Deemo drawing changes, port it to `js/deemo.js` too.
 - **Redrawing the diagrams:** run the scripts in `docs/diagrams/src` with Node (`bun install` there first); ELK's bundled worker fails under Bun. `shot.sh` renders the HTML to a 2x PNG with headless Chrome, which only writes the file when its output goes to a pipe. Flowcharts use a hand grid on purpose: ELK reverses loops and breaks the spine.

@@ -2,6 +2,7 @@ import { type Difficulty, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import type { LiveState } from "@/live/types";
 import { api } from "@/utils/api";
+import { freshFor } from "@/utils/fresh";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/modules/scoring/domain/session.ts. Reports are scored on the server; the app submits and reads them.
@@ -106,8 +107,12 @@ function fromLive(s: LiveState, endedBy: "panel" | "student" | "time") {
   };
 }
 
+// Opening a screen reuses a list loaded in the last minute, unless a session is still being scored.
+const fresh = freshFor(60_000);
+
 export const sessions = {
   reset() {
+    fresh.invalidate();
     store.set({ list: [], loaded: false, error: false, submit: { state: "idle" } });
   },
 
@@ -116,6 +121,7 @@ export const sessions = {
     store.set({ submit: { state: "saving" } });
     try {
       const saved = await api<Session>("/sessions", post(payload));
+      fresh.invalidate(); // a new session for History and Home
       store.set({ submit: { state: "saved", id: saved.id } });
     } catch (e) {
       store.set({ submit: { state: "failed", error: e instanceof Error ? e.message : "Couldn't save.", payload } });
@@ -133,13 +139,22 @@ export const sessions = {
 
   get: (id: string) => api<Session>(`/sessions/${id}`),
 
-  rescore: (id: string) => api<Session>(`/sessions/${id}/score`, { method: "POST" }),
+  rescore(id: string) {
+    fresh.invalidate(); // its status changes
+    return api<Session>(`/sessions/${id}/score`, { method: "POST" });
+  },
 
-  async refresh() {
-    try {
-      store.set({ list: await api<SessionSummary[]>("/sessions"), loaded: true, error: false });
-    } catch {
-      store.set({ loaded: true, error: true });
-    }
+  // `force`: pull to refresh.
+  refresh(force = false) {
+    const pending = store.get().list.some((s) => s.status === "scoring");
+    return fresh.run(async () => {
+      try {
+        store.set({ list: await api<SessionSummary[]>("/sessions"), loaded: true, error: false });
+        return true;
+      } catch {
+        store.set({ loaded: true, error: true });
+        return false;
+      }
+    }, force || pending);
   },
 };

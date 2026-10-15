@@ -2,10 +2,10 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 
 import { projects } from "@/hooks/use-projects";
-import { useSession } from "@/hooks/use-session";
+import { session, useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { trackTouch } from "@/hooks/touch-point";
 import { colors } from "@/theme";
@@ -25,11 +25,21 @@ export default function RootLayout() {
 
   // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out.
   useEffect(() => {
-    if (inside) void projects.refresh();
+    if (inside) void projects.refresh(true);
     else {
       projects.reset();
       sessions.reset();
     }
+  }, [inside]);
+
+  // Re-read the account (Premium, typed answers) when the app comes back to the foreground, so a change made
+  // elsewhere shows up without asking the server on every screen.
+  useEffect(() => {
+    if (!inside) return;
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void session.refresh();
+    });
+    return () => sub.remove();
   }, [inside]);
 
   if (!ready) return null;

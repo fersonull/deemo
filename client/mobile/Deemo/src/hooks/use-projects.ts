@@ -3,6 +3,7 @@ import { File } from "expo-file-system";
 import { DEFAULT_WEIGHTS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { api } from "@/utils/api";
+import { freshFor } from "@/utils/fresh";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/modules/manuscripts/domain/manuscript.ts. The server keeps projects; the app only caches the list.
@@ -56,6 +57,8 @@ export type GroupReadiness = {
 };
 const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false });
 let generation = 0;
+// Opening a screen reuses a list loaded in the last minute, unless a manuscript is still being analyzed.
+const fresh = freshFor(60_000);
 const json = (method: string, body: object) => ({
   method,
   headers: { "content-type": "application/json" },
@@ -91,20 +94,27 @@ export const projects = {
   // Signed out: drop the last student's list and active manuscript.
   reset() {
     generation++;
+    fresh.invalidate();
     store.set({ projects: [], groups: [], loaded: false, error: false });
     practiceSetup.set({ projectId: null, weights: DEFAULT_WEIGHTS });
   },
 
-  async refresh() {
-    const started = generation;
-    try {
-      const [list, groups] = await Promise.all([api<Project[]>("/projects"), api<GroupReadiness[]>("/groups")]);
-      if (started !== generation) return;
-      store.set({ projects: list, groups, loaded: true, error: false });
-      pickActive(list);
-    } catch {
-      if (started === generation) store.set({ groups: [], loaded: true, error: true });
-    }
+  // `force`: pull to refresh, or an action that changed the list on the server.
+  refresh(force = false) {
+    const pending = store.get().projects.some((p) => p.status === "analyzing");
+    return fresh.run(async () => {
+      const started = generation;
+      try {
+        const [list, groups] = await Promise.all([api<Project[]>("/projects"), api<GroupReadiness[]>("/groups")]);
+        if (started !== generation) return false;
+        store.set({ projects: list, groups, loaded: true, error: false });
+        pickActive(list);
+        return true;
+      } catch {
+        if (started === generation) store.set({ groups: [], loaded: true, error: true });
+        return false;
+      }
+    }, force || pending);
   },
 
   async get(id: string) {
@@ -152,7 +162,7 @@ export const projects = {
   async leaveGroup(p: Project) {
     if (!p.group) return;
     await api(`/groups/${p.group.code}/me`, { method: "DELETE" });
-    await this.refresh();
+    await this.refresh(true);
   },
   // `{ rubric }`: the panel's own; `{ weights }`: back to the default criteria with these weights.
   async saveRubric(id: string, body: { rubric: Rubric } | { weights: number[] }) {
