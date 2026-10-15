@@ -120,7 +120,9 @@ const g = await layout(
     "elk.spacing.edgeEdge": "18",
     "elk.spacing.edgeNode": "28",
     "elk.edgeLabels.inline": "true",
-    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
+    // Centre every column on one middle line so the diagram reads straight left to right instead of stepping down.
+    "elk.layered.nodePlacement.strategy": "SIMPLE",
+    "elk.layered.considerModelOrder.strategy": "NONE",
   },
 );
 placeLabelsOnLines(g);
