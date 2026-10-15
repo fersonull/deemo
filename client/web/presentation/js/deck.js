@@ -118,13 +118,16 @@ addEventListener("keydown", (e) => {
 document.getElementById("prevBtn").addEventListener("click", () => go(index - 1));
 document.getElementById("nextBtn").addEventListener("click", () => go(index + 1));
 
-// PowerPoint-style mouse: left click = next, right click = previous (buttons and links keep their own clicks).
+// Mouse: right click = next, left click = previous (buttons and links keep their own clicks).
+// Touch taps are ignored here; touch moves by swipe.
+let pointer = "mouse";
+addEventListener("pointerdown", (e) => { pointer = e.pointerType; });
 addEventListener("click", (e) => {
-  if (e.button === 0 && !e.target.closest("button, a")) go(index + 1);
+  if (e.button === 0 && pointer === "mouse" && !e.target.closest("button, a")) go(index - 1);
 });
 addEventListener("contextmenu", (e) => {
   e.preventDefault();
-  go(index - 1);
+  go(index + 1);
 });
 
 let touchX = null;
