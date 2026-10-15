@@ -17,7 +17,7 @@
 <main id="stage" class="stage">
 
   <!-- 1 -->
-  <section class="slide" data-kind="title">
+  <section class="slide active" data-kind="title">
     <img class="mark mark--hero" src="assets/deemo-mark.svg" alt="" aria-hidden="true" />
     <p class="eyebrow">BSIT Capstone Project</p>
     <h1 class="display">DEEMO</h1>
@@ -170,18 +170,37 @@
 
   <!-- 12 -->
   <section class="slide">
-    <p class="eyebrow">How It Works</p>
-    <h2>From manuscript to readiness score</h2>
-    <div class="pipeline">
-      <div class="pipeline__step"><span class="material-symbols-rounded">upload_file</span><p>Upload manuscript</p></div>
-      <div class="pipeline__arrow">→</div>
-      <div class="pipeline__step"><span class="material-symbols-rounded">neurology</span><p>AI analyzes &amp; summarizes</p></div>
-      <div class="pipeline__arrow">→</div>
-      <div class="pipeline__step"><span class="material-symbols-rounded">tune</span><p>Pick stage &amp; rubric</p></div>
-      <div class="pipeline__arrow">→</div>
-      <div class="pipeline__step"><span class="material-symbols-rounded">mic</span><p>Live voice session</p></div>
-      <div class="pipeline__arrow">→</div>
-      <div class="pipeline__step"><span class="material-symbols-rounded">insights</span><p>Scored report</p></div>
+    <div class="slide__row">
+      <div class="slide__col">
+        <p class="eyebrow">How It Works</p>
+        <h2>From manuscript to readiness score</h2>
+        <div class="pipeline">
+          <div class="pipeline__step"><span class="material-symbols-rounded">upload_file</span><p>Upload manuscript</p></div>
+          <div class="pipeline__arrow">→</div>
+          <div class="pipeline__step"><span class="material-symbols-rounded">neurology</span><p>AI analyzes &amp; summarizes</p></div>
+          <div class="pipeline__arrow">→</div>
+          <div class="pipeline__step"><span class="material-symbols-rounded">tune</span><p>Pick stage &amp; rubric</p></div>
+          <div class="pipeline__arrow">→</div>
+          <div class="pipeline__step"><span class="material-symbols-rounded">mic</span><p>Live voice session</p></div>
+          <div class="pipeline__arrow">→</div>
+          <div class="pipeline__step"><span class="material-symbols-rounded">insights</span><p>Scored report</p></div>
+        </div>
+      </div>
+      <div class="phone3d" aria-hidden="true">
+        <div class="phone3d__body">
+          <div class="phone3d__notch"></div>
+          <div class="phone3d__screen">
+            <div class="phone3d__statusbar"><span>9:41</span><span>07:48</span></div>
+            <div class="phone3d__panel">
+              <img class="phone3d__mark" src="assets/deemo-mark.svg" alt="" />
+              <p class="phone3d__role">Methodology Panelist</p>
+              <div class="phone3d__wave"><span></span><span></span><span></span><span></span><span></span></div>
+              <p class="phone3d__caption">"You said 30 respondents — the paper says 40."</p>
+            </div>
+            <div class="phone3d__mic"><span class="material-symbols-rounded">mic</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -190,10 +209,23 @@
     <p class="eyebrow">Architecture</p>
     <h2>The phone talks to Gemini directly — the server is never in the conversation</h2>
     <div class="arch">
-      <div class="arch__box arch__box--phone">
-        <span class="material-symbols-rounded">smartphone</span>
-        <p>Phone</p>
-        <p class="meta">live audio session</p>
+      <div class="arch__node">
+        <div class="phone3d" aria-hidden="true">
+          <div class="phone3d__body">
+            <div class="phone3d__notch"></div>
+            <div class="phone3d__screen">
+              <div class="phone3d__statusbar"><span>9:41</span><span>04:12</span></div>
+              <div class="phone3d__panel">
+                <img class="phone3d__mark" src="assets/deemo-mark.svg" alt="" />
+                <p class="phone3d__role">Technical Panelist</p>
+                <div class="phone3d__wave"><span></span><span></span><span></span><span></span><span></span></div>
+                <p class="phone3d__caption">"Walk me through your database design…"</p>
+              </div>
+              <div class="phone3d__mic"><span class="material-symbols-rounded">mic</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="arch__node-label">Phone <span class="meta">— live audio session</span></p>
       </div>
       <div class="arch__link arch__link--wss">⇄ WSS, direct</div>
       <div class="arch__box arch__box--ai">
