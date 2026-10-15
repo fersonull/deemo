@@ -1,4 +1,5 @@
 // Slide navigation, GSAP slide transitions, and the phone hand-off between slides.
+import { createDeemo } from "./deemo.js";
 import { createPhone } from "./phone.js";
 
 const stage = document.getElementById("stage");
@@ -22,8 +23,11 @@ const slotOf = (i) => slides[i].querySelector(".phone-slot");
 
 let index = Math.min(Math.max((parseInt(location.hash.slice(1), 10) || 1) - 1, 0), slides.length - 1);
 let tl = null;
+const say = createDeemo(document.getElementById("deemo"));
 
 function updateChrome() {
+  const { deemo, say: line } = slides[index].dataset;
+  say(deemo, line);
   count.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
   gsap.to(progress, { scaleX: index / (slides.length - 1), duration: 0.6, ease: "power3.out" });
   history.replaceState(null, "", `#${index + 1}`);

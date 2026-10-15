@@ -22,7 +22,7 @@
 <div class="stage" id="stage">
 
   <!-- 1 · cold open -->
-  <section class="slide slide--title" aria-label="DEEMO">
+  <section class="slide slide--title" data-deemo="waving" data-say="Hi, I&#39;m Deemo. I sit on the panel when yours can&#39;t." aria-label="DEEMO">
     <div class="title-copy">
       <img class="title-mark r" src="assets/deemo-mark.svg" alt="" />
       <h1 class="display r">DEEMO</h1>
@@ -33,8 +33,8 @@
   </section>
 
   <!-- 2 · problem -->
-  <section class="slide">
-    <h2 class="q r">Why does this need to exist?</h2>
+  <section class="slide" data-deemo="nervous" data-say="Defenses are scary. Practice makes them less so.">
+    <h2 class="q r">Why did we build this?</h2>
     <div class="split">
       <div>
         <p class="answer r">Students can build it. Defending it out loud is another story.</p>
@@ -50,8 +50,8 @@
   </section>
 
   <!-- 3 · solution -->
-  <section class="slide">
-    <h2 class="q r">So what did you build?</h2>
+  <section class="slide" data-deemo="cheering" data-say="I read your paper first, then I ask out loud.">
+    <h2 class="q r">What did we build?</h2>
     <div class="solution">
       <ul class="callouts">
         <li class="r"><span class="icon">menu_book</span><strong>Reads your paper</strong>Questions come from your uploaded manuscript.</li>
@@ -66,8 +66,8 @@
   </section>
 
   <!-- 4 · target market (Ch. II) -->
-  <section class="slide">
-    <h2 class="q r">Who is this for?</h2>
+  <section class="slide" data-deemo="idle" data-say="First stop: BSIT students at PMFTCI.">
+    <h2 class="q r">Who did we build it for?</h2>
     <div class="market">
       <div class="bullseye">
         <div class="ring ring--outer r"><span>PMFTCI · first rollout</span></div>
@@ -83,8 +83,8 @@
   </section>
 
   <!-- 5 · target technologies (Ch. II) -->
-  <section class="slide">
-    <h2 class="q r">What technology does it rest on?</h2>
+  <section class="slide" data-deemo="reading" data-say="Gemini does the heavy lifting; I do the asking.">
+    <h2 class="q r">What technology did we use?</h2>
     <div class="solution">
       <ul class="callouts">
         <li class="r"><span class="icon">neurology</span><strong>Natural Language Processing</strong>Reads the manuscript and spots contradictions.</li>
@@ -99,8 +99,8 @@
   </section>
 
   <!-- 6 · comparison (Ch. II, Table 1) -->
-  <section class="slide">
-    <h2 class="q r">Doesn't this already exist?</h2>
+  <section class="slide" data-deemo="encouraging" data-say="Others can chat about a paper. I run the defense.">
+    <h2 class="q r">How is it different from existing tools?</h2>
     <table class="matrix r">
       <thead>
         <tr><th scope="col">Feature</th><th scope="col">Gemini AI</th><th scope="col">ChatGPT</th><th scope="col">NotebookLM</th><th scope="col">Claude AI</th><th scope="col" class="is-us">DEEMO</th></tr>
@@ -119,8 +119,8 @@
   </section>
 
   <!-- 7 · objectives (Ch. I) -->
-  <section class="slide">
-    <h2 class="q r">What did you set out to do?</h2>
+  <section class="slide" data-deemo="reading" data-say="Six objectives, one mock panel.">
+    <h2 class="q r">What did we set out to do?</h2>
     <div class="split">
       <ol class="points points--2 points--num">
         <li class="r"><strong>Identify the challenges</strong>Communication, confidence, critical thinking.</li>
@@ -135,8 +135,8 @@
   </section>
 
   <!-- 8 · key terms -->
-  <section class="slide">
-    <h2 class="q r">Define your terms.</h2>
+  <section class="slide" data-deemo="reading" data-say="A quick glossary before the hard questions.">
+    <h2 class="q r">The terms we use.</h2>
     <dl class="terms">
       <div class="r"><dt>Readiness Score</dt><dd>0–100 from the rubric, adjusted for consistency and coverage.</dd></div>
       <div class="r"><dt>Bounded Follow-Up</dt><dd>At most two follow-ups per topic, then the panel moves on.</dd></div>
@@ -148,8 +148,8 @@
   </section>
 
   <!-- 9 · system functions -->
-  <section class="slide">
-    <h2 class="q r">What can it actually do?</h2>
+  <section class="slide" data-deemo="cheering" data-say="Contradictions get a gentle amber flag, never red.">
+    <h2 class="q r">What can DEEMO do?</h2>
     <div class="solution">
       <ul class="callouts">
         <li class="r"><span class="icon">mic</span><strong>Live mock defense</strong>Voice panel, adaptive questions, live transcript.</li>
@@ -164,8 +164,8 @@
   </section>
 
   <!-- 10 · how it works: the active step drives the phone screen -->
-  <section class="slide">
-    <h2 class="q r">Walk us through a session.</h2>
+  <section class="slide" data-deemo="encouraging" data-say="Five steps from upload to score.">
+    <h2 class="q r">How does a session work?</h2>
     <div class="flow">
       <ol class="steps" id="flowSteps">
         <li class="r"><button type="button" data-screen="projects"><span class="icon">upload_file</span><span>Upload manuscript<small>PDF or DOCX, one per project</small></span></button></li>
@@ -179,7 +179,7 @@
   </section>
 
   <!-- 11 · architecture -->
-  <section class="slide">
+  <section class="slide" data-deemo="idle" data-say="Your voice goes straight to Gemini, not our server.">
     <h2 class="q r">Where does the audio go?</h2>
     <div class="arch">
       <div class="phone-slot slot--arch" data-screen="session" data-pose="right"></div>
@@ -201,8 +201,8 @@
   </section>
 
   <!-- 12 · stack + scope -->
-  <section class="slide">
-    <h2 class="q r">What is it built on, and where does it stop?</h2>
+  <section class="slide" data-deemo="reading" data-say="And here&#39;s where I stop.">
+    <h2 class="q r">What did we build it on, and where does it stop?</h2>
     <div class="stackscope">
       <dl class="stack">
         <div class="r"><dt>Mobile</dt><dd>React Native Expo, TypeScript</dd></div>
@@ -226,8 +226,8 @@
   </section>
 
   <!-- 13 · status -->
-  <section class="slide">
-    <h2 class="q r">Does it work today?</h2>
+  <section class="slide" data-deemo="encouraging" data-say="Working end to end. A few steps left.">
+    <h2 class="q r">Where are we now?</h2>
     <div class="split">
       <div>
         <ul class="checks">
@@ -249,13 +249,19 @@
   </section>
 
   <!-- 14 · close: the phone turns to face the real panel -->
-  <section class="slide slide--closing">
+  <section class="slide slide--closing" data-deemo="waving" data-say="Your turn, panel!">
     <div class="closing-copy">
       <h2 class="display r">The floor<br />is yours.</h2>
       <p class="lede r">Questions from the panel.</p>
     </div>
     <div class="phone-slot slot--closing" data-screen="mic" data-pose="front" data-spin="1"></div>
   </section>
+
+  <!-- Deemo, the app's owl, narrates each slide (js/deemo.js) -->
+  <div class="deemo" id="deemo" aria-live="polite">
+    <div class="deemo__owl"></div>
+    <p class="deemo__say"></p>
+  </div>
 
 </div>
 </main>
