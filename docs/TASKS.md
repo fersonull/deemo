@@ -27,6 +27,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Deck: compact slides + Chapter II data**: no timer/mode HUD or panelist labels, slide-3-style compact content, target market/technologies/comparison from the paper.
 - [x] **Deck: group-voice headings + Deemo narrator** (the owl, one mood and line per slide).
 - [x] **Deck: portrait layouts for phones** (720-wide stage, one-column slides).
+- [x] **Deck: mouse wheel moves through the slide 10 steps.**
 - [x] **Deck: right click = next, left click = previous.**
 - [x] **Deck: bigger slide 10 phone (the step walkthrough is the highlight).**
 - [x] **Deck: thank-you close, no status slide, sharper phone screen, phone-view fixes (slides 2, 10, 11).**

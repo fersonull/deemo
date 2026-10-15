@@ -63,6 +63,14 @@ flowButtons.forEach((b, i) =>
   }),
 );
 setStep(0);
+// Mouse wheel walks the steps (down = next); one step per gesture, so trackpads don't skip ahead.
+let wheelAt = 0;
+addEventListener("wheel", (e) => {
+  if (index !== flowSlide || !e.deltaY || e.timeStamp - wheelAt < 400) return;
+  wheelAt = e.timeStamp;
+  clearInterval(flowTimer);
+  setStep(Math.min(Math.max(step + Math.sign(e.deltaY), 0), flowButtons.length - 1));
+}, { passive: true });
 
 const reveal = (s) => s.querySelectorAll(".r");
 
