@@ -27,6 +27,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Deck: compact slides + Chapter II data**: no timer/mode HUD or panelist labels, slide-3-style compact content, target market/technologies/comparison from the paper.
 - [x] **Deck: group-voice headings + Deemo narrator** (the owl, one mood and line per slide).
 - [x] **Deck: portrait layouts for phones** (720-wide stage, one-column slides).
+- [x] **Deck: thank-you close, no status slide, sharper phone screen, phone-view fixes (slides 2, 10, 11).**
 - [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
 - [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).
 - [ ] **Read-only share link** (addendum Q2, optional; not in the prototype): one report, expires after 7 days. Skipped for now; the PDF covers sending results to the adviser.

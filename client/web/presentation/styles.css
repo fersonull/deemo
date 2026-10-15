@@ -315,14 +315,6 @@ button { font: inherit; color: inherit; }
 .scope .is-not li { color: var(--muted); }
 .scope .is-not li::before { background: transparent; box-shadow: inset 0 0 0 2px var(--faint); }
 
-/* ── 13 · status ── */
-.checks { display: flex; flex-direction: column; gap: 22px; font: 500 30px/1.35 var(--body); }
-.checks li { display: flex; gap: 20px; align-items: center; }
-.checks .icon { font-size: 38px; color: var(--sage); font-variation-settings: "FILL" 1; }
-.split .scope__head { margin-top: 60px; font-size: 36px; }
-.checks--open { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 40px; font: 400 27px/1.35 var(--body); color: var(--ink-muted); }
-.checks--open .icon { color: var(--amber); font-size: 34px; font-variation-settings: "FILL" 0; }
-
 /* ── 14 · closing ── */
 .slide--closing { flex-direction: row; align-items: center; justify-content: space-between; }
 .closing-copy { display: flex; flex-direction: column; gap: 40px; }
@@ -412,11 +404,14 @@ body { touch-action: pinch-zoom; } /* keeps pointer events alive for swipes, sti
 .portrait .slot--title,
 .portrait .slot--closing { flex: 1; min-height: 0; width: 100%; max-height: 640px; margin: 0; }
 
-.portrait .split { grid-template-columns: 1fr 200px; gap: 28px; align-items: start; }
-.portrait .split .answer { margin-bottom: 36px; }
-.portrait .slot--split { width: 200px; height: 420px; position: sticky; top: 0; }
-.portrait .points,
-.portrait .points--2 { grid-template-columns: 1fr; gap: 26px; }
+/* split slides: answer, then the phone filling the free height, then the points */
+.portrait .split { display: flex; flex-direction: column; gap: 32px; min-height: 0; }
+.portrait .split > div:not(.phone-slot) { display: contents; }
+.portrait .split .answer { order: 1; margin: 0; }
+.portrait .slot--split { order: 2; flex: 1; min-height: 260px; width: 100%; height: auto; }
+.portrait .split .points { order: 3; }
+.portrait .points { grid-template-columns: 1fr; gap: 26px; }
+.portrait .points--2 { grid-template-columns: 1fr 1fr; gap: 28px 24px; }
 .portrait .points li { grid-template-columns: 52px 1fr; column-gap: 16px; font-size: 22px; }
 .portrait .points .icon,
 .portrait .points--num li::before { width: 52px; height: 45px; font-size: 26px; }
@@ -452,19 +447,23 @@ body { touch-action: pinch-zoom; } /* keeps pointer events alive for swipes, sti
 .portrait .terms dt { font-size: 28px; margin-bottom: 6px; }
 .portrait .terms dd { font-size: 21px; }
 
-.portrait .flow { grid-template-columns: 1fr 200px; gap: 20px; align-items: start; }
+.portrait .flow { display: flex; flex-direction: column; gap: 28px; min-height: 0; }
 .portrait .steps button { gap: 16px; padding: 14px 16px; font-size: 26px; }
 .portrait .steps .icon { width: 52px; height: 45px; font-size: 24px; }
 .portrait .steps small { font-size: 18px; }
-.portrait .slot--flow { width: 200px; height: 420px; }
+.portrait .slot--flow { flex: 1; min-height: 260px; width: 100%; height: auto; }
 
-.portrait .arch { grid-template-columns: 200px 1fr; grid-template-rows: auto auto auto; gap: 30px; align-items: center; }
-.portrait .slot--arch { grid-row: 1; width: 200px; height: 410px; }
-.portrait .arch__box { grid-row: 1; padding: 30px 28px; }
-.portrait .arch__name { font-size: 40px; }
-.portrait .arch__box .icon { font-size: 42px; margin-bottom: 10px; }
-.portrait .arch__link { grid-column: 1 / -1; grid-row: 2; }
-.portrait .arch__server { grid-column: 1 / -1; grid-row: 3; padding: 22px 24px; font-size: 21px; }
+/* architecture: phone, dotted line, Gemini card on one row so the line joins them */
+.portrait .arch { grid-template-columns: 190px 1fr 230px; grid-template-rows: auto auto auto auto; gap: 26px 0; align-items: center; }
+.portrait .arch__link { display: contents; }
+.portrait .slot--arch { grid-column: 1; grid-row: 1; width: 190px; height: 390px; }
+.portrait .arch__line { grid-column: 2; grid-row: 1; height: 30px; width: calc(100% + 40px); margin-left: -40px; }
+.portrait .arch__box { grid-column: 3; grid-row: 1; padding: 26px 22px; }
+.portrait .arch__name { font-size: 34px; }
+.portrait .arch__box .icon { font-size: 38px; margin-bottom: 10px; }
+.portrait .arch__link .answer { grid-column: 1 / -1; grid-row: 2; text-align: center; justify-self: center; max-width: 22ch; }
+.portrait .arch__tag { grid-column: 1 / -1; grid-row: 3; justify-self: center; font-size: 18px; }
+.portrait .arch__server { grid-column: 1 / -1; grid-row: 4; padding: 22px 24px; font-size: 21px; }
 .portrait .arch__server strong { font-size: 26px; }
 
 .portrait .stackscope { grid-template-columns: 1fr; gap: 40px; }
@@ -476,10 +475,6 @@ body { touch-action: pinch-zoom; } /* keeps pointer events alive for swipes, sti
 .portrait .scope ul { gap: 12px; font-size: 21px; }
 .portrait .scope li::before { top: 10px; }
 
-.portrait .checks { font-size: 23px; gap: 16px; }
-.portrait .checks .icon { font-size: 30px; }
-.portrait .split .scope__head { margin-top: 36px; font-size: 28px; }
-.portrait .checks--open { grid-template-columns: 1fr; gap: 12px; font-size: 21px; }
 
 .portrait .deemo { left: 28px; bottom: 24px; gap: 10px; }
 .portrait .deemo__owl { width: 112px; height: 118px; }

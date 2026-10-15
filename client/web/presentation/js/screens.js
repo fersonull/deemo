@@ -1,10 +1,10 @@
 // App screens drawn with Canvas 2D in the prototype's own 360×760 coordinates
-// (docs/design/DEEMO Prototype.dc.html), rendered at 2× and used as the phone's screen texture.
+// (docs/design/DEEMO Prototype.dc.html), rendered at the phone's on-screen size (setScale) and used as its
+// screen texture. Matching the display size and skipping mipmaps keeps the text sharp.
 // ponytail: approximations of the prototype, not the shipped app; swap for real screenshots if wanted.
 
 export const W = 360;
 export const H = 760;
-const SCALE = 2;
 
 const C = {
   paper: "#F7F3EC", sand: "#EDE5D8", banner: "#F1E6D6", ink: "#2A2420", inkSoft: "#3E3731",
@@ -424,29 +424,6 @@ const DRAW = {
       rr(ctx, 36, y + 7, (288 * s) / 5, 6, 3, C.dusk);
     });
   },
-
-  mic(ctx, t) {
-    bg(ctx);
-    statusBar(ctx);
-    text(ctx, "Your panel", 20, 116, F.display(800, 32), C.ink, { ls: -1.1 });
-    text(ctx, "is ready.", 20, 150, F.display(800, 32), C.ink, { ls: -1.1 });
-    text(ctx, "Pre-Oral · 3 panelists · 15 min", 20, 178, F.body(400, 14), C.inkMuted);
-    [92, 180, 268].forEach((cx, i) => panelist(ctx, PANEL[i], cx, 300, false, t));
-    const cy = 480;
-    for (let k = 3; k >= 1; k--) {
-      const r = 46 + k * 22 + Math.sin(t * 2 - k) * 4;
-      ctx.beginPath();
-      ctx.arc(180, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(90,102,199,${0.07 * (4 - k)})`;
-      ctx.fill();
-    }
-    ctx.beginPath();
-    ctx.arc(180, cy, 48, 0, Math.PI * 2);
-    ctx.fillStyle = C.ink;
-    ctx.fill();
-    icon(ctx, "mic", 180, cy, 40, C.paper, "center");
-    text(ctx, "Tap the mic and answer out loud.", 180, 600, F.body(500, 14), C.inkMuted, { align: "center" });
-  },
 };
 
 function tabBar(ctx, on) {
@@ -461,7 +438,7 @@ function tabBar(ctx, on) {
   });
 }
 
-const ANIMATED = new Set(["session", "flag", "mic"]);
+const ANIMATED = new Set(["session", "flag"]);
 
 // Fonts must be ready before drawing, or the canvas bakes in fallbacks and raw ligature names.
 async function fontsReady() {
@@ -486,39 +463,43 @@ function loadImage(src) {
   });
 }
 
-export async function createScreens(THREE, maxAnisotropy) {
+export async function createScreens(THREE) {
   const [, mark] = await Promise.all([fontsReady(), loadImage("assets/deemo-mark.svg")]);
   const cache = new Map();
+  let scale = 2;
 
-  function entry(id) {
-    if (cache.has(id)) return cache.get(id);
-    const canvas = document.createElement("canvas");
-    canvas.width = W * SCALE;
-    canvas.height = H * SCALE;
+  // (Re)builds a screen's canvas and texture at the current scale; a new size needs a new GPU texture.
+  function build(id) {
+    let e = cache.get(id);
+    if (e && e.scale === scale) return e;
+    const canvas = e?.canvas ?? document.createElement("canvas");
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
     const ctx = canvas.getContext("2d");
-    ctx.scale(SCALE, SCALE);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    e?.texture.dispose();
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = maxAnisotropy;
-    const e = { ctx, texture, drawn: false };
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    DRAW[id](ctx, 0, mark);
+    e = { canvas, ctx, texture, scale };
     cache.set(id, e);
     return e;
   }
 
   return {
-    texture(id) {
-      const e = entry(id);
-      if (!e.drawn) {
-        DRAW[id](e.ctx, 0, mark);
-        e.texture.needsUpdate = true;
-        e.drawn = true;
-      }
-      return e.texture;
+    texture: (id) => build(id).texture,
+    // Texture pixels per screen point; returns true when it changed (callers re-fetch their textures).
+    setScale(next) {
+      if (next === scale) return false;
+      scale = next;
+      return true;
     },
     // Redraws an animated screen; call only for the screen that is showing.
     tick(id, t) {
       if (!ANIMATED.has(id)) return;
-      const e = entry(id);
+      const e = build(id);
       DRAW[id](e.ctx, t, mark);
       e.texture.needsUpdate = true;
     },

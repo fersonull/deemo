@@ -184,7 +184,7 @@ export async function createPhone(canvas) {
   const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 100);
   camera.position.z = 12;
 
-  const screens = await createScreens(THREE, renderer.capabilities.getMaxAnisotropy());
+  const screens = await createScreens(THREE);
   // Two stacked screens: the top one fades in a new screen, then hands it to the bottom one.
   const base = new THREE.MeshBasicMaterial({ toneMapped: false });
   const fade = new THREE.MeshBasicMaterial({ toneMapped: false, transparent: true, opacity: 0, depthWrite: false });
@@ -255,9 +255,19 @@ export async function createPhone(canvas) {
     lean.rotation.set(0, 0, 0);
   }
 
+  // Draw the screen texture at the size it will appear on screen (device pixels), so it stays sharp.
+  function sharpen(t) {
+    const px = (t.s * SCR_H * renderer.getPixelRatio()) / unit();
+    const next = Math.min(4, Math.max(0.75, Math.floor((px / SH) * 4) / 4));
+    if (!screens.setScale(next)) return;
+    fadeTween?.progress(1);
+    base.map = screens.texture(current);
+  }
+
   function goTo(el, { instant = false } = {}) {
     slot = el;
     const t = targetFor(el);
+    if (el) sharpen(t);
     if (el?.dataset.screen) setScreen(el.dataset.screen, instant || reduced.matches ? 0 : 0.35);
     flight?.kill();
     if (instant || reduced.matches) {
@@ -285,7 +295,9 @@ export async function createPhone(canvas) {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     flight?.progress(1);
-    place(targetFor(slot));
+    const t = targetFor(slot);
+    place(t);
+    if (slot) sharpen(t);
   }
   addEventListener("resize", resize);
   resize();
