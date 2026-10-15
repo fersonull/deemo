@@ -1,0 +1,360 @@
+// DEEMO's data (Firebase handles sign-in only; the server is the only one touching this database).
+// Every row belongs to a User, and deleting the User cascades to everything that is theirs ("Delete my data").
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  analyzing
+  ready
+  failed
+}
+
+enum SessionStatus {
+  scoring
+  ready
+  failed
+}
+
+enum DefenseMode {
+  TITLE
+  PRE_ORAL
+  FINAL
+}
+
+enum Difficulty {
+  EASY
+  STANDARD
+  HARD
+}
+
+enum EndedBy {
+  panel
+  student
+  time
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+// A student. `id` is the Firebase Authentication uid; email, name and verification are synced from Firebase.
+model User {
+  id             String    @id @db.VarChar(128)
+  email          String?   @db.VarChar(320)
+  name           String?   @db.VarChar(60)
+  emailVerified  Boolean   @default(false) @map("email_verified")
+  provider       String?   @db.VarChar(30)
+  avatar         String?   @db.VarChar(32) // DiceBear seed; null = default from the uid
+  premium        Boolean   @default(false) // simulated (addendum Q1)
+  allowTyping    Boolean   @default(true) @map("allow_typing")
+  consentVersion String?   @map("consent_version") @db.VarChar(20)
+  consentAt      DateTime? @map("consent_at")
+  sessionDay     String?   @map("session_day") @db.VarChar(10) // Manila calendar day of the last Live start
+  sessionCount   Int       @default(0) @map("session_count")
+  deletedAt      DateTime? @map("deleted_at") // set while "Delete my data" runs
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  projects    Project[]
+  sessions    Session[]
+  liveStarts  LiveStart[]
+  ownedGroups Group[]
+  memberships GroupMember[]
+
+  @@map("users")
+}
+
+// An uploaded manuscript. The file itself is never stored; only its analysis.
+model Project {
+  id          String        @id @db.VarChar(36)
+  userId      String        @map("user_id") @db.VarChar(128)
+  name        String        @db.VarChar(80)
+  domain      String        @db.VarChar(30)
+  fileName    String        @map("file_name") @db.VarChar(200)
+  sizeBytes   Int           @map("size_bytes")
+  status      ProjectStatus
+  error       String?
+  confirmedAt DateTime?     @map("confirmed_at")
+  weights     Int[] // the default rubric's five weights; empty = defaults
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis Analysis?
+  rubric   Rubric?
+  group    Group?
+
+  @@index([userId, createdAt])
+  @@map("projects")
+}
+
+// Document Logic Analysis of a project (plan F2).
+model Analysis {
+  projectId  String   @id @map("project_id") @db.VarChar(36)
+  title      String   @db.VarChar(2000)
+  problem    String   @db.VarChar(2000)
+  objectives String   @db.VarChar(2000)
+  method     String   @db.VarChar(2000)
+  scope      String   @db.VarChar(2000)
+  features   String   @db.VarChar(2000)
+  limits     String   @db.VarChar(2000)
+  results    String   @db.VarChar(2000)
+  facts      String[]
+  unsure     String[]
+  model      String?  @db.VarChar(40)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("analyses")
+}
+
+// The panel's own rubric for a project (plan F3), replacing the default five criteria.
+model Rubric {
+  projectId String @id @map("project_id") @db.VarChar(36)
+  source    String @db.VarChar(200)
+
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  criteria RubricCriterion[]
+
+  @@map("rubrics")
+}
+
+model RubricCriterion {
+  id          Int     @id @default(autoincrement())
+  rubricId    String  @map("rubric_id") @db.VarChar(36)
+  position    Int
+  name        String  @db.VarChar(80)
+  description String  @db.VarChar(300)
+  points      Float
+  weight      Int
+  scored      Boolean
+  level1      String  @db.VarChar(200)
+  level3      String  @db.VarChar(200)
+  level5      String  @db.VarChar(200)
+
+  rubric Rubric @relation(fields: [rubricId], references: [projectId], onDelete: Cascade)
+
+  @@unique([rubricId, position])
+  @@map("rubric_criteria")
+}
+
+// A finished practice session. Transcripts only; audio is never stored.
+model Session {
+  id                String        @id @db.VarChar(36)
+  userId            String        @map("user_id") @db.VarChar(128)
+  status            SessionStatus
+  error             String?
+  projectId         String?       @map("project_id") @db.VarChar(100) // may name a shared "group-CODE" project, so no FK
+  groupCode         String?       @map("group_code") @db.VarChar(6)
+  focusArea         String?       @map("focus_area") @db.VarChar(160)
+  weakFrom          String?       @map("weak_from") @db.VarChar(100)
+  manuscriptContext String?       @map("manuscript_context")
+  title             String        @db.VarChar(2000)
+  mode              DefenseMode
+  domain            String        @db.VarChar(30)
+  minutes           Int
+  panelists         Int
+  followUps         Int           @map("follow_ups")
+  difficulty        Difficulty
+  durationMs        Int           @map("duration_ms")
+  endedBy           EndedBy       @map("ended_by")
+  weights           Float[]
+  rubric            Json? // snapshot of the panel's rubric criteria at the time
+  lines             Json // the full transcript
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  turns  SessionTurn[]
+  flags  SessionFlag[]
+  report Report?
+
+  @@index([userId, createdAt])
+  @@index([groupCode])
+  @@map("sessions")
+}
+
+model SessionTurn {
+  id        Int    @id @default(autoincrement())
+  sessionId String @map("session_id") @db.VarChar(36)
+  position  Int
+  number    Int
+  followUp  Int    @map("follow_up")
+  type      String @db.VarChar(20)
+  panelist  Int
+  question  String @db.VarChar(600)
+  answer    String @db.VarChar(4000)
+  latencyMs Int?   @map("latency_ms")
+  answerMs  Int    @map("answer_ms")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, position])
+  @@map("session_turns")
+}
+
+// Contradictions flagged live by the panel.
+model SessionFlag {
+  id                 Int      @id @default(autoincrement())
+  sessionId          String   @map("session_id") @db.VarChar(36)
+  position           Int
+  spokenClaim        String   @map("spoken_claim") @db.VarChar(400)
+  manuscriptEvidence String   @map("manuscript_evidence") @db.VarChar(400)
+  severity           Severity
+  atMs               Int      @map("at_ms")
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, position])
+  @@map("session_flags")
+}
+
+// The scored report of a session (addendum Q4).
+model Report {
+  sessionId     String  @id @map("session_id") @db.VarChar(36)
+  score         Int
+  band          String  @db.VarChar(20)
+  message       String
+  scored        Boolean
+  rubricScore   Int     @map("rubric_score")
+  penalty       Float
+  answered      Int
+  planned       Int
+  headline      String
+  model         String? @db.VarChar(40)
+  latencyS      Float?  @map("latency_s")
+  fillersPerMin Float?  @map("fillers_per_min")
+  wordsPerMin   Float?  @map("words_per_min")
+
+  session        Session               @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  criteria       ReportCriterion[]
+  contradictions ReportContradiction[]
+  turns          ReportTurn[]
+  fixes          ReportFix[]
+
+  @@map("reports")
+}
+
+model ReportCriterion {
+  id       Int    @id @default(autoincrement())
+  reportId String @map("report_id") @db.VarChar(36)
+  position Int
+  key      String @db.VarChar(20)
+  name     String @db.VarChar(80)
+  weight   Float
+  level    Int? // null: not measured
+  why      String
+
+  report Report @relation(fields: [reportId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([reportId, position])
+  @@map("report_criteria")
+}
+
+model ReportContradiction {
+  id                 Int      @id @default(autoincrement())
+  reportId           String   @map("report_id") @db.VarChar(36)
+  position           Int
+  spokenClaim        String   @map("spoken_claim")
+  manuscriptEvidence String   @map("manuscript_evidence")
+  severity           Severity
+  turn               Int?
+
+  report Report @relation(fields: [reportId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([reportId, position])
+  @@map("report_contradictions")
+}
+
+// Feedback and a stronger answer for each answer of the session.
+model ReportTurn {
+  id           Int    @id @default(autoincrement())
+  reportId     String @map("report_id") @db.VarChar(36)
+  position     Int
+  feedback     String
+  betterAnswer String @map("better_answer")
+
+  report Report @relation(fields: [reportId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([reportId, position])
+  @@map("report_turns")
+}
+
+model ReportFix {
+  id       Int    @id @default(autoincrement())
+  reportId String @map("report_id") @db.VarChar(36)
+  position Int
+  text     String
+  turn     Int?
+
+  report Report @relation(fields: [reportId], references: [sessionId], onDelete: Cascade)
+
+  @@unique([reportId, position])
+  @@map("report_fixes")
+}
+
+// A shared capstone project (addendum Q10): one per project, joined with its 6-character code.
+model Group {
+  code      String   @id @db.VarChar(6)
+  ownerId   String   @map("owner_id") @db.VarChar(128)
+  projectId String   @unique @map("project_id") @db.VarChar(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  owner   User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  members GroupMember[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  groupCode  String   @map("group_code") @db.VarChar(6)
+  userId     String   @map("user_id") @db.VarChar(128)
+  shareScore Boolean  @default(false) @map("share_score")
+  focusArea  String   @default("") @map("focus_area") @db.VarChar(160)
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupCode], references: [code], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupCode, userId])
+  @@index([userId])
+  @@map("group_members")
+}
+
+// One Live practice start (daily cap, addendum Q1): reserved before the token is minted, so retries are safe.
+model LiveStart {
+  id              String    @db.VarChar(100)
+  userId          String    @map("user_id") @db.VarChar(128)
+  day             String    @db.VarChar(10)
+  setup           String // fingerprint of the locked panel setup
+  lease           String    @db.VarChar(36)
+  pendingUntil    DateTime  @map("pending_until")
+  expiresAt       DateTime  @map("expires_at")
+  token           String?
+  newSessionUntil DateTime? @map("new_session_until")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, id])
+  @@map("live_starts")
+}
+
+// Fixed-window request counters for rate limiting, shared by every server instance.
+model RateLimitCounter {
+  key         String   @db.VarChar(200)
+  windowStart DateTime @map("window_start")
+  count       Int
+
+  @@id([key, windowStart])
+  @@map("rate_limit_counters")
+}

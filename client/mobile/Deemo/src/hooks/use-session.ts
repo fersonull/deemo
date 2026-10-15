@@ -34,15 +34,18 @@ const store = createStore({
   name: null as string | null, // Firebase display name: from Google, or typed at sign-up or in Profile
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
+  accountLoaded: false, // the server's account record has arrived (false offline): only then can missing consent be told apart
   premium: false, // simulated freemium (addendum Q1)
 });
 
 // The consent text's version, recorded on the account. 2026-10.3: Google's AI only (the OpenAI backup was removed).
 export const CONSENT_VERSION = "2026-10.3";
 
-type Me = { premium: boolean; allowTyping: boolean; avatar: string; consentAt?: string };
+type Me = { name: string | null; premium: boolean; allowTyping: boolean; avatar: string; consentAt?: string };
 
 const fromMe = (me: Me) => ({
+  accountLoaded: true,
+  name: me.name ?? store.get().name, // the server keeps the name (and writes it back to Firebase)
   premium: me.premium,
   allowTyping: me.allowTyping,
   avatar: me.avatar,
@@ -52,7 +55,7 @@ const fromMe = (me: Me) => ({
 const patchMe = (body: object) =>
   api<Me>("/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
-// The account record lives on the server, which only serves verified emails (server/src/firebase.ts).
+// The account record lives on the server, which only serves verified emails (server/src/shared/auth/authenticate.ts).
 async function loadAccount() {
   try {
     // Consent was given before there was an account to record it on.
@@ -73,7 +76,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     verified: !!user?.emailVerified,
     email: user?.email ?? null,
     name: user?.displayName ?? null,
-    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0, avatar: null }),
+    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0, avatar: null, accountLoaded: false }),
   });
   if (user?.emailVerified) await loadAccount();
 });
@@ -132,7 +135,13 @@ export const session = {
     await this.signOut().catch(() => {}); // the account is already gone server-side
   },
 
+  // Consent before sign-in: kept on the device until there's an account to record it on (loadAccount).
   consent: () => store.set({ consentAt: new Date().toISOString() }),
+
+  // Consent from a signed-in account that has none on record (an older account): recorded right away.
+  async acceptConsent() {
+    store.set(fromMe(await patchMe({ consentVersion: CONSENT_VERSION })));
+  },
 
   signInWithEmail: (email: string, password: string) => signInWithEmailAndPassword(getAuth(), email.trim(), password),
 
@@ -146,14 +155,20 @@ export const session = {
       .catch(() => {}); // the verify-email screen can resend it
   },
 
-  // Saved on the Firebase account, where Google's name lives too, so the server sees it for group members. The local
-  // user object doesn't refresh itself, so the store gets the new name directly.
+  // The server owns the name: it saves it on the account and writes it to the Firebase user, so both stay in sync.
+  // During sign-up the email isn't verified yet and the server won't answer, so the name goes on the Firebase user
+  // directly; the server copies it onto the account on the first verified request.
   async setName(raw: string) {
     const user = getAuth().currentUser;
     const name = cleanName(raw);
     if (!user || !name) return;
-    await updateProfile(user, { displayName: name });
-    store.set({ name });
+    if (!user.emailVerified) {
+      await updateProfile(user, { displayName: name });
+      store.set({ name });
+      return;
+    }
+    store.set({ name: (await patchMe({ name })).name ?? name });
+    await reload(user).catch(() => {}); // the local Firebase user picks up the new display name
   },
 
   async resendVerification() {

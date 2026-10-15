@@ -96,7 +96,7 @@ export function Criteria({ criteria }: { criteria: Report["criteria"] }) {
             <Text style={styles.mono}>{c.level === null ? "Not measured" : `${c.level}/5 · ${c.weight}%`}</Text>
           </View>
           <View style={styles.track}>
-            {/* Bar = points earned: level 1 is empty, 5 is full (server/src/scoring.ts levelPoints). */}
+            {/* Bar = points earned: level 1 is empty, 5 is full (server/src/modules/scoring/domain/scoring.ts levelPoints). */}
             <View style={[styles.bar, { width: `${c.level === null ? 0 : ((c.level - 1) / 4) * 100}%` }]} />
           </View>
           <Text style={styles.why}>{c.why}</Text>

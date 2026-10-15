@@ -12,7 +12,7 @@ import { PressableScale } from "@/components/pressable-scale";
 
 const PDF = "application/pdf";
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-const MAX_MB = 20; // server/src/analysis.ts MAX_BYTES
+const MAX_MB = 20; // server/src/modules/manuscripts/domain/manuscript.ts MAX_BYTES
 
 const mb = (bytes?: number) => (bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : "");
 const nameFrom = (f: PickedFile | null) => (f ? f.name.replace(/\.(pdf|docx)$/i, "").replace(/[_-]+/g, " ") : "");

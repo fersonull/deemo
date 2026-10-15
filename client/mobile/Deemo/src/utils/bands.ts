@@ -1,6 +1,6 @@
 import { colors } from "@/colors";
 
-// Readiness bands (addendum Q4, server/src/scoring.ts `band`) with their status colors, so a score reads at a
+// Readiness bands (addendum Q4, server/src/modules/scoring/domain/scoring.ts `band`) with their status colors, so a score reads at a
 // glance: sage = defense-ready, dusk = nearly ready, amber = developing, clay = needs preparation. Color is never
 // the only signal: the band's name always travels with it. Never used inside a live session (no red there).
 

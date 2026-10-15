@@ -14,8 +14,10 @@ import { colors } from "@/theme";
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { ready, signedIn, verified } = useSession();
+  const { ready, signedIn, verified, accountLoaded, consentAt } = useSession();
   const inside = signedIn && verified; // email sign-ups wait on verify-email until they tap the link
+  // An account with no consent on record (made before consent was stored server-side) sees the consent screen first.
+  const needsConsent = inside && accountLoaded && !consentAt;
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -47,13 +49,15 @@ export default function RootLayout() {
       >
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="welcome" />
-          <Stack.Screen name="consent" />
           <Stack.Screen name="sign-in" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn || needsConsent}>
+          <Stack.Screen name="consent" />
         </Stack.Protected>
         <Stack.Protected guard={signedIn && !verified}>
           <Stack.Screen name="verify-email" options={{ gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={inside}>
+        <Stack.Protected guard={inside && !needsConsent}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="analysis" />
           <Stack.Screen name="practice" />

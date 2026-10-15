@@ -26,7 +26,7 @@ async function token(force: boolean) {
   }
 }
 
-// Every DEEMO server call carries the student's Firebase ID token (server/src/firebase.ts requireUser);
+// Every DEEMO server call carries the student's Firebase ID token (server/src/shared/auth/authenticate.ts);
 // the SDK refreshes it before it expires. A 401 gets one more try with a freshly minted token.
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   try {
