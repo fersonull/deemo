@@ -2,7 +2,7 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-15_
+_Last updated: 2026-10-16_
 
 ## Current state
 
@@ -34,6 +34,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **ERD reads straight left to right**: columns centred on one middle line (ELK `SIMPLE` node placement, free ordering within columns) instead of stepping down-right; 5244×3124 px, shorter than before. Re-insert Figure 3 from `docs/diagrams/DEEMO-figure-3-erd.png`. | see git log |
 | 2026-10-15 | **Deck: wheel walks slide 10 steps**: on the step list slide, mouse wheel down/up moves to the next/previous step (clamped, one step per 400 ms so trackpads don't skip, stops the auto-cycle). Other slides ignore the wheel. | `client/web/presentation/js/deck.js`; `dev` |
 | 2026-10-15 | **Deck: mouse navigation**: right click anywhere = next slide, left click = previous (context menu suppressed). Clicks on buttons/links (arrows, slide 10 steps) keep their own action; touch taps are ignored (touch uses swipe). | `client/web/presentation/js/deck.js`; `dev` |
 | 2026-10-15 | **Deck: slide 10 phone is the hero**: `.slot--flow` is now absolute and spans the stage height (470×960, right side), with the steps in the left column. In phone view, only the active step shows its subtitle, so the phone gets the freed height. | `client/web/presentation/styles.css`; `dev` |
