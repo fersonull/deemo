@@ -34,6 +34,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Premium card on Profile**: Premium accounts get a member's-card look (ink card, goldInk hairline, a gold light sheen top right, Deemo's medal with its glint, Premium in goldLight with a Demo tag, the perks as a gold-check list). Free card unchanged. JS only. | `client/mobile/Deemo/src/screens/profile/premium-card.tsx` |
 | 2026-10-16 | **Fewer requests on navigation**: `src/utils/fresh.ts` (`freshFor`) lets `projects.refresh()` and `sessions.refresh()` reuse a list loaded in the last 60 s and share an in-flight load; they always reload while something is analyzing/scoring, after a new session or rescore, and on pull to refresh (`refresh(true)`). Home no longer re-reads `/me` on every visit; the root layout re-reads it when the app returns to the foreground. JS only. | see git log |
 | 2026-10-16 | **Request log**: the server prints one line per finished request (time, method, path without query, status, ms, user ID when signed in); never bodies or headers. | `server/src/app.ts` |
 | 2026-10-16 | **ERD reads straight left to right**: columns centred on one middle line (ELK `SIMPLE` node placement, free ordering within columns) instead of stepping down-right; 5244×3124 px, shorter than before. Re-insert Figure 3 from `docs/diagrams/DEEMO-figure-3-erd.png`. | see git log |

@@ -3,6 +3,7 @@ import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/avatar";
 import { AvatarSheet } from "./avatar-sheet";
+import { PremiumCard } from "./premium-card";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
@@ -16,13 +17,7 @@ import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
 
-const PLANS = {
-  free: { name: "Free plan", desc: "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript." },
-  premium: {
-    name: "Premium (demo)",
-    desc: "Every defense stage, up to three panelists, 25-minute sessions, the full report, and a suited-up Deemo.",
-  },
-};
+const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript.";
 
 // Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
@@ -36,7 +31,6 @@ export function Profile() {
   const [error, setError] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
-  const plan = premium ? PLANS.premium : PLANS.free;
 
   const deleteAll = async () => {
     setDeleting(true);
@@ -120,17 +114,19 @@ export function Profile() {
         </PressableScale>
       </View>
 
-      <View style={styles.plan}>
-        <View style={styles.planHead}>
-          <Text style={[styles.planName, styles.flex]}>{plan.name}</Text>
-          {!premium ? (
+      {premium ? (
+        <PremiumCard />
+      ) : (
+        <View style={styles.plan}>
+          <View style={styles.planHead}>
+            <Text style={[styles.planName, styles.flex]}>Free plan</Text>
             <PressableScale accessibilityRole="button" onPress={() => setSheet("upsell")} style={styles.upgrade}>
               <Text style={styles.upgradeText}>Upgrade</Text>
             </PressableScale>
-          ) : null}
+          </View>
+          <Text style={styles.planDesc}>{FREE_PLAN}</Text>
         </View>
-        <Text style={styles.planDesc}>{plan.desc}</Text>
-      </View>
+      )}
 
       <View style={styles.rows}>
         <View style={styles.row}>
