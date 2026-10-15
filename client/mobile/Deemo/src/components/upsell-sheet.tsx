@@ -43,7 +43,12 @@ export function UpsellSheet({ visible, onClose, onUpgrade }: { visible: boolean;
       </View>
       <View style={styles.upgrade}>
         {/* ponytail: mock upgrade, no payments (addendum Q1). */}
-        <Button label="Try Premium (demo)" onPress={onUpgrade} />
+        <Button
+          variant="premium"
+          label="Try Premium (demo)"
+          onPress={onUpgrade}
+          leading={<Icon name="workspace_premium" size={22} color={colors.gold} filled />}
+        />
       </View>
       <Pressable accessibilityRole="button" onPress={onClose} style={styles.notNow}>
         <Text style={[type.body, styles.notNowText]}>Not now</Text>
