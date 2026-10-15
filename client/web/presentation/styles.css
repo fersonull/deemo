@@ -390,3 +390,98 @@ button { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .arch__line path, .deemo-eye, .deemo-wave { animation: none; }
 }
+
+/* ── portrait (phones): a 720-wide stage, deck.js sets its height to the screen's shape ──
+   Everything stacks into one column; the phone sits beside or above the text, smaller. */
+body { touch-action: pinch-zoom; } /* keeps pointer events alive for swipes, still allows zoom */
+
+.portrait .slide { padding: 124px 44px 190px; gap: 36px; }
+.portrait .q { font-size: 58px; max-width: none; }
+.portrait .answer { font-size: 40px; max-width: none; }
+.portrait .answer--sm { font-size: 32px; }
+.portrait .lede { font-size: 30px; }
+.portrait .meta { font-size: 20px; }
+
+.portrait .slide--title,
+.portrait .slide--closing { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 40px; }
+.portrait .title-mark { width: 84px; height: 84px; border-radius: 24px; }
+.portrait .display { font-size: 168px; }
+.portrait .slide--title .lede { font-size: 32px; }
+.portrait .slide--closing .display { font-size: 132px; }
+.portrait .slide--closing .lede { font-size: 32px; }
+.portrait .slot--title,
+.portrait .slot--closing { flex: 1; min-height: 0; width: 100%; max-height: 640px; margin: 0; }
+
+.portrait .split { grid-template-columns: 1fr 200px; gap: 28px; align-items: start; }
+.portrait .split .answer { margin-bottom: 36px; }
+.portrait .slot--split { width: 200px; height: 420px; position: sticky; top: 0; }
+.portrait .points,
+.portrait .points--2 { grid-template-columns: 1fr; gap: 26px; }
+.portrait .points li { grid-template-columns: 52px 1fr; column-gap: 16px; font-size: 22px; }
+.portrait .points .icon,
+.portrait .points--num li::before { width: 52px; height: 45px; font-size: 26px; }
+.portrait .points strong { font-size: 27px; }
+
+.portrait .solution { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 30px 32px; align-items: start; }
+.portrait .slot--solution { grid-column: 1 / -1; grid-row: 1; width: 100%; height: 470px; }
+.portrait .callouts { grid-row: 2; gap: 30px; }
+.portrait .callouts:first-child,
+.portrait .callouts:first-child li { text-align: left; align-items: flex-start; }
+.portrait .callouts li { font-size: 21px; gap: 6px; }
+.portrait .callouts .icon { width: 52px; height: 45px; font-size: 26px; margin-bottom: 2px; }
+.portrait .callouts strong { font-size: 27px; }
+
+.portrait .market { grid-template-columns: 1fr; gap: 40px; justify-items: center; }
+.portrait .bullseye { width: 520px; height: 520px; margin: 0; }
+.portrait .ring span { font-size: 17px; }
+.portrait .ring--outer { padding-top: 22px; }
+.portrait .ring--inner { inset: 80px; padding-top: 20px; }
+.portrait .slot--market { width: 150px; height: 300px; margin-top: 50px; }
+.portrait .market .points { justify-self: stretch; }
+
+.portrait .matrix { font-size: 17px; }
+.portrait .matrix th,
+.portrait .matrix td { padding: 13px 5px; }
+.portrait .matrix thead th { font-size: 16px; }
+.portrait .matrix thead .is-us { font-size: 19px; }
+.portrait .matrix .is-us { width: 84px; }
+.portrait .matrix tbody th { width: 190px; }
+
+.portrait .terms { grid-template-columns: 1fr; gap: 26px; align-content: start; }
+.portrait .terms > div { padding-top: 14px; }
+.portrait .terms dt { font-size: 28px; margin-bottom: 6px; }
+.portrait .terms dd { font-size: 21px; }
+
+.portrait .flow { grid-template-columns: 1fr 200px; gap: 20px; align-items: start; }
+.portrait .steps button { gap: 16px; padding: 14px 16px; font-size: 26px; }
+.portrait .steps .icon { width: 52px; height: 45px; font-size: 24px; }
+.portrait .steps small { font-size: 18px; }
+.portrait .slot--flow { width: 200px; height: 420px; }
+
+.portrait .arch { grid-template-columns: 200px 1fr; grid-template-rows: auto auto auto; gap: 30px; align-items: center; }
+.portrait .slot--arch { grid-row: 1; width: 200px; height: 410px; }
+.portrait .arch__box { grid-row: 1; padding: 30px 28px; }
+.portrait .arch__name { font-size: 40px; }
+.portrait .arch__box .icon { font-size: 42px; margin-bottom: 10px; }
+.portrait .arch__link { grid-column: 1 / -1; grid-row: 2; }
+.portrait .arch__server { grid-column: 1 / -1; grid-row: 3; padding: 22px 24px; font-size: 21px; }
+.portrait .arch__server strong { font-size: 26px; }
+
+.portrait .stackscope { grid-template-columns: 1fr; gap: 40px; }
+.portrait .stack > div { grid-template-columns: 190px 1fr; padding: 13px 0; }
+.portrait .stack dt { font-size: 15px; }
+.portrait .stack dd { font-size: 23px; }
+.portrait .scope { gap: 28px; }
+.portrait .scope__head { font-size: 34px; margin-bottom: 16px; }
+.portrait .scope ul { gap: 12px; font-size: 21px; }
+.portrait .scope li::before { top: 10px; }
+
+.portrait .checks { font-size: 23px; gap: 16px; }
+.portrait .checks .icon { font-size: 30px; }
+.portrait .split .scope__head { margin-top: 36px; font-size: 28px; }
+.portrait .checks--open { grid-template-columns: 1fr; gap: 12px; font-size: 21px; }
+
+.portrait .deemo { left: 28px; bottom: 24px; gap: 10px; }
+.portrait .deemo__owl { width: 112px; height: 118px; }
+.portrait .deemo__say { font-size: 21px; max-width: 520px; margin-bottom: 40px; padding: 12px 18px; }
+.portrait .hud { top: 12px; right: 10px; bottom: auto; }

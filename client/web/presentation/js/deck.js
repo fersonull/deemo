@@ -11,8 +11,16 @@ const flowSlide = slides.findIndex((s) => s.contains(flowButtons[0]));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 const pad = (n) => String(n).padStart(2, "0");
 
+// Landscape: a 1920×1080 stage. Portrait (phones): a 720-wide stage as tall as the screen's shape
+// allows, with its own layouts (.portrait in styles.css). Runs before the phone's resize handler.
 function fit() {
-  stage.style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1080));
+  const portrait = innerWidth < innerHeight * 0.9;
+  document.documentElement.classList.toggle("portrait", portrait);
+  const w = portrait ? 720 : 1920;
+  const h = portrait ? Math.round(Math.min(Math.max((w * innerHeight) / innerWidth, 1180), 1600)) : 1080;
+  stage.style.width = `${w}px`;
+  stage.style.height = `${h}px`;
+  stage.style.setProperty("--s", Math.min(innerWidth / w, innerHeight / h));
 }
 fit();
 addEventListener("resize", fit);
