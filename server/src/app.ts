@@ -14,6 +14,18 @@ import { scoringRouter } from "./modules/scoring/http/routes";
 export const app = express();
 app.set("trust proxy", "loopback"); // the Cloudflare tunnel connects from localhost
 
+// One line per request once it finishes: method, path, status, time and the student's ID when signed in. Never the
+// body or headers (tokens, manuscripts, transcripts).
+app.use((req, res, next) => {
+  const start = performance.now();
+  res.on("finish", () => {
+    const user = (req as express.Request & { user?: { id: string } }).user?.id;
+    const ms = Math.round(performance.now() - start);
+    console.log(`${new Date().toISOString()} ${req.method} ${req.originalUrl.split("?")[0]} ${res.statusCode} ${ms}ms${user ? ` ${user}` : ""}`);
+  });
+  next();
+});
+
 // The Cloudflare tunnel (https://api.deemo-ai.com/api) passes its /api prefix through; the same routes answer under it.
 app.use((req, _res, next) => {
   if (req.url === "/api" || req.url.startsWith("/api/")) req.url = req.url.slice(4) || "/";

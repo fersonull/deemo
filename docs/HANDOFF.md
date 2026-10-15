@@ -34,6 +34,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Request log**: the server prints one line per finished request (time, method, path without query, status, ms, user ID when signed in); never bodies or headers. | `server/src/app.ts` |
 | 2026-10-16 | **ERD reads straight left to right**: columns centred on one middle line (ELK `SIMPLE` node placement, free ordering within columns) instead of stepping down-right; 5244×3124 px, shorter than before. Re-insert Figure 3 from `docs/diagrams/DEEMO-figure-3-erd.png`. | see git log |
 | 2026-10-15 | **Deck: wheel walks slide 10 steps**: on the step list slide, mouse wheel down/up moves to the next/previous step (clamped, one step per 400 ms so trackpads don't skip, stops the auto-cycle). Other slides ignore the wheel. | `client/web/presentation/js/deck.js`; `dev` |
 | 2026-10-15 | **Deck: mouse navigation**: right click anywhere = next slide, left click = previous (context menu suppressed). Clicks on buttons/links (arrows, slide 10 steps) keep their own action; touch taps are ignored (touch uses swipe). | `client/web/presentation/js/deck.js`; `dev` |
