@@ -226,7 +226,7 @@ button { font: inherit; color: inherit; }
 .terms .is-amber dt { color: var(--amber-ink); }
 
 /* ── 10 · flow ── */
-.flow { flex: 1; display: grid; grid-template-columns: 1fr 520px; gap: 90px; align-items: center; }
+.flow { flex: 1; display: grid; grid-template-columns: 1fr 640px; gap: 60px; align-items: center; }
 .steps { display: flex; flex-direction: column; gap: 10px; counter-reset: step; }
 .steps button {
   width: 100%;
@@ -257,7 +257,8 @@ button { font: inherit; color: inherit; }
 .steps .is-on button { background: var(--sand); color: var(--ink); }
 .steps .is-on .icon { background: var(--dusk); color: var(--paper); }
 .steps .is-on small { opacity: 1; color: var(--ink-muted); }
-.slot--flow { width: 340px; height: 700px; justify-self: center; }
+/* the hero of the slide: spans the full stage height, beside the steps */
+.slot--flow { position: absolute; top: 40px; right: 230px; width: 470px; height: 960px; }
 
 /* ── 11 · architecture ── */
 .arch {
@@ -451,7 +452,8 @@ body { touch-action: pinch-zoom; } /* keeps pointer events alive for swipes, sti
 .portrait .steps button { gap: 16px; padding: 14px 16px; font-size: 26px; }
 .portrait .steps .icon { width: 52px; height: 45px; font-size: 24px; }
 .portrait .steps small { font-size: 18px; }
-.portrait .slot--flow { flex: 1; min-height: 260px; width: 100%; height: auto; }
+.portrait .slot--flow { position: static; flex: 1; min-height: 360px; width: 100%; height: auto; }
+.portrait .steps li:not(.is-on) small { display: none; }
 
 /* architecture: phone, dotted line, Gemini card on one row so the line joins them */
 .portrait .arch { grid-template-columns: 190px 1fr 230px; grid-template-rows: auto auto auto auto; gap: 26px 0; align-items: center; }
