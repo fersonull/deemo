@@ -118,6 +118,15 @@ addEventListener("keydown", (e) => {
 document.getElementById("prevBtn").addEventListener("click", () => go(index - 1));
 document.getElementById("nextBtn").addEventListener("click", () => go(index + 1));
 
+// PowerPoint-style mouse: left click = next, right click = previous (buttons and links keep their own clicks).
+addEventListener("click", (e) => {
+  if (e.button === 0 && !e.target.closest("button, a")) go(index + 1);
+});
+addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+  go(index - 1);
+});
+
 let touchX = null;
 addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") touchX = e.clientX; });
 addEventListener("pointerup", (e) => {
