@@ -18,7 +18,6 @@ const POSES = {
   hero: { x: -0.08, y: -0.42, z: 0.05 },
   left: { x: -0.04, y: -0.3, z: 0.02 },
   right: { x: -0.04, y: 0.3, z: -0.02 },
-  away: { x: 0.12, y: 0.52, z: -0.04 },
 };
 
 function roundedRect(w, h, r) {

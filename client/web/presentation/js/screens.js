@@ -232,15 +232,6 @@ function session(ctx, t, flag) {
 
 // ── screens ──
 const DRAW = {
-  off(ctx) {
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "#1b1816");
-    g.addColorStop(0.55, "#0c0b0a");
-    g.addColorStop(1, "#141211");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-  },
-
   splash(ctx, t, img) {
     bg(ctx);
     statusBar(ctx);

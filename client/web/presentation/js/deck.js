@@ -1,13 +1,10 @@
-// Slide navigation, GSAP slide transitions, session HUD, and the phone hand-off between slides.
+// Slide navigation, GSAP slide transitions, and the phone hand-off between slides.
 import { createPhone } from "./phone.js";
 
 const stage = document.getElementById("stage");
 const slides = [...document.querySelectorAll(".slide")];
 const count = document.getElementById("count");
 const progress = document.getElementById("progress");
-const session = document.querySelector(".session");
-const sessionTime = document.getElementById("sessionTime");
-const stageItems = [...document.querySelectorAll("#sessionStages li")];
 const flowButtons = [...document.querySelectorAll("#flowSteps button")];
 const flowSlide = slides.findIndex((s) => s.contains(flowButtons[0]));
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
@@ -26,24 +23,7 @@ const slotOf = (i) => slides[i].querySelector(".phone-slot");
 let index = Math.min(Math.max((parseInt(location.hash.slice(1), 10) || 1) - 1, 0), slides.length - 1);
 let tl = null;
 
-// ── session HUD: clock starts when the deck leaves the title slide, stops on the closing slide ──
-let started = null;
-let stopped = null;
-setInterval(() => {
-  if (!started) return;
-  const secs = Math.floor(((stopped ?? Date.now()) - started) / 1000);
-  sessionTime.textContent = `${pad(Math.floor(secs / 60))}:${pad(secs % 60)}`;
-}, 500);
-
 function updateChrome() {
-  const st = Number(slides[index].dataset.stage);
-  if (st > 0 && !started) started = Date.now();
-  stopped = st === 4 ? (stopped ?? Date.now()) : null;
-  session.toggleAttribute("data-idle", st === 0);
-  stageItems.forEach((li, i) => {
-    li.classList.toggle("is-on", i + 1 === st);
-    li.classList.toggle("is-done", i + 1 < st);
-  });
   count.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
   gsap.to(progress, { scaleX: index / (slides.length - 1), duration: 0.6, ease: "power3.out" });
   history.replaceState(null, "", `#${index + 1}`);

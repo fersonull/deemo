@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DEEMO — Capstone Defense</title>
-<meta name="description" content="DEEMO: a voice-based AI mock panel for BSIT capstone defense practice." />
+<meta name="description" content="DEEMO: a voice-interactive mock panel simulator for capstone defense preparation." />
 <meta name="theme-color" content="#F7F3EC" />
 <link rel="icon" href="assets/deemo-mark.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,47 +15,47 @@
 </head>
 <body>
 
-<!-- 1920×1080 stage, scaled to fit. Every content slide is a panel question; the body is the group's answer.
+<!-- 1920×1080 stage, scaled to fit. Each content slide is a panel question with a compact answer.
      A .phone-slot marks where the one 3D phone (js/phone.js) lands on that slide and which screen it shows.
-     Slides without a slot send the phone out of frame. data-stage drives the session HUD. -->
+     Slides without a slot send the phone out of frame. Content comes from the paper (Ch. I–III). -->
 <main class="viewport">
 <div class="stage" id="stage">
 
   <!-- 1 · cold open -->
-  <section class="slide slide--title" data-stage="0" aria-label="DEEMO">
+  <section class="slide slide--title" aria-label="DEEMO">
     <div class="title-copy">
       <img class="title-mark r" src="assets/deemo-mark.svg" alt="" />
       <h1 class="display r">DEEMO</h1>
-      <p class="lede r">Practice your capstone defense with an AI panel that has actually read your paper.</p>
+      <p class="lede r">A voice-interactive mock panel simulator for capstone defense preparation.</p>
       <p class="meta r">BSIT Capstone · 4B — Kimberly's Group<br />Pinamalayan Maritime Foundation and Technological College, Inc.</p>
     </div>
     <div class="phone-slot slot--title" data-screen="splash" data-pose="hero"></div>
   </section>
 
   <!-- 2 · problem -->
-  <section class="slide" data-stage="1">
-    <div class="ask r"><p class="who" data-who="chair">Panel chair</p><h2>Why does this need to exist?</h2></div>
-    <div class="problem">
+  <section class="slide">
+    <h2 class="q r">Why does this need to exist?</h2>
+    <div class="split">
       <div>
         <p class="answer r">Students can build it. Defending it out loud is another story.</p>
-        <ol class="rules">
-          <li class="r"><strong>Saying it out loud</strong>Expressing technical ideas, answering unexpected questions, and justifying methodology, design, and testing.</li>
-          <li class="r"><strong>Defense anxiety</strong>Fear of negative evaluation impairs thinking on one's feet.</li>
-          <li class="r"><strong>Practice isn't a panel</strong>Self-review, peer practice, and short consultations miss a real panel's pressure.</li>
-          <li class="r"><strong>Generic AI tools</strong>They simulate job interviews or public speaking, not an academic capstone defense.</li>
-        </ol>
+        <ul class="points points--2">
+          <li class="r"><span class="icon">record_voice_over</span><strong>Saying it out loud</strong>Explaining and justifying the work under questioning.</li>
+          <li class="r"><span class="icon">psychology_alt</span><strong>Defense anxiety</strong>Fear of evaluation blocks quick thinking.</li>
+          <li class="r"><span class="icon">groups</span><strong>Practice isn't a panel</strong>Self-review and peers miss the pressure.</li>
+          <li class="r"><span class="icon">smart_toy</span><strong>Generic AI tools</strong>Built for job interviews, not capstone defenses.</li>
+        </ul>
       </div>
-      <div class="phone-slot slot--problem" data-screen="off" data-pose="away"></div>
+      <div class="phone-slot slot--split" data-screen="splash" data-pose="left"></div>
     </div>
   </section>
 
   <!-- 3 · solution -->
-  <section class="slide" data-stage="1">
-    <div class="ask r"><p class="who" data-who="chair">Panel chair</p><h2>So what did you build?</h2></div>
+  <section class="slide">
+    <h2 class="q r">So what did you build?</h2>
     <div class="solution">
       <ul class="callouts">
         <li class="r"><span class="icon">menu_book</span><strong>Reads your paper</strong>Questions come from your uploaded manuscript.</li>
-        <li class="r"><span class="icon">record_voice_over</span><strong>Asks out loud</strong>A voice-based panel on your phone, unlimited sessions.</li>
+        <li class="r"><span class="icon">record_voice_over</span><strong>Asks out loud</strong>A voice-based panel on your phone.</li>
       </ul>
       <div class="phone-slot slot--solution" data-screen="session" data-pose="front" data-spin="1"></div>
       <ul class="callouts">
@@ -65,106 +65,107 @@
     </div>
   </section>
 
-  <!-- 4 · target market (Chapter II placeholder) -->
-  <section class="slide" data-stage="1" data-placeholder="true">
-    <div class="ask r"><p class="who" data-who="chair">Panel chair</p><h2>Who is this for?</h2></div>
+  <!-- 4 · target market (Ch. II) -->
+  <section class="slide">
+    <h2 class="q r">Who is this for?</h2>
     <div class="market">
       <div class="bullseye">
-        <div class="ring ring--outer r"><span>[ADD: secondary]</span></div>
-        <div class="ring ring--inner r"><span>[ADD: primary]</span></div>
+        <div class="ring ring--outer r"><span>PMFTCI · first rollout</span></div>
+        <div class="ring ring--inner r"><span>4th-year BSIT students</span></div>
         <div class="phone-slot slot--market" data-screen="projects" data-pose="front"></div>
       </div>
-      <ul class="rules rules--single placeholder">
-        <li class="r"><strong>Primary</strong>[ADD: e.g. 4th-year BSIT students at PMFTCI, with population/number]</li>
-        <li class="r"><strong>Secondary</strong>[ADD: advisers and faculty]</li>
-        <li class="r"><strong>Scope</strong>[ADD: market size or scope statement from Chapter II]</li>
+      <ul class="points">
+        <li class="r"><span class="icon">location_on</span><strong>Geographic</strong>4th-year BSIT students at PMFTCI, Pinamalayan.</li>
+        <li class="r"><span class="icon">self_improvement</span><strong>Psychographic</strong>Students who want to improve before the real panel.</li>
+        <li class="r"><span class="icon">event_repeat</span><strong>Behavioral</strong>Preparing for Title, Pre-Oral, or Final defense.</li>
       </ul>
     </div>
   </section>
 
-  <!-- 5 · target technologies (Chapter II placeholder) -->
-  <section class="slide" data-stage="1" data-placeholder="true">
-    <div class="ask r"><p class="who" data-who="technical">Technical panelist</p><h2>What technology does it rest on?</h2></div>
-    <div class="pillars placeholder">
-      <div class="pillar r"><span class="icon">graphic_eq</span><p class="pillar__name">[ADD: technology 1]</p><p>[ADD: why it fits DEEMO]</p></div>
-      <div class="pillar r"><span class="icon">description</span><p class="pillar__name">[ADD: technology 2]</p><p>[ADD: why it fits DEEMO]</p></div>
-      <div class="pillar r"><span class="icon">smartphone</span><p class="pillar__name">[ADD: technology 3]</p><p>[ADD: why it fits DEEMO]</p></div>
+  <!-- 5 · target technologies (Ch. II) -->
+  <section class="slide">
+    <h2 class="q r">What technology does it rest on?</h2>
+    <div class="solution">
+      <ul class="callouts">
+        <li class="r"><span class="icon">neurology</span><strong>Natural Language Processing</strong>Reads the manuscript and spots contradictions.</li>
+        <li class="r"><span class="icon">auto_awesome</span><strong>Google Gemini API</strong>Live runs the panel; Flash analyzes and scores.</li>
+      </ul>
+      <div class="phone-slot slot--solution" data-screen="analysis" data-pose="front"></div>
+      <ul class="callouts">
+        <li class="r"><span class="icon">graphic_eq</span><strong>Speech recognition</strong>Live transcripts of every spoken answer.</li>
+        <li class="r"><span class="icon">smartphone</span><strong>React Native Expo</strong>One TypeScript codebase for the Android app.</li>
+      </ul>
     </div>
   </section>
 
-  <!-- 6 · comparison (Chapter II placeholder for the existing apps) -->
-  <section class="slide" data-stage="1" data-placeholder="true">
-    <div class="ask r"><p class="who" data-who="chair">Panel chair</p><h2>Doesn't this already exist?</h2></div>
+  <!-- 6 · comparison (Ch. II, Table 1) -->
+  <section class="slide">
+    <h2 class="q r">Doesn't this already exist?</h2>
     <table class="matrix r">
       <thead>
-        <tr><th scope="col">Feature</th><th scope="col" class="placeholder">[ADD: app 1]</th><th scope="col" class="placeholder">[ADD: app 2]</th><th scope="col" class="placeholder">[ADD: app 3]</th><th scope="col" class="is-us">DEEMO</th></tr>
+        <tr><th scope="col">Feature</th><th scope="col">Gemini AI</th><th scope="col">ChatGPT</th><th scope="col">NotebookLM</th><th scope="col">Claude AI</th><th scope="col" class="is-us">DEEMO</th></tr>
       </thead>
       <tbody>
-        <tr><th scope="row">Reads your own manuscript</th><td>[ADD]</td><td>[ADD]</td><td>[ADD]</td><td class="is-us"><span class="icon" aria-label="Yes">check</span></td></tr>
-        <tr><th scope="row">Spoken, live panel</th><td>[ADD]</td><td>[ADD]</td><td>[ADD]</td><td class="is-us"><span class="icon" aria-label="Yes">check</span></td></tr>
-        <tr><th scope="row">Flags contradictions with the paper</th><td>[ADD]</td><td>[ADD]</td><td>[ADD]</td><td class="is-us"><span class="icon" aria-label="Yes">check</span></td></tr>
-        <tr><th scope="row">Scores against your rubric</th><td>[ADD]</td><td>[ADD]</td><td>[ADD]</td><td class="is-us"><span class="icon" aria-label="Yes">check</span></td></tr>
-        <tr><th scope="row">Title, Pre-Oral, and Final modes</th><td>[ADD]</td><td>[ADD]</td><td>[ADD]</td><td class="is-us"><span class="icon" aria-label="Yes">check</span></td></tr>
+        <tr><th scope="row">Research paper analysis</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Voice interaction</th><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td><td class="l">Limited</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Adaptive follow-up questions</th><td class="y">Yes</td><td class="y">Yes</td><td class="l">Limited</td><td class="y">Yes</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Mock defense simulation</th><td class="n">No</td><td class="l">Limited</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Speech performance evaluation</th><td class="n">No</td><td class="l">Limited</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Defense evaluation rubric</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us l">Optional</td></tr>
+        <tr><th scope="row">Verbal consistency checking</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
+        <tr><th scope="row">Defense performance analytics</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
       </tbody>
     </table>
   </section>
 
-  <!-- 7 · overview + objectives -->
-  <section class="slide" data-stage="2">
-    <div class="ask r"><p class="who" data-who="methodology">Methodology panelist</p><h2>What did you set out to do?</h2></div>
-    <div class="objectives">
-      <div class="overview">
-        <p class="answer answer--sm r">Unlimited, voice-based mock defenses grounded in the student's own manuscript, scored against their actual rubric.</p>
-        <dl class="pairs r">
-          <dt>Primary users</dt><dd>4th-year BSIT students preparing for capstone defense</dd>
-          <dt>Secondary users</dt><dd>Faculty advisers, through exported reports</dd>
-        </dl>
-      </div>
-      <ol class="ledger">
-        <li class="r">Identify challenges in defense preparation: communication, confidence, critical thinking, answering questions.</li>
-        <li class="r">Evaluate how existing preparation methods influence readiness.</li>
-        <li class="r is-key">Develop an AI mock panel simulator that analyzes manuscripts and generates adaptive questions.</li>
-        <li class="r">Assess users' perception of usability.</li>
-        <li class="r">Evaluate effectiveness in assessing communication, reasoning, and verbal–manuscript consistency.</li>
-        <li class="r">Examine perceived improvement in confidence, communication, critical thinking, and readiness.</li>
+  <!-- 7 · objectives (Ch. I) -->
+  <section class="slide">
+    <h2 class="q r">What did you set out to do?</h2>
+    <div class="split">
+      <ol class="points points--2 points--num">
+        <li class="r"><strong>Identify the challenges</strong>Communication, confidence, critical thinking.</li>
+        <li class="r"><strong>Evaluate current prep</strong>Self-review, peer practice, adviser consultations.</li>
+        <li class="r is-key"><strong>Build the AI mock panel</strong>Reads manuscripts, asks adaptive questions.</li>
+        <li class="r"><strong>Assess usability</strong>How students rate the app.</li>
+        <li class="r"><strong>Test the evaluation</strong>Communication, reasoning, consistency.</li>
+        <li class="r"><strong>Measure readiness</strong>Confidence and defense readiness gains.</li>
       </ol>
-      <div class="phone-slot slot--objectives" data-screen="setup" data-pose="left"></div>
+      <div class="phone-slot slot--split" data-screen="setup" data-pose="left"></div>
     </div>
   </section>
 
   <!-- 8 · key terms -->
-  <section class="slide" data-stage="2">
-    <div class="ask r"><p class="who" data-who="methodology">Methodology panelist</p><h2>Define your terms.</h2></div>
+  <section class="slide">
+    <h2 class="q r">Define your terms.</h2>
     <dl class="terms">
-      <div class="r"><dt>Readiness Score</dt><dd>A 0–100 score from the weighted rubric result, adjusted for manuscript consistency and coverage.</dd></div>
-      <div class="r"><dt>Bounded Adaptive Follow-Up</dt><dd>The panel asks at most a fixed number of follow-ups per topic (default 2), then moves on.</dd></div>
-      <div class="r is-amber"><dt>Live Verbal Consistency Checker</dt><dd>Flags contradictions between what the student says and what the manuscript states.</dd></div>
-      <div class="r"><dt>Adaptive Domain Profiling</dt><dd>The panel's questions adjust to the student's discipline and field.</dd></div>
-      <div class="r"><dt>Ephemeral Token</dt><dd>A short-lived credential the server mints, locked to the model, prompt, and tools. The phone never holds a standing AI key.</dd></div>
-      <div class="r"><dt>Stage Modes</dt><dd>Title, Pre-Oral, and Final Defense, each with a different question focus.</dd></div>
+      <div class="r"><dt>Readiness Score</dt><dd>0–100 from the rubric, adjusted for consistency and coverage.</dd></div>
+      <div class="r"><dt>Bounded Follow-Up</dt><dd>At most two follow-ups per topic, then the panel moves on.</dd></div>
+      <div class="r is-amber"><dt>Verbal Consistency Checker</dt><dd>Flags when an answer contradicts the manuscript.</dd></div>
+      <div class="r"><dt>Adaptive Domain Profiling</dt><dd>Questions fit the student's field.</dd></div>
+      <div class="r"><dt>Ephemeral Token</dt><dd>A short-lived key locked to the panel. No AI key on the phone.</dd></div>
+      <div class="r"><dt>Stage Modes</dt><dd>Title, Pre-Oral, Final: each with its own question focus.</dd></div>
     </dl>
   </section>
 
   <!-- 9 · system functions -->
-  <section class="slide" data-stage="2">
-    <div class="ask r"><p class="who" data-who="technical">Technical panelist</p><h2>What can it actually do?</h2></div>
-    <div class="bento">
-      <div class="tile tile--hero r">
-        <span class="icon">mic</span>
-        <p class="tile__title">Live mock defense</p>
-        <ul><li>Voice interaction, speech ↔ text</li><li>Adaptive questions with type labels</li><li>Live consistency checking</li><li>Real-time transcript</li><li>Pause, resume, duration tracking</li></ul>
-      </div>
-      <div class="phone-slot slot--bento" data-screen="flag" data-pose="right"></div>
-      <div class="tile r"><p class="tile__title">Manuscript &amp; rubric</p><ul><li>Upload PDF or DOCX</li><li>Document Logic Analysis, editable summary</li><li>Rubric upload or built-in default</li></ul></div>
-      <div class="tile r"><p class="tile__title">Session setup</p><ul><li>Adaptive Domain Profiling</li><li>Title / Pre-Oral / Final mode</li><li>Panel size, duration, follow-up limit</li></ul></div>
-      <div class="tile r"><p class="tile__title">Results &amp; progress</p><ul><li>Defense Performance Analytics report</li><li>Session history and trend chart</li><li>PDF export, share with group</li></ul></div>
-      <div class="tile r"><p class="tile__title">Account</p><ul><li>Email or Google sign-in</li><li>Freemium tiers</li><li>Privacy notice and consent</li></ul></div>
+  <section class="slide">
+    <h2 class="q r">What can it actually do?</h2>
+    <div class="solution">
+      <ul class="callouts">
+        <li class="r"><span class="icon">mic</span><strong>Live mock defense</strong>Voice panel, adaptive questions, live transcript.</li>
+        <li class="r"><span class="icon">description</span><strong>Manuscript &amp; rubric</strong>PDF or DOCX analysis; your rubric or the default.</li>
+      </ul>
+      <div class="phone-slot slot--solution" data-screen="flag" data-pose="front"></div>
+      <ul class="callouts">
+        <li class="r"><span class="icon">insights</span><strong>Results &amp; progress</strong>Readiness report, history, PDF export.</li>
+        <li class="r"><span class="icon">account_circle</span><strong>Account</strong>Email or Google sign-in, Free and Premium.</li>
+      </ul>
     </div>
   </section>
 
   <!-- 10 · how it works: the active step drives the phone screen -->
-  <section class="slide" data-stage="3">
-    <div class="ask r"><p class="who" data-who="technical">Technical panelist</p><h2>Walk us through a session.</h2></div>
+  <section class="slide">
+    <h2 class="q r">Walk us through a session.</h2>
     <div class="flow">
       <ol class="steps" id="flowSteps">
         <li class="r"><button type="button" data-screen="projects"><span class="icon">upload_file</span><span>Upload manuscript<small>PDF or DOCX, one per project</small></span></button></li>
@@ -178,8 +179,8 @@
   </section>
 
   <!-- 11 · architecture -->
-  <section class="slide" data-stage="3">
-    <div class="ask r"><p class="who" data-who="technical">Technical panelist</p><h2>Where does the audio go?</h2></div>
+  <section class="slide">
+    <h2 class="q r">Where does the audio go?</h2>
     <div class="arch">
       <div class="phone-slot slot--arch" data-screen="session" data-pose="right"></div>
       <div class="arch__link r">
@@ -194,27 +195,27 @@
       </div>
       <div class="arch__server r">
         <span class="icon">dns</span>
-        <p><strong>Server</strong>Auth, quotas, mints the ephemeral token, analyzes the manuscript, scores the session. Never proxies live audio.</p>
+        <p><strong>Server</strong>Sign-in, limits, the short-lived token, manuscript analysis, scoring. Never touches live audio.</p>
       </div>
     </div>
   </section>
 
   <!-- 12 · stack + scope -->
-  <section class="slide" data-stage="3">
-    <div class="ask r"><p class="who" data-who="technical">Technical panelist</p><h2>What is it built on, and where does it stop?</h2></div>
+  <section class="slide">
+    <h2 class="q r">What is it built on, and where does it stop?</h2>
     <div class="stackscope">
       <dl class="stack">
-        <div class="r"><dt>Mobile</dt><dd>Expo (React Native, TypeScript)</dd></div>
-        <div class="r"><dt>Server</dt><dd>Bun + Express, domain-driven modules</dd></div>
-        <div class="r"><dt>Database</dt><dd>PostgreSQL via Prisma</dd></div>
-        <div class="r"><dt>Auth</dt><dd>Firebase Authentication</dd></div>
-        <div class="r"><dt>Live panel</dt><dd>Gemini Live</dd></div>
-        <div class="r"><dt>Analysis &amp; scoring</dt><dd>Gemini Flash fallback chain</dd></div>
+        <div class="r"><dt>Mobile</dt><dd>React Native Expo, TypeScript</dd></div>
+        <div class="r"><dt>Server</dt><dd>Bun + Express</dd></div>
+        <div class="r"><dt>Database</dt><dd>PostgreSQL + Prisma</dd></div>
+        <div class="r"><dt>Sign-in</dt><dd>Firebase Authentication</dd></div>
+        <div class="r"><dt>AI</dt><dd>Gemini Live + Gemini Flash</dd></div>
+        <div class="r"><dt>Quality model</dt><dd>ISO/IEC 25010</dd></div>
       </dl>
       <div class="scope">
         <div class="r">
           <p class="scope__head">It is</p>
-          <ul><li>Android only, English only</li><li>Cloud AI only, no offline mode</li><li>Freemium, simulated: no real payments</li><li>A practice tool: scores carry no official weight</li></ul>
+          <ul><li>Android, English</li><li>Online only</li><li>Freemium, simulated</li><li>A practice tool</li></ul>
         </div>
         <div class="r">
           <p class="scope__head">It isn't</p>
@@ -225,30 +226,30 @@
   </section>
 
   <!-- 13 · status -->
-  <section class="slide" data-stage="3">
-    <div class="ask r"><p class="who" data-who="chair">Panel chair</p><h2>Does it work today?</h2></div>
-    <div class="status">
+  <section class="slide">
+    <h2 class="q r">Does it work today?</h2>
+    <div class="split">
       <div>
         <ul class="checks">
-          <li class="r"><span class="icon">check_circle</span>Upload → analysis → rubric → live session → scored report, end to end</li>
-          <li class="r"><span class="icon">check_circle</span>Adaptive questions, bounded follow-ups, live consistency checking</li>
-          <li class="r"><span class="icon">check_circle</span>Pause / resume and the analytics report</li>
-          <li class="r"><span class="icon">check_circle</span>Group projects, PDF export, session history</li>
+          <li class="r"><span class="icon">check_circle</span>Upload to scored report, end to end</li>
+          <li class="r"><span class="icon">check_circle</span>Adaptive questions and live consistency checks</li>
+          <li class="r"><span class="icon">check_circle</span>Pause, resume, and the analytics report</li>
+          <li class="r"><span class="icon">check_circle</span>Group projects, PDF export, history</li>
         </ul>
-        <p class="scope__head r">Open before full student evaluation</p>
+        <p class="scope__head r">Before student evaluation</p>
         <ul class="checks checks--open">
-          <li class="r"><span class="icon">radio_button_unchecked</span>Move to the Gemini paid tier</li>
-          <li class="r"><span class="icon">radio_button_unchecked</span>Deploy the server publicly</li>
-          <li class="r"><span class="icon">radio_button_unchecked</span>Ship a release build</li>
-          <li class="r"><span class="icon">radio_button_unchecked</span>Harden recovery after a dropped connection</li>
+          <li class="r"><span class="icon">radio_button_unchecked</span>Gemini paid tier</li>
+          <li class="r"><span class="icon">radio_button_unchecked</span>Public server</li>
+          <li class="r"><span class="icon">radio_button_unchecked</span>Release build</li>
+          <li class="r"><span class="icon">radio_button_unchecked</span>Reconnect recovery</li>
         </ul>
       </div>
-      <div class="phone-slot slot--status" data-screen="results" data-pose="left"></div>
+      <div class="phone-slot slot--split" data-screen="results" data-pose="left"></div>
     </div>
   </section>
 
   <!-- 14 · close: the phone turns to face the real panel -->
-  <section class="slide slide--closing" data-stage="4">
+  <section class="slide slide--closing">
     <div class="closing-copy">
       <h2 class="display r">The floor<br />is yours.</h2>
       <p class="lede r">Questions from the panel.</p>
@@ -260,13 +261,6 @@
 </main>
 
 <canvas id="phone" class="phone-canvas" aria-hidden="true"></canvas>
-
-<!-- session HUD: elapsed time since leaving the title slide, plus which defense stage the deck covers -->
-<div class="session" aria-hidden="true">
-  <span class="session__rec"></span>
-  <span class="session__time" id="sessionTime">00:00</span>
-  <ol class="session__stages" id="sessionStages"><li>Title</li><li>Pre-Oral</li><li>Final</li></ol>
-</div>
 
 <nav class="hud" aria-label="Slide navigation">
   <button class="hud__btn" id="prevBtn" type="button" aria-label="Previous slide"><span class="icon">arrow_back</span></button>
