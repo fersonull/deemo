@@ -38,7 +38,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Names for email/password accounts**: name on Create account, editable in Profile, current names on Group readiness. Merged into `dev`, phone-checked.
 - [x] **DiceBear avatars** (notionists in brand colors, initials fallback), **saved per account with a picker in Profile**, and a **compact Group readiness** card with member faces. Merged into `dev`, phone-checked.
 - [x] **Server on Prisma + PostgreSQL** (Firebase sign-in only), domain modules, zod validation, rate limits, auth gates, two-way user sync, re-consent for accounts without consent. Tested by the user and merged into `dev` (2026-10-15).
-- [ ] **Audit doc back to PostgreSQL:** Fix 1, Tables, ERD and DFD still describe Firestore.
+- [ ] **Audit doc back to PostgreSQL:** Fix 1 and Tables still describe Firestore; ERD/flowchart PNGs redrawn (2026-10-15), re-insert them in the doc.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.

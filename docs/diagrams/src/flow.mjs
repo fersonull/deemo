@@ -209,7 +209,7 @@ render(
     ["real", "dec", "Any real answer?"],
     ["rate", "proc", "Gemini rates each criterion and re-checks contradictions; code measures delivery"],
     ["ok", "dec", "Scoring succeeded?"],
-    ["compute", "proc", "Server computes the readiness score and verdict; saves the report in the session"],
+    ["compute", "proc", "Server computes the readiness score and verdict; saves the report"],
     ["show", "io", "Show the readiness report"],
     ["end", "term", "End"],
   ],
