@@ -2,7 +2,7 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-14_
+_Last updated: 2026-10-15_
 
 ## Current state
 
@@ -16,7 +16,7 @@ _Last updated: 2026-10-14_
 
 ## Next task
 
-**Paper follow-up:** Chapter 2 Target Technologies already describes PostgreSQL + Prisma (user edited it 2026-10-15). The diagram PNGs in `docs/diagrams/` are redrawn for PostgreSQL (ERD = the 17 tables). Still to update in the audit doc: Fix 1 and the Tables tab (Tables 2-6 still list Firestore fields), and re-insert the new ERD and Flowchart B images (the user inserts images).
+**Paper follow-up (user action):** the paper ("4B - KIMBERLY'S GROUP") now matches the app except its figures: replace Figure 2 (DFD), Figure 3 (ERD) and both System Flowchart images with the PNGs in `docs/diagrams/`, sized inside the page margins. Optional: add References entries for the documentation citations (Google AI for Developers, TypeScript Documentation, Expo/Bun/Prisma Documentation, etc.), and delete the stale Fix 1-6 tabs in the audit doc (Claude can't delete tabs). The audit doc's Audit tab lists only open items (now just R1, the figures).
 
 In priority order (full backlog in `docs/TASKS.md`):
 
@@ -32,6 +32,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-15 | **Paper audit closed out**: the audit doc's Tables tab holds the PostgreSQL data dictionary (Tables 2-18, from the schema), which the group pasted into Ch. 3 (verified field for field). The Audit tab was trimmed to open items only (Oct 14 sections removed); remaining text fixes (extracted-fields lists, typos, Ch. 2 citations) applied in the paper directly. Only R1 (re-insert the redrawn figures) is open. | Google Docs (no repo code) |
 | 2026-10-15 | **Diagrams for PostgreSQL**: ERD (`docs/diagrams/src/erd.mjs`) redrawn from `server/prisma/schema.prisma` (17 tables, SQL types, FK/PK, dashed = reference without FK: `sessions.project_id`); Flowchart B says "saves the report". DFD unchanged (its stores are logical and still hold). Render: `bun install` in `src/`, `node erd.mjs`, `bash shot.sh erd`. | see git log |
 | 2026-10-15 | **Server on Prisma + PostgreSQL, domain-driven** (plan: `~/.claude/plans/i-am-planning-to-serialized-beaver.md`). Firebase is sign-in only. Modules `identity`, `manuscripts`, `groups`, `practice`, `scoring` under `server/src/modules/` (domain / application / infrastructure / http) plus `server/src/shared/` (zod env config, Prisma client with `withSerializable` retry on P2034, `AppError` + error handler, zod `validate`, Postgres-counted fixed-window `rateLimit`, Firebase `authenticate`, `ai/gemini` with zod-checked replies). Gates: `protect` = token, verified email, user sync, not being deleted; `requireConsent` on AI routes; `requirePremium`. Plan limits in `identity/domain/plan.ts`; the daily cap is pure `practice/domain/live-start.ts` run in serializable transactions. Two-way sync: Firebase to `users` row on each request (email, verification, provider, first name), row to Firebase on rename (`PATCH /me { name }`) and delete. Same routes and responses; client: renaming goes through the server, signed-in accounts without consent see the consent screen. 39 server unit tests, 59 client tests, both type checks and lint pass; the server boots and answers health/401/404 without a database. **Not run yet:** migrations, integration tests and the phone (no `DATABASE_URL`). | `feat/postgres` (`e694226`, `e991e72`), merged into `dev` (`e89bd7a`) after the user's test |
 | 2026-10-15 | **Chapter 3 diagrams redrawn** for the group's Google Doc (audit doc, new **Diagrams** tab after Fix 7): DFD (Gane-Sarson like the group's sample, left to right) and ERD (crow's foot, left to right) on landscape pages, System Flowchart parts A and B top to bottom on portrait pages (a flipped section). Content follows the app: no OpenAI, email verification loop, consent before sign-in, names, DiceBear avatars, `avatar` on User. The images are not in the doc yet: the user uploads each PNG at its highlighted line (the repo stays unpushed). Fix 7's outdated sentences were corrected in place. The Tables tab got an `avatar` row in Table 2 and its Length column filled in Tables 2 to 6 (the group's sample format, as in a SQL data dictionary: a text field's length is the most characters the app stores, from server limits, fixed formats or the longest allowed value; "Variable" for free text with no limit; N/A for booleans, numbers, text timestamps, arrays and maps. Fix 1's "Length column is dropped" sentence now says this. Table 1 is earlier in the paper, outside the data dictionary.). Sources: `docs/diagrams/src` (ELK layered layout with orthogonal routing for the DFD and ERD, a hand grid for the flowchart; `node dfd.mjs` etc., then `bash shot.sh <name>`). | `docs/diagrams/`; uncommitted |
