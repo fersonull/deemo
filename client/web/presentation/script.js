@@ -108,7 +108,69 @@
     current = index;
     dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
     countEl.textContent = `${index + 1} / ${total}`;
+    updateSession(slides[index]);
+    updateFlow(slides[index]);
   }
+
+  // session HUD: real elapsed time from the first move past the title slide
+  // (a defense is timeboxed, so the clock is useful), and the stage track
+  // (data-stage: 0 title slide, 1 Title, 2 Pre-Oral, 3 Final, 4 ended)
+  const sessionEl = document.querySelector(".session");
+  const timeEl = document.getElementById("sessionTime");
+  const stageEls = Array.from(document.getElementById("sessionStages").children);
+  let startedAt = null;
+  let clock = null;
+
+  function renderTime() {
+    const s = Math.floor((Date.now() - startedAt) / 1000);
+    timeEl.textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  function updateSession(slide) {
+    const stage = Number(slide.dataset.stage || 0);
+    stageEls.forEach((el, i) => {
+      el.classList.toggle("is-on", i + 1 === stage);
+      el.classList.toggle("is-done", i + 1 < stage);
+    });
+    if (stage > 0 && stage < 4 && startedAt === null) {
+      startedAt = Date.now();
+      clock = setInterval(renderTime, 1000);
+    }
+    if (stage === 4 && clock) { clearInterval(clock); clock = null; renderTime(); }
+    if (stage < 4 && startedAt !== null && !clock) clock = setInterval(renderTime, 1000);
+    sessionEl.classList.toggle("is-live", clock !== null);
+  }
+
+  // "how it works": the steps cycle while the slide is up, each one switching
+  // the phone screen; clicking a step picks it and stops the cycle
+  const flowSlide = document.querySelector("[data-flow]");
+  const flowSteps = flowSlide ? Array.from(flowSlide.querySelectorAll(".flow__steps li")) : [];
+  const flowScreens = flowSlide ? Array.from(flowSlide.querySelectorAll(".flow__screen")) : [];
+  let flowTimer = null;
+  let flowAt = 0;
+
+  function showStep(i) {
+    flowAt = i;
+    flowSteps.forEach((el, j) => el.classList.toggle("is-on", j === i));
+    flowScreens.forEach((el, j) => el.classList.toggle("is-on", j === i));
+  }
+
+  function updateFlow(slide) {
+    clearInterval(flowTimer);
+    flowTimer = null;
+    if (slide !== flowSlide) return;
+    showStep(0);
+    if (!reducedMotion.matches) {
+      flowTimer = setInterval(() => showStep((flowAt + 1) % flowSteps.length), 2400);
+    }
+  }
+
+  flowSteps.forEach((el, i) => el.addEventListener("click", (e) => {
+    e.stopPropagation();
+    clearInterval(flowTimer);
+    flowTimer = null;
+    showStep(i);
+  }));
 
   function goTo(index) {
     const clamped = Math.max(0, Math.min(total - 1, index));

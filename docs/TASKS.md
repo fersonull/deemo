@@ -22,6 +22,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 ## Planned features not built yet
 
 - [x] **Panel-defense presentation deck** (not in the plan doc; requested directly): static HTML/CSS/JS slide deck at `client/web/presentation/` for presenting DEEMO to the capstone panel, themed with the app's design tokens, deployed to GitHub Pages via `.github/workflows/deploy-presentation.yml`. Chapter II/III competitor and market slides are placeholders pending the group's actual paper text.
+- [x] **Deck redesign: "the deck is a defense"**: each slide is a panel question with the answer underneath, a session HUD (elapsed time + Title/Pre-Oral/Final track), 14 slides in varied layouts.
 - [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
 - [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).
 - [ ] **Read-only share link** (addendum Q2, optional; not in the prototype): one report, expires after 7 days. Skipped for now; the PDF covers sending results to the adviser.

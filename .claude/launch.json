@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "presentation",
+      "runtimeExecutable": "bunx",
+      "runtimeArgs": ["serve", "client/web/presentation", "-l", "5055"],
+      "port": 5055
+    }
+  ]
+}
