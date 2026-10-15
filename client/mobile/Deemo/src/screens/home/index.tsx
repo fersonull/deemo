@@ -16,9 +16,9 @@ import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { refreshEverything } from "@/hooks/refresh-everything";
-import { useProjects } from "@/hooks/use-projects";
+import { projects, useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
-import { useSessions } from "@/hooks/use-sessions";
+import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { homeBrief } from "@/utils/home-brief";
 import { riseIn } from "@/utils/motion";
@@ -59,7 +59,9 @@ export function Home() {
 
   useFocusEffect(
     useCallback(() => {
-      void refreshEverything(); // the account too, so a Premium change made elsewhere shows on return
+      // The account (/me) is re-read when the app comes back to the foreground (app/_layout.tsx), not on every visit.
+      void sessions.refresh();
+      void projects.refresh();
     }, []),
   );
 
