@@ -11,12 +11,13 @@ import { briefText, type Brief } from "@/utils/home-brief";
 
 // Deemo, the informer, at the top of Home. The bubble leads with the last score as a big headline (number and band in
 // the band's color, where it's easy to see), then at most three lines on what changed and what to work on, important
-// parts in bold. Deemo's face follows the score. Tap it to open that report. The words fade in when they change.
-export function DeemoBrief({ brief }: { brief: Brief }) {
+// parts in bold. Deemo's face follows the score; during the launch spotlight (`greet`) it waves hello first. Tap it to
+// open that report. The words fade in when they change.
+export function DeemoBrief({ brief, greet }: { brief: Brief; greet?: boolean }) {
   const { openId } = brief;
   const body = (
     <>
-      <Deemo mood={brief.mood} look="right" />
+      <Deemo mood={greet ? "waving" : brief.mood} look="right" />
       <View style={styles.bubble}>
         <View style={styles.tail} />
         {brief.headline ? (

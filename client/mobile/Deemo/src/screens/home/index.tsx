@@ -1,14 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/avatar";
@@ -25,6 +18,7 @@ import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
+import { useSpotlight, useSpotlightStyle } from "@/hooks/spotlight";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { homeBrief } from "@/utils/home-brief";
@@ -48,12 +42,6 @@ function greeting(hour: number) {
 }
 
 
-// Once per app launch, Home opens with a spotlight on Deemo and its brief: everything else waits at low opacity, then
-// fades up. A touch anywhere ends it early.
-let spotlit = false;
-const DIM = 0.25;
-const HOLD_MS = 2400;
-
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 // Home (plan S-05, prototype home): greeting, Deemo telling you where you stand (the last score on its sign, what it
@@ -73,18 +61,9 @@ export function Home() {
   const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
   const reduced = useReducedMotion();
   const ready = loaded && projectsLoaded;
-  const rest = useSharedValue(spotlit ? 1 : DIM);
-  const restStyle = useAnimatedStyle(() => ({ opacity: rest.value }));
-  useEffect(() => {
-    if (!ready || spotlit) return;
-    spotlit = true;
-    rest.set(withDelay(HOLD_MS, withTiming(1, { duration: 600 })));
-  }, [ready, rest]);
-  const endSpotlight = () => {
-    if (rest.get() >= 1) return;
-    cancelAnimation(rest);
-    rest.set(withTiming(1, { duration: 250 }));
-  };
+  // Once per launch: Deemo and its brief in the spotlight (hooks/spotlight.ts); offline ends it at once.
+  const { greet, end: endSpotlight } = useSpotlight(ready || (loaded && error));
+  const restStyle = useSpotlightStyle();
 
   useFocusEffect(
     useCallback(() => {
@@ -116,7 +95,7 @@ export function Home() {
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (
           <Animated.View entering={riseIn(60, reduced)}>
-            <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} />
+            <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} greet={greet} />
           </Animated.View>
         ) : (
           <Skeleton label="Loading">
