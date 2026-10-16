@@ -192,6 +192,7 @@ export const PANEL_TOOLS = [
 // The confirmed Document Logic Analysis, as the panel reads it.
 export function manuscriptFacts(a: Analysis): string {
   return [
+    ...(a.field ? [`Field: ${a.field}`] : []),
     `Title: ${a.title}`,
     `Problem: ${a.problem}`,
     `Objectives: ${a.objectives}`,

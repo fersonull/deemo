@@ -1,13 +1,11 @@
 import * as DocumentPicker from "expo-document-picker";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
-import { IT_FIELDS, isComputing, type Domain } from "@/constants";
 import { projects, type PickedFile, type Project } from "@/hooks/use-projects";
-import { useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { PressableScale } from "@/components/pressable-scale";
 
@@ -24,8 +22,6 @@ type Props = { visible: boolean; onClose: () => void; onUploaded: (p: Project) =
 export function UploadSheet({ visible, onClose, onUploaded }: Props) {
   const [file, setFile] = useState<PickedFile | null>(null);
   const [name, setName] = useState("");
-  const computing = isComputing(useSession().course);
-  const [domain, setDomain] = useState<Domain>(IT_FIELDS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,7 +40,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     setBusy(true);
     setError("");
     try {
-      const p = await projects.upload(file, name.trim(), computing ? domain : "General");
+      const p = await projects.upload(file, name.trim(), "General") // the analysis detects the field and IT field;
       setFile(null);
       setName("");
       onUploaded(p);
@@ -95,31 +91,8 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
           accessibilityLabel="Project name"
         />
       </View>
+      <Text style={styles.hint}>{"DEEMO reads your study's field from the manuscript. You can correct it on the summary."}</Text>
 
-      {computing ? (
-        <>
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>IT field</Text>
-            <View accessibilityRole="radiogroup" style={styles.domains}>
-              {IT_FIELDS.map((d) => {
-                const selected = d === domain;
-                return (
-                  <Pressable
-                    key={d}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: selected }}
-                    onPress={() => setDomain(d)}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                  >
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{d}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-          <Text style={styles.hint}>The panel tunes its technical questions to this field.</Text>
-        </>
-      ) : null}
 
       {error ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">
@@ -161,11 +134,6 @@ const styles = StyleSheet.create({
   field: { marginTop: 8, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
   fieldLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 11, color: colors.muted },
   input: { fontFamily: fonts.body, fontWeight: "500", fontSize: 15, color: colors.ink, paddingVertical: 4, paddingHorizontal: 0 },
-  domains: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 8 },
-  chip: { height: 34, borderRadius: 17, paddingHorizontal: 12, justifyContent: "center", backgroundColor: colors.paper },
-  chipSelected: { backgroundColor: colors.ink },
-  chipText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.ink },
-  chipTextSelected: { color: colors.paper },
   hint: { ...type.meta, lineHeight: 17, marginTop: 6, paddingHorizontal: 4 },
   error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
   cta: { marginTop: 16 },

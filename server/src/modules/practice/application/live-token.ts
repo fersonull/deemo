@@ -21,7 +21,8 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
   if (setup.projectId && (!project?.analysis || !project.confirmedAt))
     throw new AppError(403, "This manuscript is unavailable. Choose a reviewed project.");
   panel.focusArea = project?.group?.focusArea;
-  panel.course = courseOf(account.course); // profiles the panel (plan F4); not part of the fingerprint
+  // The manuscript's field profiles the panel (plan F4); the account course only without one. Not in the fingerprint.
+  panel.course = project?.analysis?.field ?? courseOf(account.course);
   // Each seat's voice is its persona's (the course decides who sits). ponytail: read from the account at every mint, so
   // a course changed on another device mid-session would re-seat later panelists; snapshot it on the live start if
   // that ever matters (Profile can't be opened during a session on this device).

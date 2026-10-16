@@ -111,6 +111,7 @@ model Analysis {
   results    String   @db.VarChar(2000)
   facts      String[]
   unsure     String[]
+  field      String?  @db.VarChar(40) // the manuscript's field (identity/domain/course.ts COURSES); profiles the panel
   model      String?  @db.VarChar(40)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

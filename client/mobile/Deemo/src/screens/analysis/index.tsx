@@ -16,8 +16,10 @@ import { riseIn } from "@/utils/motion";
 import { Reading } from "./reading";
 import { SummaryCard } from "./summary-card";
 import { GroupCard } from "./group-card";
+import { FieldCard } from "./field-card";
+import { useSession } from "@/hooks/use-session";
 
-type TextField = Exclude<keyof AnalysisData, "facts" | "unsure">;
+type TextField = Exclude<keyof AnalysisData, "facts" | "unsure" | "field">;
 
 const CARDS: { k: TextField; title: string }[] = [
   { k: "title", title: "TITLE" },
@@ -35,6 +37,7 @@ const POLL_MS = 2500;
 // Document Logic Analysis (plan F2, screens S-07): reading → "Here's what we understood" → confirm.
 export function Analysis({ id }: { id: string }) {
   const project = useProjects().projects.find((p) => p.id === id);
+  const { course } = useSession();
   // A failed upload holds nothing worth keeping (the file is never stored): it's deleted as soon as its reason is shown,
   // and the reason stays on screen (issue #10). The server also sweeps failed uploads the student never opened.
   const [failedReason, setFailedReason] = useState<string | null>(null);
@@ -154,6 +157,9 @@ export function Analysis({ id }: { id: string }) {
       </Text>
       {project.confirmedAt ? <GroupCard project={project} onLeft={back} /> : null}
       <View style={styles.cards}>
+        <Animated.View entering={stagger(0)}>
+          <FieldCard project={project} readOnly={readOnly} course={course} />
+        </Animated.View>
         {cards.map((c, i) => (
           <Animated.View key={c.k} entering={stagger(i)}>
             <SummaryCard

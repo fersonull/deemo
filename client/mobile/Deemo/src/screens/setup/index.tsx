@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
-import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, isComputing, type Mode } from "@/constants";
+import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, isComputing, profileCourse, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -33,6 +33,7 @@ export function Setup() {
   const upsell = () => setSheet("upsell");
   const list = useProjects();
   const manuscript = list.projects.find((p) => p.id === setup.projectId);
+  const field = profileCourse(manuscript, course); // the manuscript's field, else the student's course
 
   useFocusEffect(
     useCallback(() => {
@@ -120,7 +121,7 @@ export function Setup() {
         </View>
       </PressableScale>
       {/* The IT field is for computing courses only; every other course is profiled by the course (plan F4). */}
-      {isComputing(course) ? (
+      {isComputing(field) ? (
         <PressableScale
           scaleTo={0.98}
           accessibilityRole="button"
@@ -149,7 +150,7 @@ export function Setup() {
         onLocked={upsell}
         options={[1, 2, 3].map((n) => ({ value: n, label: String(n), locked: n > 1 && !premium }))}
       />
-      <PanelPreview course={course} panelists={setup.panelists} />
+      <PanelPreview course={field} panelists={setup.panelists} />
 
       <Text style={[type.label, styles.section]}>LENGTH</Text>
       <Segmented
@@ -183,7 +184,7 @@ export function Setup() {
         <Button
           label="Continue to mic check"
           onPress={() => {
-            if (!isComputing(course)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
+            if (!isComputing(field)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
             router.push("/mic-check");
           }}
         />

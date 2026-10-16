@@ -6,7 +6,7 @@ import { MANUSCRIPT_LIMIT_MESSAGE, planOf } from "../../identity/domain/plan";
 import { accessibleProject } from "../../groups/application/access";
 import { leaveGroup } from "../../groups/application/groups";
 import { groupRepo } from "../../groups/infrastructure/group-repo";
-import { Rejected, applyEdits, type DocType, type FIELDS, type Project } from "../domain/manuscript";
+import { Rejected, applyEdits, type AnalysisEdits, type DocType, type Project } from "../domain/manuscript";
 import type { Rubric } from "../domain/rubric";
 import { projectRepo } from "../infrastructure/project-repo";
 import { analyzeManuscript } from "./read-documents";
@@ -36,7 +36,7 @@ export async function uploadManuscript(account: Account, u: Upload): Promise<Pro
 
 async function readInBackground(id: string, bytes: Uint8Array, type: DocType) {
   try {
-    await projectRepo.finishAnalysis(id, { analysis: await analyzeManuscript(bytes, type) });
+    await projectRepo.finishAnalysis(id, await analyzeManuscript(bytes, type));
   } catch (err) {
     if (!(err instanceof Rejected)) console.error("analysis", id, err);
     const error =
@@ -62,12 +62,15 @@ async function ownedForEditing(uid: string, id: string, who: string) {
 export async function editAnalysis(
   uid: string,
   id: string,
-  edits: Partial<Record<(typeof FIELDS)[number], string>> & { facts?: string[] },
+  { domain, ...edits }: AnalysisEdits & { domain?: string },
   confirm: boolean,
 ) {
   const p = await ownedForEditing(uid, id, "summary");
   if (!p.analysis) throw new AppError(404, "not found");
-  await projectRepo.saveAnalysis(p.id, applyEdits(p.analysis, edits), confirm);
+  // A field outside computing has no IT field.
+  const field = edits.field ?? p.analysis.field;
+  const nextDomain = edits.field && field !== "BSIT" && field !== "BSCS" ? "General" : domain;
+  await projectRepo.saveAnalysis(p.id, applyEdits(p.analysis, edits), confirm, nextDomain);
   return accessibleProject(uid, p.id);
 }
 

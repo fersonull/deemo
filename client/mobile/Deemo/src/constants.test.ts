@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { lineup, panelLabel, panelistName } from "./constants";
+import { lineup, panelLabel, panelistName, profileCourse } from "./constants";
 
 // Same table as server/src/modules/practice/domain/panel.test.ts: keep both sides seating the same panel.
 test("the course decides who sits with one or two panelists, in panel order", () => {
@@ -19,4 +19,10 @@ test("Santos is the course's field expert; the others keep their titles", () => 
   expect(panelLabel(1, "BSIT")).toBe("Tech");
   expect(panelistName(0, "Maritime")).toBe("Dr. Reyes");
   expect(panelLabel(2, "Education")).toBe("Methods");
+});
+
+test("the panel follows the manuscript's field, else the student's course", () => {
+  expect(profileCourse({ analysis: { field: "BSIT" } }, "Education")).toBe("BSIT");
+  expect(profileCourse({ analysis: {} }, "Education")).toBe("Education");
+  expect(profileCourse(undefined, "Maritime")).toBe("Maritime");
 });

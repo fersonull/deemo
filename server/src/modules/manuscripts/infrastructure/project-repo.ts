@@ -1,4 +1,5 @@
 import { Prisma, prisma, type Tx } from "../../../shared/prisma";
+import { courseOf } from "../../identity/domain/course";
 import { STALE_ERROR, STALE_MS, type Analysis, type Project } from "../domain/manuscript";
 import type { Rubric } from "../domain/rubric";
 
@@ -10,8 +11,8 @@ type Row = Prisma.ProjectGetPayload<{ include: typeof include }>;
 type Db = Tx | typeof prisma;
 
 function toAnalysis(a: NonNullable<Row["analysis"]>): Analysis {
-  const { projectId: _, model, ...fields } = a;
-  return { ...fields, ...(model && { model }) };
+  const { projectId: _, model, field, ...fields } = a;
+  return { ...fields, ...(field && { field: courseOf(field) }), ...(model && { model }) };
 }
 
 function toRubric(r: NonNullable<Row["rubric"]>): Rubric {
@@ -49,8 +50,8 @@ export function toProject(row: Row): Project {
 }
 
 const analysisData = (a: Analysis) => {
-  const { model, ...fields } = a;
-  return { ...fields, model: model ?? null };
+  const { model, field, ...fields } = a;
+  return { ...fields, field: field ?? null, model: model ?? null };
 };
 
 export const projectRepo = {
@@ -78,22 +79,26 @@ export const projectRepo = {
     }),
 
   // The background read finished. Nothing happens if the student deleted the project meanwhile.
-  async finishAnalysis(id: string, result: { analysis: Analysis } | { error: string }) {
+  // `domain`: the IT field the analysis detected.
+  async finishAnalysis(id: string, result: { analysis: Analysis; domain: string } | { error: string }) {
     await prisma.$transaction(async (tx) => {
       const exists = await tx.project.findUnique({ where: { id }, select: { id: true } });
       if (!exists) return;
       if ("analysis" in result) {
         await tx.analysis.create({ data: { projectId: id, ...analysisData(result.analysis) } });
-        await tx.project.update({ where: { id }, data: { status: "ready", error: null } });
+        await tx.project.update({ where: { id }, data: { status: "ready", error: null, domain: result.domain } });
       } else await tx.project.update({ where: { id }, data: { status: "failed", error: result.error } });
     });
   },
 
   // The student's corrections, and "Looks right".
-  async saveAnalysis(id: string, analysis: Analysis, confirm: boolean) {
+  async saveAnalysis(id: string, analysis: Analysis, confirm: boolean, domain?: string) {
     await prisma.$transaction([
       prisma.analysis.update({ where: { projectId: id }, data: analysisData(analysis) }),
-      prisma.project.update({ where: { id }, data: { updatedAt: new Date(), ...(confirm && { confirmedAt: new Date() }) } }),
+      prisma.project.update({
+        where: { id },
+        data: { updatedAt: new Date(), ...(domain && { domain }), ...(confirm && { confirmedAt: new Date() }) },
+      }),
     ]);
   },
 

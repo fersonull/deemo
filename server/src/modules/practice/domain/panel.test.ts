@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { buildPanelPrompt, lineup, PANEL_TOOLS, seatShare } from "./panel";
+import { buildPanelPrompt, lineup, manuscriptFacts, PANEL_TOOLS, seatShare } from "./panel";
 
 const setup = { mode: "PRE_ORAL" as const, domain: "Web/Mobile App", minutes: 15, followUps: 2, difficulty: "STANDARD" as const };
 
@@ -78,4 +78,9 @@ test("Santos is the field expert for the student's course", () => {
   const solo = buildPanelPrompt({ ...setup, domain: "General", panelists: 1, course: "Psychology & Social Sciences" });
   expect(solo).toContain("Methodology: Prof. Cruz");
   expect(solo).toContain("As the only panelist");
+});
+
+test("the panel sees the manuscript's field first", () => {
+  const a = { title: "T", problem: "P", objectives: "O", method: "M", scope: "S", features: "", limits: "L", results: "", facts: [], unsure: [], field: "Maritime" as const };
+  expect(manuscriptFacts(a).startsWith("Field: Maritime\nTitle: T")).toBe(true);
 });

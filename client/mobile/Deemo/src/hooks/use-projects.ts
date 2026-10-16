@@ -1,6 +1,6 @@
 import { File } from "expo-file-system";
 
-import { DEFAULT_WEIGHTS, type Domain } from "@/constants";
+import { DEFAULT_WEIGHTS, type Course, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { api } from "@/utils/api";
 import { freshFor } from "@/utils/fresh";
@@ -18,6 +18,7 @@ export type Analysis = {
   results: string;
   facts: string[];
   unsure: string[];
+  field?: Course; // detected from the manuscript (none on older analyses); the panel follows it
 };
 
 // The panel's own rubric (plan F3), replacing the default five criteria. Mirrors server/src/modules/manuscripts/domain/rubric.ts.
@@ -133,12 +134,14 @@ export const projects = {
     return upsert(await api<Project>("/projects", { method: "POST", body: form }));
   },
 
-  async saveAnalysis(id: string, analysis: Partial<Analysis>, confirm = false) {
+  // `domain`: a corrected IT field (saved on the project).
+  async saveAnalysis(id: string, analysis: Partial<Analysis>, confirm = false, domain?: Domain) {
     const p = await api<Project>(`/projects/${id}/analysis`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ analysis, confirm }),
+      body: JSON.stringify({ analysis: { ...analysis, ...(domain && { domain }) }, confirm }),
     });
+    if (practiceSetup.get().projectId === p.id) practiceSetup.set({ domain: p.domain }); // the active manuscript's IT field
     return upsert(p);
   },
 

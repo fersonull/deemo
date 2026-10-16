@@ -26,6 +26,10 @@ export const COURSES = [
   "Other",
 ] as const;
 export type Course = (typeof COURSES)[number];
+// The course the panel is set up for: the manuscript's field, else the student's own course (server live-token.ts
+// uses the same rule).
+export const profileCourse = (project: { analysis?: { field?: Course } } | undefined, course: Course | null) =>
+  project?.analysis?.field ?? course;
 export const isComputing = (c: Course | null) => c === "BSIT" || c === "BSCS"; // these pick an IT field per project
 
 // Session data model values (plan §13).

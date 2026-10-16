@@ -73,8 +73,9 @@ export async function rescore(uid: string, id: string): Promise<Session> {
 }
 
 async function judge(uid: string, s: Unscored): Promise<Report> {
-  // The student's course profiles the feedback (plan F4); read now, so a course changed since counts.
-  const course = courseOf((await prisma.user.findUnique({ where: { id: uid }, select: { course: true } }))?.course);
+  // The manuscript's field profiles the feedback (plan F4), else the student's course; read now, so a change since counts.
+  const field = s.projectId ? (await prisma.analysis.findUnique({ where: { projectId: s.projectId }, select: { field: true } }))?.field : null;
+  const course = courseOf(field ?? (await prisma.user.findUnique({ where: { id: uid }, select: { course: true } }))?.course);
   const criteria = judgedCriteria(s, delivery(s.turns).why);
   const { value, model } = await generateObject(
     {

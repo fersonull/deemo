@@ -7,6 +7,7 @@ import {
   PDF,
   Rejected,
   type Analysis,
+  type Domain,
   type DocOrImageType,
   type DocType,
 } from "../domain/manuscript";
@@ -14,7 +15,8 @@ import { RUBRIC_PROMPT, RUBRIC_SCHEMA, RubricReply, rubricFromReply, type Rubric
 import { docxText } from "../infrastructure/docx";
 
 // Document Logic Analysis (plan F2): a PDF goes to Gemini as-is (it reads scanned pages too), a DOCX as its text.
-export async function analyzeManuscript(bytes: Uint8Array, type: DocType): Promise<Analysis> {
+// Returns the analysis and the IT field it detected (the project's domain; "General" outside computing).
+export async function analyzeManuscript(bytes: Uint8Array, type: DocType): Promise<{ analysis: Analysis; domain: Domain }> {
   let doc;
   if (type === PDF) doc = { inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } };
   else {
@@ -30,9 +32,9 @@ export async function analyzeManuscript(bytes: Uint8Array, type: DocType): Promi
     },
     AnalysisReply,
   );
-  const { isManuscript, notManuscriptReason, ...analysis } = value;
+  const { isManuscript, notManuscriptReason, itField, ...analysis } = value;
   if (!isManuscript) throw new Rejected(notManuscriptReason || "This doesn't look like a research manuscript.");
-  return { ...analysis, model };
+  return { analysis: { ...analysis, model }, domain: analysis.field === "BSIT" || analysis.field === "BSCS" ? itField : "General" };
 }
 
 // Rubric upload (plan F3): the panel's own form, read into a whole rubric. Nothing is stored; the student reviews it
