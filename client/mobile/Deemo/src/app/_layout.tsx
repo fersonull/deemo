@@ -77,6 +77,7 @@ export default function RootLayout() {
           <Stack.Screen name="analysis" />
           <Stack.Screen name="practice" />
           <Stack.Screen name="rubric" />
+          <Stack.Screen name="premium" />
           <Stack.Screen name="results" />
           <Stack.Screen name="mic-check" />
           <Stack.Screen name="session" options={{ gestureEnabled: false }} />

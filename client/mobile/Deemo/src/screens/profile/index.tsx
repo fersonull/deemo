@@ -1,14 +1,15 @@
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/avatar";
 import { CoursePicker } from "@/components/course-picker";
 import { AvatarSheet } from "./avatar-sheet";
-import { PremiumCard } from "./premium-card";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Sheet } from "@/components/sheet";
+import { PremiumCard } from "@/components/premium-card";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { session, useSession } from "@/hooks/use-session";
@@ -20,7 +21,9 @@ import { PressableScale } from "@/components/pressable-scale";
 
 const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, five sessions a day, one manuscript.";
 
-// Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, course, the typed-answer setting, download and delete my data, sign out.
+// Profile (prototype profile screen), top to bottom by importance: who you are (tap the face to pick a look, the name to
+// change it), your plan (Premium: a compact card that opens the benefits screen), then grouped settings (course, typed
+// answers), your data (download, delete) and sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
   const { name, email, avatar, premium, allowTyping, course } = useSession();
@@ -88,7 +91,7 @@ export function Profile() {
           accessibilityHint="Pick your look"
           onPress={() => setSheet("avatar")}
         >
-          <Avatar seed={avatar} name={name} email={email} size={56} premium={premium} />
+          <Avatar seed={avatar} name={name} email={email} size={64} premium={premium} />
           <View style={styles.avatarBadge}>
             <Icon name="edit" size={12} color={colors.paper} />
           </View>
@@ -117,7 +120,9 @@ export function Profile() {
       </View>
 
       {premium ? (
-        <PremiumCard />
+        <View style={styles.planCard}>
+          <PremiumCard onPress={() => router.push("/premium")} />
+        </View>
       ) : (
         <View style={styles.plan}>
           <View style={styles.planHead}>
@@ -130,7 +135,8 @@ export function Profile() {
         </View>
       )}
 
-      <View style={styles.rows}>
+      <Text style={[type.label, styles.section]}>SETTINGS</Text>
+      <View style={styles.group}>
         <PressableScale
           accessibilityRole="button"
           accessibilityHint="Change your course"
@@ -146,7 +152,7 @@ export function Profile() {
           </View>
           <Icon name="chevron_right" size={20} color={colors.muted} />
         </PressableScale>
-        <View style={styles.row}>
+        <View style={[styles.row, styles.divider]}>
           <View style={styles.flex}>
             <Text style={styles.rowLabel}>Allow typed answers</Text>
             <Text style={styles.meta}>{"Shows the keyboard button in sessions, for when you can't speak."}</Text>
@@ -155,10 +161,14 @@ export function Profile() {
             accessibilityLabel="Allow typed answers"
             value={allowTyping}
             onValueChange={(v) => void session.setAllowTyping(v)}
-            trackColor={{ false: colors.sand, true: colors.dusk }}
+            trackColor={{ false: colors.faint, true: colors.dusk }}
             thumbColor={colors.paper}
           />
         </View>
+      </View>
+
+      <Text style={[type.label, styles.section]}>YOUR DATA</Text>
+      <View style={styles.group}>
         <PressableScale
           accessibilityRole="button"
           accessibilityState={{ busy: downloading }}
@@ -173,12 +183,13 @@ export function Profile() {
             </Text>
           </View>
         </PressableScale>
-        <PressableScale accessibilityRole="button" onPress={() => setSheet("delete")} style={styles.row}>
+        <PressableScale accessibilityRole="button" onPress={() => setSheet("delete")} style={[styles.row, styles.divider]}>
           <Text style={[styles.rowLabel, styles.danger]}>Delete my data</Text>
         </PressableScale>
-        <PressableScale accessibilityRole="button" onPress={() => void session.signOut()} style={styles.row}>
-          <Text style={styles.rowLabel}>Sign out</Text>
-        </PressableScale>
+      </View>
+
+      <View style={styles.signOut}>
+        <Button variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
       </View>
 
       <UpsellSheet
@@ -282,7 +293,7 @@ export function Profile() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  account: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18, paddingRight: 4 },
+  account: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 18, paddingRight: 4 },
   nameRow: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56 },
   avatarBadge: {
     position: "absolute",
@@ -303,24 +314,20 @@ const styles = StyleSheet.create({
   nameError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
   saveName: { marginTop: 16 },
   coursePicker: { marginTop: 16 },
-  name: { ...type.heading, fontSize: 18 },
+  name: { ...type.heading, fontSize: 20, letterSpacing: -0.3 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
-  plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
+  planCard: { marginTop: 20 },
+  plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 20 },
   planHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   planName: { ...type.heading },
   upgrade: { height: 34, borderRadius: 17, paddingHorizontal: 14, backgroundColor: colors.ink, justifyContent: "center" },
   upgradeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.paper },
   planDesc: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 6 },
-  rows: { marginTop: 18, borderTopWidth: 1, borderTopColor: colors.border },
-  row: {
-    minHeight: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
+  section: { marginTop: 26, marginBottom: 8, paddingHorizontal: 4 },
+  group: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 16 },
+  row: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
+  divider: { borderTopWidth: 1, borderTopColor: colors.border },
+  signOut: { marginTop: 26 },
   rowLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   danger: { color: colors.clay },
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
