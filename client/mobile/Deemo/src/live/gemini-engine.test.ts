@@ -224,3 +224,29 @@ test("handover never strands the floor: a late pass_to_next, a spoken handover, 
     timers.mockRestore();
   }
 });
+
+test("a turn that only flagged a contradiction goes ahead at once, without the quiet-turn wait", () => {
+  const engine = new GeminiEngine(setup);
+  const i = engine as unknown as Internals & { endStudentTurn: () => void; settle: () => void; turnDone: boolean; queued: number };
+  const sent: any[] = [];
+  i.emit = () => {};
+  i.ready = true;
+  i.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+  const jobs: { ms: number }[] = [];
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation(((_run: () => void, ms: number) => {
+    jobs.push({ ms });
+    return jobs.length;
+  }) as typeof setTimeout);
+  try {
+    i.endStudentTurn();
+    i.onToolCall({ id: "f", name: "flag_inconsistency", args: { spokenClaim: "40", manuscriptEvidence: "30", severity: "HIGH" } });
+    i.turnDone = true;
+    i.queued = 0;
+    i.settle(); // no voice, no question: just the flag
+    expect(sent.at(-1).clientContent.turns[0].parts[0].text).toContain("ask your next question");
+    expect(jobs.some((j) => j.ms === 2500)).toBe(false); // no waiting for late audio
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});

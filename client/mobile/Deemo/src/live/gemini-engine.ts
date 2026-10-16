@@ -23,7 +23,7 @@ const MIC_RATE = 16000; // Live API input
 const VOICE_RATE = 24000; // Live API output
 const ROLES = ["Chair", "Technical", "Methodology"]; // the tool's `panelist` values, in PANEL order
 const RETRY_MS = 2000;
-const QUIET_TURN_MS = 5000; // a turn that ended without a voice: wait this long for late audio
+const QUIET_TURN_MS = 2500; // a turn that ended without a voice: wait this long for late audio
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
 const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
 const STALL_MS = 12000; // the panel went quiet mid-turn and never sent turnComplete: treat the turn as over
@@ -40,6 +40,7 @@ export type SessionSetup = {
 };
 
 type FunctionCall = { id: string; name: string; args?: Record<string, unknown> };
+type Token = { token: string; model: string; voice?: string };
 type ServerMessage = {
   setupComplete?: object;
   serverContent?: {
@@ -60,7 +61,12 @@ export class GeminiEngine implements LiveEngine {
   private seatMains = 0; // main questions this panelist has asked
   private passing = false; // this panelist is done: hand over once their turn settles
   private switching = false; // connecting the next panelist's session
-  private prefetched: { seat: number; token: string; model: string; voice?: string; at: number } | null = null;
+  // The next panelist's token, fetched early (a promise, so a handover awaits it instead of fetching twice).
+  private prefetched: { seat: number; at: number; token: Promise<Token> } | null = null;
+  // The next panelist's session, opened while the current one hands over, so the switch is instant.
+  private next: { seat: number; ws: WebSocket; ready: boolean; handle: string | null } | null = null;
+  private flagged = false; // the panel flagged a contradiction since the student's last turn
+  private mark = 0; // when the panel's reply (or a handover) started, for the timing log
   private stall: ReturnType<typeof setTimeout> | null = null;
   private ws: WebSocket | null = null;
   private ready = false; // setupComplete on the current socket
@@ -175,6 +181,8 @@ export class GeminiEngine implements LiveEngine {
     if (this.stopped) return;
     this.stopped = true;
     this.clearStall();
+    this.next?.ws.close();
+    this.next = null;
     if (this.lipSync) clearInterval(this.lipSync);
     this.lipSync = null;
     panelVoice.value = 0;
@@ -203,8 +211,8 @@ export class GeminiEngine implements LiveEngine {
     try {
       // The next panelist's token, fetched while the last one was still questioning (a quicker handover).
       if (pre && pre.seat === this.seat && !this.handle && Date.now() - pre.at < 50_000) {
-        ({ token, model, voice } = pre);
         this.prefetched = null;
+        ({ token, model, voice } = await pre.token.catch(() => this.fetchToken(this.seat)));
       } else ({ token, model, voice } = await this.fetchToken(this.seat));
     } catch (err) {
       if (this.stopped) return;
@@ -220,20 +228,32 @@ export class GeminiEngine implements LiveEngine {
     }
     if (this.stopped || this.paused || this.ws) return;
 
-    const ws = new WebSocket(`${WS_URL}?access_token=${encodeURIComponent(token)}`);
-    ws.binaryType = "arraybuffer";
+    const ws = this.open({ token, model, voice }, this.handle);
     this.ws = ws;
     this.ready = false;
+    this.attach(ws);
+  }
+
+  // A Live socket that sends its setup when it opens. Everything but the voice and the resumption handle is locked by
+  // the token; the voice is the server's choice (it only takes effect when a session starts).
+  private open({ token, model, voice }: Token, handle: string | null) {
+    const ws = new WebSocket(`${WS_URL}?access_token=${encodeURIComponent(token)}`);
+    ws.binaryType = "arraybuffer";
     ws.onopen = () => {
-      // Everything but the voice and the resumption handle is locked by the token. The voice is the server's choice
-      // (it only takes effect when a session starts; a resumed one keeps its voice).
       const speech = voice ? { generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } } : {};
-      ws.send(JSON.stringify({ setup: { model, ...speech, sessionResumption: this.handle ? { handle: this.handle } : {} } }));
+      ws.send(JSON.stringify({ setup: { model, ...speech, sessionResumption: handle ? { handle } : {} } }));
     };
-    ws.onmessage = (e) => {
-      const raw = typeof e.data === "string" ? e.data : utf8(new Uint8Array(e.data as ArrayBuffer));
-      this.onMessage(JSON.parse(raw) as ServerMessage);
-    };
+    return ws;
+  }
+
+  private static parse(e: { data: unknown }) {
+    const raw = typeof e.data === "string" ? e.data : utf8(new Uint8Array(e.data as ArrayBuffer));
+    return JSON.parse(raw) as ServerMessage;
+  }
+
+  // The live socket's handlers.
+  private attach(ws: WebSocket) {
+    ws.onmessage = (e) => this.onMessage(GeminiEngine.parse(e));
     ws.onclose = (e) => {
       if (this.ws !== ws) return;
       console.warn("[live] closed", e.code, e.reason);
@@ -270,9 +290,34 @@ export class GeminiEngine implements LiveEngine {
   private prefetch() {
     const seat = this.seat + 1;
     if (!this.sequential || seat >= this.setup.panelists || this.prefetched?.seat === seat) return;
-    this.fetchToken(seat)
+    const token = this.fetchToken(seat);
+    token.catch(() => {}); // a failure just means the handover fetches it again
+    this.prefetched = { seat, at: Date.now(), token };
+  }
+
+  // Open the next panelist's session now (their token, setup and voice) while the current one says their handover
+  // line, so it's ready the moment they finish. If it fails, the handover connects the usual way.
+  private prepareNext() {
+    const seat = this.seat + 1;
+    if (!this.sequential || seat >= this.setup.panelists || this.next?.seat === seat || this.stopped) return;
+    this.prefetch();
+    const pre = this.prefetched!;
+    pre.token
       .then((t) => {
-        if (!this.stopped && this.seat < seat) this.prefetched = { seat, ...t, at: Date.now() };
+        if (this.stopped || this.seat !== seat - 1 || this.next) return;
+        const ws = this.open(t, null);
+        const next = { seat, ws, ready: false, handle: null as string | null };
+        this.next = next;
+        if (this.prefetched === pre) this.prefetched = null;
+        ws.onmessage = (e) => {
+          const m = GeminiEngine.parse(e);
+          if (m.setupComplete) next.ready = true;
+          const u = m.sessionResumptionUpdate;
+          if (u?.resumable && u.newHandle) next.handle = u.newHandle;
+        };
+        ws.onclose = () => {
+          if (this.next === next) this.next = null;
+        };
       })
       .catch(() => {});
   }
@@ -312,7 +357,19 @@ export class GeminiEngine implements LiveEngine {
     this.heard = false;
     this.nudged = false;
     this.switching = true;
+    this.flagged = false;
+    this.mark = Date.now();
     this.emit({ type: "handover", seat: this.seat });
+    const next = this.next;
+    this.next = null;
+    if (next && next.seat === this.seat) {
+      this.ws = next.ws;
+      this.handle = next.handle;
+      this.attach(next.ws);
+      if (next.ready) this.onMessage({ setupComplete: {} }); // already set up: the new panelist begins now
+      return;
+    }
+    next?.ws.close();
     void this.connect();
   }
 
@@ -329,6 +386,8 @@ export class GeminiEngine implements LiveEngine {
       if (this.switching) {
         // The next panelist's session is up: tell them what was covered, and they begin.
         this.switching = false;
+        console.log(`[live] handover to seat ${this.seat}: session ready in ${Date.now() - this.mark} ms`);
+        this.mark = Date.now();
         this.emit({ type: "reconnecting", value: false });
         this.sendTurn(this.note(this.seat - 1, this.seat));
         this.awaitPanel();
@@ -364,7 +423,13 @@ export class GeminiEngine implements LiveEngine {
       if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
       return;
     }
-    if (c.modelTurn || c.outputTranscription) this.armStall();
+    if (c.modelTurn || c.outputTranscription) {
+      this.armStall();
+      if (this.mark) {
+        console.log(`[live] panel replied in ${Date.now() - this.mark} ms`);
+        this.mark = 0;
+      }
+    }
     for (const part of c.modelTurn?.parts ?? []) if (part.inlineData?.data) this.play(part.inlineData.data);
     const said = this.quiet ? "" : c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
     if (said?.trim()) {
@@ -408,6 +473,7 @@ export class GeminiEngine implements LiveEngine {
       if (this.sequential && !this.lastSeat && !q.isFollowUp && this.seatMains >= this.share) {
         this.passing = true;
         this.quiet = true;
+        this.prepareNext();
         return { id, name, response: { allowed: false, instruction: "Your part is done. Say nothing more." } };
       }
       if (this.canAsk(q)) {
@@ -433,6 +499,7 @@ export class GeminiEngine implements LiveEngine {
       }
     } else if (name === "flag_inconsistency") {
       this.emit({ type: "flag", flag: args as Omit<Inconsistency, "atMs"> });
+      this.flagged = true;
       response = { ok: true, scheduling: "SILENT" };
     } else if (name === "pass_to_next") {
       // Only between panelists, and never while their question still waits for its answer.
@@ -440,7 +507,7 @@ export class GeminiEngine implements LiveEngine {
       if (this.asked) return { id, name, response: { ok: false, instruction: "Not yet. Wait for the student's answer." } };
       if (!this.lastSeat) {
         this.passing = true;
-        this.prefetch();
+        this.prepareNext();
         // It came after the turn ended and the floor went back to the student: if they haven't spoken, hand over now;
         // if they're speaking, it happens when they finish (finishTurn).
         if (this.studentFloor && !this.activity) this.handOver();
@@ -531,6 +598,13 @@ export class GeminiEngine implements LiveEngine {
       this.handOver();
     } else if (this.heard) {
       this.giveFloor();
+    } else if (this.flagged && !this.asked && !this.nudged) {
+      // It only flagged a contradiction and stopped (the flag's silent reply can end its turn): go ahead right away
+      // instead of waiting for late audio, so the challenge or next question comes promptly.
+      this.nudged = true;
+      this.turnDone = false;
+      this.sendTurn("(Go ahead: react to the answer and ask your next question through ask_question.)");
+      this.awaitPanel();
     } else {
       // A turn with no voice (tool-only, or the model chose silence). Audio may still follow. If a
       // question was approved it is on screen, so just hand the floor back: nudging here made the
@@ -568,6 +642,8 @@ export class GeminiEngine implements LiveEngine {
   }
 
   private endStudentTurn() {
+    this.mark = Date.now();
+    this.flagged = false;
     this.studentFloor = false;
     this.turnDone = false;
     this.nudged = false;
