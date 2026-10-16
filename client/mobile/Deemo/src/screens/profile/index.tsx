@@ -212,7 +212,7 @@ export function Profile() {
 
       <Sheet visible={sheet === "course"} onClose={() => setSheet(null)}>
         <Text style={styles.sheetTitle}>Your course</Text>
-        <Text style={styles.sheetBody}>The panel asks what a panel in your field would ask.</Text>
+        <Text style={styles.sheetBody}>Your panel and its questions follow your course. Takes effect from your next session.</Text>
         <View style={styles.coursePicker}>
           <CoursePicker
             value={course}

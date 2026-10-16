@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import Animated, { cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 
 import { PanelFace } from "@/components/panel-face";
-import { PANEL } from "@/constants";
+import { PANEL, panelLabel, type Course } from "@/constants";
 import { colors, fonts } from "@/theme";
 
 export type PanelistStatus = "speaking" | "listening" | "thinking" | "skeptical" | "offline";
@@ -11,17 +11,20 @@ export type PanelistStatus = "speaking" | "listening" | "thinking" | "skeptical"
 const STATUS = { speaking: "Speaking", listening: "Listening", thinking: "Thinking…", skeptical: "Listening", offline: "Joining…" };
 
 // One panelist in the live session: their face (components/panel-face) with its mood, name, role and status.
-// `level` is the student's mic level, so listeners nod while the student talks.
-export function Panelist({ index, status, count, level = 0 }: { index: number; status: PanelistStatus; count: number; level?: number }) {
+// `persona` is who sits in this seat (constants.ts lineup); `level` is the student's mic level, so listeners nod while
+// the student talks.
+type Props = { persona: number; course: Course | null; status: PanelistStatus; count: number; level?: number };
+export function Panelist({ persona, course, status, count, level = 0 }: Props) {
   const big = count === 1 ? 84 : count === 2 ? 74 : 64;
   const size = status === "speaking" ? big : big - 8;
-  const { name, role } = PANEL[index];
+  const { name } = PANEL[persona]!;
+  const role = panelLabel(persona, course);
 
   return (
     <View style={[styles.wrap, status === "offline" && styles.offline]} accessible accessibilityLabel={`${name}, ${role}. ${STATUS[status]}`}>
       <View style={{ width: size, height: size }}>
         {status === "speaking" && <Pulse size={size} />}
-        <PanelFace index={index} size={size} mood={status} level={level} />
+        <PanelFace index={persona} size={size} mood={status} level={level} />
         {status === "thinking" && (
           <View style={styles.bubble}>
             {[0.3, 0.6, 1].map((o) => (

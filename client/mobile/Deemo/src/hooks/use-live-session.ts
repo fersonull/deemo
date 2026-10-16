@@ -12,24 +12,28 @@ import type { LiveEngine } from "@/live/types";
 const TICK_MS = 250;
 
 // EXPO_PUBLIC_LIVE_ENGINE=mock plays the scripted defense instead of Gemini (UI work, no server needed).
-function createEngine(): LiveEngine {
+function createEngine(seats: number[]): LiveEngine {
   if (process.env.EXPO_PUBLIC_LIVE_ENGINE === "mock") return new MockEngine(practiceSetup.get().panelists);
   const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weakFrom } = practiceSetup.get();
-  return new GeminiEngine({
-    mode,
-    domain,
-    panelists,
-    minutes,
-    followUps,
-    difficulty,
-    projectId: projectId ?? undefined, // no project: the sample paper
-    weakFrom: weakFrom ?? undefined,
-  });
+  return new GeminiEngine(
+    {
+      mode,
+      domain,
+      panelists,
+      minutes,
+      followUps,
+      difficulty,
+      projectId: projectId ?? undefined, // no project: the sample paper
+      weakFrom: weakFrom ?? undefined,
+    },
+    seats,
+  );
 }
 
 // Runs one live session: engine events -> reducer, client-side timers, and the auto-pauses
 // the brief asks for (app backgrounded, connection lost).
-export function useLiveSession() {
+// `seats`: the persona in each seat (constants.ts lineup), for names in the handover.
+export function useLiveSession(seats: number[]) {
   const [state, dispatch] = useReducer(liveReducer, undefined, () => ({
     ...initialLiveState,
     followUpLimit: practiceSetup.get().followUps,
@@ -44,12 +48,12 @@ export function useLiveSession() {
   }, [state]);
 
   useEffect(() => {
-    const engine = createEngine();
+    const engine = createEngine(seats);
     engineRef.current = engine;
     engine.start(
       dispatch,
       (q) => canAsk(stateRef.current, q), // follow-up limit, enforced on device
-      (from, to) => handoverNote(stateRef.current, from, to), // what the next panelist is told
+      (from, to) => handoverNote(stateRef.current, from, to, seats), // what the next panelist is told
     );
 
     let last = Date.now();
@@ -63,7 +67,7 @@ export function useLiveSession() {
       clearInterval(id);
       engine.stop();
     };
-  }, []);
+  }, [seats]); // fixed for the session (useState in the session screen), so this runs once
 
   useEffect(() => {
     if (state.phase === "ending" && state.endedBy === "time") engineRef.current?.endForTime();

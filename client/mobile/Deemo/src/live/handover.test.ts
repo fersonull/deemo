@@ -37,3 +37,12 @@ test("a long session is trimmed, and the instruction stays at the end", () => {
   expect(note.length).toBeLessThanOrEqual(6000);
   expect(note.endsWith("ask your first question.")).toBe(true);
 });
+
+test("names come from the persona in each seat (a course's lineup)", () => {
+  // Nursing with two panelists: seat 0 is Santos, seat 1 is Cruz.
+  const s: LiveState = { ...initialLiveState, turns: [{ question: q("protocol", "Walk me through the protocol.", 0), latencyMs: 0, answerMs: 1, answer: "We followed it." }] };
+  const note = handoverNote(s, 0, 1, [1, 2]);
+  expect(note).toContain("Santos (Tech) has finished");
+  expect(note).toContain("You are Cruz (Methods)");
+  expect(note).toContain("Q1 by Santos (Tech)");
+});

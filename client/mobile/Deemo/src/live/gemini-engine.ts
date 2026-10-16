@@ -103,7 +103,11 @@ export class GeminiEngine implements LiveEngine {
   private spoken = ""; // what the panel has said since the student's turn ended
   private watchdog: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private setup: SessionSetup) {}
+  // `seats`: the persona in each seat (constants.ts lineup), to recognise a spoken handover by the next one's name.
+  constructor(
+    private setup: SessionSetup,
+    private seats: number[] = [0, 1, 2],
+  ) {}
 
   start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean, note?: (from: number, to: number) => string) {
     this.emit = emit;
@@ -548,7 +552,7 @@ export class GeminiEngine implements LiveEngine {
   // even if the model never called pass_to_next.
   private saidHandover() {
     if (!this.sequential || this.lastSeat || this.asked) return false;
-    const next = PANEL[this.seat + 1]?.name;
+    const next = PANEL[this.seats[this.seat + 1] ?? this.seat + 1]?.name;
     return !!next && this.spoken.toLowerCase().includes(next.toLowerCase());
   }
 

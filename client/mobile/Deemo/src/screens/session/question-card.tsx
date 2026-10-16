@@ -3,7 +3,7 @@ import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
 import { PanelFace } from "@/components/panel-face";
-import { PANEL } from "@/constants";
+import { PANEL, panelLabel, type Course } from "@/constants";
 import type { Phase, Question, QuestionType } from "@/live/types";
 import { colors, fonts, type } from "@/theme";
 import { riseIn } from "@/utils/motion";
@@ -20,17 +20,19 @@ type Props = {
   phase: Phase;
   question: Question | null;
   closing: string;
-  takeover: number | null; // a new panelist is taking over (they question in turn)
+  takeover: number | null; // a new panelist is taking over (they question in turn): their seat
+  seats: number[]; // the persona in each seat
+  course: Course | null;
   count: number;
   followUpLimit: number;
   onDonePresenting: () => void;
 };
 
-export function QuestionCard({ phase, question, closing, takeover, count, followUpLimit, onDonePresenting }: Props) {
+export function QuestionCard({ phase, question, closing, takeover, seats, course, count, followUpLimit, onDonePresenting }: Props) {
   const showQuestion = question && phase !== "connecting" && phase !== "presentation" && phase !== "ending" && phase !== "ended";
   const text =
     takeover !== null && phase === "thinking"
-      ? `${PANEL[takeover]?.name} is taking over…`
+      ? `${PANEL[seats[takeover] ?? 0]?.name} is taking over…`
       : phase === "connecting"
       ? "Getting the panel ready…"
       : phase === "presentation"
@@ -39,7 +41,8 @@ export function QuestionCard({ phase, question, closing, takeover, count, follow
           ? closing
           : (question?.text ?? "");
   const size = text.length > 170 ? [17, 22] : text.length > 110 ? [19, 24] : [21, 25];
-  const asker = question ? PANEL[question.panelist % count] : null;
+  const askerPersona = question ? (seats[question.panelist % count] ?? 0) : null;
+  const asker = askerPersona === null ? null : { name: PANEL[askerPersona]!.name, role: panelLabel(askerPersona, course) };
   const reduced = useReducedMotion();
 
   return (
@@ -69,7 +72,7 @@ export function QuestionCard({ phase, question, closing, takeover, count, follow
           </View>
           {asker && (
             <View style={styles.asker}>
-              <PanelFace index={question.panelist % count} size={22} still />
+              <PanelFace index={askerPersona ?? 0} size={22} still />
               <Text style={styles.askerText}>
                 {asker.name} · {asker.role} asks
               </Text>

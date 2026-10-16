@@ -77,9 +77,14 @@ export const useSessions = store.use;
 const post = (body: object) => ({ method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 // What the server scores: the setup, the Q&A with timings, the transcript and the live flags. No audio.
-function fromLive(s: LiveState, endedBy: "panel" | "student" | "time") {
+// The live state counts panelists by seat; a saved session stores persona indices, so its transcript keeps the right
+// names whatever the course is later.
+function fromLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: number[]) {
+  const persona = (seat: number) => seats[seat] ?? seat;
   const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights, weakFrom } = practiceSetup.get();
-  const lines = s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines;
+  const lines = (s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines).map((l) =>
+    l.who === "you" ? l : { ...l, who: persona(l.who) },
+  );
   return {
     mode,
     domain,
@@ -96,7 +101,7 @@ function fromLive(s: LiveState, endedBy: "panel" | "student" | "time") {
       number: t.question.number,
       followUp: t.question.followUp,
       type: t.question.type,
-      panelist: t.question.panelist,
+      panelist: persona(t.question.panelist),
       question: t.question.text,
       answer: t.answer,
       latencyMs: t.latencyMs,
@@ -128,8 +133,8 @@ export const sessions = {
     }
   },
 
-  submitLive(s: LiveState, endedBy: "panel" | "student" | "time") {
-    void this.submit(fromLive(s, endedBy));
+  submitLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: number[]) {
+    void this.submit(fromLive(s, endedBy, seats));
   },
 
   retrySubmit() {

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { buildPanelPrompt, PANEL_TOOLS, seatShare } from "./panel";
+import { buildPanelPrompt, lineup, PANEL_TOOLS, seatShare } from "./panel";
 
 const setup = { mode: "PRE_ORAL" as const, domain: "Web/Mobile App", minutes: 15, followUps: 2, difficulty: "STANDARD" as const };
 
@@ -52,4 +52,30 @@ test("a study with no features leaves the Features / output line out", () => {
   const a = { title: "T", problem: "P", objectives: "O", method: "M", scope: "S", features: "", limits: "L", results: "", facts: [], unsure: [] };
   expect(buildPanelPrompt({ ...setup, panelists: 1 }, a)).not.toContain("Features / output");
   expect(buildPanelPrompt({ ...setup, panelists: 1 }, { ...a, features: "QR check-in" })).toContain("Features / output: QR check-in");
+});
+
+test("the course decides who sits with one or two panelists (best fit), in panel order", () => {
+  expect(lineup("BSIT", 1)).toEqual([1]);
+  expect(lineup("BSIT", 2)).toEqual([0, 1]);
+  expect(lineup("BSIT", 3)).toEqual([0, 1, 2]);
+  expect(lineup("Nursing & Health", 2)).toEqual([1, 2]);
+  expect(lineup("Psychology & Social Sciences", 1)).toEqual([2]);
+  expect(lineup("Other", 1)).toEqual([0]);
+  expect(lineup("Other", 2)).toEqual([0, 2]);
+});
+
+test("Santos is the field expert for the student's course", () => {
+  const nursing = { ...setup, domain: "General", panelists: 2, course: "Nursing & Health" as const };
+  const first = buildPanelPrompt(nursing, undefined, 0);
+  expect(first).toContain("You are Dr. Santos, the Clinical");
+  expect(first).toContain("panelist is your id: Technical");
+  expect(first).not.toContain("architecture, database");
+  expect(first).toContain("handing over to Prof. Cruz");
+  expect(buildPanelPrompt({ ...setup, domain: "General", panelists: 3, course: "Maritime" }, undefined, 0)).toContain(
+    "handing over to Capt. Santos",
+  );
+  expect(buildPanelPrompt({ ...setup, panelists: 3 }, undefined, 1)).toContain("You are Engr. Santos, the Technical");
+  const solo = buildPanelPrompt({ ...setup, domain: "General", panelists: 1, course: "Psychology & Social Sciences" });
+  expect(solo).toContain("Methodology: Prof. Cruz");
+  expect(solo).toContain("As the only panelist");
 });

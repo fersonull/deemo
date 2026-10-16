@@ -6,6 +6,7 @@ _Last updated: 2026-10-17_
 
 ## Current state
 
+- **Open branch `feat/course-panel`** (not merged; waiting for the user's phone test): the panel adapts to the course. Santos is the course's field expert (title, role, focus); with 1 or 2 panelists the best-fit personas sit (`lineup`, mirrored in server `practice/domain/panel.ts` and app `constants.ts`); Setup previews the panel. Plan: `docs/COURSE_PANEL_PLAN.md`. No migration, no rebuild.
 - **`feat/course-profile` merged into `dev` (2026-10-17)**, then deleted: DEEMO is general-purpose (any course and kind of study), the study stays BSIT at PMFTCI; onboarding survey asks the course, Profile edits it, computing courses keep the IT field per project; Profile hierarchy and the Premium benefits screen. Merged at the user's request before a phone test. Any other database needs `cd server && bun run db:migrate` (`20261016160148_add_user_course`). Plan: `docs/COURSE_PROFILE_PLAN.md`.
 - **Branch:** `dev`. `feat/panel-faces` and `feat/sequential-panel` (illustrated panel faces with lip-sync; panelists in turn, each in their own voice) were tested by the user and merged into `dev` on 2026-10-16, then deleted.
 - **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The native build includes Firebase, Google sign-in, the document picker, the VoiceCommunication mic patch, `react-native-svg`, print and sharing, and the owl app icon and splash.
@@ -16,6 +17,12 @@ _Last updated: 2026-10-17_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Test `feat/course-panel`, then merge it into `dev`:** restart the server, reload Metro.
+1. Setup: switching Panelists 1 → 2 → 3 shows the right faces and names for the course (BSIT: Santos; Reyes + Santos; all three. Nursing: Santos; Santos + Cruz. Psychology: Cruz. Other: Reyes; Reyes + Cruz). Changing the course in Profile re-seats it.
+2. A BSIT Free session (1 panelist): Engr. Santos in the Charon voice, technical questions plus the basics.
+3. A Nursing 3-panelist session: Reyes, then Dr. Santos (label "Santos · Clinical", introduces himself on the clinical side), then Cruz, three voices; the handover works.
+4. The report's transcript shows the panelists who actually spoke; an older report's names are unchanged.
 
 **Phone-test the course profile (merged into `dev` untested):** run `bun run db:migrate` in `server/`, restart the server, reload Metro.
 1. An existing account sees "What's your course?" once after opening the app; pick BSIT → Home.
@@ -55,6 +62,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-17 | **Course-adapted panel**: Santos is the field expert for the student's course (`FIELD_EXPERT`: Engr./Capt./Dr./Prof. and a role such as Clinical, Maritime, Pedagogy; focus from `COURSE_FOCUS`, today's technical text for BSIT/BSCS). With 1 or 2 panelists the best-fit personas sit: `PRIORITY` per course → `lineup(course, n)` (persona per seat, in panel order), mirrored in `server/.../practice/domain/panel.ts` and the app's `constants.ts` (tests on both sides pin it). Server: prompts and the voice per seat follow the lineup; the tool id stays Chair/Technical/Methodology. App: the engine and reducer still count seats; the session screen snapshots `seats` once and maps seat → persona for faces, labels, the question card, the live transcript, the handover note and spoken-handover detection; saved sessions store persona indices (`fromLive`). Setup shows a panel preview (`screens/setup/panel-preview.tsx`). Profile's course sheet says it takes effect from the next session. Server 54 tests, app 81. | `feat/course-panel` (not merged) |
 | 2026-10-17 | **Premium avatar as a medal**: the Premium avatar is the medal's body (the gold ring is its rim) with Deemo's two ribbon tails (goldInk and gold, V-cut, as on `components/deemo/badge.tsx`) hanging behind it, about a quarter of its size below (`RibbonTails` in `components/avatar.tsx`). The tails overhang the avatar's box, so layouts don't move. Shows wherever `Avatar premium` is used. JS only. | `dev` |
 | 2026-10-17 | **Profile hierarchy + Premium benefits screen**: Profile is ordered by importance: larger account header (64 px avatar, 20 px name), the plan, then labelled grouped cards (SETTINGS: course, typed answers; YOUR DATA: download, delete) and Sign out as a secondary button. The Premium card moved to `components/premium-card.tsx`: compact (one row, chevron) with `onPress`, full with the perks otherwise; on Profile it opens the new `/premium` benefits screen (`app/premium.tsx`, `screens/premium/`: the full card plus each benefit against Free, demo note; a Try Premium button for Free accounts). JS only. | `feat/course-profile` → `dev` |
 | 2026-10-17 | **General-purpose app, course profile (plan F4)**: `users.course` (migration `add_user_course`), set in a new onboarding survey (`app/survey.tsx`, gate after consent in `_layout.tsx`) and Profile (`components/course-picker.tsx`); `PATCH /me` takes `course` (zod enum). Prompts are program-neutral: `fieldFocus(course, domain)` in `practice/domain/panel.ts` (COURSE_FOCUS per course, DOMAIN_FOCUS per IT field for BSIT/BSCS) feeds the panel prompt and `scoringPrompt`; the course is read from the account on the server (live-token, scoring), never sent by the app. `DOMAINS` gains "General" (non-computing projects); the IT field picker shows only for BSIT/BSCS. Analysis: "research manuscript", features = features or output (card hidden when empty). "research group" copy. Admin user page shows the course. Server 52 tests, app 78, admin lint/types clean. | `feat/course-profile` → `dev` |
@@ -167,6 +175,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 Older history: `git log dev`.
 
 ## Gotchas
+
+- **Seat vs persona:** a seat is the speaking order (engine, reducer, `question.panelist` and live `Line.who` during a session); a persona is who sits there (face, name, voice). `lineup(course, panelists)` maps seat → persona and must stay identical in `server/src/modules/practice/domain/panel.ts` and `client/mobile/Deemo/src/constants.ts`. Saved sessions store **persona** indices (converted in `fromLive`), so results read `PANEL[who]` directly; older sessions had seat = persona. The ask_question `panelist` value stays the persona id (Chair/Technical/Methodology) even when Santos is "Clinical". The server reads the course at every token mint (ponytail note in `live-token.ts`).
 
 - **Course profile:** the course comes from the account on the server (`courseOf(account.course)` in `live-token.ts` and scoring), never from the app; a null or unknown course reads as "Other". `"General"` is the domain for non-computing courses, and `fieldFocus` ignores an IT field unless the course is BSIT/BSCS. Prompts must stay program-neutral: don't re-add "BSIT" to the panel, analysis or scoring prompts (the study population lives in the paper, not the app). Keep `COURSES` identical in `server/.../identity/domain/course.ts` and the app's `constants.ts`.
 

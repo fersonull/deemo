@@ -17,6 +17,7 @@ import { PressableScale } from "@/components/pressable-scale";
 import { Segmented } from "./segmented";
 import { DomainSheet } from "./sheets";
 import { FocusArea } from "./focus-area";
+import { PanelPreview } from "./panel-preview";
 
 const MODES: { value: Mode; desc: string }[] = [
   { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },
@@ -148,6 +149,7 @@ export function Setup() {
         onLocked={upsell}
         options={[1, 2, 3].map((n) => ({ value: n, label: String(n), locked: n > 1 && !premium }))}
       />
+      <PanelPreview course={course} panelists={setup.panelists} />
 
       <Text style={[type.label, styles.section]}>LENGTH</Text>
       <Segmented

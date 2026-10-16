@@ -69,12 +69,57 @@ const DIFFICULTY_STYLE: Record<Difficulty, string> = {
   HARD: "Be demanding: probe justifications, alternatives, limitations and edge cases, ask for exact figures, and press on any vague or generic answer.",
 };
 
-// Same order as PANEL in the app's constants.ts; the tool's `panelist` value indexes it.
+// The three panelists ("personas"), same order as PANEL in the app's constants.ts. The persona index is who they are
+// (face, voice, transcript); the tool's `panelist` value is their fixed id. A seat is only the order they speak in.
 const PERSONAS = [
-  { role: "Chair", name: "Dr. Reyes", focus: "problem, scope, significance, objectives and overall coherence" },
-  { role: "Technical", name: "Engr. Santos", focus: "architecture, database, security, implementation and testing" },
-  { role: "Methodology", name: "Prof. Cruz", focus: "research design, sampling, instruments, statistics and evaluation" },
+  { id: "Chair", role: "Chair", name: "Dr. Reyes", focus: "problem, scope, significance, objectives and overall coherence" },
+  { id: "Technical", role: "Technical", name: "Engr. Santos", focus: "architecture, database, security, implementation and testing" },
+  { id: "Methodology", role: "Methodology", name: "Prof. Cruz", focus: "research design, sampling, instruments, statistics and evaluation" },
 ];
+
+// Santos is the field expert for the student's course: the title and role change, the face and voice don't.
+// Same labels as FIELD_ROLE / FIELD_TITLE in the app's constants.ts.
+const FIELD_EXPERT: Record<Course, { title: string; role: string }> = {
+  BSIT: { title: "Engr.", role: "Technical" },
+  BSCS: { title: "Engr.", role: "Technical" },
+  Engineering: { title: "Engr.", role: "Engineering" },
+  Maritime: { title: "Capt.", role: "Maritime" },
+  Education: { title: "Dr.", role: "Pedagogy" },
+  "Nursing & Health": { title: "Dr.", role: "Clinical" },
+  "Business & Accountancy": { title: "Dr.", role: "Business" },
+  "Hospitality & Tourism": { title: "Prof.", role: "Industry" },
+  Criminology: { title: "Dr.", role: "Criminology" },
+  "Psychology & Social Sciences": { title: "Dr.", role: "Theory" },
+  Other: { title: "Dr.", role: "Field expert" },
+};
+
+export function personaFor(index: number, course: Course = "BSIT") {
+  const p = PERSONAS[index]!;
+  if (index !== 1) return p;
+  const { title, role } = FIELD_EXPERT[course];
+  return { ...p, role, name: `${title} Santos`, focus: COMPUTING.includes(course) ? p.focus : COURSE_FOCUS[course] };
+}
+
+// Who sits when there are fewer than three: each course's personas from best fit down (0 Chair, 1 field expert,
+// 2 Methodology). Applied and build courses are judged on the work itself, so the field expert leads; applied research
+// courses pair the field expert with Methodology; for Psychology and Social Sciences the method is the substance;
+// with no known field, the Chair. The chosen personas speak in panel order (Chair, field, Methodology).
+// Same table as the app's constants.ts.
+const PRIORITY: Record<Course, readonly [number, number, number]> = {
+  BSIT: [1, 0, 2],
+  BSCS: [1, 0, 2],
+  Engineering: [1, 0, 2],
+  Maritime: [1, 0, 2],
+  "Business & Accountancy": [1, 0, 2],
+  "Hospitality & Tourism": [1, 0, 2],
+  Criminology: [1, 0, 2],
+  Education: [1, 2, 0],
+  "Nursing & Health": [1, 2, 0],
+  "Psychology & Social Sciences": [2, 1, 0],
+  Other: [0, 2, 1],
+};
+// The persona in each seat, e.g. Nursing with two panelists: [1, 2].
+export const lineup = (course: Course = "BSIT", panelists: number) => PRIORITY[course].slice(0, panelists).sort((a, b) => a - b);
 
 const MODE_FOCUS: Record<Mode, string> = {
   TITLE:
@@ -109,7 +154,7 @@ export const PANEL_TOOLS = [
         questionText: { type: "STRING", description: "Only the question, without your short reaction before it." },
         questionType: { type: "STRING", enum: ["TECHNICAL", "METHODOLOGICAL", "CONCEPTUAL", "CLARIFICATORY"] },
         isFollowUp: { type: "BOOLEAN" },
-        panelist: { type: "STRING", enum: PERSONAS.map((p) => p.role), description: "Which panelist is asking." },
+        panelist: { type: "STRING", enum: PERSONAS.map((p) => p.id), description: "Which panelist is asking: your own id." },
       },
       required: ["topicId", "questionText", "questionType", "isFollowUp", "panelist"],
     },
@@ -174,20 +219,21 @@ export function buildPanelPrompt(
   seat = 0,
 ): string {
   const sequential = panelists > 1;
-  const me = PERSONAS[seat]!;
-  const next = PERSONAS[seat + 1];
+  const seats = lineup(course, panelists).map((i) => personaFor(i, course));
+  const me = seats[seat]!;
+  const next = seats[seat + 1];
   const last = seat === panelists - 1;
   const mains = sequential ? seatShare(minutes, panelists) : plannedMainQuestions(minutes);
   const { student, field: fieldName, focus } = fieldFocus(course, domain);
-  const field = `Field: ${fieldName}. Panels in this field press on ${focus}. Read the manuscript for the kind of study (system-building or not) and stay grounded in it. If the study builds no system, the technical side asks about its tools, procedures, data and how its output works instead of architecture and code.`;
+  const field = `Field: ${fieldName}. Panels in this field press on ${focus}. Read the manuscript for the kind of study (system-building or not) and stay grounded in it. If the study builds no system, ask about its tools, procedures, data and how its output works instead of architecture and code.`;
   const who = sequential
     ? `You are ${me.name}, the ${me.role} of a ${panelists}-member research defense panel for ${student} in the Philippines. This is ${MODE_FOCUS[mode]}. ${field}
 
-THE PANEL QUESTIONS IN TURN: ${PERSONAS.slice(0, panelists).map((p) => `${p.name} (${p.role})`).join(", then ")}. You are panelist ${seat + 1} of ${panelists}. Speak only as ${me.name}; never speak for another panelist. You ask about ${me.focus}.`
+THE PANEL QUESTIONS IN TURN: ${seats.map((p) => `${p.name} (${p.role})`).join(", then ")}. You are panelist ${seat + 1} of ${panelists}. Speak only as ${me.name}; never speak for another panelist. You ask about ${me.focus}. When calling ask_question, panelist is your id: ${me.id}.`
     : `You are a research defense panel for ${student} in the Philippines. This is ${MODE_FOCUS[mode]}. ${field}
 
 PANEL (one voice; the student sees who is asking):
-- ${me.role}: ${me.name}, asks about ${me.focus}.`
+- ${me.role}: ${me.name}, asks about ${me.focus}. As the only panelist, also cover the problem and scope and how the study was done, briefly. When calling ask_question, panelist is your id: ${me.id}.`
   const opening =
     seat === 0
       ? "- The student speaks first with a short presentation. Do not greet or speak before it ends. If it sounds cut short, just begin with your first question."

@@ -9,8 +9,12 @@ import type { LiveState } from "./types";
 const cut = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 const MAX = 6000;
 
-export function handoverNote(s: LiveState, from: number, to: number) {
-  const name = (i: number) => `${PANEL[i]?.name ?? "A panelist"} (${PANEL[i]?.role ?? "Panel"})`;
+// `from`, `to` and the turns' askers are seats; `seats[seat]` is the persona sitting there.
+export function handoverNote(s: LiveState, from: number, to: number, seats: number[] = [0, 1, 2]) {
+  const name = (seat: number) => {
+    const p = PANEL[seats[seat] ?? seat];
+    return p ? `${p.name} (${p.role})` : "A panelist";
+  };
   const firstPanel = s.lines.findIndex((l) => l.who !== "you");
   const presentation = s.lines
     .slice(0, firstPanel < 0 ? s.lines.length : firstPanel)
