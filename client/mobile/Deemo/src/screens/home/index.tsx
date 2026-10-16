@@ -25,6 +25,7 @@ import { riseIn } from "@/utils/motion";
 
 import { TrendChart } from "../history/trend-chart";
 import { DeemoBrief } from "./deemo-brief";
+import { DefensePath } from "./defense-path";
 import { GroupReadiness } from "./group-readiness";
 
 const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
@@ -107,6 +108,12 @@ export function Home() {
         ) : null}
 
         <GroupReadiness />
+        {loaded && !error && recent.length ? (
+          <Animated.View entering={riseIn(100, reduced)}>
+            <Text style={[type.label, styles.section]}>DEFENSE PATH</Text>
+            <DefensePath sessions={list} />
+          </Animated.View>
+        ) : null}
         {charted ? (
           <Animated.View entering={riseIn(120, reduced)}>
             <Text style={[type.label, styles.section]}>YOUR READINESS</Text>

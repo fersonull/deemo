@@ -1,4 +1,4 @@
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
@@ -36,7 +36,14 @@ const FILTERS: { label: string; mode: Mode | null }[] = [
 export function History() {
   const reduced = useReducedMotion();
   const { list: all, loaded, error } = useSessions();
-  const [mode, setMode] = useState<Mode | null>(null);
+  // Opened from the Defense Path on a stage (?stage=PRE_ORAL): start filtered to it, and follow later taps.
+  const { stage } = useLocalSearchParams<{ stage?: Mode }>();
+  const [mode, setMode] = useState<Mode | null>(stage ?? null);
+  const [lastStage, setLastStage] = useState(stage);
+  if (stage !== lastStage) {
+    setLastStage(stage);
+    if (stage) setMode(stage);
+  }
   const list = mode ? all.filter((s) => s.mode === mode) : all;
   const { premium } = useSession();
   const summary = historySummary(list, mode ? MODE_LABELS[mode] : null);
