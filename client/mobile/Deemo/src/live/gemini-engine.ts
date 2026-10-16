@@ -26,6 +26,9 @@ const RETRY_MS = 2000;
 const QUIET_TURN_MS = 2500; // a turn that ended without a voice: wait this long for late audio
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
 const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
+// After the presentation or a handover the panel must speak, and it normally starts in about 1.5 s (measured against
+// the real prompt, 2026-10-16); a silent model there was waiting out the 15 s watchdog. Nudge it much sooner.
+const START_WAIT_MS = 4000;
 const STALL_MS = 12000; // the panel went quiet mid-turn and never sent turnComplete: treat the turn as over
 
 export type SessionSetup = {
@@ -66,6 +69,7 @@ export class GeminiEngine implements LiveEngine {
   // The next panelist's session, opened while the current one hands over, so the switch is instant.
   private next: { seat: number; ws: WebSocket; ready: boolean; handle: string | null } | null = null;
   private flagged = false; // the panel flagged a contradiction since the student's last turn
+  private presented = false; // the student's presentation (their first turn) is over
   private mark = 0; // when the panel's reply (or a handover) started, for the timing log
   private stall: ReturnType<typeof setTimeout> | null = null;
   private ws: WebSocket | null = null;
@@ -390,7 +394,7 @@ export class GeminiEngine implements LiveEngine {
         this.mark = Date.now();
         this.emit({ type: "reconnecting", value: false });
         this.sendTurn(this.note(this.seat - 1, this.seat));
-        this.awaitPanel();
+        this.awaitPanel(START_WAIT_MS, "(Please begin your part now: introduce yourself and ask your first question.)");
       } else if (!this.connected) {
         this.connected = true;
         this.startMic();
@@ -651,7 +655,11 @@ export class GeminiEngine implements LiveEngine {
     this.spokeQuestion = false;
     this.quiet = false;
     this.spoken = "";
-    this.awaitPanel();
+    if (this.presented) this.awaitPanel();
+    else {
+      this.presented = true;
+      this.awaitPanel(START_WAIT_MS, "(That's the end of my presentation. Please begin with your first question.)");
+    }
     this.emit({ type: "level", value: 0 });
     this.emit({ type: "youDone" });
   }
@@ -698,12 +706,15 @@ export class GeminiEngine implements LiveEngine {
   }
 
   // Re-arms until the panel says or does something; never fires a nudge while paused.
-  private awaitPanel() {
+  private awaitPanel(ms = PANEL_WAIT_MS, nudge = "(I'm done answering. Please continue.)") {
     this.panelResponded();
     this.watchdog = setTimeout(() => {
-      if (!this.paused) this.sendTurn("(I'm done answering. Please continue.)");
+      if (!this.paused) {
+        console.log(`[live] panel silent for ${ms} ms: nudged`);
+        this.sendTurn(nudge);
+      }
       this.awaitPanel();
-    }, PANEL_WAIT_MS);
+    }, ms);
   }
 
   private panelResponded() {

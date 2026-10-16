@@ -250,3 +250,29 @@ test("a turn that only flagged a contradiction goes ahead at once, without the q
     timers.mockRestore();
   }
 });
+
+test("after the presentation a silent panel is nudged in 4 s, later turns keep the 15 s watchdog", () => {
+  const engine = new GeminiEngine(setup);
+  const i = engine as unknown as Internals & { endStudentTurn: () => void };
+  const sent: any[] = [];
+  i.emit = () => {};
+  i.ready = true;
+  i.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+  const jobs: { run: () => void; ms: number }[] = [];
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation(((run: () => void, ms: number) => {
+    jobs.push({ run, ms });
+    return jobs.length;
+  }) as typeof setTimeout);
+  try {
+    i.endStudentTurn(); // the presentation
+    const first = jobs.at(-1)!;
+    expect(first.ms).toBe(4000);
+    first.run();
+    expect(sent.at(-1).clientContent.turns[0].parts[0].text).toContain("end of my presentation");
+    i.endStudentTurn(); // an answer later on
+    expect(jobs.at(-1)!.ms).toBe(15000);
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});
