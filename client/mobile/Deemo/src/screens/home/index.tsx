@@ -29,8 +29,10 @@ import { DefensePath } from "./defense-path";
 import { GroupReadiness } from "./group-readiness";
 
 const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
-const MODE_INITIALS: Record<Mode, string> = { TITLE: "T", PRE_ORAL: "PO", FINAL: "F" };
+// Each stage's mark on the recent rows: the idea (Title), the chapters and method (Pre-Oral), the finished study (Final).
+const MODE_ICON: Record<Mode, string> = { TITLE: "lightbulb", PRE_ORAL: "assignment", FINAL: "school" };
 const MODE_BG: Record<Mode, string> = { TITLE: colors.sand, PRE_ORAL: colors.duskTint, FINAL: colors.sageTint };
+const MODE_INK: Record<Mode, string> = { TITLE: colors.ink, PRE_ORAL: colors.duskInk, FINAL: colors.sageInk };
 
 function greeting(hour: number) {
   if (hour < 12) return "Morning";
@@ -168,7 +170,7 @@ export function Home() {
                   style={[styles.row]}
                 >
                   <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
-                    <Text style={styles.modeText}>{MODE_INITIALS[s.mode]}</Text>
+                    <Icon name={MODE_ICON[s.mode]} size={20} color={MODE_INK[s.mode]} />
                   </View>
                   <View style={styles.flex}>
                     <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
@@ -204,7 +206,6 @@ const styles = StyleSheet.create({
   section: { marginTop: 24, marginBottom: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, height: 58 },
   mode: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
-  modeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   meta: { ...type.meta, marginTop: 2 },
   done: { color: colors.muted, textDecorationLine: "line-through" },
