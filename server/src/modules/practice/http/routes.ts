@@ -10,6 +10,7 @@ import { issueLiveToken } from "../application/live-token";
 const TokenBody = SetupInput.extend({
   startId: z.string({ error: "invalid practice start" }).regex(/^[A-Za-z0-9_-]{1,100}$/, "invalid practice start"),
   resume: z.boolean({ error: "invalid practice start" }).default(false),
+  seat: z.number({ error: "invalid practice start" }).int("invalid practice start").min(0, "invalid practice start").max(2, "invalid practice start").default(0),
 });
 
 export const practiceRouter = Router();

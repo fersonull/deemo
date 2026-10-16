@@ -51,6 +51,8 @@ export type LiveState = {
   followUpLimit: number; // per topic, chosen in setup (plan F8)
   level: number; // 0..1 mic level for the mic ring
   unasked?: { question: Question | null; followUps: Record<string, number> }; // panel spoke before ask_question this turn
+  seat: number; // the panelist holding the floor (sequential panel: they question in turn); 0 with one panelist
+  takeover: boolean; // a new panelist just took over and hasn't asked yet
 };
 
 export type AskQuestion = Omit<Question, "followUp" | "number">;
@@ -59,6 +61,7 @@ export type LiveEvent =
   | { type: "connected" }
   | { type: "ask"; question: AskQuestion } // ask_question tool call
   | { type: "panelText"; text: string } // output transcription chunk
+  | { type: "handover"; seat: number } // the next panelist takes over, in their own session and voice
   | { type: "panelDone" } // panel finished speaking
   | { type: "youText"; text: string } // input transcription chunk
   | { type: "youSpeaking" } // first speech heard on the mic this turn
@@ -75,7 +78,8 @@ export type LiveEvent =
 
 // What the screen talks to. A Gemini Live implementation replaces the mock behind this.
 export interface LiveEngine {
-  start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean): void;
+  // `note(from, to)`: what the next panelist is told when they take over (live/handover.ts).
+  start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean, note?: (from: number, to: number) => string): void;
   finishTurn(): void; // student taps the mic / Done presenting
   sendText(text: string): void; // typed-answer fallback
   endForTime(): void;

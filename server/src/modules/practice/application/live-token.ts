@@ -1,19 +1,19 @@
 import { AppError } from "../../../shared/errors";
-import { withSerializable } from "../../../shared/prisma";
+import { prisma, withSerializable } from "../../../shared/prisma";
 import type { Account } from "../../identity/domain/account";
 import { accessibleProject } from "../../groups/application/access";
 import { getSession } from "../../scoring/application/sessions";
 import { weakTopics } from "../../scoring/domain/session";
-import { NEW_SESSION_MS, decideFinish, decideStart } from "../domain/live-start";
-import { LIVE_MODEL, PANEL_VOICE, type PanelSetup } from "../domain/panel";
+import { NEW_SESSION_MS, decideFinish, decideSeat, decideStart } from "../domain/live-start";
+import { LIVE_MODEL, PANEL_VOICES, type PanelSetup } from "../domain/panel";
 import { mintLiveToken } from "../infrastructure/gemini-live";
 import { liveStartRepo } from "../infrastructure/live-start-repo";
 
-export type TokenRequest = Omit<PanelSetup, "focusArea" | "weakTopics"> & { startId: string; resume: boolean };
+export type TokenRequest = Omit<PanelSetup, "focusArea" | "weakTopics"> & { startId: string; resume: boolean; seat?: number };
 
 // The app calls this before every connect, including reconnects (the resumption handle carries the session).
 export async function issueLiveToken(account: Account, req: TokenRequest) {
-  const { startId, resume, ...setup } = req;
+  const { startId, resume, seat = 0, ...setup } = req;
   const fingerprint = JSON.stringify(setup); // what the app chose; the server-added fields below aren't part of it
   const panel: PanelSetup = { ...setup };
   const project = setup.projectId ? await accessibleProject(account.id, setup.projectId) : null;
@@ -24,6 +24,20 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     const last = await getSession(account.id, setup.weakFrom); // the student's own session only
     if (!last?.report || last.report.scored === false) throw new AppError(404, "That report can't start a weak-topics round.");
     panel.weakTopics = weakTopics(last.report);
+  }
+
+  // A later panelist (sequential panel): a token for their seat under the same start, no new daily slot. Every
+  // request mints a fresh single-use token (retries and reconnects included); the round's expiry bounds them.
+  if (seat > 0) {
+    const { expiresAt } = decideSeat({
+      previous: await liveStartRepo.find(prisma, account.id, startId),
+      fingerprint,
+      seat,
+      panelists: setup.panelists,
+      now: Date.now(),
+    });
+    const token = await mintLiveToken(panel, project?.analysis, expiresAt, Date.now() + NEW_SESSION_MS, seat);
+    return { token, model: LIVE_MODEL, voice: PANEL_VOICES[seat] };
   }
 
   // Reserve the start (and today's slot) before minting.
@@ -44,7 +58,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     if (d.kind === "new") await tx.user.update({ where: { id: account.id }, data: { sessionDay: d.day, sessionCount: d.count } });
     return d;
   });
-  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice: PANEL_VOICE };
+  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice: PANEL_VOICES[0] };
 
   let token: string | undefined;
   const newSessionUntil = Date.now() + NEW_SESSION_MS;
@@ -54,7 +68,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     // Save the token for retries and resumption, or refund the slot if minting failed.
     await finish(account.id, startId, decision.start.lease, token, newSessionUntil);
   }
-  return { token, model: LIVE_MODEL, voice: PANEL_VOICE };
+  return { token, model: LIVE_MODEL, voice: PANEL_VOICES[0] };
 }
 
 async function finish(uid: string, startId: string, lease: string, token: string | undefined, newSessionUntil: number) {

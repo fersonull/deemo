@@ -154,3 +154,24 @@ test("speech before ask_question goes to the asker the tool names, and its guess
   expect(s.followUps.problem ?? 0).toBe(0); // the guess is undone
   expect(s.unasked).toBeUndefined();
 });
+
+test("handover: the next panelist holds the floor, their intro and question are theirs, the transcript stays continuous", () => {
+  const q1 = { topicId: "problem", text: "What problem?", type: "CONCEPTUAL" as const, isFollowUp: false, panelist: 0 };
+  let s = liveReducer({ ...initialLiveState, phase: "presentation" }, { type: "ask", question: q1 });
+  s = liveReducer(s, { type: "panelText", text: "What problem?" });
+  s = liveReducer(s, { type: "panelDone" });
+  s = liveReducer(s, { type: "youText", text: "Lost papers." });
+  s = liveReducer(s, { type: "youDone" });
+  s = liveReducer(s, { type: "handover", seat: 1 });
+  expect(s.seat).toBe(1);
+  expect(s.takeover).toBe(true);
+  expect(s.phase).toBe("thinking");
+  s = liveReducer(s, { type: "panelText", text: "Good afternoon, I'm Engr. Santos." }); // intro before the ask
+  expect(s.partial?.who).toBe(1);
+  expect(s.followUps.problem ?? 0).toBe(0); // not a follow-up on the Chair's topic
+  const q2 = { topicId: "db", text: "Why PostgreSQL?", type: "TECHNICAL" as const, isFollowUp: false, panelist: 1 };
+  s = liveReducer(s, { type: "ask", question: q2 });
+  expect(s.takeover).toBe(false);
+  expect(s.question?.number).toBe(2);
+  expect(s.lines.map((l) => l.who)).toEqual([0, "you", 1]); // continuous: Chair, student, Santos's intro
+});
