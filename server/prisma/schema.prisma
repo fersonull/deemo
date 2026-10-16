@@ -56,6 +56,7 @@ model User {
   avatar         String?   @db.VarChar(32) // DiceBear seed; null = default from the uid
   premium        Boolean   @default(false) // simulated (addendum Q1)
   allowTyping    Boolean   @default(true) @map("allow_typing")
+  course         String?   @db.VarChar(40) // onboarding survey (identity/domain/course.ts); null = not answered yet
   consentVersion String?   @map("consent_version") @db.VarChar(20)
   consentAt      DateTime? @map("consent_at")
   sessionDay     String?   @map("session_day") @db.VarChar(10) // Manila calendar day of the last Live start

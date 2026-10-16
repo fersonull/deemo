@@ -4,7 +4,9 @@ import type { Rubric } from "./rubric";
 
 // A student's manuscript project and its Document Logic Analysis (plan F2). The raw file is never kept.
 
-export const DOMAINS = ["Web/Mobile App", "Networking & Security", "Data & AI", "IoT/Hardware", "Information Systems"] as const;
+// The study's IT field, picked per project by computing students (identity/domain/course.ts COMPUTING); every other
+// course uses "General" and is profiled by the course alone.
+export const DOMAINS = ["Web/Mobile App", "Networking & Security", "Data & AI", "IoT/Hardware", "Information Systems", "General"] as const;
 export type Domain = (typeof DOMAINS)[number];
 
 export const FIELDS = ["title", "problem", "objectives", "method", "scope", "features", "limits", "results"] as const;
@@ -105,14 +107,14 @@ export const AnalysisReply = z.object({
   unsure: z.array(z.enum(FIELDS)),
 });
 
-export const ANALYSIS_PROMPT = `A student uploaded this as their BSIT capstone manuscript. A mock defense panel will question them using only what you extract, and will flag spoken answers that contradict it.
+export const ANALYSIS_PROMPT = `A student uploaded this as their research manuscript (a capstone, thesis or research paper from any program). A mock defense panel will question them using only what you extract, and will flag spoken answers that contradict it.
 First decide isManuscript: true for a capstone, thesis or research manuscript at any stage (title proposal, Chapters 1–3, or a full paper, even incomplete or rough). False for anything else: a resume, an assignment or quiz, slides or notes on an unrelated topic, a form, a story, a manual, or a file with almost no readable content. If false, set notManuscriptReason to one short sentence for the student saying what the file looks like instead (e.g. "This looks like a resume, not a research paper."), leave every other field empty and facts and unsure as empty lists. If true, set notManuscriptReason to "" and extract, in plain English:
 - title: the exact title.
 - problem: the problem the study addresses and for whom (1–2 sentences).
 - objectives: the general and specific objectives, condensed (1–3 sentences).
 - method: research design, development methodology, respondents/sample (number and who), sampling technique, instruments and statistical treatment.
 - scope: who and what the system covers, where and when.
-- features: the system's main features.
+- features: the system's main features; if the study builds no system, its main output or intervention (a module, program, framework, product); "" if it has none.
 - limits: the stated limitations.
 - results: the main findings and evaluation results with their numbers; "" if the manuscript has no results yet.
 - facts: 10 to 25 short, checkable facts a panel could catch a student contradicting: counts, sample sizes, tools and technologies, scales, scores, dates, names. Copy numbers exactly, and end each with where it appears, e.g. "Thirty (30) respondents: 20 students, 7 staff, 3 IT experts (Ch. 3)".

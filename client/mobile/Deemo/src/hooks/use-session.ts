@@ -19,6 +19,7 @@ import {
   isSuccessResponse,
 } from "react-native-nitro-google-signin";
 
+import type { Course } from "@/constants";
 import { api } from "@/utils/api";
 import { cleanName } from "@/utils/auth-form";
 import { createStore } from "@/utils/store";
@@ -33,6 +34,7 @@ const store = createStore({
   email: null as string | null,
   name: null as string | null, // Firebase display name: from Google, or typed at sign-up or in Profile
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
+  course: null as Course | null, // onboarding survey (Profile setting); null until answered
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
   accountLoaded: false, // the server's account record has arrived (false offline): only then can missing consent be told apart
   premium: false, // simulated freemium (addendum Q1)
@@ -41,13 +43,14 @@ const store = createStore({
 // The consent text's version, recorded on the account. 2026-10.3: Google's AI only (the OpenAI backup was removed).
 export const CONSENT_VERSION = "2026-10.3";
 
-type Me = { name: string | null; premium: boolean; allowTyping: boolean; avatar: string; consentAt?: string };
+type Me = { name: string | null; premium: boolean; allowTyping: boolean; course: Course | null; avatar: string; consentAt?: string };
 
 const fromMe = (me: Me) => ({
   accountLoaded: true,
   name: me.name ?? store.get().name, // the server keeps the name (and writes it back to Firebase)
   premium: me.premium,
   allowTyping: me.allowTyping,
+  course: me.course,
   avatar: me.avatar,
   consentAt: me.consentAt ?? store.get().consentAt,
 });
@@ -76,7 +79,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     verified: !!user?.emailVerified,
     email: user?.email ?? null,
     name: user?.displayName ?? null,
-    ...(!user && { premium: false, allowTyping: true, verifySentAt: 0, avatar: null, accountLoaded: false }),
+    ...(!user && { premium: false, allowTyping: true, course: null, verifySentAt: 0, avatar: null, accountLoaded: false }),
   });
   if (user?.emailVerified) await loadAccount();
 });
@@ -121,6 +124,11 @@ export const session = {
     } catch {
       store.set({ allowTyping: !allowTyping });
     }
+  },
+
+  // The onboarding survey and Profile: saved on the account; the server profiles the panel by it (plan F4).
+  async setCourse(course: Course) {
+    store.set({ course: (await patchMe({ course })).course });
   },
 
   // The face the student picked in Profile; saved on the account so teammates see it too.

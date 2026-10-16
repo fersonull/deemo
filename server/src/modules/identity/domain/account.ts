@@ -9,6 +9,7 @@ export type Account = {
   avatar: string | null; // DiceBear seed the student picked; null = default from the uid
   premium: boolean; // simulated (addendum Q1)
   allowTyping: boolean;
+  course: string | null; // COURSES (domain/course.ts); null until the onboarding survey
   consentVersion: string | null;
   consentAt: Date | null;
   sessionDay: string | null;
@@ -54,6 +55,7 @@ export function toMe(a: Account) {
     premium: a.premium,
     allowTyping: a.allowTyping,
     avatar: a.avatar ?? defaultAvatar(a.id),
+    course: a.course,
     ...(a.consentVersion && { consentVersion: a.consentVersion }),
     ...(a.consentAt && { consentAt: a.consentAt.toISOString() }),
   };

@@ -129,6 +129,7 @@ export function UserDetailView({ id }: { id: string }) {
                     ? `${formatDay(user.consentAt)} (v${user.consentVersion ?? "?"})`
                     : "Not given",
                 ],
+                ["Course", user.course ?? "Not answered yet"],
                 ["Typed answers", user.allowTyping ? "Allowed" : "Off"],
                 [
                   "User ID",

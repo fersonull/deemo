@@ -11,7 +11,7 @@ import { colors, fonts, radius, type } from "@/theme";
 const FACE = 32;
 const SHOWN = 4; // faces before "+n": the stack shares a row with the code chip and the share button
 
-// Your capstone group, compact (the analysis screen): the join code with a share button, the members as a stack of
+// Your research group, compact (the analysis screen): the join code with a share button, the members as a stack of
 // faces (from the same /groups data as Home's Group readiness), the share-my-score switch and a small leave link.
 // On sand, like Group readiness, so the dusk faces carry the color.
 export function GroupCard({ project, onLeft }: { project: Project; onLeft: () => void }) {
@@ -37,7 +37,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
     <View style={styles.card}>
       <View style={styles.row}>
         <Icon name="group" color={colors.duskIcon} />
-        <Text style={type.heading}>Your capstone group</Text>
+        <Text style={type.heading}>Your research group</Text>
       </View>
       {group ? (
         <>
@@ -52,7 +52,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               accessibilityRole="button"
               accessibilityLabel="Share the join code"
               onPress={() =>
-                void Share.share({ message: `Join our capstone group on DEEMO with the code ${group.code}.` }).catch(() => {})
+                void Share.share({ message: `Join our research group on DEEMO with the code ${group.code}.` }).catch(() => {})
               }
               style={styles.iconButton}
             >

@@ -57,7 +57,7 @@ export function Rubric() {
       <Text style={styles.sub}>
         {custom
           ? `Your panel's own rubric${custom.source ? `, from ${custom.source}` : ""}. Adjust the weights if your form changed.`
-          : "Five criteria, like most capstone defense forms. Set the weights to match your panel."}
+          : "Five criteria, like most defense forms. Set the weights to match your panel."}
       </Text>
       {project?.group ? (
         <Text style={styles.sub}>

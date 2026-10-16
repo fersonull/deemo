@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/avatar";
+import { CoursePicker } from "@/components/course-picker";
 import { AvatarSheet } from "./avatar-sheet";
 import { PremiumCard } from "./premium-card";
 import { Button } from "@/components/button";
@@ -19,11 +20,12 @@ import { PressableScale } from "@/components/pressable-scale";
 
 const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, five sessions a day, one manuscript.";
 
-// Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, the typed-answer setting, download and delete my data, sign out.
+// Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, course, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
-  const { name, email, avatar, premium, allowTyping } = useSession();
-  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | null>(null);
+  const { name, email, avatar, premium, allowTyping, course } = useSession();
+  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | null>(null);
+  const [courseError, setCourseError] = useState("");
   const [draft, setDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
@@ -129,6 +131,21 @@ export function Profile() {
       )}
 
       <View style={styles.rows}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityHint="Change your course"
+          onPress={() => {
+            setCourseError("");
+            setSheet("course");
+          }}
+          style={styles.row}
+        >
+          <View style={styles.flex}>
+            <Text style={styles.rowLabel}>Course</Text>
+            <Text style={styles.meta}>{course ?? "Not set"}</Text>
+          </View>
+          <Icon name="chevron_right" size={20} color={colors.muted} />
+        </PressableScale>
         <View style={styles.row}>
           <View style={styles.flex}>
             <Text style={styles.rowLabel}>Allow typed answers</Text>
@@ -181,6 +198,28 @@ export function Profile() {
         name={name}
         email={email}
       />
+
+      <Sheet visible={sheet === "course"} onClose={() => setSheet(null)}>
+        <Text style={styles.sheetTitle}>Your course</Text>
+        <Text style={styles.sheetBody}>The panel asks what a panel in your field would ask.</Text>
+        <View style={styles.coursePicker}>
+          <CoursePicker
+            value={course}
+            onPick={(c) => {
+              setCourseError("");
+              session
+                .setCourse(c)
+                .then(() => setSheet(null))
+                .catch(() => setCourseError("Couldn't save your course. Check your connection and try again."));
+            }}
+          />
+        </View>
+        {courseError ? (
+          <Text style={styles.nameError} accessibilityLiveRegion="polite">
+            {courseError}
+          </Text>
+        ) : null}
+      </Sheet>
 
       <Sheet visible={sheet === "name"} onClose={() => !savingName && setSheet(null)}>
         <Text style={styles.sheetTitle}>Your name</Text>
@@ -263,6 +302,7 @@ const styles = StyleSheet.create({
   input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
   nameError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
   saveName: { marginTop: 16 },
+  coursePicker: { marginTop: 16 },
   name: { ...type.heading, fontSize: 18 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },

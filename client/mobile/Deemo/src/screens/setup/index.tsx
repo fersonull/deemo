@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
-import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, type Mode } from "@/constants";
+import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, isComputing, type Mode } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -27,7 +27,7 @@ const MODES: { value: Mode; desc: string }[] = [
 // Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 min. Locked choices open the upsell.
 export function Setup() {
   const setup = usePracticeSetup();
-  const { premium } = useSession();
+  const { premium, course } = useSession();
   const [sheet, setSheet] = useState<"domain" | "upsell" | null>(null);
   const upsell = () => setSheet("upsell");
   const list = useProjects();
@@ -118,24 +118,27 @@ export function Setup() {
           <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
         </View>
       </PressableScale>
-      <PressableScale
-        scaleTo={0.98}
-        accessibilityRole="button"
-        accessibilityHint="Change domain"
-        onPress={() => setSheet("domain")}
-        style={[styles.manuscript, styles.rubricRow]}
-      >
-        <Icon name="category" size={20} color={colors.duskIcon} />
-        <View style={styles.flex}>
-          <Text style={type.label}>DOMAIN</Text>
-          <Text style={styles.manuscriptName} numberOfLines={1}>
-            {setup.domain}
-          </Text>
-        </View>
-        <View style={styles.change}>
-          <Text style={styles.changeText}>Change</Text>
-        </View>
-      </PressableScale>
+      {/* The IT field is for computing courses only; every other course is profiled by the course (plan F4). */}
+      {isComputing(course) ? (
+        <PressableScale
+          scaleTo={0.98}
+          accessibilityRole="button"
+          accessibilityHint="Change IT field"
+          onPress={() => setSheet("domain")}
+          style={[styles.manuscript, styles.rubricRow]}
+        >
+          <Icon name="category" size={20} color={colors.duskIcon} />
+          <View style={styles.flex}>
+            <Text style={type.label}>IT FIELD</Text>
+            <Text style={styles.manuscriptName} numberOfLines={1}>
+              {setup.domain}
+            </Text>
+          </View>
+          <View style={styles.change}>
+            <Text style={styles.changeText}>Change</Text>
+          </View>
+        </PressableScale>
+      ) : null}
 
       <Text style={[type.label, styles.section]}>PANELISTS</Text>
       <Segmented
@@ -175,7 +178,13 @@ export function Setup() {
 
       {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
       <View style={styles.cta}>
-        <Button label="Continue to mic check" onPress={() => router.push("/mic-check")} />
+        <Button
+          label="Continue to mic check"
+          onPress={() => {
+            if (!isComputing(course)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
+            router.push("/mic-check");
+          }}
+        />
       </View>
 
       <DomainSheet

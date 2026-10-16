@@ -16,11 +16,12 @@ export type AccountUpdate = {
   consentVersion?: string;
   premium?: boolean;
   allowTyping?: boolean;
+  course?: string;
   avatar?: string;
   name?: string;
 };
 
-// Consent, the simulated upgrade, settings, the avatar and the name. DEEMO → Firebase: a new name is written to the
+// Consent, the simulated upgrade, settings (typed answers, course), the avatar and the name. DEEMO → Firebase: a new name is written to the
 // account first, then to Firebase; if Firebase refuses, the account goes back to the old name.
 export async function updateAccount(account: Account, patch: AccountUpdate): Promise<Account> {
   const data: Partial<Account> = {};
@@ -30,6 +31,7 @@ export async function updateAccount(account: Account, patch: AccountUpdate): Pro
   }
   if (patch.premium === true) data.premium = true; // ponytail: demo toggle, no payments (addendum Q1)
   if (patch.allowTyping !== undefined) data.allowTyping = patch.allowTyping;
+  if (patch.course !== undefined) data.course = patch.course;
   if (patch.avatar !== undefined) data.avatar = patch.avatar;
   const rename = patch.name !== undefined && patch.name !== account.name;
   if (rename) data.name = patch.name;

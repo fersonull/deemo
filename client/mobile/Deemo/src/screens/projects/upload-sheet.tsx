@@ -5,8 +5,9 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
-import { DOMAINS, type Domain } from "@/constants";
+import { IT_FIELDS, isComputing, type Domain } from "@/constants";
 import { projects, type PickedFile, type Project } from "@/hooks/use-projects";
+import { useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { PressableScale } from "@/components/pressable-scale";
 
@@ -23,7 +24,8 @@ type Props = { visible: boolean; onClose: () => void; onUploaded: (p: Project) =
 export function UploadSheet({ visible, onClose, onUploaded }: Props) {
   const [file, setFile] = useState<PickedFile | null>(null);
   const [name, setName] = useState("");
-  const [domain, setDomain] = useState<Domain>(DOMAINS[0]);
+  const computing = isComputing(useSession().course);
+  const [domain, setDomain] = useState<Domain>(IT_FIELDS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,7 +44,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     setBusy(true);
     setError("");
     try {
-      const p = await projects.upload(file, name.trim(), domain);
+      const p = await projects.upload(file, name.trim(), computing ? domain : "General");
       setFile(null);
       setName("");
       onUploaded(p);
@@ -94,26 +96,30 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
         />
       </View>
 
-      <View style={styles.field}>
-        <Text style={styles.fieldLabel}>Project domain</Text>
-        <View accessibilityRole="radiogroup" style={styles.domains}>
-          {DOMAINS.map((d) => {
-            const selected = d === domain;
-            return (
-              <Pressable
-                key={d}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: selected }}
-                onPress={() => setDomain(d)}
-                style={[styles.chip, selected && styles.chipSelected]}
-              >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{d}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-      <Text style={styles.hint}>The panel tunes its technical questions to this domain.</Text>
+      {computing ? (
+        <>
+          <View style={styles.field}>
+            <Text style={styles.fieldLabel}>IT field</Text>
+            <View accessibilityRole="radiogroup" style={styles.domains}>
+              {IT_FIELDS.map((d) => {
+                const selected = d === domain;
+                return (
+                  <Pressable
+                    key={d}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected }}
+                    onPress={() => setDomain(d)}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{d}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+          <Text style={styles.hint}>The panel tunes its technical questions to this field.</Text>
+        </>
+      ) : null}
 
       {error ? (
         <Text style={styles.error} accessibilityLiveRegion="polite">

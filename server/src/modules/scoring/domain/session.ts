@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import type { RubricCriterion } from "../../manuscripts/domain/rubric";
-import { plannedMainQuestions, type Difficulty, type Mode } from "../../practice/domain/panel";
+import type { Course } from "../../identity/domain/course";
+import { fieldFocus, plannedMainQuestions, type Difficulty, type Mode } from "../../practice/domain/panel";
 import { CRITERIA, band, delivery, readiness, type Severity } from "./scoring";
 
 // A finished practice session and its report (plan F14, addendum Q3/Q4). Transcripts only; audio is never stored.
@@ -181,9 +182,10 @@ For delivery, confidence or presentation criteria, use these measurements from t
   };
 }
 
-export function scoringPrompt(s: Unscored, facts: string, rubric: { keys: string[]; text: string }) {
+export function scoringPrompt(s: Unscored, facts: string, rubric: { keys: string[]; text: string }, course?: Course) {
+  const { student, field, focus } = fieldFocus(course, s.domain);
   const label = (t: SessionTurn) => `Q${t.number}${t.followUp ? ` follow-up ${t.followUp}` : ""}`;
-  return `You are scoring a BSIT capstone mock defense (${s.mode.replace("_", "-")} defense). Judge only from the answers and the manuscript facts below. Address the student as "you". Never invent facts that aren't in the manuscript. In any text the student reads, refer to questions by their label (Q1, Q2 follow-up 1), never by the [index] in brackets; the indices are only for the turn fields.
+  return `You are scoring a research mock defense (${s.mode.replace("_", "-")} defense) for ${student}. Field: ${field}; judge technical depth against what matters there: ${focus}. Judge only from the answers and the manuscript facts below. Address the student as "you". Never invent facts that aren't in the manuscript. In any text the student reads, refer to questions by their label (Q1, Q2 follow-up 1), never by the [index] in brackets; the indices are only for the turn fields.
 
 RUBRIC (level 5 / 3 / 1):
 ${rubric.text}
@@ -197,7 +199,7 @@ ${s.turns.map((t, i) => `[${i}] ${label(t)} (${t.type}): ${t.question}\n    Answ
 CONTRADICTIONS FLAGGED DURING THE SESSION
 ${s.flags.length ? s.flags.map((f, i) => `[${i}] (${f.severity}) said: "${f.spokenClaim}" / manuscript: "${f.manuscriptEvidence}"`).join("\n") : "(none)"}
 
-CALIBRATION: score like a strict but fair Filipino capstone panel, not a tutor.
+CALIBRATION: score like a strict but fair Filipino defense panel, not a tutor.
 - 5 is rare: complete, precise, and grounded in the manuscript's own specifics (numbers, tools, methods).
 - 3 is acceptable: on topic and mostly correct, but generic or missing specifics.
 - 1 is wrong, off-topic, evasive, "I don't know", or no answer. A one-line or vague answer can't score above 2 for knowledge or reasoning criteria.

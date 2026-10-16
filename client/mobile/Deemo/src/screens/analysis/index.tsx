@@ -25,7 +25,7 @@ const CARDS: { k: TextField; title: string }[] = [
   { k: "objectives", title: "OBJECTIVES" },
   { k: "method", title: "METHODOLOGY" },
   { k: "scope", title: "SCOPE" },
-  { k: "features", title: "KEY FEATURES" },
+  { k: "features", title: "FEATURES / OUTPUT" }, // a study that builds nothing has none: the card is hidden
   { k: "limits", title: "LIMITATIONS" },
   { k: "results", title: "RESULTS" },
 ];
@@ -129,7 +129,7 @@ export function Analysis({ id }: { id: string }) {
 
   const a = project.analysis;
   const readOnly = !!project.group && !project.group.isOwner;
-  const cards = CARDS.filter((c) => c.k !== "results" || a.results.trim());
+  const cards = CARDS.filter((c) => (c.k !== "results" && c.k !== "features") || a[c.k].trim());
   const save = (edits: Partial<AnalysisData>) => projects.saveAnalysis(id, edits).then(() => {});
 
   const go = async () => {

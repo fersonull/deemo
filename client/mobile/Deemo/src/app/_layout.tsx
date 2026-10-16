@@ -14,10 +14,12 @@ import { colors } from "@/theme";
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { ready, signedIn, verified, accountLoaded, consentAt } = useSession();
+  const { ready, signedIn, verified, accountLoaded, consentAt, course } = useSession();
   const inside = signedIn && verified; // email sign-ups wait on verify-email until they tap the link
   // An account with no consent on record (made before consent was stored server-side) sees the consent screen first.
   const needsConsent = inside && accountLoaded && !consentAt;
+  // Then the onboarding survey (their course), once; older accounts see it on their next open.
+  const needsCourse = inside && accountLoaded && !needsConsent && !course;
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -64,10 +66,13 @@ export default function RootLayout() {
         <Stack.Protected guard={!signedIn || needsConsent}>
           <Stack.Screen name="consent" />
         </Stack.Protected>
+        <Stack.Protected guard={needsCourse}>
+          <Stack.Screen name="survey" options={{ gestureEnabled: false }} />
+        </Stack.Protected>
         <Stack.Protected guard={signedIn && !verified}>
           <Stack.Screen name="verify-email" options={{ gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={inside && !needsConsent}>
+        <Stack.Protected guard={inside && !needsConsent && !needsCourse}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="analysis" />
           <Stack.Screen name="practice" />
