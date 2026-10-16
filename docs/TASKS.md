@@ -50,7 +50,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Server on Prisma + PostgreSQL** (Firebase sign-in only), domain modules, zod validation, rate limits, auth gates, two-way user sync, re-consent for accounts without consent. Tested by the user and merged into `dev` (2026-10-15).
 - [x] **Audit doc back to PostgreSQL:** data dictionary (Tables 2-18) in the Tables tab and in the paper; Audit tab trimmed to open items; paper text fixes applied (2026-10-15).
 - [ ] **Web admin** (`client/web/admin/`, merged into `dev` 2026-10-16): overview, users (+ actions, daily reset), sessions (+ Score again), manuscripts, groups, admins, audit log, Ctrl K palette, shortcuts, theme menu, icon sidebar, server pages. User to apply the migration, set up the Firebase Web app, grant the first admin, test, deploy to Vercel.
-- [ ] **Panel faces + sequential panel with a voice each** (branches `feat/panel-faces` → `feat/sequential-panel`): built and tested in code; user to phone-test (mock run with `EXPO_PUBLIC_LIVE_ENGINE=mock`, then a real 3-panelist session), then merge `feat/sequential-panel` into `dev`.
+- [x] **Panel faces + sequential panel with a voice each**: tested by the user, merged into `dev` (2026-10-16).
 - [ ] **Paper figures** (user action): replace Figure 2, Figure 3 and both System Flowchart images with the PNGs in `docs/diagrams/`.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
