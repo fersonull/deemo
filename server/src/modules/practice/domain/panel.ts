@@ -6,6 +6,10 @@ import { DOMAINS, type Analysis } from "../../manuscripts/domain/manuscript";
 // locked into each ephemeral token (addendum B1, B4, Q3, Q7).
 
 export const LIVE_MODEL = "models/gemini-3.8-live"; // check the Models page before changing
+// The panel's one voice (a Live session keeps the voice it starts with; it can't change per panelist). Female, to match
+// the Chair, Dr. Reyes, who opens and closes every session. The app sends it in its setup message: a voice baked into
+// the ephemeral token was ignored in testing (2026-10-16), one sent by the client at session start was used.
+export const PANEL_VOICE = "Kore";
 
 export const MODES = ["TITLE", "PRE_ORAL", "FINAL"] as const;
 export type Mode = (typeof MODES)[number];
@@ -170,9 +174,13 @@ export function liveSetup(setup: PanelSetup, analysis?: Analysis) {
   };
 }
 
+// Everything the token locks: the whole setup except the voice (only the response modality of generationConfig, so the
+// client's speechConfig is applied).
 export const LOCKED_FIELDS = Object.keys(
   liveSetup({ mode: "TITLE", domain: "", panelists: 1, minutes: 10, followUps: 2, difficulty: "STANDARD" }),
-).join(",");
+)
+  .map((k) => (k === "generationConfig" ? "generationConfig.responseModalities" : k))
+  .join(",");
 
 // The practice setup the app sends (trust boundary): the same bounds the panel and the plan policy rely on.
 const ID = /^[A-Za-z0-9_-]{1,100}$/;

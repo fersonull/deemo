@@ -184,8 +184,9 @@ export class GeminiEngine implements LiveEngine {
     this.connecting = true;
     let token: string;
     let model: string;
+    let voice: string | undefined;
     try {
-      ({ token, model } = await api<{ token: string; model: string }>("/live/token", {
+      ({ token, model, voice } = await api<{ token: string; model: string; voice?: string }>("/live/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ ...this.setup, startId: this.startId, resume: !!this.handle }),
@@ -209,8 +210,10 @@ export class GeminiEngine implements LiveEngine {
     this.ws = ws;
     this.ready = false;
     ws.onopen = () => {
-      // Everything but the resumption handle is locked by the token.
-      ws.send(JSON.stringify({ setup: { model, sessionResumption: this.handle ? { handle: this.handle } : {} } }));
+      // Everything but the voice and the resumption handle is locked by the token. The voice is the server's choice
+      // (it only takes effect when a session starts; a resumed one keeps its voice).
+      const speech = voice ? { generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } } } } : {};
+      ws.send(JSON.stringify({ setup: { model, ...speech, sessionResumption: this.handle ? { handle: this.handle } : {} } }));
     };
     ws.onmessage = (e) => {
       const raw = typeof e.data === "string" ? e.data : utf8(new Uint8Array(e.data as ArrayBuffer));

@@ -5,7 +5,7 @@ import { accessibleProject } from "../../groups/application/access";
 import { getSession } from "../../scoring/application/sessions";
 import { weakTopics } from "../../scoring/domain/session";
 import { NEW_SESSION_MS, decideFinish, decideStart } from "../domain/live-start";
-import { LIVE_MODEL, type PanelSetup } from "../domain/panel";
+import { LIVE_MODEL, PANEL_VOICE, type PanelSetup } from "../domain/panel";
 import { mintLiveToken } from "../infrastructure/gemini-live";
 import { liveStartRepo } from "../infrastructure/live-start-repo";
 
@@ -44,7 +44,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     if (d.kind === "new") await tx.user.update({ where: { id: account.id }, data: { sessionDay: d.day, sessionCount: d.count } });
     return d;
   });
-  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL };
+  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice: PANEL_VOICE };
 
   let token: string | undefined;
   const newSessionUntil = Date.now() + NEW_SESSION_MS;
@@ -54,7 +54,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     // Save the token for retries and resumption, or refund the slot if minting failed.
     await finish(account.id, startId, decision.start.lease, token, newSessionUntil);
   }
-  return { token, model: LIVE_MODEL };
+  return { token, model: LIVE_MODEL, voice: PANEL_VOICE };
 }
 
 async function finish(uid: string, startId: string, lease: string, token: string | undefined, newSessionUntil: number) {
