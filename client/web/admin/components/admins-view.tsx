@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { useAdmin } from "@/components/auth-gate"
 import { LoadError } from "@/components/list-controls"
@@ -29,20 +30,18 @@ export function AdminsView() {
   const { data, error, reload } = useAdminData<{ admins: AdminAccount[] }>("/admin/admins")
   const [email, setEmail] = useState("")
   const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [removing, setRemoving] = useState<AdminAccount | null>(null)
 
   const act = async (call: () => Promise<unknown>, done: string) => {
     setBusy(true)
-    setMessage(null)
     try {
       await call()
-      setMessage({ ok: true, text: done })
+      toast.success(done)
       setRemoving(null)
       reload()
       return true
     } catch (e) {
-      setMessage({ ok: false, text: (e as Error).message })
+      toast.error((e as Error).message)
       return false
     } finally {
       setBusy(false)
@@ -72,7 +71,6 @@ export function AdminsView() {
             {busy && !removing ? "Adding…" : "Add"}
           </Button>
         </div>
-        {message ? <p className={`text-sm ${message.ok ? "text-muted-foreground" : "text-destructive"}`}>{message.text}</p> : null}
       </form>
 
       {error && !data ? (

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState, type ReactNode } from "react"
+import { toast } from "sonner"
 
 import { FilterSelect, ListSearch, LoadError } from "@/components/list-controls"
 import { Pager } from "@/components/pager"
@@ -136,18 +137,17 @@ export function SessionsView() {
 function SessionSheet({ id, onClose, onChanged }: { id: string | null; onClose: () => void; onChanged: () => void }) {
   const { data: s, error, reload } = useAdminData<SessionReport>(id ? `/admin/sessions/${encodeURIComponent(id)}` : null)
   const [busy, setBusy] = useState(false)
-  const [actionError, setActionError] = useState("")
 
   const rescore = async () => {
     if (!s) return
     setBusy(true)
-    setActionError("")
     try {
       await adminApi(`/admin/sessions/${encodeURIComponent(s.id)}/rescore`, { method: "POST" })
+      toast.success("Scoring again. The result appears here in a minute or so.")
       reload()
       onChanged()
     } catch (e) {
-      setActionError((e as Error).message)
+      toast.error((e as Error).message)
     } finally {
       setBusy(false)
     }
@@ -192,7 +192,6 @@ function SessionSheet({ id, onClose, onChanged }: { id: string | null; onClose: 
                     </Button>
                     <span className="text-xs text-muted-foreground">Uses the same scoring as the app&apos;s Try again.</span>
                   </div>
-                  {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
                 </Section>
               ) : null}
 

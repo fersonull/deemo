@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
+import { toast } from "sonner"
 
 import { useAdmin } from "@/components/auth-gate"
 import { Pager } from "@/components/pager"
@@ -149,7 +150,6 @@ export function UserSheet({ id, onClose, onChanged }: { id: string | null; onClo
 function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: () => void; onDeleted: () => void }) {
   const admin = useAdmin()
   const [busy, setBusy] = useState<"premium" | "sign-in" | "delete" | "daily" | null>(null)
-  const [error, setError] = useState("")
   const [confirm, setConfirm] = useState<"disable" | "delete" | null>(null)
   const [typed, setTyped] = useState("")
   const path = `/admin/users/${encodeURIComponent(user.id)}`
@@ -163,15 +163,16 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
       </Section>
     )
 
-  const run = async (kind: "premium" | "sign-in" | "delete" | "daily", call: () => Promise<unknown>, after: () => void) => {
+  const who = user.name ?? user.email ?? "this student"
+  const run = async (kind: "premium" | "sign-in" | "delete" | "daily", call: () => Promise<unknown>, after: () => void, done: string) => {
     setBusy(kind)
-    setError("")
     try {
       await call()
       setConfirm(null)
+      toast.success(done)
       after()
     } catch (e) {
-      setError((e as Error).message)
+      toast.error((e as Error).message)
     } finally {
       setBusy(null)
     }
@@ -188,7 +189,9 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
           checked={user.premium}
           disabled={busy !== null}
           aria-label="Premium"
-          onCheckedChange={(premium) => run("premium", () => adminApi(`${path}/premium`, { method: "PATCH", body: { premium } }), onChanged)}
+          onCheckedChange={(premium) =>
+            run("premium", () => adminApi(`${path}/premium`, { method: "PATCH", body: { premium } }), onChanged, `Premium ${premium ? "on" : "off"} for ${who}.`)
+          }
         />
       </div>
 
@@ -206,7 +209,7 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
           variant="outline"
           size="sm"
           disabled={busy !== null || user.usedToday === 0}
-          onClick={() => run("daily", () => adminApi(`${path}/reset-daily`, { method: "POST" }), onChanged)}
+          onClick={() => run("daily", () => adminApi(`${path}/reset-daily`, { method: "POST" }), onChanged, `Today's sessions given back to ${who}.`)}
         >
           {busy === "daily" ? "Resetting…" : "Reset"}
         </Button>
@@ -225,7 +228,9 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
             size="sm"
             disabled={busy !== null}
             onClick={() =>
-              disabled ? run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: false } }), onChanged) : setConfirm("disable")
+              disabled
+                ? run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: false } }), onChanged, `Sign-in turned on for ${who}.`)
+                : setConfirm("disable")
             }
           >
             {busy === "sign-in" ? "Saving…" : disabled ? "Turn on" : "Turn off"}
@@ -251,8 +256,6 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
         </Button>
       </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
       <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && busy === null && setConfirm(null)}>
         <AlertDialogContent>
           {confirm === "disable" ? (
@@ -268,7 +271,9 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
                 <AlertDialogCancel disabled={busy !== null}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   disabled={busy !== null}
-                  onClick={() => run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: true } }), onChanged)}
+                  onClick={() =>
+                    run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: true } }), onChanged, `Sign-in turned off for ${who}. They're signed out everywhere.`)
+                  }
                 >
                   {busy === "sign-in" ? "Turning off…" : "Turn off sign-in"}
                 </AlertDialogAction>
@@ -289,7 +294,7 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
                 <AlertDialogAction
                   variant="destructive"
                   disabled={busy !== null || typed.trim() !== deleteWord}
-                  onClick={() => run("delete", () => adminApi(path, { method: "DELETE" }), onDeleted)}
+                  onClick={() => run("delete", () => adminApi(path, { method: "DELETE" }), onDeleted, `${who}'s account and data were deleted.`)}
                 >
                   {busy === "delete" ? "Deleting…" : "Delete for good"}
                 </AlertDialogAction>
