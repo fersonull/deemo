@@ -49,6 +49,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **DiceBear avatars** (notionists in brand colors, initials fallback), **saved per account with a picker in Profile**, and a **compact Group readiness** card with member faces. Merged into `dev`, phone-checked.
 - [x] **Server on Prisma + PostgreSQL** (Firebase sign-in only), domain modules, zod validation, rate limits, auth gates, two-way user sync, re-consent for accounts without consent. Tested by the user and merged into `dev` (2026-10-15).
 - [x] **Audit doc back to PostgreSQL:** data dictionary (Tables 2-18) in the Tables tab and in the paper; Audit tab trimmed to open items; paper text fixes applied (2026-10-15).
+- [ ] **Web admin** (read-only user lookup, `client/web/admin/`, branch `feat/admin`): built and type-checked; user to set up the Firebase Web app, grant the admin claim, test, deploy to Vercel, then merge.
 - [ ] **Paper figures** (user action): replace Figure 2, Figure 3 and both System Flowchart images with the PNGs in `docs/diagrams/`.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.

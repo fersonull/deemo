@@ -10,6 +10,7 @@ export type AuthClaims = {
   name: string | null;
   emailVerified: boolean;
   provider: string | null; // "password", "google.com", ...
+  admin: boolean; // the `admin` custom claim (scripts/set-admin.ts), for the web admin's /admin routes
 };
 
 export const claimsOf = (req: Request) => (req as Request & { auth: AuthClaims }).auth;
@@ -31,6 +32,7 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     name: typeof decoded.name === "string" ? decoded.name.trim().slice(0, 60) || null : null,
     emailVerified: decoded.email_verified === true,
     provider: decoded.firebase?.sign_in_provider ?? null,
+    admin: decoded.admin === true,
   };
   next();
 }

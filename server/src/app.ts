@@ -2,6 +2,7 @@ import express from "express";
 
 import { errorHandler } from "./shared/errors";
 import { byIp, rateLimit } from "./shared/rate-limit";
+import { adminRouter } from "./modules/admin/http/routes";
 import { protect } from "./modules/identity/http/gates";
 import { identityRouter } from "./modules/identity/http/routes";
 import { manuscriptsRouter } from "./modules/manuscripts/http/routes";
@@ -38,6 +39,9 @@ app.get("/health", (_req, res) => {
 
 app.use(rateLimit("ip", { who: byIp }));
 app.use(express.json({ limit: "1mb" })); // a 25-minute transcript outgrows the 100 kB default
+
+// The web admin (client/web/admin): read-only, admin claim only, never a student account.
+app.use(adminRouter);
 
 // Everything below belongs to a signed-in student: a verified Firebase token, a synced account, not being deleted,
 // and a per-student limit on writes. The module routers use full paths, so they mount at the root.

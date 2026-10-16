@@ -6,7 +6,7 @@ _Last updated: 2026-10-16_
 
 ## Current state
 
-- **Branch:** `dev`, clean (the three.js + GSAP presentation deck is committed; see Recent changes). `feat/postgres` (Prisma + PostgreSQL server) was tested by the user and merged into `dev` on 2026-10-15, then deleted. `main` is behind `dev` (the user merges into `main` themselves).
+- **Branch:** `feat/admin` (web admin, off `dev`; not merged, waiting for the user's test). `dev` holds everything else (the three.js + GSAP presentation deck is committed; see Recent changes). `feat/postgres` (Prisma + PostgreSQL server) was tested by the user and merged into `dev` on 2026-10-15, then deleted. `main` is behind `dev` (the user merges into `main` themselves).
 - **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The native build includes Firebase, Google sign-in, the document picker, the VoiceCommunication mic patch, `react-native-svg`, print and sharing, and the owl app icon and splash.
 - **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
 - **Data:** Firebase Authentication for sign-in only (email/password with email verification, Google); all app data in PostgreSQL through Prisma 7 (`server/prisma/schema.prisma`, 17 tables: users, projects, analyses, rubrics, rubric_criteria, sessions, session_turns, session_flags, reports, report_criteria, report_contradictions, report_turns, report_fixes, groups, group_members, live_starts, rate_limit_counters). Only the server reads and writes it (`DATABASE_URL` in `server/.env`).
@@ -15,6 +15,13 @@ _Last updated: 2026-10-16_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Web admin test (user action, branch `feat/admin`):** read-only user lookup in `client/web/admin/` (Next.js 16 + shadcn preset `b1oVxsfY`) over new server routes `GET /admin/users` and `GET /admin/users/:id`. To try it:
+1. Firebase console → Project settings → add a **Web app**; copy its config into `client/web/admin/.env.local` (see `.env.example`; `NEXT_PUBLIC_API_URL=http://localhost:3000` locally). Google sign-in must be enabled (it is, for the app).
+2. `cd server && bun scripts/set-admin.ts <your Google email>` (remove with `--remove`).
+3. `bun run dev` in `server/`, then the `admin` launch config (or `bun run dev` in `client/web/admin`, port 3001); sign in, search, filter, open a user and compare with Prisma Studio. A non-admin Google account must see "Not an admin".
+4. Vercel: project root `client/web/admin`, the same env vars with `NEXT_PUBLIC_API_URL=https://api.deemo-ai.com/api`; add the Vercel domain to Firebase Auth → Authorized domains and to `ADMIN_ORIGINS` in `server/.env`, restart the server. The hosted admin only works while the PC and tunnel run.
+Merge `feat/admin` into `dev` after it works, then delete the branch. Not yet seen signed in (the table and sheet were only type-checked and built).
 
 **Presentation follow-up (user action):** `client/web/presentation/` is filled from the paper; nothing is a placeholder any more. In the GitHub repo's Settings → Pages, set **Source = GitHub Actions** once so `deploy-presentation.yml` (push to `main` under `client/web/presentation/**`, or run it by hand from the Actions tab) publishes it to https://fersonull.github.io/deemo/ (repo is public; Pages was not enabled as of 2026-10-15). Preview locally with the `presentation` launch config (`bunx serve client/web/presentation -l 5055`); open via http, not `file://` (ES modules). If Chapter II changes (target market, technologies, Table 1), update slides 4–6 to match.
 
@@ -34,6 +41,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Web admin (read-only user lookup)**: `client/web/admin/` (Next.js 16, Tailwind, shadcn preset `b1oVxsfY`; sidebar, searchable/filterable user table, detail sheet with projects, recent sessions, groups and Firebase sign-in facts). Server: `admin` claim on `AuthClaims`, `requireAdmin`, `src/modules/admin/` with `GET /admin/users` and `/admin/users/:id`, CORS for `ADMIN_ORIGINS`, `scripts/set-admin.ts`. On `feat/admin`, not merged. | `feat/admin` |
 | 2026-10-16 | **Try Premium button**: new `premium` variant on `Button` (ink pill, goldInk hairline, gold sheen, goldLight label) with Deemo's filled `workspace_premium` medal icon in gold; used only by the upsell sheet. JS only. | `client/mobile/Deemo/src/components/button.tsx`, `upsell-sheet.tsx` |
 | 2026-10-16 | **Premium card on Profile**: Premium accounts get a member's-card look (ink card, goldInk hairline, a gold light sheen top right, Deemo's medal with its glint, Premium in goldLight with a Demo tag, the perks as a gold-check list). Free card unchanged. JS only. | `client/mobile/Deemo/src/screens/profile/premium-card.tsx` |
 | 2026-10-16 | **Fewer requests on navigation**: `src/utils/fresh.ts` (`freshFor`) lets `projects.refresh()` and `sessions.refresh()` reuse a list loaded in the last 60 s and share an in-flight load; they always reload while something is analyzing/scoring, after a new session or rescore, and on pull to refresh (`refresh(true)`). Home no longer re-reads `/me` on every visit; the root layout re-reads it when the app returns to the foreground. JS only. | see git log |
@@ -121,6 +129,9 @@ In priority order (full backlog in `docs/TASKS.md`):
 Older history: `git log dev`.
 
 ## Gotchas
+
+- **Web admin auth:** `/admin/*` uses `authenticate` + `requireAdmin` only, never `syncUser`, so an admin's Google account never becomes a `users` row. The `admin` custom claim reaches the token only after the admin signs out and back in. Browsers can call `/admin` only from `ADMIN_ORIGINS` (plus `http://localhost:3001`).
+- **Admin Firebase init is lazy** (`client/web/admin/lib/firebase.ts` `getAuth()`): Next prerenders pages at build time without the API key, so never call Firebase at module load.
 
 - **Screen data is cached for 60 s:** focus refreshes skip the server if the list loaded under a minute ago (`freshFor` in `src/utils/fresh.ts`). After a server-side change the app makes itself, call `refresh(true)` or `invalidate` the store's freshness, or the change shows up only after a minute or a pull to refresh.
 
