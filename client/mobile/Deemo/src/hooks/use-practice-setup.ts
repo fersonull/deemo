@@ -10,7 +10,6 @@ const store = createStore({
   minutes: 10,
   followUps: 2, // per topic (plan F8 default)
   difficulty: "STANDARD" as Difficulty,
-  coach: true, // Coach mode marks contradictions; Panel mode shows nothing (addendum Q3)
   projectId: null as string | null, // the manuscript the panel reads; null uses the built-in sample
   weights: DEFAULT_WEIGHTS, // rubric weights in percent, RUBRIC order
   weakFrom: null as string | null, // "Practice weak topics": the scored session it targets; Setup clears it

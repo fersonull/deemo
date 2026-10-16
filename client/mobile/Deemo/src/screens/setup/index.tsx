@@ -24,11 +24,6 @@ const MODES: { value: Mode; desc: string }[] = [
   { value: "FINAL", desc: "Results, testing, conclusions · 15–20 min" },
 ];
 
-const FEEDBACK = [
-  { coach: true, label: "Coach", desc: "Flags answers that don't match your paper" },
-  { coach: false, label: "Panel", desc: "Realistic. No hints at all" },
-];
-
 // Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 min. Locked choices open the upsell.
 export function Setup() {
   const setup = usePracticeSetup();
@@ -179,27 +174,6 @@ export function Setup() {
       />
 
       {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
-      <Text style={[type.label, styles.section]}>FEEDBACK</Text>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Feedback" style={styles.feedback}>
-        {FEEDBACK.map((f) => {
-          const selected = setup.coach === f.coach;
-          const fg = selected ? colors.paper : colors.ink;
-          return (
-            <PressableScale
-              scaleTo={0.98}
-              key={f.label}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-              onPress={() => practiceSetup.set({ coach: f.coach })}
-              style={[styles.fbCard, selected && styles.inkCard]}
-            >
-              <Text style={[type.heading, styles.fbLabel, { color: fg }]}>{f.label}</Text>
-              <Text style={[styles.desc, styles.fbDesc, { color: fg }]}>{f.desc}</Text>
-            </PressableScale>
-          );
-        })}
-      </View>
-
       <View style={styles.cta}>
         <Button label="Continue to mic check" onPress={() => router.push("/mic-check")} />
       </View>
@@ -255,9 +229,5 @@ const styles = StyleSheet.create({
   inkCard: { backgroundColor: colors.ink },
   desc: { ...type.body, fontSize: 12.5, lineHeight: 17.5, opacity: 0.75, marginTop: 2 },
   section: { marginTop: 20, marginBottom: 8 },
-  feedback: { flexDirection: "row", gap: 8 },
-  fbCard: { flex: 1, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.lg, backgroundColor: colors.sand },
-  fbLabel: { fontSize: 15 },
-  fbDesc: { fontSize: 12, lineHeight: 16, marginTop: 3 },
   cta: { marginTop: 20 },
 });

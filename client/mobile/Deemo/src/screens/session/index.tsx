@@ -167,7 +167,7 @@ export function Session() {
           />
         </Animated.View>
 
-        <Transcript lines={s.lines} partial={s.partial} coach={setup.coach} />
+        <Transcript lines={s.lines} partial={s.partial} />
 
         {typing && (
           <View style={styles.typeRow}>

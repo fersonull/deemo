@@ -7,12 +7,12 @@ import { PANEL } from "@/constants";
 import type { Line } from "@/live/types";
 import { colors, fonts } from "@/theme";
 
-type Props = { lines: Line[]; partial: Line | null; coach: boolean };
+type Props = { lines: Line[]; partial: Line | null };
 
 const CLEAR = `${colors.paper}00`; // paper at 0 alpha, so the fade never passes through grey
 
 // Real-Time Transcript (plan F10). Follows new text unless the student has scrolled back.
-export function Transcript({ lines, partial, coach }: Props) {
+export function Transcript({ lines, partial }: Props) {
   const ref = useRef<ScrollView>(null);
   const atBottom = useRef(true);
   const all = partial ? [...lines, partial] : lines;
@@ -36,18 +36,16 @@ export function Transcript({ lines, partial, coach }: Props) {
       >
         {all.map((l, i) => {
           const live = partial && i === all.length - 1;
-          // Coach mode: a quiet amber dot on a contradicting line. Panel mode: nothing on screen (addendum Q3).
-          const marked = coach && l.flagged;
+          // Like a real panel: nothing on screen marks a contradiction; the panelist challenges it out loud (issue #14),
+          // and the report lists them afterwards.
           const name = l.who === "you" ? "You" : PANEL[l.who].name;
           return (
             <View
               key={i}
               style={styles.line}
               accessible
-              accessibilityLabel={`${name}: ${l.text}${marked ? ". Possible contradiction with your manuscript." : ""}`}
+              accessibilityLabel={`${name}: ${l.text}`}
             >
-              {/* Separate elements: recoloring one View after mount drew it square on Android. */}
-              {marked ? <View key="flag" style={[styles.dot, styles.dotFlag]} /> : <View key="none" style={styles.dot} />}
               {l.who === "you" ? null : <View style={styles.face}><PanelFace index={l.who} size={20} still /></View>}
               <Text style={styles.text}>
                 <Text style={styles.name}>{name}</Text>
@@ -74,9 +72,7 @@ const styles = StyleSheet.create({
   fadeTop: { top: 0, height: 24 },
   fadeBottom: { bottom: 0, height: 28 },
   line: { flexDirection: "row", gap: 8 },
-  dot: { width: 7, height: 7, borderRadius: 3.5, marginTop: 7 },
   face: { marginTop: 1 },
-  dotFlag: { backgroundColor: colors.amber },
   text: {
     flex: 1,
     fontFamily: fonts.body,
