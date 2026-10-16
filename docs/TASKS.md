@@ -70,7 +70,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Documentation (manuscript, not code)
 
-- [ ] **General-purpose scope + course profile (F4)** (after `feat/course-profile` merges): Ch. 1 scope and delimitation (any course accepted; evaluation limited to 4th-year BSIT at PMFTCI), F4 wording (course in onboarding/Profile, IT field for computing courses), Ch. 3 data dictionary and ERD (`users.course`), "features or output" in Document Logic Analysis, Ch. 5 recommendation. Exact text: `docs/COURSE_PROFILE_PLAN.md` §7.
+- [ ] **General-purpose scope + course profile (F4)** (app side merged 2026-10-17): Ch. 1 scope and delimitation (any course accepted; evaluation limited to 4th-year BSIT at PMFTCI), F4 wording (course in onboarding/Profile, IT field for computing courses), Ch. 3 data dictionary and ERD (`users.course`), "features or output" in Document Logic Analysis, Ch. 5 recommendation. Exact text: `docs/COURSE_PROFILE_PLAN.md` §7.
 - [ ] **Chapter 3, readiness formula.** The app now uses: level points = (level − 1) / 4; coverage = answered ÷ planned with no floor, counting only real answers (the panel closing early doesn't count against the student); unmeasurable delivery drops out of the weights; sessions with no answer aren't scored. The addendum's worked example becomes 54 (was 62).
 - [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
 - [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
@@ -87,7 +87,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 | Plan item | What's built |
 |---|---|
-| F4 Adaptive Domain Profiling | Course from the onboarding survey (editable in Profile) plus the IT field for BSIT/BSCS projects; steers panel questions and scoring feedback (`fieldFocus`); any course's manuscript accepted (`feat/course-profile`) |
+| F4 Adaptive Domain Profiling | Course from the onboarding survey (editable in Profile) plus the IT field for BSIT/BSCS projects; steers panel questions and scoring feedback (`fieldFocus`); any course's manuscript accepted (merged into `dev` 2026-10-17) |
 | S-01 Splash, S-02 Onboarding, S-03 Consent (F19) | Consent with age confirmation, recorded on the account with its version |
 | S-04 Sign in (F17) | Firebase Auth: email/password, account creation, password reset, Google sign-in (Credential Manager); stays signed in |
 | S-05 Home | Greeting, last readiness score, Start practice, recent sessions |
