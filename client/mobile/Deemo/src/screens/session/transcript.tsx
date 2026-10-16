@@ -7,12 +7,12 @@ import { PANEL } from "@/constants";
 import type { Line } from "@/live/types";
 import { colors, fonts } from "@/theme";
 
-type Props = { lines: Line[]; partial: Line | null };
+type Props = { lines: Line[]; partial: Line | null; seats: number[] }; // live lines hold seats; seats[seat] is the persona
 
 const CLEAR = `${colors.paper}00`; // paper at 0 alpha, so the fade never passes through grey
 
 // Real-Time Transcript (plan F10). Follows new text unless the student has scrolled back.
-export function Transcript({ lines, partial }: Props) {
+export function Transcript({ lines, partial, seats }: Props) {
   const ref = useRef<ScrollView>(null);
   const atBottom = useRef(true);
   const all = partial ? [...lines, partial] : lines;
@@ -38,7 +38,8 @@ export function Transcript({ lines, partial }: Props) {
           const live = partial && i === all.length - 1;
           // Like a real panel: nothing on screen marks a contradiction; the panelist challenges it out loud (issue #14),
           // and the report lists them afterwards.
-          const name = l.who === "you" ? "You" : PANEL[l.who].name;
+          const persona = l.who === "you" ? 0 : (seats[l.who] ?? 0);
+          const name = l.who === "you" ? "You" : PANEL[persona]!.name;
           return (
             <View
               key={i}
@@ -46,7 +47,7 @@ export function Transcript({ lines, partial }: Props) {
               accessible
               accessibilityLabel={`${name}: ${l.text}`}
             >
-              {l.who === "you" ? null : <View style={styles.face}><PanelFace index={l.who} size={20} still /></View>}
+              {l.who === "you" ? null : <View style={styles.face}><PanelFace index={persona} size={20} still /></View>}
               <Text style={styles.text}>
                 <Text style={styles.name}>{name}</Text>
                 {"  "}

@@ -6,7 +6,7 @@ import { accessibleProject } from "../../groups/application/access";
 import { getSession } from "../../scoring/application/sessions";
 import { weakTopics } from "../../scoring/domain/session";
 import { NEW_SESSION_MS, decideFinish, decideSeat, decideStart } from "../domain/live-start";
-import { LIVE_MODEL, PANEL_VOICES, type PanelSetup } from "../domain/panel";
+import { LIVE_MODEL, PANEL_VOICES, lineup, type PanelSetup } from "../domain/panel";
 import { mintLiveToken } from "../infrastructure/gemini-live";
 import { liveStartRepo } from "../infrastructure/live-start-repo";
 
@@ -21,7 +21,12 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
   if (setup.projectId && (!project?.analysis || !project.confirmedAt))
     throw new AppError(403, "This manuscript is unavailable. Choose a reviewed project.");
   panel.focusArea = project?.group?.focusArea;
-  panel.course = courseOf(account.course); // profiles the panel (plan F4); not part of the fingerprint
+  // The manuscript's field profiles the panel (plan F4); the account course only without one. Not in the fingerprint.
+  panel.course = project?.analysis?.field ?? courseOf(account.course);
+  // Each seat's voice is its persona's (the course decides who sits). ponytail: read from the account at every mint, so
+  // a course changed on another device mid-session would re-seat later panelists; snapshot it on the live start if
+  // that ever matters (Profile can't be opened during a session on this device).
+  const voice = PANEL_VOICES[lineup(panel.course, setup.panelists)[seat] ?? 0];
   if (setup.weakFrom) {
     const last = await getSession(account.id, setup.weakFrom); // the student's own session only
     if (!last?.report || last.report.scored === false) throw new AppError(404, "That report can't start a weak-topics round.");
@@ -39,7 +44,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
       now: Date.now(),
     });
     const token = await mintLiveToken(panel, project?.analysis, expiresAt, Date.now() + NEW_SESSION_MS, seat);
-    return { token, model: LIVE_MODEL, voice: PANEL_VOICES[seat] };
+    return { token, model: LIVE_MODEL, voice };
   }
 
   // Reserve the start (and today's slot) before minting.
@@ -60,7 +65,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     if (d.kind === "new") await tx.user.update({ where: { id: account.id }, data: { sessionDay: d.day, sessionCount: d.count } });
     return d;
   });
-  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice: PANEL_VOICES[0] };
+  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice };
 
   let token: string | undefined;
   const newSessionUntil = Date.now() + NEW_SESSION_MS;
@@ -70,7 +75,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     // Save the token for retries and resumption, or refund the slot if minting failed.
     await finish(account.id, startId, decision.start.lease, token, newSessionUntil);
   }
-  return { token, model: LIVE_MODEL, voice: PANEL_VOICES[0] };
+  return { token, model: LIVE_MODEL, voice };
 }
 
 async function finish(uid: string, startId: string, lease: string, token: string | undefined, newSessionUntil: number) {

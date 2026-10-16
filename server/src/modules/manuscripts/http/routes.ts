@@ -8,6 +8,7 @@ import { rateLimit } from "../../../shared/rate-limit";
 import { bodyOf, validate } from "../../../shared/validate";
 import { accountOf, requireConsent } from "../../identity/http/gates";
 import { accessibleProject, listProjects } from "../../groups/application/access";
+import { COURSES } from "../../identity/domain/course";
 import { DOMAINS, FIELDS, MAX_BYTES, Rejected, sniff, sniffDocOrImage } from "../domain/manuscript";
 import { RubricInput } from "../domain/rubric";
 import { editAnalysis, removeProject, saveRubric, uploadManuscript } from "../application/projects";
@@ -32,6 +33,8 @@ const AnalysisBody = z.object({
         z.ZodOptional<z.ZodString>
       >),
       facts: z.array(z.string(), { error: "facts must be a list of text" }).optional(),
+      field: z.enum(COURSES, { error: "Pick a field from the list." }).optional(),
+      domain: z.enum(DOMAINS, { error: "Pick an IT field from the list." }).optional(),
     })
     .default({}),
   confirm: z.boolean().optional(),

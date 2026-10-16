@@ -8,9 +8,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
-import { MODE_LABELS } from "@/constants";
+import { MODE_LABELS, lineup, profileCourse } from "@/constants";
 import { useLiveSession } from "@/hooks/use-live-session";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
+import { useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, type } from "@/theme";
@@ -30,8 +31,12 @@ const GLIDE = LinearTransition.duration(200).easing(easeOut);
 export function Session() {
   useKeepAwake();
   const setup = usePracticeSetup();
-  const { allowTyping } = useSession(); // Profile setting
-  const { state: s, finishTurn, sendText, pause, resume, stop } = useLiveSession();
+  const { allowTyping, course } = useSession(); // Profile settings
+  // Who sits in each seat, fixed for the whole session: the manuscript's field decides, else the course (constants.ts lineup).
+  const manuscript = useProjects().projects.find((p) => p.id === setup.projectId);
+  const field = profileCourse(manuscript, course);
+  const [seats] = useState(() => lineup(field, setup.panelists));
+  const { state: s, finishTurn, sendText, pause, resume, stop } = useLiveSession(seats);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [heldBySheet, setHeldBySheet] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -57,7 +62,7 @@ export function Session() {
 
   const leave = (endedBy: "panel" | "student" | "time" = s.endedBy === "time" ? "time" : "student") => {
     stop();
-    sessions.submitLive(s, endedBy); // scored on the server; the scoring screen waits for it
+    sessions.submitLive(s, endedBy, seats); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
 
@@ -151,7 +156,7 @@ export function Session() {
 
         <Animated.View layout={GLIDE} style={[styles.panel, { gap: count === 1 ? 0 : 6 }]}>
           {Array.from({ length: count }, (_, i) => (
-            <Panelist key={i} index={i} status={status(i)} count={count} level={listeningLevel} />
+            <Panelist key={i} persona={seats[i]!} course={field} status={status(i)} count={count} level={listeningLevel} />
           ))}
         </Animated.View>
 
@@ -160,6 +165,8 @@ export function Session() {
           phase={s.phase}
           question={s.question}
           takeover={s.takeover ? s.seat % count : null}
+          seats={seats}
+          course={field}
           closing={closing}
           count={count}
           followUpLimit={s.followUpLimit}
@@ -167,7 +174,7 @@ export function Session() {
           />
         </Animated.View>
 
-        <Transcript lines={s.lines} partial={s.partial} />
+        <Transcript lines={s.lines} partial={s.partial} seats={seats} />
 
         {typing && (
           <View style={styles.typeRow}>
