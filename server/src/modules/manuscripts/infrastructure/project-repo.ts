@@ -65,6 +65,11 @@ export const projectRepo = {
   },
 
   // Manuscripts that hold a plan slot: everything except failed uploads.
+  // A failed upload holds nothing (the file is never stored, and there is no analysis): remove it once the student has
+  // had time to see why it failed (issue #10). The app also deletes it as soon as it shows the reason.
+  purgeFailed: (ownerId: string, before: Date) =>
+    prisma.project.deleteMany({ where: { userId: ownerId, status: "failed", updatedAt: { lt: before } } }),
+
   countHeld: (tx: Tx, ownerId: string) => tx.project.count({ where: { userId: ownerId, status: { not: "failed" } } }),
 
   create: (tx: Tx, ownerId: string, p: Project) =>

@@ -35,6 +35,13 @@ const POLL_MS = 2500;
 // Document Logic Analysis (plan F2, screens S-07): reading → "Here's what we understood" → confirm.
 export function Analysis({ id }: { id: string }) {
   const project = useProjects().projects.find((p) => p.id === id);
+  // A failed upload holds nothing worth keeping (the file is never stored): it's deleted as soon as its reason is shown,
+  // and the reason stays on screen (issue #10). The server also sweeps failed uploads the student never opened.
+  const [failedReason, setFailedReason] = useState<string | null>(null);
+  if (project?.status === "failed" && failedReason === null) setFailedReason(project.error ?? "Try a text-based PDF or a DOCX.");
+  useEffect(() => {
+    if (project?.status === "failed" && !project.group) projects.remove(id).catch(() => {}); // a failed delete: the sweep gets it
+  }, [project?.status, project?.group, id]);
   const [offline, setOffline] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -81,6 +88,24 @@ export function Analysis({ id }: { id: string }) {
     }
   };
 
+  if (failedReason !== null) {
+    return (
+      <Screen onBack={back}>
+        <View style={styles.failed}>
+          <Blob width={96} height={84} color={colors.sand}>
+            <Icon name="description" size={34} color={colors.inkMuted} />
+          </Blob>
+          <Text accessibilityRole="header" style={[type.title, styles.failedTitle]}>
+            {"This file won't\nwork."}
+          </Text>
+          <Text style={styles.sub}>{failedReason}</Text>
+          <Text style={[styles.sub, styles.removedNote]}>{"It wasn't saved. Upload another file from Projects."}</Text>
+        </View>
+        <Button label="Back to projects" onPress={back} />
+      </Screen>
+    );
+  }
+
   if (!project || project.status === "analyzing") {
     return (
       <Screen onBack={back}>
@@ -94,24 +119,10 @@ export function Analysis({ id }: { id: string }) {
     );
   }
 
-  if (project.status === "failed" || !project.analysis) {
+  if (!project.analysis) {
     return (
       <Screen onBack={back}>
-        <View style={styles.failed}>
-          <Blob width={96} height={84} color={colors.sand}>
-            <Icon name="description" size={34} color={colors.inkMuted} />
-          </Blob>
-          <Text accessibilityRole="header" style={[type.title, styles.failedTitle]}>
-            {"This file won't\nwork."}
-          </Text>
-          <Text style={styles.sub}>{project.error ?? "Try a text-based PDF or a DOCX."}</Text>
-        </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button label="Back to projects" onPress={back} />
-        {/* A rejected upload holds nothing worth keeping, so no confirmation. */}
-        <Pressable accessibilityRole="button" disabled={busy} onPress={remove} style={styles.textButton}>
-          <Text style={styles.textButtonLabel}>Delete this upload</Text>
-        </Pressable>
+        <Fetching title={"Opening your\nmanuscript."} subtitle="Getting the summary the panel works from." />
       </Screen>
     );
   }
@@ -212,4 +223,5 @@ const styles = StyleSheet.create({
   offline: { ...type.meta, textAlign: "center", marginBottom: 8 },
   failed: { flex: 1, justifyContent: "center" },
   failedTitle: { marginTop: 22 },
+  removedNote: { marginTop: 8 },
 });

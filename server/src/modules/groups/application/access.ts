@@ -5,7 +5,10 @@ import { groupRepo } from "../infrastructure/group-repo";
 
 // Which projects a student can open: their own, plus the ones shared with them through a group (addendum Q10).
 
+const FAILED_KEEP_MS = 10 * 60_000; // how long a failed upload stays listed with its reason
+
 export async function listProjects(uid: string): Promise<SharedProject[]> {
+  await projectRepo.purgeFailed(uid, new Date(Date.now() - FAILED_KEEP_MS));
   const [own, memberships] = await Promise.all([projectRepo.list(uid), groupRepo.membershipsOf(uid)]);
   const list: SharedProject[] = [...own];
   for (const m of memberships) {
