@@ -7,7 +7,8 @@ Specs: `docs/DEEMO_Mobile_App_Plan.md`. Start here: `docs/HANDOFF.md` (current s
 ## Layout
 
 - `client/mobile/Deemo/` — Expo app (Expo Router, TypeScript). Expo-specific rules: `client/mobile/Deemo/AGENTS.md`.
-- `server/` — Bun + Express (TypeScript, run directly by Bun), Prisma 7 + PostgreSQL. Domain-driven: `src/modules/<identity|manuscripts|groups|practice|scoring>/{domain,application,infrastructure,http}`, shared kernel in `src/shared/` (config, prisma, errors, zod `validate`, `rate-limit`, auth, `ai/gemini`), wiring in `src/app.ts`.
+- `server/` — Bun + Express (TypeScript, run directly by Bun), Prisma 7 + PostgreSQL. Domain-driven: `src/modules/<identity|manuscripts|groups|practice|scoring|admin>/{domain,application,infrastructure,http}`, shared kernel in `src/shared/` (config, prisma, errors, zod `validate`, `rate-limit`, auth, `ai/gemini`), wiring in `src/app.ts`.
+- `client/web/admin/` — web admin (Next.js 16 + Tailwind, shadcn preset `b1oVxsfY`, hosted on Vercel): read-only user lookup through the server's `/admin/*` routes (Firebase sign-in with the `admin` custom claim; `server/scripts/set-admin.ts <email>`). Next 16 differs from older versions: read `client/web/admin/AGENTS.md` first.
 - `docs/` — product plan, addendum, design pointer.
 
 ## Commands

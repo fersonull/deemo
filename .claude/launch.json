@@ -4,8 +4,23 @@
     {
       "name": "presentation",
       "runtimeExecutable": "bunx",
-      "runtimeArgs": ["serve", "client/web/presentation", "-l", "5055"],
+      "runtimeArgs": [
+        "serve",
+        "client/web/presentation",
+        "-l",
+        "5055"
+      ],
       "port": 5055
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd=client/web/admin",
+        "dev"
+      ],
+      "port": 3001
     }
   ]
 }

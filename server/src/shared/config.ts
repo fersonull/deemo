@@ -9,6 +9,11 @@ const Env = z.object({
     .min(1, "FIREBASE_SERVICE_ACCOUNT is not set. Add the service-account key path to server/.env."),
   GEMINI_API_KEY: z.string().default(""),
   PORT: z.coerce.number().int().positive().default(3000),
+  // Web origins allowed to call /admin from a browser (the Vercel admin), comma-separated. Local dev is always allowed.
+  ADMIN_ORIGINS: z
+    .string()
+    .default("")
+    .transform((s) => [...s.split(",").map((o) => o.trim()).filter(Boolean), "http://localhost:3001"]),
 });
 
 const parsed = Env.safeParse(process.env);
