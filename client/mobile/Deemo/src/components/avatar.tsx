@@ -10,12 +10,12 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Circle, ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
+import { PremiumBadge } from "@/components/deemo/badge";
 import { colors, fonts } from "@/theme";
 import { avatarUrl } from "@/utils/avatar";
 import { initials } from "@/utils/initials";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 const SWEEP = Easing.bezier(0.77, 0, 0.175, 1); // the badge's glint curve
 
 type Props = {
@@ -27,7 +27,8 @@ type Props = {
 };
 
 // A student's face (DiceBear, see utils/avatar.ts). The initials sit underneath, so they show while the image loads,
-// before the account record arrives, offline, or if DiceBear is down. Premium students wear it in Deemo's medal.
+// before the account record arrives, offline, or if DiceBear is down. Premium students wear it in Deemo's medal ring,
+// with Deemo's badge (the gold medal on its ribbon) pinned to the rim at the top right.
 export function Avatar({ seed, name, email = null, size, premium }: Props) {
   const [failed, setFailed] = useState<string | null>(null); // the seed whose image failed
   const band = premium ? ringWidth(size) : 0;
@@ -47,7 +48,32 @@ export function Avatar({ seed, name, email = null, size, premium }: Props) {
         ) : null}
       </View>
       {premium ? <MedalRing size={size} band={band} /> : null}
+      {premium ? <PinnedBadge size={size} band={band} /> : null}
     </View>
+  );
+}
+
+// Deemo's badge pinned on the ring at about half past one, overhanging the avatar's box (nothing clips it). The badge
+// is drawn around (0, 0): medal r 9, ribbon tails down to y 16, its sparkle up to y -13 (viewBox below). The medal is
+// about a third of the avatar wide: 14 px on a 42 px avatar, 38 px on the 112 px preview.
+const VIEW = { x: -14, y: -14, w: 28, h: 31 };
+function PinnedBadge({ size, band }: { size: number; band: number }) {
+  const reduced = useReducedMotion();
+  const w = size * 0.53;
+  const h = (w * VIEW.h) / VIEW.w;
+  const r = size / 2 - band / 2; // on the ring's middle
+  const x = size / 2 + r * Math.cos(Math.PI / 4);
+  const y = size / 2 - r * Math.sin(Math.PI / 4);
+  return (
+    <Svg
+      width={w}
+      height={h}
+      viewBox={`${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`}
+      style={{ position: "absolute", left: x - (w * -VIEW.x) / VIEW.w, top: y - (h * -VIEW.y) / VIEW.h }}
+      pointerEvents="none"
+    >
+      <PremiumBadge cx={0} cy={0} still={reduced} />
+    </Svg>
   );
 }
 
@@ -56,8 +82,8 @@ const ringWidth = (size: number) => Math.max(4, Math.round(size * 0.105));
 
 // Deemo's Premium medal (components/deemo/badge.tsx) as a ring: polished gold (light at the top left, deep gold at
 // the bottom right), goldInk bevels at both edges and a goldLight hairline inside. Like the badge, a glint sweeps
-// across it every 6–9 s (a timer, not a frame loop) and a small sparkle flares at the rim; reduce motion keeps it
-// still. Rings in a row start at different times, so a group card never flashes in unison.
+// across it every 6–9 s (a timer, not a frame loop); the pinned badge has its own glint and sparkle. Reduce motion
+// keeps it still. Rings in a row start at different times, so a group card never flashes in unison.
 function MedalRing({ size, band }: { size: number; band: number }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const reduced = useReducedMotion();
@@ -83,16 +109,9 @@ function MedalRing({ size, band }: { size: number; band: number }) {
     x: -size * 0.4 + size * 1.8 * shine.value,
     opacity: shine.value > 0 && shine.value < 1 ? 1 : 0,
   }));
-  const sparkle = useAnimatedProps(() => ({ opacity: Math.max(0, 1 - Math.abs(shine.value - 0.7) * 5) }));
 
   // The band's shape, for clipping the glint: the outer circle minus the inner one.
   const circle = (r: number) => `M${c - r} ${c} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
-  // A four-point sparkle on the rim at the top right (about 1–2 o'clock), scaled with the band.
-  const sx = c + (c - band / 2) * Math.cos(-Math.PI / 4);
-  const sy = c + (c - band / 2) * Math.sin(-Math.PI / 4);
-  const k = Math.max(3, band * 0.9);
-  const star = `M${sx} ${sy - k} Q${sx + k * 0.15} ${sy - k * 0.15} ${sx + k} ${sy} Q${sx + k * 0.15} ${sy + k * 0.15} ${sx} ${sy + k} Q${sx - k * 0.15} ${sy + k * 0.15} ${sx - k} ${sy} Q${sx - k * 0.15} ${sy - k * 0.15} ${sx} ${sy - k}Z`;
-
   return (
     <Svg width={size} height={size} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
@@ -130,7 +149,6 @@ function MedalRing({ size, band }: { size: number; band: number }) {
           />
         </G>
       </G>
-      <AnimatedPath animatedProps={sparkle} d={star} fill={colors.paper} opacity={0} />
     </Svg>
   );
 }
