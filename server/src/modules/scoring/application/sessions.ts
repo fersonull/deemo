@@ -1,4 +1,6 @@
 import { Busy, generateObject } from "../../../shared/ai/gemini";
+import { prisma } from "../../../shared/prisma";
+import { courseOf } from "../../identity/domain/course";
 import { AppError, BUSY } from "../../../shared/errors";
 import { accessibleProject } from "../../groups/application/access";
 import { SAMPLE_MANUSCRIPT, manuscriptFacts, type PanelSetup } from "../../practice/domain/panel";
@@ -59,22 +61,24 @@ export async function createSession(uid: string, body: FinishedSession): Promise
     lines: body.lines,
     flags: body.flags,
   });
-  void scoreInBackground(session);
+  void scoreInBackground(uid, session);
   return session;
 }
 
 export async function rescore(uid: string, id: string): Promise<Session> {
   const session = await sessionRepo.resetForScoring(uid, id);
   if (!session) throw new AppError(404, "not found");
-  void scoreInBackground(session);
+  void scoreInBackground(uid, session);
   return session;
 }
 
-async function judge(s: Unscored): Promise<Report> {
+async function judge(uid: string, s: Unscored): Promise<Report> {
+  // The student's course profiles the feedback (plan F4); read now, so a course changed since counts.
+  const course = courseOf((await prisma.user.findUnique({ where: { id: uid }, select: { course: true } }))?.course);
   const criteria = judgedCriteria(s, delivery(s.turns).why);
   const { value, model } = await generateObject(
     {
-      contents: [{ role: "user", parts: [{ text: scoringPrompt(s, s.manuscriptContext ?? SAMPLE_MANUSCRIPT, criteria) }] }],
+      contents: [{ role: "user", parts: [{ text: scoringPrompt(s, s.manuscriptContext ?? SAMPLE_MANUSCRIPT, criteria, course) }] }],
       // temperature 0: the same answers get the same levels
       generationConfig: { responseMimeType: "application/json", responseJsonSchema: judgeSchema(criteria.keys), temperature: 0 },
     },
@@ -83,10 +87,10 @@ async function judge(s: Unscored): Promise<Report> {
   return buildReport(s, value, model);
 }
 
-async function scoreInBackground(s: Unscored) {
+async function scoreInBackground(uid: string, s: Unscored) {
   try {
     // Nothing answered: no score and no AI call.
-    await sessionRepo.saveReport(s.id, coverage(s).answered === 0 ? unscored(s) : await judge(s));
+    await sessionRepo.saveReport(s.id, coverage(s).answered === 0 ? unscored(s) : await judge(uid, s));
   } catch (err) {
     console.error("scoring", s.id, err);
     const error = err instanceof Busy ? BUSY : "We couldn't score this session. Try again.";

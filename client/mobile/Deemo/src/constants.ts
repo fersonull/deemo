@@ -5,9 +5,28 @@ export const DOMAINS = [
   "Data & AI",
   "IoT/Hardware",
   "Information Systems",
+  "General", // every non-computing course (profiled by the course alone)
 ] as const;
 
 export type Domain = (typeof DOMAINS)[number];
+export const IT_FIELDS = DOMAINS.filter((d) => d !== "General"); // what computing students pick from
+
+// The student's course (onboarding survey, editable in Profile). Same list as server/src/modules/identity/domain/course.ts.
+export const COURSES = [
+  "BSIT",
+  "BSCS",
+  "Engineering",
+  "Maritime",
+  "Education",
+  "Nursing & Health",
+  "Business & Accountancy",
+  "Hospitality & Tourism",
+  "Criminology",
+  "Psychology & Social Sciences",
+  "Other",
+] as const;
+export type Course = (typeof COURSES)[number];
+export const isComputing = (c: Course | null) => c === "BSIT" || c === "BSCS"; // these pick an IT field per project
 
 // Session data model values (plan §13).
 export type Mode = "TITLE" | "PRE_ORAL" | "FINAL";

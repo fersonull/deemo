@@ -1,6 +1,7 @@
 import { AppError } from "../../../shared/errors";
 import { prisma, withSerializable } from "../../../shared/prisma";
 import type { Account } from "../../identity/domain/account";
+import { courseOf } from "../../identity/domain/course";
 import { accessibleProject } from "../../groups/application/access";
 import { getSession } from "../../scoring/application/sessions";
 import { weakTopics } from "../../scoring/domain/session";
@@ -20,6 +21,7 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
   if (setup.projectId && (!project?.analysis || !project.confirmedAt))
     throw new AppError(403, "This manuscript is unavailable. Choose a reviewed project.");
   panel.focusArea = project?.group?.focusArea;
+  panel.course = courseOf(account.course); // profiles the panel (plan F4); not part of the fingerprint
   if (setup.weakFrom) {
     const last = await getSession(account.id, setup.weakFrom); // the student's own session only
     if (!last?.report || last.report.scored === false) throw new AppError(404, "That report can't start a weak-topics round.");

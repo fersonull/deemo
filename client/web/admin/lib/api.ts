@@ -51,6 +51,7 @@ export type UserDetail = Omit<
   "projects" | "sessions" | "lastSessionAt"
 > & {
   allowTyping: boolean
+  course: string | null // onboarding survey; null = not answered yet
   consentVersion: string | null
   consentAt: string | null
   sessionDay: string | null

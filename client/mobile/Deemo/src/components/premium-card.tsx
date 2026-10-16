@@ -4,17 +4,20 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
 import { PremiumBadge } from "@/components/deemo/badge";
 import { Icon } from "@/components/icon";
+import { PressableScale } from "@/components/pressable-scale";
 import { colors, fonts, radius } from "@/theme";
 
 const PERKS = ["Unlimited practice sessions", "Every defense stage", "Up to three panelists", "25-minute sessions", "The full report", "A suited-up Deemo"];
 
-// The Premium plan on Profile, made like a member's card: ink stock, a gold hairline edge, light catching the top
-// right corner, and Deemo's own medal (the badge the owl wears, with its occasional glint). Gold stays the Premium-only
-// color it is everywhere else in the app.
-export function PremiumCard() {
+// The Premium plan, made like a member's card: ink stock, a gold hairline edge, light catching the top right corner,
+// and Deemo's own medal (the badge the owl wears, with its occasional glint). Gold stays the Premium-only color it is
+// everywhere else in the app. Compact on Profile (one row, opens the benefits screen); full, with the perks, there.
+export function PremiumCard({ onPress }: { onPress?: () => void }) {
   const reduced = useReducedMotion();
-  return (
-    <View style={styles.card} accessible accessibilityLabel={`Premium plan, demo. ${PERKS.join(", ")}.`}>
+  const compact = !!onPress;
+
+  const body = (
+    <>
       <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
         <Defs>
           <LinearGradient id="premiumSheen" x1="1" y1="0" x2="0.35" y2="0.9">
@@ -37,20 +40,41 @@ export function PremiumCard() {
               <Text style={styles.demoText}>Demo</Text>
             </View>
           </View>
-          <Text style={styles.sub}>Your panel, at full strength.</Text>
+          <Text style={styles.sub}>{compact ? "See your benefits" : "Your panel, at full strength."}</Text>
         </View>
+        {compact ? <Icon name="chevron_right" size={22} color={colors.gold} /> : null}
       </View>
 
-      <View style={styles.rule} />
-
-      <View style={styles.perks}>
-        {PERKS.map((p) => (
-          <View key={p} style={styles.perk}>
-            <Icon name="check" size={16} color={colors.gold} />
-            <Text style={styles.perkText}>{p}</Text>
+      {compact ? null : (
+        <>
+          <View style={styles.rule} />
+          <View style={styles.perks}>
+            {PERKS.map((p) => (
+              <View key={p} style={styles.perk}>
+                <Icon name="check" size={16} color={colors.gold} />
+                <Text style={styles.perkText}>{p}</Text>
+              </View>
+            ))}
           </View>
-        ))}
-      </View>
+        </>
+      )}
+    </>
+  );
+
+  return compact ? (
+    <PressableScale
+      scaleTo={0.98}
+      accessibilityRole="button"
+      accessibilityLabel="Premium plan, demo"
+      accessibilityHint="Shows your Premium benefits"
+      onPress={onPress}
+      style={[styles.card, styles.compact]}
+    >
+      {body}
+    </PressableScale>
+  ) : (
+    <View style={styles.card} accessible accessibilityLabel={`Premium plan, demo. ${PERKS.join(", ")}.`}>
+      {body}
     </View>
   );
 }
@@ -58,7 +82,6 @@ export function PremiumCard() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   card: {
-    marginTop: 18,
     borderRadius: radius.xl,
     backgroundColor: colors.ink,
     borderWidth: 1,
@@ -68,6 +91,7 @@ const styles = StyleSheet.create({
     paddingBottom: 18,
     paddingHorizontal: 18,
   },
+  compact: { paddingTop: 6, paddingBottom: 6, paddingRight: 14 },
   head: { flexDirection: "row", alignItems: "center", gap: 10, marginLeft: -6 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontFamily: fonts.display, fontWeight: "800", fontSize: 24, letterSpacing: -0.6, color: colors.goldLight },

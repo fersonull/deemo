@@ -2,10 +2,11 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-16_
+_Last updated: 2026-10-17_
 
 ## Current state
 
+- **Open branch `feat/course-profile`** (not merged; waiting for the user's phone test): DEEMO is general-purpose (any course and kind of study), the study stays BSIT at PMFTCI. Onboarding survey asks the course; Profile edits it; computing courses keep the IT field per project. Needs `cd server && bun run db:migrate` (`20261016160148_add_user_course`). Plan: `docs/COURSE_PROFILE_PLAN.md`.
 - **Branch:** `dev`. `feat/panel-faces` and `feat/sequential-panel` (illustrated panel faces with lip-sync; panelists in turn, each in their own voice) were tested by the user and merged into `dev` on 2026-10-16, then deleted.
 - **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The native build includes Firebase, Google sign-in, the document picker, the VoiceCommunication mic patch, `react-native-svg`, print and sharing, and the owl app icon and splash.
 - **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
@@ -15,6 +16,14 @@ _Last updated: 2026-10-16_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Test `feat/course-profile`, then merge it into `dev`:** run `bun run db:migrate` in `server/`, restart the server, reload Metro.
+1. An existing account sees "What's your course?" once after opening the app; pick BSIT → Home.
+2. Profile → Course shows it; switching to Nursing & Health hides the IT field in Upload and Setup (projects upload as "General").
+3. A non-IT thesis: the summary hides an empty FEATURES / OUTPUT card; the panel asks field questions (protocol, ethics, outcomes), not code; the report doesn't mention systems.
+4. A BSIT paper as "Data & AI" vs "Web/Mobile App": the technical questions shift (dataset/accuracy vs UX/platform).
+5. Profile: grouped sections read top-down; with Premium, the compact card opens the benefits screen and Back returns.
+Then merge, delete the branch, and give the group the paper text in `docs/COURSE_PROFILE_PLAN.md` §7 (scope and delimitation, F4 wording, `users.course` in the data dictionary and ERD).
 
 **Web admin (on `dev`, first signed-in test still to do):** `client/web/admin/` (Next.js 16 + shadcn preset `b1oVxsfY`). Sections: **Overview** (counts, average readiness, sign-ups and sessions per Philippine day for 30 days, failed or stuck analyses and scoring), **Users** (search, filters, server pages, today's practice count; sheet with paged sessions, Premium on/off, daily reset, sign-in off/on, delete), **Sessions** (all students; stage/status/date filters; report summary sheet without transcript; Score again for failed or stuck ones), **Manuscripts** (status and failure reason; no analysis content), **Groups** (leader, members, focus areas, score sharing), **Admins** (list claim holders, add by email, remove; not yourself), **Audit log**. Shell: icon sidebar (Ctrl B), Ctrl/⌘ K palette, shortcuts (`?`, `/`, `G` + O/U/S/P/G/A/L, `D`), Light/Dark/System. Admin list = a Firebase `listUsers` scan for the claim (fine at this size). To try it:
 1. **Apply the new migration first:** `cd server && bun run db:migrate` (adds `admin_actions`, `prisma/migrations/20261016000000_admin_actions`). Without it, actions and the audit page fail.
@@ -46,6 +55,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-17 | **Profile hierarchy + Premium benefits screen**: Profile is ordered by importance: larger account header (64 px avatar, 20 px name), the plan, then labelled grouped cards (SETTINGS: course, typed answers; YOUR DATA: download, delete) and Sign out as a secondary button. The Premium card moved to `components/premium-card.tsx`: compact (one row, chevron) with `onPress`, full with the perks otherwise; on Profile it opens the new `/premium` benefits screen (`app/premium.tsx`, `screens/premium/`: the full card plus each benefit against Free, demo note; a Try Premium button for Free accounts). JS only. | `feat/course-profile` (not merged) |
+| 2026-10-17 | **General-purpose app, course profile (plan F4)**: `users.course` (migration `add_user_course`), set in a new onboarding survey (`app/survey.tsx`, gate after consent in `_layout.tsx`) and Profile (`components/course-picker.tsx`); `PATCH /me` takes `course` (zod enum). Prompts are program-neutral: `fieldFocus(course, domain)` in `practice/domain/panel.ts` (COURSE_FOCUS per course, DOMAIN_FOCUS per IT field for BSIT/BSCS) feeds the panel prompt and `scoringPrompt`; the course is read from the account on the server (live-token, scoring), never sent by the app. `DOMAINS` gains "General" (non-computing projects); the IT field picker shows only for BSIT/BSCS. Analysis: "research manuscript", features = features or output (card hidden when empty). "research group" copy. Admin user page shows the course. Server 52 tests, app 78, admin lint/types clean. | `feat/course-profile` (not merged) |
 | 2026-10-16 | **Daily limits: Free 5, Premium unlimited** (user decision): `PLAN` in `server/src/modules/identity/domain/plan.ts` (free `dailySessions: 5`, premium `Infinity`; sessions are still counted). Admin shows Premium as "no limit" (`dailyCap: null`, no Reset); app copy: Free plan card "five sessions a day", "Unlimited practice sessions" first in the Premium card and upsell perks. Tests updated. Paper still says two/ten a day (Ch. 1, Ch. 3 overview, Objective 12). | `identity/domain/plan.ts`, admin, profile, upsell |
 | 2026-10-16 | **Admin sidebar logo**: the DEEMO app icon (the owl), made greyscale to sit with the admin's neutral theme, replaces the "D" square in the sidebar header (`client/web/admin/public/deemo-icon.png`, 128 px, from `client/mobile/Deemo/assets/images/icon.png` via ffmpeg `format=gray`). Gotcha: after pulling the Vercel Analytics merge, run `bun install` in `client/web/admin` (else the build can't find `@vercel/analytics`). | `client/web/admin/components/admin-shell.tsx` |
 | 2026-10-16 | **Faster first question after the presentation**: measured against the real panel prompt, the model starts its first question in ~1.4–1.6 s (tool call ~0.9 s, audio ~0.5 s later), so the noticeable wait was 3.8 Live staying silent and the 15 s watchdog. After the presentation, and after a handover note, a silent panel is now nudged after 4 s (`START_WAIT_MS`) with a specific line ("That's the end of my presentation…" / "Please begin your part now…"); other turns keep 15 s. Metro logs `[live] panel silent for … ms: nudged`. Test added. | `client/mobile/Deemo/src/live/gemini-engine.ts` |
@@ -155,6 +166,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 Older history: `git log dev`.
 
 ## Gotchas
+
+- **Course profile:** the course comes from the account on the server (`courseOf(account.course)` in `live-token.ts` and scoring), never from the app; a null or unknown course reads as "Other". `"General"` is the domain for non-computing courses, and `fieldFocus` ignores an IT field unless the course is BSIT/BSCS. Prompts must stay program-neutral: don't re-add "BSIT" to the panel, analysis or scoring prompts (the study population lives in the paper, not the app). Keep `COURSES` identical in `server/.../identity/domain/course.ts` and the app's `constants.ts`.
 
 - **Sequential panel = one Live session per panelist.** The engine's `seat` picks the token (`seat` in the token request), the voice and the prompt; resumption handles belong to one seat (a handover clears it). Only seat 0 touches the daily cap (`decideStart`); seats 1–2 go through `decideSeat`, which needs seat 0's start to have its token. With one panelist nothing of this runs.
 

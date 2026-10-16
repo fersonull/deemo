@@ -5,7 +5,7 @@ import { AVATAR, claimsPatch, defaultAvatar, toMe, type Account } from "./accoun
 
 const account = (over: Partial<Account> = {}): Account => ({
   id: "uid-1", email: "a@school.edu", name: null, emailVerified: true, provider: "password", avatar: null,
-  premium: false, allowTyping: true, consentVersion: null, consentAt: null, sessionDay: null, sessionCount: 0,
+  premium: false, allowTyping: true, course: null, consentVersion: null, consentAt: null, sessionDay: null, sessionCount: 0,
   deletedAt: null, ...over,
 });
 const claims = { uid: "uid-1", email: "a@school.edu", name: "Juan Dela Cruz", emailVerified: true, provider: "password" };

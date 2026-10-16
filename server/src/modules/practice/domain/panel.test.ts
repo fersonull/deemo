@@ -34,3 +34,22 @@ test("each panelist's share of main questions", () => {
   expect(seatShare(25, 2)).toBe(5); // 10 planned / 2
   expect(seatShare(10, 3)).toBe(2); // never fewer than 2
 });
+
+test("the panel is profiled by the student's course and, for computing courses, the IT field (plan F4)", () => {
+  const nursing = buildPanelPrompt({ ...setup, domain: "General", panelists: 1, course: "Nursing & Health" });
+  expect(nursing).not.toContain("BSIT");
+  expect(nursing).toContain("a Nursing & Health student");
+  expect(nursing).toContain("ethics clearance");
+  const ai = buildPanelPrompt({ ...setup, domain: "Data & AI", panelists: 1, course: "BSIT" });
+  expect(ai).toContain("Field: BSIT, Data & AI");
+  expect(ai).toContain("training and validation");
+  // A non-computing course ignores a leftover IT field.
+  expect(buildPanelPrompt({ ...setup, domain: "Data & AI", panelists: 1, course: "Education" })).not.toContain("training and validation");
+  expect(buildPanelPrompt({ ...setup, domain: "General", panelists: 1, course: "Other" })).toContain("a college student");
+});
+
+test("a study with no features leaves the Features / output line out", () => {
+  const a = { title: "T", problem: "P", objectives: "O", method: "M", scope: "S", features: "", limits: "L", results: "", facts: [], unsure: [] };
+  expect(buildPanelPrompt({ ...setup, panelists: 1 }, a)).not.toContain("Features / output");
+  expect(buildPanelPrompt({ ...setup, panelists: 1 }, { ...a, features: "QR check-in" })).toContain("Features / output: QR check-in");
+});

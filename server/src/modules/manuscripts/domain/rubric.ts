@@ -93,7 +93,7 @@ export const RubricReply = z.object({
   ),
 });
 
-export const RUBRIC_PROMPT = `A student uploaded this as the evaluation rubric or grading form their capstone defense panel uses.
+export const RUBRIC_PROMPT = `A student uploaded this as the evaluation rubric or grading form their research defense panel uses.
 First decide isRubric: true only for a defense / oral presentation evaluation rubric or scoring form. If false, set notRubricReason to one short sentence for the student (e.g. "This looks like a class schedule, not a defense rubric.") and return no criteria.
 If true, list every scored criterion on the form, in the form's order (at most ${MAX_CRITERIA}; merge sub-items into their parent criterion if there are more):
 - name: the criterion's name as written, short.

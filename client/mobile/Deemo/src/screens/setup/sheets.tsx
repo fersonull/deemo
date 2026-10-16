@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "@/components/icon";
 import { Sheet } from "@/components/sheet";
-import { DOMAINS, type Domain } from "@/constants";
+import { IT_FIELDS, type Domain } from "@/constants";
 import { colors, radius, type } from "@/theme";
 import { PressableScale } from "@/components/pressable-scale";
 
@@ -19,10 +19,10 @@ export function DomainSheet({
 }) {
   return (
     <Sheet visible={visible} onClose={onClose}>
-      <Text style={styles.title}>Project domain</Text>
+      <Text style={styles.title}>IT field</Text>
       <Text style={styles.subtitle}>The panel tunes its technical questions to this.</Text>
       <View accessibilityRole="radiogroup" style={styles.domains}>
-        {DOMAINS.map((d) => {
+        {IT_FIELDS.map((d) => {
           const selected = d === value;
           return (
             <PressableScale

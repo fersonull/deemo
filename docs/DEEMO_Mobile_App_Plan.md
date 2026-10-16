@@ -62,7 +62,8 @@
 | SO6 | Examine perceived improvement in confidence, communication, critical thinking, readiness | Evaluation |
 
 ### 1.4 Users 📘
-- **Primary:** 4th-year BSIT students of PMFTCI preparing for capstone defense.
+- **Primary:** 4th-year BSIT students of PMFTCI preparing for capstone defense (the study's population).
+- **System scope (2026-10-17):** the app accepts research manuscripts from any course; the course profile (F4) tailors the panel. Only the BSIT/PMFTCI evaluation is claimed.
 - **Secondary:** Faculty members and research advisers (supplementary tool; may monitor preparedness).
 
 ### 1.5 Scope 📘
@@ -129,7 +130,7 @@ Features are grouped into modules. Priority: **P0** = required for defense/MVP, 
 
 | ID | Feature | Source | Priority | Details |
 |---|---|---|---|---|
-| F4 | **Adaptive Domain Profiling** | 📘 | P1 | User selects discipline/field (e.g. Web/Mobile App, Networking, Data/AI, IoT/Hardware, Information Systems 💡). Alters question focus and rubric emphasis |
+| F4 | **Adaptive Domain Profiling** | 📘 | P1 | The student states their **course** in an onboarding survey (editable in Profile); computing courses (BSIT, BSCS) also pick the project's **IT field** (Web/Mobile App, Networking, Data/AI, IoT/Hardware, Information Systems). Alters question focus and the feedback's emphasis; rubric weights unchanged (built 2026-10-17) |
 | F5 | **Mock Defense Stage Modes** | 📘 | P0 | **Title Defense:** feasibility, significance, scope. **Pre-Oral:** data gathering, preliminary findings, consistency with proposal. **Final:** findings, conclusions, overall study |
 | F5a | Session config | 💡 | P1 | Number of panelists (1–3 AI personas), question count / target duration, follow-up limit, difficulty |
 
@@ -169,7 +170,7 @@ Features are grouped into modules. Priority: **P0** = required for defense/MVP, 
 
 Do **not** build these — they are explicitly excluded in Chapter 1:
 
-- Other courses, lower year levels, graduate theses, dissertations, board exams
+- Evaluating other courses, lower year levels, graduate theses, dissertations, board exams (the app accepts their manuscripts; effectiveness there is not claimed)
 - Official grading (scores have no academic weight)
 - Fact-checking / originality verification against external databases
 - **Offline mode**
