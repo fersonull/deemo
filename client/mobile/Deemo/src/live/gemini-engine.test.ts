@@ -116,3 +116,55 @@ test("one question per panel turn: a repeat before it's heard is fine; after it,
     timers.mockRestore();
   }
 });
+
+test("in turns: each panelist asks their share, then the next takes over in their own session with a handover note", async () => {
+  const engine = new GeminiEngine({ ...setup, panelists: 3, minutes: 15 }); // share: 2 main questions each
+  const internals = engine as unknown as Internals & {
+    endStudentTurn: () => void;
+    settle: () => void;
+    seat: number;
+    passing: boolean;
+    turnDone: boolean;
+    queued: number;
+    note: (from: number, to: number) => string;
+  };
+  const events: LiveEvent[] = [];
+  const sent: any[] = [];
+  internals.emit = (e) => events.push(e);
+  internals.note = (from, to) => `note ${from}->${to}`;
+  internals.ready = true;
+  internals.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
+  const ask = (topicId: string, isFollowUp = false) =>
+    internals.onToolCall({ id: topicId, name: "ask_question", args: { topicId, questionText: "Why?", questionType: "CONCEPTUAL", isFollowUp, panelist: "Methodology" } })
+      .response.allowed;
+  try {
+    expect(ask("a")).toBe(true);
+    expect((events.at(-1) as { question: { panelist: number } }).question.panelist).toBe(0); // the asker is the seat
+    internals.endStudentTurn();
+    expect(ask("a", true)).toBe(true); // follow-ups don't use the share
+    internals.endStudentTurn();
+    expect(ask("b")).toBe(true); // second main question: share reached (the next token is fetched early)
+    internals.endStudentTurn();
+    expect(ask("c")).toBe(false); // a third main question: hand over instead
+    expect(internals.passing).toBe(true);
+    internals.turnDone = true;
+    internals.queued = 0;
+    internals.settle(); // the turn settles: the next panelist takes over
+    expect(internals.seat).toBe(1);
+    expect(events.at(-1)).toEqual({ type: "handover", seat: 1 });
+    // pass_to_next is refused while a question waits, honoured after the answer
+    internals.ready = true;
+    internals.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+    (internals as unknown as { onMessage: (m: object) => void }).onMessage({ setupComplete: {} });
+    expect(sent.at(-1).clientContent.turns[0].parts[0].text).toBe("note 0->1");
+    expect(ask("d")).toBe(true);
+    expect((internals.onToolCall({ id: "p", name: "pass_to_next" }).response as { ok: boolean }).ok).toBe(false);
+    internals.endStudentTurn();
+    expect((internals.onToolCall({ id: "p", name: "pass_to_next" }).response as { ok: boolean }).ok).toBe(true);
+    expect(internals.passing).toBe(true);
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});

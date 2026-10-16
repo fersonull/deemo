@@ -14,6 +14,8 @@ import { panelVoice } from "./voice-level";
 // Phone ⇄ Gemini Live directly (addendum B1–B6). The server only mints a token with the panel's
 // prompt and tools locked in. The student holds the floor until they tap done (manual activity:
 // activityStart → mic audio → activityEnd), and the mic is never sent while the panel talks.
+// With more than one panelist they question in turn (sequential panel): a Live session keeps the voice it starts
+// with, so each panelist ("seat") gets their own session and voice, and the engine hands over between them.
 
 const WS_URL =
   "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained";
@@ -52,6 +54,12 @@ type ServerMessage = {
 export class GeminiEngine implements LiveEngine {
   private emit: (e: LiveEvent) => void = () => {};
   private canAsk: (q: AskQuestion) => boolean = () => true;
+  private note: (from: number, to: number) => string = () => "";
+  private seat = 0; // the panelist whose session is live
+  private seatMains = 0; // main questions this panelist has asked
+  private passing = false; // this panelist is done: hand over once their turn settles
+  private switching = false; // connecting the next panelist's session
+  private prefetched: { seat: number; token: string; model: string; voice?: string; at: number } | null = null;
   private ws: WebSocket | null = null;
   private ready = false; // setupComplete on the current socket
   private connected = false; // first setupComplete seen
@@ -85,9 +93,10 @@ export class GeminiEngine implements LiveEngine {
 
   constructor(private setup: SessionSetup) {}
 
-  start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean) {
+  start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean, note?: (from: number, to: number) => string) {
     this.emit = emit;
     this.canAsk = canAsk;
+    if (note) this.note = note;
 
     this.ctx = new AudioContext({ sampleRate: VOICE_RATE });
     this.voice = this.ctx.createBufferQueueSource();
@@ -185,12 +194,13 @@ export class GeminiEngine implements LiveEngine {
     let token: string;
     let model: string;
     let voice: string | undefined;
+    const pre = this.prefetched;
     try {
-      ({ token, model, voice } = await api<{ token: string; model: string; voice?: string }>("/live/token", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...this.setup, startId: this.startId, resume: !!this.handle }),
-      }));
+      // The next panelist's token, fetched while the last one was still questioning (a quicker handover).
+      if (pre && pre.seat === this.seat && !this.handle && Date.now() - pre.at < 50_000) {
+        ({ token, model, voice } = pre);
+        this.prefetched = null;
+      } else ({ token, model, voice } = await this.fetchToken(this.seat));
     } catch (err) {
       if (this.stopped) return;
       if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 408) {
@@ -230,6 +240,65 @@ export class GeminiEngine implements LiveEngine {
     };
   }
 
+  private fetchToken(seat: number) {
+    return api<{ token: string; model: string; voice?: string }>("/live/token", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...this.setup, startId: this.startId, resume: !!this.handle && seat === this.seat, seat }),
+    });
+  }
+
+  private get sequential() {
+    return this.setup.panelists > 1;
+  }
+
+  private get lastSeat() {
+    return this.seat >= this.setup.panelists - 1;
+  }
+
+  // Each panelist's share of main questions (server/src/modules/practice/domain/panel.ts seatShare).
+  private get share() {
+    return Math.max(2, Math.round(Math.max(2, Math.round(this.setup.minutes / 2.5)) / this.setup.panelists));
+  }
+
+  // Fetch the next panelist's token early; a failure just means the handover fetches it itself.
+  private prefetch() {
+    const seat = this.seat + 1;
+    if (!this.sequential || seat >= this.setup.panelists || this.prefetched?.seat === seat) return;
+    this.fetchToken(seat)
+      .then((t) => {
+        if (!this.stopped && this.seat < seat) this.prefetched = { seat, ...t, at: Date.now() };
+      })
+      .catch(() => {});
+  }
+
+  // The next panelist takes over: the current session closes, theirs opens in their voice, and once it's ready they're
+  // told what was covered (note) and begin.
+  private handOver() {
+    const from = this.seat;
+    this.clearTimer();
+    this.panelResponded();
+    const ws = this.ws;
+    this.ws = null; // before close(): its onclose must not reconnect
+    ws?.close();
+    this.ready = false;
+    this.handle = null;
+    this.activity = false;
+    this.seat = from + 1;
+    this.seatMains = 0;
+    this.passing = false;
+    this.asked = false;
+    this.spokeQuestion = false;
+    this.quiet = false;
+    this.spoken = "";
+    this.turnDone = false;
+    this.heard = false;
+    this.nudged = false;
+    this.switching = true;
+    this.emit({ type: "handover", seat: this.seat });
+    void this.connect();
+  }
+
   private retry() {
     if (this.stopped || this.paused) return; // resume() reconnects
     if (this.connected) this.emit({ type: "reconnecting", value: true });
@@ -240,7 +309,13 @@ export class GeminiEngine implements LiveEngine {
   private onMessage(m: ServerMessage) {
     if (m.setupComplete) {
       this.ready = true;
-      if (!this.connected) {
+      if (this.switching) {
+        // The next panelist's session is up: tell them what was covered, and they begin.
+        this.switching = false;
+        this.emit({ type: "reconnecting", value: false });
+        this.sendTurn(this.note(this.seat - 1, this.seat));
+        this.awaitPanel();
+      } else if (!this.connected) {
         this.connected = true;
         this.startMic();
         this.studentFloor = true; // the student opens with their presentation
@@ -286,7 +361,7 @@ export class GeminiEngine implements LiveEngine {
   }
 
   // Panel tools run on the device (addendum B4). The follow-up limit is enforced here, not trusted to the prompt.
-  private onToolCall({ id, name, args = {} }: FunctionCall) {
+  private onToolCall({ id, name, args = {} }: FunctionCall): { id: string; name: string; response: Record<string, unknown> } {
     let response: Record<string, unknown> = { ok: true };
     if (name === "ask_question") {
       if (this.ending !== "no")
@@ -307,19 +382,28 @@ export class GeminiEngine implements LiveEngine {
         text: String(args.questionText ?? ""),
         type: (args.questionType as QuestionType) ?? "CONCEPTUAL",
         isFollowUp: args.isFollowUp === true,
-        panelist: Math.max(0, role) % this.setup.panelists,
+        // In turns, the asker is whoever's session this is.
+        panelist: this.sequential ? this.seat : Math.max(0, role) % this.setup.panelists,
       };
+      // Their share is done and they want another main question: hand over instead (the rest of the turn is muted).
+      if (this.sequential && !this.lastSeat && !q.isFollowUp && this.seatMains >= this.share) {
+        this.passing = true;
+        this.quiet = true;
+        return { id, name, response: { allowed: false, instruction: "Your part is done. Say nothing more." } };
+      }
       if (this.canAsk(q)) {
         // Spoken first, tool call after: put it on screen under the right panelist, but don't let it be said again.
         if (alreadySaid(this.spoken, q.text)) {
           this.asked = true;
           this.spokeQuestion = true;
           this.quiet = true;
+          this.countMain(q);
           this.emit({ type: "ask", question: q });
           return { id, name, response: { allowed: true, instruction: "Recorded. Say nothing more this turn." } };
         }
         this.asked = true;
         this.spokeQuestion = false;
+        this.countMain(q);
         this.emit({ type: "ask", question: q });
         response = { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." }; // a bare ok sometimes ended the turn silently
       } else {
@@ -331,6 +415,16 @@ export class GeminiEngine implements LiveEngine {
     } else if (name === "flag_inconsistency") {
       this.emit({ type: "flag", flag: args as Omit<Inconsistency, "atMs"> });
       response = { ok: true, scheduling: "SILENT" };
+    } else if (name === "pass_to_next") {
+      // Only between panelists, and never while their question still waits for its answer.
+      if (!this.sequential) return { id, name, response: { ok: true } };
+      if (this.asked) return { id, name, response: { ok: false, instruction: "Not yet. Wait for the student's answer." } };
+      if (!this.lastSeat) {
+        this.passing = true;
+        this.prefetch();
+        return { id, name, response: { ok: true } };
+      }
+      return this.onToolCall({ id, name: "end_session", args }); // the last panelist ends the session
     } else if (name === "end_session") {
       // Not while a question is still waiting for its answer (the same run-on, ending without the student).
       if (this.asked) {
@@ -357,6 +451,13 @@ export class GeminiEngine implements LiveEngine {
     if (next !== panelVoice.value) panelVoice.value = next;
   }
 
+  // A main question counts toward this panelist's share; reaching it fetches the next panelist's token early.
+  private countMain(q: AskQuestion) {
+    if (q.isFollowUp) return;
+    this.seatMains++;
+    if (this.sequential && this.seatMains >= this.share) this.prefetch();
+  }
+
   private play(b64: string) {
     if (!this.ctx || !this.voice || this.quiet) return;
     if (this.asked) this.spokeQuestion = true;
@@ -380,6 +481,8 @@ export class GeminiEngine implements LiveEngine {
       this.timer = setTimeout(() => this.finish(), 1200);
     } else if (this.ending === "asked") {
       this.timer = setTimeout(() => this.finish(), CLOSE_GRACE_MS); // the goodbye usually follows as its own turn
+    } else if (this.passing) {
+      this.handOver();
     } else if (this.heard) {
       this.giveFloor();
     } else {

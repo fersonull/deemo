@@ -5,6 +5,7 @@ import { AppState } from "react-native";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { GeminiEngine } from "@/live/gemini-engine";
 import { MockEngine } from "@/live/mock-engine";
+import { handoverNote } from "@/live/handover";
 import { canAsk, initialLiveState, liveReducer } from "@/live/reducer";
 import type { LiveEngine } from "@/live/types";
 
@@ -12,7 +13,7 @@ const TICK_MS = 250;
 
 // EXPO_PUBLIC_LIVE_ENGINE=mock plays the scripted defense instead of Gemini (UI work, no server needed).
 function createEngine(): LiveEngine {
-  if (process.env.EXPO_PUBLIC_LIVE_ENGINE === "mock") return new MockEngine();
+  if (process.env.EXPO_PUBLIC_LIVE_ENGINE === "mock") return new MockEngine(practiceSetup.get().panelists);
   const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weakFrom } = practiceSetup.get();
   return new GeminiEngine({
     mode,
@@ -45,7 +46,11 @@ export function useLiveSession() {
   useEffect(() => {
     const engine = createEngine();
     engineRef.current = engine;
-    engine.start(dispatch, (q) => canAsk(stateRef.current, q)); // follow-up limit, enforced on device
+    engine.start(
+      dispatch,
+      (q) => canAsk(stateRef.current, q), // follow-up limit, enforced on device
+      (from, to) => handoverNote(stateRef.current, from, to), // what the next panelist is told
+    );
 
     let last = Date.now();
     const id = setInterval(() => {

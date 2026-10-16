@@ -19,6 +19,8 @@ export const initialLiveState: LiveState = {
   followUps: {},
   followUpLimit: FOLLOW_UP_LIMIT,
   level: 0,
+  seat: 0,
+  takeover: false,
 };
 
 // The client-side tool handler's rule: the AI can't exceed the follow-up limit even if it tries.
@@ -56,6 +58,7 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       }
       if (!canAsk(s, e.question)) return s;
       const q = e.question;
+      const fresh = s.takeover ? { takeover: false } : {};
       const followUp = q.isFollowUp ? (s.followUps[q.topicId] ?? 0) + 1 : 0;
       const number = q.isFollowUp && s.question ? s.question.number : (s.question?.number ?? 0) + 1;
       return {
@@ -65,12 +68,16 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
         followUps: q.isFollowUp ? { ...s.followUps, [q.topicId]: followUp } : s.followUps,
         lines: finish(s),
         partial: null,
+        ...fresh,
       };
     }
 
     case "panelText": {
-      const who = s.phase === "ending" ? 0 : (s.question?.panelist ?? 0);
+      // Whoever holds the floor: the asker, or the panelist who just took over or is closing.
+      const who = s.takeover || s.phase === "ending" ? s.seat : (s.question?.panelist ?? s.seat);
       if (s.phase !== "thinking") return { ...s, ...append(s, who, e.text) };
+      // A new panelist introducing themselves before their first ask_question: theirs, not a follow-up.
+      if (s.takeover) return { ...s, ...append(s, who, e.text), phase: "speaking" };
       // The panel spoke without ask_question (a rephrase or challenge, seen after reconnects).
       // Count it as a follow-up on the current topic so the limit still holds for the next tool call.
       const q = s.question;
@@ -85,6 +92,9 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
         unasked: { question: s.question, followUps: s.followUps },
       };
     }
+
+    case "handover":
+      return { ...s, seat: e.seat, takeover: true, phase: "thinking", lines: finish(s), partial: null, unasked: undefined };
 
     case "panelDone": {
       if (s.phase === "ending") return { ...s, lines: finish(s), partial: null, unasked: undefined };

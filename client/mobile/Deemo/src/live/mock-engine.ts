@@ -17,6 +17,10 @@ export class MockEngine implements LiveEngine {
   private ending = false;
   private next = 0; // next SCRIPT item
   private turn: "none" | "presenting" | "answering" = "none";
+  private seat = 0;
+
+  // `panelists`: with more than one, the scripted panel questions in turn and hands over like the Gemini engine.
+  constructor(private panelists = 1) {}
 
   start(emit: (e: LiveEvent) => void, canAsk: (q: AskQuestion) => boolean) {
     this.emit = emit;
@@ -80,8 +84,16 @@ export class MockEngine implements LiveEngine {
   }
 
   private ask(): void {
-    const item = SCRIPT[this.next++];
+    const item = SCRIPT[this.next];
     if (!item) return this.close();
+    const seat = item.panelist % this.panelists;
+    if (this.panelists > 1 && seat > this.seat) {
+      this.seat = seat;
+      this.emit({ type: "handover", seat });
+      this.after(1500, () => this.ask()); // the next panelist's session connects
+      return;
+    }
+    this.next++;
     const q: AskQuestion = {
       topicId: item.topicId,
       text: item.question,

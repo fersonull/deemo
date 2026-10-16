@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { expect, test } from "bun:test";
 
-import { decideFinish, decideStart, sessionDay, type StartState } from "./live-start";
+import { decideFinish, decideSeat, decideStart, sessionDay, type StartState } from "./live-start";
 import { SetupInput } from "./panel";
 
 // The same scenario the Firestore version was tested with, against an in-memory store that applies each decision the
@@ -91,4 +91,17 @@ test("Premium: ten a day, up to 25 minutes", () => {
   expect(h.account("long").sessionCount).toBe(0);
   const long = h.start("long", "x", false, { ...h.setup, minutes: 25 });
   expect(long.expiresAt).toBe(h.clock.get() + 55 * 60_000);
+});
+
+test("later panelists' seats: only under a connected start for the same setup, before it expires, no new slot", () => {
+  const now = 1_000_000;
+  const start = { day: "2026-10-16", setup: "fp", lease: "l", pendingUntil: now, expiresAt: now + 60_000, token: "t" };
+  expect(decideSeat({ previous: start, fingerprint: "fp", seat: 1, panelists: 3, now })).toEqual({ expiresAt: now + 60_000 });
+  expect(decideSeat({ previous: start, fingerprint: "fp", seat: 2, panelists: 3, now }).expiresAt).toBe(now + 60_000);
+  expect(() => decideSeat({ previous: start, fingerprint: "fp", seat: 0, panelists: 3, now })).toThrow(); // seat 0 reserves the slot
+  expect(() => decideSeat({ previous: start, fingerprint: "fp", seat: 2, panelists: 2, now })).toThrow(); // no third panelist
+  expect(() => decideSeat({ previous: null, fingerprint: "fp", seat: 1, panelists: 3, now })).toThrow(); // no start
+  expect(() => decideSeat({ previous: { ...start, token: undefined }, fingerprint: "fp", seat: 1, panelists: 3, now })).toThrow(); // not connected yet
+  expect(() => decideSeat({ previous: start, fingerprint: "other", seat: 1, panelists: 3, now })).toThrow(); // setup changed
+  expect(() => decideSeat({ previous: start, fingerprint: "fp", seat: 1, panelists: 3, now: now + 60_000 })).toThrow(); // expired
 });

@@ -83,3 +83,14 @@ export function decideFinish(i: {
   if (i.token) return { kind: "save", token: i.token, newSessionUntil: i.newSessionUntil! };
   return { kind: "refund", count: i.account.sessionDay === start.day ? Math.max(0, i.account.sessionCount - 1) : null };
 }
+
+// A later panelist's seat (sequential panel: each panelist questions in turn, in their own voice). It belongs to a start
+// that already reserved today's slot and connected, for the same setup, before the round expires; it uses no new slot.
+export function decideSeat(i: { previous: StartState | null; fingerprint: string; seat: number; panelists: number; now: number }) {
+  const { previous } = i;
+  if (!Number.isInteger(i.seat) || i.seat < 1 || i.seat >= i.panelists) throw new AppError(400, "invalid practice start");
+  if (!previous || !previous.token) throw new AppError(404, "This practice round is unavailable. Go back to setup and start again.");
+  if (previous.setup !== i.fingerprint) throw new AppError(400, "Start a new practice round after changing its setup.");
+  if (previous.expiresAt <= i.now) throw new AppError(410, "This practice connection expired. Go back to setup and start again.");
+  return { expiresAt: previous.expiresAt };
+}

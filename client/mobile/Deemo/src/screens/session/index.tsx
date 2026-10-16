@@ -85,11 +85,12 @@ export function Session() {
   }, [s.flags.length]);
   const skeptical = s.flags.length > skepticalFlags;
 
-  const asker = s.question ? s.question.panelist % count : 0;
+  // Who holds the floor: the asker, or the panelist who just took over (they question in turn) or is closing.
+  const asker = s.takeover || s.phase === "ending" || !s.question ? s.seat % count : s.question.panelist % count;
   const status = (i: number): PanelistStatus => {
     if (s.phase === "connecting") return "offline";
     if (s.phase === "speaking" && i === asker) return "speaking";
-    if (s.phase === "ending" && i === 0) return "speaking";
+    if (s.phase === "ending" && i === asker) return "speaking";
     if (s.phase === "thinking" && i === asker) return "thinking";
     if (skeptical && i === asker) return "skeptical";
     return "listening";
@@ -158,6 +159,7 @@ export function Session() {
           <QuestionCard
           phase={s.phase}
           question={s.question}
+          takeover={s.takeover ? s.seat % count : null}
           closing={closing}
           count={count}
           followUpLimit={s.followUpLimit}

@@ -20,15 +20,18 @@ type Props = {
   phase: Phase;
   question: Question | null;
   closing: string;
+  takeover: number | null; // a new panelist is taking over (they question in turn)
   count: number;
   followUpLimit: number;
   onDonePresenting: () => void;
 };
 
-export function QuestionCard({ phase, question, closing, count, followUpLimit, onDonePresenting }: Props) {
+export function QuestionCard({ phase, question, closing, takeover, count, followUpLimit, onDonePresenting }: Props) {
   const showQuestion = question && phase !== "connecting" && phase !== "presentation" && phase !== "ending" && phase !== "ended";
   const text =
-    phase === "connecting"
+    takeover !== null && phase === "thinking"
+      ? `${PANEL[takeover]?.name} is taking over…`
+      : phase === "connecting"
       ? "Getting the panel ready…"
       : phase === "presentation"
         ? "Present your study. Tap Done when you're finished."
