@@ -1,7 +1,7 @@
 "use client"
 
 import { signOut } from "firebase/auth"
-import { KeyboardIcon, LogOutIcon, MonitorIcon, MoonIcon, ScrollTextIcon, SunIcon, UserIcon, UsersIcon } from "lucide-react"
+import { KeyboardIcon, LogOutIcon, MonitorIcon, MoonIcon, SunIcon, UserIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, type ReactNode } from "react"
@@ -20,6 +20,7 @@ import { Command } from "@/components/ui/command"
 import { useAdminData } from "@/hooks/use-admin-data"
 import type { UserPage } from "@/lib/api"
 import { getAuth } from "@/lib/firebase"
+import { NAV } from "@/lib/nav"
 
 type Item = { id: string; label: string; icon: ReactNode; shortcut?: string; run: () => void }
 
@@ -46,10 +47,7 @@ export function CommandMenu({ open, onOpenChange, onShortcuts }: { open: boolean
   const groups: { heading: string; items: Item[] }[] = [
     {
       heading: "Pages",
-      items: [
-        { id: "users", label: "Users", icon: <UsersIcon />, shortcut: "G U", run: () => router.push("/users") },
-        { id: "audit", label: "Audit log", icon: <ScrollTextIcon />, shortcut: "G A", run: () => router.push("/audit") },
-      ],
+      items: NAV.map((n) => ({ id: n.href, label: n.label, icon: <n.icon />, shortcut: `G ${n.key.toUpperCase()}`, run: () => router.push(n.href) })),
     },
     {
       heading: "Theme",

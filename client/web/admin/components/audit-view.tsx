@@ -18,6 +18,10 @@ const LABELS: Record<AdminAction["action"], { label: string; destructive?: boole
   sign_in_disabled: { label: "Sign-in turned off", destructive: true },
   sign_in_enabled: { label: "Sign-in turned on" },
   account_deleted: { label: "Account deleted", destructive: true },
+  daily_reset: { label: "Daily sessions reset" },
+  session_rescored: { label: "Session scored again" },
+  admin_granted: { label: "Admin access given" },
+  admin_revoked: { label: "Admin access removed", destructive: true },
 }
 
 // Every change an admin made, newest first, 25 to a page (from the server).
@@ -48,7 +52,7 @@ export function AuditView() {
               <TableRow>
                 <TableHead>When</TableHead>
                 <TableHead>Action</TableHead>
-                <TableHead>Student</TableHead>
+                <TableHead>Account</TableHead>
                 <TableHead className="hidden md:table-cell">By</TableHead>
               </TableRow>
             </TableHeader>
@@ -68,7 +72,7 @@ export function AuditView() {
                         <Badge variant={LABELS[a.action]?.destructive ? "destructive" : "outline"}>{LABELS[a.action]?.label ?? a.action}</Badge>
                       </TableCell>
                       <TableCell className="max-w-64">
-                        {a.action === "account_deleted" ? (
+                        {["account_deleted", "admin_granted", "admin_revoked"].includes(a.action) ? (
                           <span className="truncate text-muted-foreground">{a.targetEmail ?? a.targetId}</span>
                         ) : (
                           <Link href={`/users?user=${encodeURIComponent(a.targetId)}`} className="truncate underline-offset-4 hover:underline">

@@ -1,6 +1,7 @@
 import { getAuth } from "../../../shared/auth/firebase";
 import { AppError } from "../../../shared/errors";
 import { prisma } from "../../../shared/prisma";
+import { dailyUsage } from "../domain/daily";
 import { PAGE_SIZE, userWhere, type UserFilter } from "../domain/filters";
 
 // Views of the students for the web admin (client/web/admin). Nothing here writes; changes are in actions.ts.
@@ -26,6 +27,8 @@ export async function listUsers(filter: UserFilter, page: number) {
         premium: true,
         createdAt: true,
         deletedAt: true,
+        sessionDay: true,
+        sessionCount: true,
         _count: { select: { projects: true, sessions: true } },
       },
     }),
@@ -40,8 +43,9 @@ export async function listUsers(filter: UserFilter, page: number) {
     total,
     page,
     pageSize: PAGE_SIZE,
-    users: users.map(({ _count, ...u }) => ({
+    users: users.map(({ _count, sessionDay, sessionCount, ...u }) => ({
       ...u,
+      ...dailyUsage({ premium: u.premium, sessionDay, sessionCount }),
       projects: _count.projects,
       sessions: _count.sessions,
       lastSessionAt: lastBy.get(u.id) ?? null,
@@ -84,6 +88,7 @@ export async function getUser(id: string) {
   return {
     ...rest,
     totalSessions: _count.sessions,
+    ...dailyUsage(rest),
     groups: memberships.map((m) => ({ code: m.groupCode, role: m.group.ownerId === id ? "owner" : "member", joinedAt: m.joinedAt })),
     firebase,
   };

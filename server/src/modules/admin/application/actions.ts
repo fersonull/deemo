@@ -1,12 +1,23 @@
 import type { AuthClaims } from "../../../shared/auth/authenticate";
 import { AppError } from "../../../shared/errors";
 import { prisma } from "../../../shared/prisma";
-import { deleteAccount, setPremium, setSignInDisabled } from "../../identity/application/accounts";
+import { deleteAccount, resetDailyCount, setPremium, setSignInDisabled } from "../../identity/application/accounts";
+import { rescore } from "../../scoring/application/sessions";
+import { STUCK_MS } from "./overview";
 
 // What an admin can change, each one written to the audit log (admin_actions). The account rules themselves live in
 // identity (Premium, Firebase sign-in, Delete my data); this module only decides who may call them and records it.
 
-export type AdminActionKind = "premium_on" | "premium_off" | "sign_in_disabled" | "sign_in_enabled" | "account_deleted";
+export type AdminActionKind =
+  | "premium_on"
+  | "premium_off"
+  | "sign_in_disabled"
+  | "sign_in_enabled"
+  | "account_deleted"
+  | "daily_reset"
+  | "session_rescored"
+  | "admin_granted"
+  | "admin_revoked";
 
 export const AUDIT_PAGE_SIZE = 25;
 
@@ -17,7 +28,7 @@ async function target(admin: AuthClaims, id: string) {
   return user;
 }
 
-const record = (admin: AuthClaims, action: AdminActionKind, user: { id: string; email: string | null }) =>
+export const record = (admin: AuthClaims, action: AdminActionKind, user: { id: string; email: string | null }) =>
   prisma.adminAction.create({
     data: { adminId: admin.uid, adminEmail: admin.email, action, targetId: user.id, targetEmail: user.email },
   });
@@ -40,6 +51,24 @@ export async function removeUser(admin: AuthClaims, id: string) {
   const user = await target(admin, id);
   await deleteAccount(id);
   await record(admin, "account_deleted", user);
+}
+
+export async function resetDaily(admin: AuthClaims, id: string) {
+  const user = await target(admin, id);
+  await resetDailyCount(id);
+  await record(admin, "daily_reset", user);
+}
+
+// Scoring again with the same rules the app's Try again uses, for a failed or stuck session; the owner is looked up first.
+export async function rescoreSession(admin: AuthClaims, sessionId: string) {
+  const session = await prisma.session.findUnique({ where: { id: sessionId }, select: { userId: true, status: true, updatedAt: true } });
+  if (!session) throw new AppError(404, "No such session.");
+  if (session.status === "ready") throw new AppError(409, "This session is already scored.");
+  if (session.status === "scoring" && Date.now() - session.updatedAt.getTime() < STUCK_MS)
+    throw new AppError(409, "It's still being scored. Try again in a few minutes if it doesn't finish.");
+  const user = await target(admin, session.userId);
+  await rescore(session.userId, sessionId);
+  await record(admin, "session_rescored", user);
 }
 
 export async function listActions(page: number) {

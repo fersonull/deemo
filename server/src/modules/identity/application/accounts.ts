@@ -61,3 +61,5 @@ export const accountsByIds = (ids: string[]) => userRepo.findMany(ids);
 // Web admin (client/web/admin): Premium both ways, and turning Firebase sign-in off or on.
 export const setPremium = (id: string, premium: boolean) => userRepo.update(id, { premium });
 export const setSignInDisabled = setFirebaseDisabled;
+// Give back today's practice sessions (testing and demos); the next start counts from zero again.
+export const resetDailyCount = (id: string) => userRepo.update(id, { sessionCount: 0 });

@@ -31,6 +31,8 @@ export type UserRow = {
   projects: number
   sessions: number
   lastSessionAt: string | null
+  usedToday: number
+  dailyCap: number
 }
 
 export type UserPage = Paged & { users: UserRow[] }
@@ -62,9 +64,107 @@ export type AdminAction = {
   id: number
   adminId: string
   adminEmail: string | null
-  action: "premium_on" | "premium_off" | "sign_in_disabled" | "sign_in_enabled" | "account_deleted"
+  action:
+    | "premium_on"
+    | "premium_off"
+    | "sign_in_disabled"
+    | "sign_in_enabled"
+    | "account_deleted"
+    | "daily_reset"
+    | "session_rescored"
+    | "admin_granted"
+    | "admin_revoked"
   targetId: string
   targetEmail: string | null
   createdAt: string
 }
 export type AuditPage = Paged & { actions: AdminAction[] }
+
+export type Person = { id: string; email: string | null; name: string | null }
+
+export type Overview = {
+  counts: { users: number; verified: number; premium: number; newThisWeek: number; sessionsThisWeek: number }
+  readiness: { average: number | null; scored: number; days: number }
+  signups: { day: string; n: number }[]
+  sessions: { day: string; n: number }[]
+  attention: {
+    projects: { id: string; name: string; status: string; error: string | null; updatedAt: string; stuck: boolean; user: Person }[]
+    sessions: { id: string; title: string; mode: SessionRow["mode"]; status: string; error: string | null; updatedAt: string; stuck: boolean; user: Person }[]
+  }
+}
+
+export type AdminSessionRow = {
+  id: string
+  title: string
+  mode: SessionRow["mode"]
+  status: SessionRow["status"]
+  minutes: number
+  panelists: number
+  durationMs: number
+  createdAt: string
+  user: Person
+  stuck: boolean
+  score: number | null
+  band: string | null
+}
+export type AdminSessionPage = Paged & { sessions: AdminSessionRow[] }
+
+export type SessionReport = {
+  id: string
+  title: string
+  mode: SessionRow["mode"]
+  status: SessionRow["status"]
+  error: string | null
+  minutes: number
+  panelists: number
+  followUps: number
+  difficulty: "EASY" | "STANDARD" | "HARD"
+  durationMs: number
+  endedBy: "panel" | "student" | "time"
+  groupCode: string | null
+  createdAt: string
+  user: Person
+  report: {
+    score: number
+    band: string
+    message: string
+    headline: string
+    scored: boolean
+    rubricScore: number
+    penalty: number
+    answered: number
+    planned: number
+    model: string | null
+    criteria: { name: string; weight: number; level: number | null; why: string }[]
+    contradictions: { spokenClaim: string; manuscriptEvidence: string; severity: "LOW" | "MEDIUM" | "HIGH" }[]
+    fixes: { text: string }[]
+  } | null
+}
+
+export type AdminProjectRow = {
+  id: string
+  name: string
+  domain: string
+  fileName: string
+  sizeBytes: number
+  status: "analyzing" | "ready" | "failed"
+  error: string | null
+  confirmedAt: string | null
+  createdAt: string
+  user: Person
+  stuck: boolean
+  rubric: string | null
+  groupCode: string | null
+}
+export type AdminProjectPage = Paged & { projects: AdminProjectRow[] }
+
+export type AdminGroup = {
+  code: string
+  createdAt: string
+  owner: Person
+  project: { id: string; name: string }
+  members: { shareScore: boolean; focusArea: string; joinedAt: string; user: Person }[]
+}
+export type AdminGroupPage = Paged & { groups: AdminGroup[] }
+
+export type AdminAccount = { uid: string; email: string | null; name: string | null; lastSignInAt: string | null }

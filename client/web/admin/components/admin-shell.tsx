@@ -1,7 +1,7 @@
 "use client"
 
 import { signOut } from "firebase/auth"
-import { KeyboardIcon, LogOutIcon, ScrollTextIcon, SearchIcon, UsersIcon } from "lucide-react"
+import { KeyboardIcon, LogOutIcon, SearchIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState, type ReactNode } from "react"
@@ -27,17 +27,13 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { getAuth } from "@/lib/firebase"
-
-const NAV = [
-  { href: "/users", label: "Users", icon: UsersIcon, key: "u" },
-  { href: "/audit", label: "Audit log", icon: ScrollTextIcon, key: "a" },
-]
+import { NAV } from "@/lib/nav"
 
 const typing = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))
 
 // The admin's frame: a sidebar that collapses to icons (Ctrl B), the search palette (Ctrl K) and the shortcuts
-// (?, /, G then U or A). The sidebar's own Ctrl B and the theme's D come from their components.
+// (?, /, G then a section letter). The sidebar's own Ctrl B and the theme's D come from their components.
 export function AdminShell({ children }: { children: ReactNode }) {
   const admin = useAdmin()
   const pathname = usePathname()
@@ -63,16 +59,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
         }
         return
       }
+      // "G then a letter" jumps to a section (G G is Groups, so check the pending G first).
       const key = e.key.toLowerCase()
-      if (key === "g") {
-        pendingG.current = Date.now()
-        return
-      }
       const target = NAV.find((n) => n.key === key)
       if (target && Date.now() - pendingG.current < 1200) {
         pendingG.current = 0
         router.push(target.href)
+        return
       }
+      if (key === "g") pendingG.current = Date.now()
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -86,7 +81,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton size="lg" tooltip="DEEMO admin" render={<Link href="/users" />}>
+              <SidebarMenuButton size="lg" tooltip="DEEMO admin" render={<Link href="/overview" />}>
                 <span className="flex size-8 shrink-0 items-center justify-center bg-primary font-heading text-sm font-bold text-primary-foreground">
                   D
                 </span>

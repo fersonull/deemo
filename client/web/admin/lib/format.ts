@@ -20,3 +20,15 @@ export const avatarUrl = (seed: string | null, id: string) =>
 
 export const initials = (name: string | null, email: string | null) =>
   ((name ?? email ?? "?").match(/\b\p{L}/gu) ?? ["?"]).slice(0, 2).join("").toUpperCase()
+
+export const formatDuration = (ms: number) => {
+  const m = Math.floor(ms / 60_000)
+  const s = Math.round((ms % 60_000) / 1000)
+  return `${m}:${String(s).padStart(2, "0")}`
+}
+
+// "2026-10-14" (a Philippine calendar day) as "Oct 14".
+export const formatShortDay = (day: string) =>
+  new Date(`${day}T00:00:00+08:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "Asia/Manila" })
+
+export const displayName = (p: { name: string | null; email: string | null; id?: string }) => p.name ?? p.email ?? p.id ?? "Unknown"

@@ -4,11 +4,15 @@ import { z } from "zod";
 import { authenticate, claimsOf } from "../../../shared/auth/authenticate";
 import { config } from "../../../shared/config";
 import { bodyOf, validate } from "../../../shared/validate";
-import { changePremium, changeSignIn, listActions, removeUser } from "../application/actions";
+import { grantAdmin, listAdmins, revokeAdmin } from "../application/admins";
+import { changePremium, changeSignIn, listActions, removeUser, rescoreSession, resetDaily } from "../application/actions";
+import { getSessionReport, listGroups, listProjects, listSessions } from "../application/catalog";
+import { overview } from "../application/overview";
 import { getUser, listUserSessions, listUsers } from "../application/users";
 import { requireAdmin } from "./gate";
 
-// The web admin's API (client/web/admin): user lookup, Premium, sign-in on/off, deletion and the audit log. Admins sign in with the same Firebase project; only accounts with
+// The web admin's API (client/web/admin): overview, users (and their actions), sessions, manuscripts, groups, admins and
+// the audit log. Admins sign in with the same Firebase project; only accounts with
 // the `admin` custom claim get in. syncUser is deliberately not used, so an admin never becomes a student row.
 export const adminRouter = Router();
 
@@ -70,4 +74,69 @@ adminRouter.delete("/admin/users/:id", validate({ params: Id }), async (req, res
 
 adminRouter.get("/admin/audit", validate({ query: Page }), async (_req, res) => {
   res.json(await listActions((res.locals.query as z.output<typeof Page>).page));
+});
+
+adminRouter.post("/admin/users/:id/reset-daily", validate({ params: Id }), async (req, res) => {
+  await resetDaily(claimsOf(req), idOf(req));
+  res.json({ ok: true });
+});
+
+adminRouter.get("/admin/overview", async (_req, res) => {
+  res.json(await overview());
+});
+
+const search = z.string().trim().max(100).optional().transform((q) => q || undefined);
+const day = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .optional();
+// A Philippine calendar day (YYYY-MM-DD) to its start in UTC.
+const manilaStart = (d: string, plusDays = 0) => new Date(Date.parse(`${d}T00:00:00+08:00`) + plusDays * 86_400_000);
+
+const SessionsQuery = Page.extend({
+  q: search,
+  mode: z.enum(["TITLE", "PRE_ORAL", "FINAL"]).optional(),
+  status: z.enum(["scoring", "ready", "failed"]).optional(),
+  from: day,
+  to: day,
+});
+adminRouter.get("/admin/sessions", validate({ query: SessionsQuery }), async (_req, res) => {
+  const { page, from, to, ...rest } = res.locals.query as z.output<typeof SessionsQuery>;
+  res.json(await listSessions({ ...rest, from: from ? manilaStart(from) : undefined, to: to ? manilaStart(to, 1) : undefined }, page));
+});
+
+adminRouter.get("/admin/sessions/:id", validate({ params: Id }), async (req, res) => {
+  res.json(await getSessionReport(idOf(req)));
+});
+
+adminRouter.post("/admin/sessions/:id/rescore", validate({ params: Id }), async (req, res) => {
+  await rescoreSession(claimsOf(req), idOf(req));
+  res.json({ ok: true });
+});
+
+const ProjectsQuery = Page.extend({ q: search, status: z.enum(["analyzing", "ready", "failed"]).optional() });
+adminRouter.get("/admin/projects", validate({ query: ProjectsQuery }), async (_req, res) => {
+  const { page, ...filter } = res.locals.query as z.output<typeof ProjectsQuery>;
+  res.json(await listProjects(filter, page));
+});
+
+const GroupsQuery = Page.extend({ q: search });
+adminRouter.get("/admin/groups", validate({ query: GroupsQuery }), async (_req, res) => {
+  const { page, q } = res.locals.query as z.output<typeof GroupsQuery>;
+  res.json(await listGroups(q, page));
+});
+
+adminRouter.get("/admin/admins", async (_req, res) => {
+  res.json({ admins: await listAdmins() });
+});
+
+const GrantBody = z.object({ email: z.email("Enter an email address.").max(320) });
+adminRouter.post("/admin/admins", validate({ body: GrantBody }), async (req, res) => {
+  await grantAdmin(claimsOf(req), bodyOf(req, GrantBody).email);
+  res.json({ ok: true });
+});
+
+adminRouter.delete("/admin/admins/:id", validate({ params: Id }), async (req, res) => {
+  await revokeAdmin(claimsOf(req), idOf(req));
+  res.json({ ok: true });
 });

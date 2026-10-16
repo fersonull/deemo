@@ -148,7 +148,7 @@ export function UserSheet({ id, onClose, onChanged }: { id: string | null; onClo
 
 function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: () => void; onDeleted: () => void }) {
   const admin = useAdmin()
-  const [busy, setBusy] = useState<"premium" | "sign-in" | "delete" | null>(null)
+  const [busy, setBusy] = useState<"premium" | "sign-in" | "delete" | "daily" | null>(null)
   const [error, setError] = useState("")
   const [confirm, setConfirm] = useState<"disable" | "delete" | null>(null)
   const [typed, setTyped] = useState("")
@@ -163,7 +163,7 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
       </Section>
     )
 
-  const run = async (kind: "premium" | "sign-in" | "delete", call: () => Promise<unknown>, after: () => void) => {
+  const run = async (kind: "premium" | "sign-in" | "delete" | "daily", call: () => Promise<unknown>, after: () => void) => {
     setBusy(kind)
     setError("")
     try {
@@ -190,6 +190,26 @@ function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: 
           aria-label="Premium"
           onCheckedChange={(premium) => run("premium", () => adminApi(`${path}/premium`, { method: "PATCH", body: { premium } }), onChanged)}
         />
+      </div>
+
+      <div className="flex items-center gap-3 text-sm">
+        <div className="flex-1">
+          <p className="font-medium">
+            Practice today: {user.usedToday} of {user.dailyCap}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {user.usedToday >= user.dailyCap ? "At today's limit." : "Resets at midnight, Philippine time."} Reset gives today&apos;s
+            sessions back.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy !== null || user.usedToday === 0}
+          onClick={() => run("daily", () => adminApi(`${path}/reset-daily`, { method: "POST" }), onChanged)}
+        >
+          {busy === "daily" ? "Resetting…" : "Reset"}
+        </Button>
       </div>
 
       {user.firebase ? (
