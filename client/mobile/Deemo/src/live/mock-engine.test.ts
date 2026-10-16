@@ -1,9 +1,12 @@
 /// <reference types="bun" />
-import { expect, test } from "bun:test";
+import { expect, mock, test } from "bun:test";
 
-import { MockEngine } from "./mock-engine";
 import { canAsk, initialLiveState, liveReducer } from "./reducer";
 import type { LiveEvent, LiveState } from "./types";
+
+// The mouth level is UI-thread state (Reanimated); a plain object stands in for it here.
+mock.module("./voice-level", () => ({ panelVoice: { value: 0 } }));
+const { MockEngine } = await import("./mock-engine");
 
 // Drives the mock by hand (no real timers) and taps "done" whenever the simulated student stops talking.
 test("the scripted defense runs start to finish through the reducer", () => {

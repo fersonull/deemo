@@ -2,6 +2,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
+import { PanelFace } from "@/components/panel-face";
 import { PANEL } from "@/constants";
 import type { Phase, Question, QuestionType } from "@/live/types";
 import { colors, fonts, type } from "@/theme";
@@ -65,7 +66,7 @@ export function QuestionCard({ phase, question, closing, count, followUpLimit, o
           </View>
           {asker && (
             <View style={styles.asker}>
-              <Icon name="record_voice_over" size={15} color={colors.inkMuted} />
+              <PanelFace index={question.panelist % count} size={22} still />
               <Text style={styles.askerText}>
                 {asker.name} · {asker.role} asks
               </Text>

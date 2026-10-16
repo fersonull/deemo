@@ -38,6 +38,18 @@ export const colors = {
   goldLight: "#F6DC86", // oklch(0.9 0.11 92)
   goldInk: "#8C6310", // oklch(0.52 0.11 75)
 
+  // panel faces (screens/session, components/panel-face): flat skin, hair and mouth tones; never red
+  skinLight: "#EDC39B",
+  skinLightShade: "#D9A77C",
+  skinMid: "#C99168",
+  skinMidShade: "#AE7650",
+  skinDeep: "#A9714A",
+  skinDeepShade: "#8C5937",
+  hairGray: "#77706A",
+  hairBlack: "#2A2321",
+  hairBrown: "#3B2A22",
+  mouth: "#5A3329",
+
   // clay: destructive actions (delete my data), and the lowest readiness band outside a session (never in one)
   clay: "#944123", // oklch(0.48 0.12 40)
   clayTint: "#F5DDD3", // oklch(0.92 0.04 40)

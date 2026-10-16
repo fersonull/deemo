@@ -10,6 +10,7 @@ const recorder = { clearOnAudioReady: mock(() => {}), stop: mock(() => {}) };
 mock.module("react-native-audio-api", () => ({ AudioContext: class {} }));
 mock.module("@/utils/api", () => ({ api, ApiError }));
 mock.module("@/utils/recorder", () => ({ getRecorder: () => recorder }));
+mock.module("./voice-level", () => ({ panelVoice: { value: 0 } }));
 const { GeminiEngine } = await import("./gemini-engine");
 const setup = { mode: "TITLE" as const, domain: "Data & AI", panelists: 1, minutes: 10, followUps: 2, difficulty: "STANDARD" as const };
 type Internals = {

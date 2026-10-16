@@ -1,4 +1,5 @@
 import { CLOSING, PRESENTATION, SCRIPT } from "./script";
+import { panelVoice } from "./voice-level";
 import type { AskQuestion, LiveEngine, LiveEvent } from "./types";
 
 const TICK = 100;
@@ -60,6 +61,7 @@ export class MockEngine implements LiveEngine {
   }
 
   stop() {
+    panelVoice.value = 0;
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.jobs = [];
@@ -90,12 +92,20 @@ export class MockEngine implements LiveEngine {
     if (!this.canAsk(q)) return this.ask(); // follow-up limit reached: move to the next topic
     this.emit({ type: "ask", question: q });
     const words = item.question.split(" ");
-    words.forEach((w, i) => this.after(110 * (i + 1), () => this.emit({ type: "panelText", text: `${i ? " " : ""}${w}` })));
+    words.forEach((w, i) => this.after(110 * (i + 1), () => this.say(w, i)));
     this.after(110 * words.length + 400, () => {
+      panelVoice.value = 0;
       this.emit({ type: "panelDone" });
       this.turn = "answering";
       this.after(1200, () => this.speakAsStudent(item.answer, item.flag)); // the student's response latency
     });
+  }
+
+  // One spoken word: its text, and a syllable for the panel face's mouth (opens, then eases shut before the next).
+  private say(word: string, i: number) {
+    this.emit({ type: "panelText", text: `${i ? " " : ""}${word}` });
+    panelVoice.value = 0.45 + Math.min(0.55, word.length / 14);
+    this.after(60, () => (panelVoice.value = 0.15));
   }
 
   // Simulated student speech: transcription chunks plus a mic level, until they tap the mic.
@@ -121,8 +131,11 @@ export class MockEngine implements LiveEngine {
     this.ending = true;
     this.emit({ type: "end", ...(reason && { reason }) });
     const words = CLOSING.split(" ");
-    words.forEach((w, i) => this.after(110 * (i + 1), () => this.emit({ type: "panelText", text: `${i ? " " : ""}${w}` })));
-    this.after(110 * words.length + 400, () => this.emit({ type: "panelDone" }));
+    words.forEach((w, i) => this.after(110 * (i + 1), () => this.say(w, i)));
+    this.after(110 * words.length + 400, () => {
+      panelVoice.value = 0;
+      this.emit({ type: "panelDone" });
+    });
     this.after(110 * words.length + 1800, () => this.emit({ type: "ended" }));
   }
 }

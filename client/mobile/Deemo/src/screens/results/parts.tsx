@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
+import { PanelFace } from "@/components/panel-face";
 import { PANEL } from "@/constants";
 import type { Report, Session, SessionTurn } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
@@ -208,6 +209,7 @@ export function Transcript({ lines, count }: { lines: Session["lines"]; count: n
           {lines.map((l, i) => (
             <View key={i} style={styles.line}>
               {l.flagged ? <View key="flag" style={[styles.dot, styles.dotFlag]} /> : <View key="none" style={styles.dot} />}
+              {l.who === "you" ? null : <View style={styles.face}><PanelFace index={l.who} size={20} still /></View>}
               <Text style={[styles.body, styles.flex]}>
                 <Text style={styles.strong}>{l.who === "you" ? "You" : PANEL[l.who]?.name}</Text> {l.text}
               </Text>
@@ -262,5 +264,6 @@ const styles = StyleSheet.create({
   link: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13.5, color: colors.duskLink },
   line: { flexDirection: "row", gap: 8 },
   dot: { width: 7, height: 7, borderRadius: 3.5, marginTop: 7 },
+  face: { marginTop: 1 },
   dotFlag: { backgroundColor: colors.amber },
 });

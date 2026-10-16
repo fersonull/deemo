@@ -1,4 +1,4 @@
-import { AudioContext, type AudioBufferQueueSourceNode } from "react-native-audio-api";
+import { AudioContext, type AnalyserNode, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
 import { type Difficulty, type Mode } from "@/constants";
 import { ApiError, api } from "@/utils/api";
@@ -7,6 +7,8 @@ import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
 import { getRecorder } from "@/utils/recorder";
 
 import type { AskQuestion, Inconsistency, LiveEngine, LiveEvent, QuestionType } from "./types";
+import { envelope, rms } from "./voice-envelope";
+import { panelVoice } from "./voice-level";
 
 // Phone ⇄ Gemini Live directly (addendum B1–B6). The server only mints a token with the panel's
 // prompt and tools locked in. The student holds the floor until they tap done (manual activity:
@@ -64,6 +66,9 @@ export class GeminiEngine implements LiveEngine {
   private gate = createNoiseGate();
   private ctx: AudioContext | null = null;
   private voice: AudioBufferQueueSourceNode | null = null;
+  private analyser: AnalyserNode | null = null; // between the voice and the speaker: what the panel face lip-syncs to
+  private frame = new Float32Array(512);
+  private lipSync: ReturnType<typeof setInterval> | null = null;
   private queued = 0; // panel audio buffers not yet played
   private heard = false; // panel audio since the student's last turn
   private turnDone = false; // turnComplete for the panel's current turn
@@ -84,7 +89,12 @@ export class GeminiEngine implements LiveEngine {
 
     this.ctx = new AudioContext({ sampleRate: VOICE_RATE });
     this.voice = this.ctx.createBufferQueueSource();
-    this.voice.connect(this.ctx.destination);
+    // voice -> analyser -> speaker: the mouth follows the sound as it plays, not as Gemini sends it (it arrives early).
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = this.frame.length;
+    this.voice.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+    this.lipSync = setInterval(() => this.measureVoice(), 33);
     this.voice.onBufferEnded = () => {
       this.queued = Math.max(0, this.queued - 1);
       this.settle();
@@ -149,6 +159,9 @@ export class GeminiEngine implements LiveEngine {
   stop() {
     if (this.stopped) return;
     this.stopped = true;
+    if (this.lipSync) clearInterval(this.lipSync);
+    this.lipSync = null;
+    panelVoice.value = 0;
     if (this.closeDeadline) clearTimeout(this.closeDeadline);
     this.closeDeadline = null;
     this.clearTimer();
@@ -314,6 +327,18 @@ export class GeminiEngine implements LiveEngine {
       }
     }
     return { id, name, response };
+  }
+
+  // About 30 times a second: the playing voice's loudness -> the speaking face's mouth (panelVoice). Shut while
+  // nothing is queued, paused or muted.
+  private measureVoice() {
+    let level = 0;
+    if (this.analyser && this.queued > 0 && !this.paused && !this.quiet) {
+      this.analyser.getFloatTimeDomainData(this.frame);
+      level = rms(this.frame);
+    }
+    const next = envelope(panelVoice.value, level);
+    if (next !== panelVoice.value) panelVoice.value = next;
   }
 
   private play(b64: string) {

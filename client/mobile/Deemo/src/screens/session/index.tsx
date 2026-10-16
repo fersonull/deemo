@@ -76,14 +76,25 @@ export function Session() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- askEnd reads current state when pressed
   }, [s.paused]);
 
+  // A contradiction flag: the asker looks skeptical for a few seconds (speaking and thinking win over it).
+  const [skepticalFlags, setSkepticalFlags] = useState(0);
+  useEffect(() => {
+    if (!s.flags.length) return;
+    const t = setTimeout(() => setSkepticalFlags(s.flags.length), 4000);
+    return () => clearTimeout(t);
+  }, [s.flags.length]);
+  const skeptical = s.flags.length > skepticalFlags;
+
   const asker = s.question ? s.question.panelist % count : 0;
   const status = (i: number): PanelistStatus => {
     if (s.phase === "connecting") return "offline";
     if (s.phase === "speaking" && i === asker) return "speaking";
     if (s.phase === "ending" && i === 0) return "speaking";
     if (s.phase === "thinking" && i === asker) return "thinking";
+    if (skeptical && i === asker) return "skeptical";
     return "listening";
   };
+  const listeningLevel = s.phase === "listening" || s.phase === "presentation" ? s.level : 0;
 
   const frozen = s.paused || s.reconnecting || !!s.error;
   const studentTurn = (s.phase === "listening" || s.phase === "presentation") && !frozen;
@@ -139,7 +150,7 @@ export function Session() {
 
         <Animated.View layout={GLIDE} style={[styles.panel, { gap: count === 1 ? 0 : 6 }]}>
           {Array.from({ length: count }, (_, i) => (
-            <Panelist key={i} index={i} status={status(i)} count={count} />
+            <Panelist key={i} index={i} status={status(i)} count={count} level={listeningLevel} />
           ))}
         </Animated.View>
 
