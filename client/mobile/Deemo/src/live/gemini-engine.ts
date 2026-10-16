@@ -268,6 +268,18 @@ export class GeminiEngine implements LiveEngine {
     if (name === "ask_question") {
       if (this.ending !== "no")
         return { id, name, response: { allowed: false, instruction: "Practice has ended. Say only a short closing sentence." } };
+      // One question per panel turn. Approving a second one before the student answered let the panel run on by itself:
+      // it reacted to answers never given and asked question after question until it ended the session.
+      if (this.asked)
+        return {
+          id,
+          name,
+          response: {
+            allowed: false,
+            instruction:
+              "You already asked a question this turn. Do not ask another. If you have not said it out loud yet, say it now; otherwise stop talking and wait for the student's answer.",
+          },
+        };
       const role = ROLES.indexOf(String(args.panelist));
       const q: AskQuestion = {
         topicId: String(args.topicId ?? "general"),
@@ -290,6 +302,9 @@ export class GeminiEngine implements LiveEngine {
       this.emit({ type: "flag", flag: args as Omit<Inconsistency, "atMs"> });
       response = { ok: true, scheduling: "SILENT" };
     } else if (name === "end_session") {
+      // Not while a question is still waiting for its answer (the same run-on, ending without the student).
+      if (this.asked)
+        return { id, name, response: { ok: false, instruction: "The student hasn't answered your question yet. Stop talking and wait for the answer." } };
       if (this.ending === "no") {
         this.ending = "asked";
         this.emit({ type: "end" });

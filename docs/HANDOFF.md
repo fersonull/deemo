@@ -42,6 +42,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Fix: panel ran on after one answer.** The device approved every `ask_question`, so a second call in the same panel turn was told "say the question out loud now": the panel reacted to answers never given, asked question after question and ended the session. `GeminiEngine.onToolCall` now approves one question per panel turn (until the student's turn ends) and refuses `end_session` while a question is unanswered; the prompt says one question per turn. Regression test in `gemini-engine.test.ts`. JS + server prompt; restart the server, reload Metro. | `client/mobile/Deemo/src/live/gemini-engine.ts`, `server/src/modules/practice/domain/panel.ts` |
 | 2026-10-16 | **Merged `feat/admin` into `dev`** (user's request) and deleted the branch. Server checks re-run on `dev`: type check and 45 tests pass. | merge commit |
 | 2026-10-16 | **Admin toasts**: shadcn Sonner (bottom right, follows the theme); every admin action confirms with a toast and failures toast the server's reason (user actions, Score again, add/remove admin). | `feat/admin` |
 | 2026-10-16 | **Web admin, round 3**: Overview (counts, readiness, 30-day sign-up/session charts with table view, needs-attention list), Sessions (filters, report summary, Score again for failed/stuck), Manuscripts, Groups, Admins (grant by email, revoke, self-protected) pages; daily practice count on Users with a reset; audit kinds `daily_reset`, `session_rescored`, `admin_granted`, `admin_revoked`. Shared `NAV`, `useUrlParams`, list controls. Server: `admin/application/{overview,catalog,admins}.ts`, `domain/{days,daily}.ts` + tests. Still on `feat/admin`. | `feat/admin` |
@@ -134,6 +135,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 Older history: `git log dev`.
 
 ## Gotchas
+
+- **One question per panel turn is enforced on the device** (`asked` in `GeminiEngine`, reset in `endStudentTurn`). Any new path that hands the floor back to the student without `endStudentTurn` must reset it, or the panel's next question is refused.
 
 - **The admin never shows transcripts, answers or manuscript analyses** (students' unpublished work, RA 10173): the session sheet is the report summary only, Manuscripts is status only. Keep it that way unless every view is audited and the consent text says admins can see them.
 - **Web admin audit rows have no foreign keys** (`admin_actions`): they outlive a deleted student, and the target's email is copied in. Write every new admin action through `record()` in `server/src/modules/admin/application/actions.ts`.
