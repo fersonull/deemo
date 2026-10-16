@@ -1,7 +1,14 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { useReducedMotion } from "react-native-reanimated";
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/avatar";
@@ -41,6 +48,12 @@ function greeting(hour: number) {
 }
 
 
+// Once per app launch, Home opens with a spotlight on Deemo and its brief: everything else waits at low opacity, then
+// fades up. A touch anywhere ends it early.
+let spotlit = false;
+const DIM = 0.25;
+const HOLD_MS = 2400;
+
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 // Home (plan S-05, prototype home): greeting, Deemo telling you where you stand (the last score on its sign, what it
@@ -59,6 +72,19 @@ export function Home() {
   const recent = list.slice(0, 3);
   const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
   const reduced = useReducedMotion();
+  const ready = loaded && projectsLoaded;
+  const rest = useSharedValue(spotlit ? 1 : DIM);
+  const restStyle = useAnimatedStyle(() => ({ opacity: rest.value }));
+  useEffect(() => {
+    if (!ready || spotlit) return;
+    spotlit = true;
+    rest.set(withDelay(HOLD_MS, withTiming(1, { duration: 600 })));
+  }, [ready, rest]);
+  const endSpotlight = () => {
+    if (rest.get() >= 1) return;
+    cancelAnimation(rest);
+    rest.set(withTiming(1, { duration: 250 }));
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -76,13 +102,17 @@ export function Home() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: tabBarSpace(bottom) }]} refreshControl={refresh}>
-        <View style={styles.head}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: tabBarSpace(bottom) }]}
+        refreshControl={refresh}
+        onTouchStart={endSpotlight}
+      >
+        <Animated.View style={[styles.head, restStyle]}>
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
           </Text>
           <Avatar seed={avatar} name={name} email={email} size={42} premium={premium} />
-        </View>
+        </Animated.View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (
           <Animated.View entering={riseIn(60, reduced)}>
@@ -97,97 +127,99 @@ export function Home() {
           </Skeleton>
         )}
 
-        <StartButton
-          label={practiced ? "Start practice" : "Add your manuscript"}
-          icon={practiced ? "mic" : "upload_file"}
-          onPress={() => router.push(practiced ? "/practice" : "/projects")}
-          style={styles.start}
-        />
-        {!practiced ? (
-          <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
-            <Text style={styles.sampleText}>Or practice with a sample paper</Text>
-          </Pressable>
-        ) : null}
+        <Animated.View style={restStyle}>
+          <StartButton
+            label={practiced ? "Start practice" : "Add your manuscript"}
+            icon={practiced ? "mic" : "upload_file"}
+            onPress={() => router.push(practiced ? "/practice" : "/projects")}
+            style={styles.start}
+          />
+          {!practiced ? (
+            <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
+              <Text style={styles.sampleText}>Or practice with a sample paper</Text>
+            </Pressable>
+          ) : null}
 
-        <GroupReadiness />
-        {loaded && !error && recent.length ? (
-          <Animated.View entering={riseIn(100, reduced)}>
-            <Text style={[type.label, styles.section]}>DEFENSE PATH</Text>
-            <DefensePath sessions={list} />
-          </Animated.View>
-        ) : null}
-        {charted ? (
-          <Animated.View entering={riseIn(120, reduced)}>
-            <Text style={[type.label, styles.section]}>YOUR READINESS</Text>
-            <TrendChart sessions={list} stage={null} compact />
-          </Animated.View>
-        ) : null}
-        {!loaded ? (
-          <>
-            <Text style={[type.label, styles.section]}>RECENT</Text>
-            <Skeleton label="Loading recent sessions">
-              {[0, 1, 2].map((i) => (
-                <View key={i} style={styles.row}>
-                  <Skeleton.Bone width={38} height={38} radius={19} />
-                  <View style={[styles.flex, styles.bones]}>
-                    <Skeleton.Bone width="35%" height={13} />
-                    <Skeleton.Bone width="75%" height={11} />
+          <GroupReadiness />
+          {loaded && !error && recent.length ? (
+            <Animated.View entering={riseIn(100, reduced)}>
+              <Text style={[type.label, styles.section]}>DEFENSE PATH</Text>
+              <DefensePath sessions={list} />
+            </Animated.View>
+          ) : null}
+          {charted ? (
+            <Animated.View entering={riseIn(120, reduced)}>
+              <Text style={[type.label, styles.section]}>YOUR READINESS</Text>
+              <TrendChart sessions={list} stage={null} compact />
+            </Animated.View>
+          ) : null}
+          {!loaded ? (
+            <>
+              <Text style={[type.label, styles.section]}>RECENT</Text>
+              <Skeleton label="Loading recent sessions">
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={styles.row}>
+                    <Skeleton.Bone width={38} height={38} radius={19} />
+                    <View style={[styles.flex, styles.bones]}>
+                      <Skeleton.Bone width="35%" height={13} />
+                      <Skeleton.Bone width="75%" height={11} />
+                    </View>
+                    <Skeleton.Bone width={22} height={15} />
                   </View>
-                  <Skeleton.Bone width={22} height={15} />
-                </View>
+                ))}
+              </Skeleton>
+            </>
+          ) : error ? null : !recent.length ? (
+            // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
+            <>
+              <Text style={[type.label, styles.section]}>GET STARTED</Text>
+              {STEPS.map((step, i) => {
+                const done = i === 0 && !!manuscript;
+                return (
+                  <View key={step} style={styles.row} accessible accessibilityLabel={`${step}${done ? ", done" : ""}`}>
+                    <Icon
+                      name={done ? "check_circle" : "radio_button_unchecked"}
+                      size={22}
+                      color={done ? colors.sage : colors.muted}
+                      filled={done}
+                    />
+                    <Text style={[styles.rowTitle, styles.flex, done && styles.done]}>{step}</Text>
+                  </View>
+                );
+              })}
+            </>
+          ) : recent.length ? (
+            <>
+              <Text style={[type.label, styles.section]}>RECENT</Text>
+              {recent.map((s, i) => (
+                <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
+                  <PressableScale
+                    scaleTo={0.98}
+                    accessibilityRole="button"
+                    accessibilityHint="Opens the report"
+                    onPress={() => open(s.id)}
+                    style={[styles.row]}
+                  >
+                    <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
+                      <Icon name={MODE_ICON[s.mode]} size={20} color={MODE_INK[s.mode]} />
+                    </View>
+                    <View style={styles.flex}>
+                      <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
+                      <Text style={styles.meta} numberOfLines={1}>
+                        {day(s.createdAt)} · {s.title}
+                      </Text>
+                    </View>
+                    {s.score !== undefined ? (
+                      <Score value={s.score} style={styles.rowScore} caption banded align="right" />
+                    ) : (
+                      <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+                    )}
+                  </PressableScale>
+                </Animated.View>
               ))}
-            </Skeleton>
-          </>
-        ) : error ? null : !recent.length ? (
-          // First visit: what gets you from here to a report. Steps, not buttons; Start practice is right above.
-          <>
-            <Text style={[type.label, styles.section]}>GET STARTED</Text>
-            {STEPS.map((step, i) => {
-              const done = i === 0 && !!manuscript;
-              return (
-                <View key={step} style={styles.row} accessible accessibilityLabel={`${step}${done ? ", done" : ""}`}>
-                  <Icon
-                    name={done ? "check_circle" : "radio_button_unchecked"}
-                    size={22}
-                    color={done ? colors.sage : colors.muted}
-                    filled={done}
-                  />
-                  <Text style={[styles.rowTitle, styles.flex, done && styles.done]}>{step}</Text>
-                </View>
-              );
-            })}
-          </>
-        ) : recent.length ? (
-          <>
-            <Text style={[type.label, styles.section]}>RECENT</Text>
-            {recent.map((s, i) => (
-              <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
-                <PressableScale
-                  scaleTo={0.98}
-                  accessibilityRole="button"
-                  accessibilityHint="Opens the report"
-                  onPress={() => open(s.id)}
-                  style={[styles.row]}
-                >
-                  <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
-                    <Icon name={MODE_ICON[s.mode]} size={20} color={MODE_INK[s.mode]} />
-                  </View>
-                  <View style={styles.flex}>
-                    <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
-                    <Text style={styles.meta} numberOfLines={1}>
-                      {day(s.createdAt)} · {s.title}
-                    </Text>
-                  </View>
-                  {s.score !== undefined ? (
-                    <Score value={s.score} style={styles.rowScore} caption banded align="right" />
-                  ) : (
-                    <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
-                  )}
-                </PressableScale>
-              </Animated.View>
-            ))}
-          </>
-        ) : null}
+            </>
+          ) : null}
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
