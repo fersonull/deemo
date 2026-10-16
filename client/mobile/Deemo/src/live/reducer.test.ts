@@ -136,3 +136,21 @@ test("a terminal token error stops timers and keeps the transcript", () => {
   expect(s.partial?.text).toBe("My study");
   expect(liveReducer(s, { type: "tick", ms: 5000 })).toBe(s);
 });
+
+test("speech before ask_question goes to the asker the tool names, and its guessed follow-up is undone", () => {
+  const q1 = { topicId: "problem", text: "What problem does it solve?", type: "CONCEPTUAL" as const, isFollowUp: false, panelist: 0 };
+  let s = liveReducer({ ...initialLiveState, phase: "presentation" }, { type: "ask", question: q1 });
+  s = liveReducer(s, { type: "panelDone" });
+  s = liveReducer(s, { type: "youText", text: "I don't know." });
+  s = liveReducer(s, { type: "youDone" }); // thinking
+  s = liveReducer(s, { type: "panelText", text: "That's okay. Could you specify your sample size?" }); // spoke first
+  expect(s.partial?.who).toBe(0); // guessed: the last asker
+  expect(s.followUps.problem).toBe(1); // guessed follow-up
+  const q2 = { topicId: "sampling", text: "Could you specify your sample size?", type: "METHODOLOGICAL" as const, isFollowUp: false, panelist: 2 };
+  s = liveReducer(s, { type: "ask", question: q2 });
+  expect(s.partial).toEqual({ who: 2, text: "That's okay. Could you specify your sample size?" }); // one line, right name
+  expect(s.question?.number).toBe(2);
+  expect(s.question?.panelist).toBe(2);
+  expect(s.followUps.problem ?? 0).toBe(0); // the guess is undone
+  expect(s.unasked).toBeUndefined();
+});

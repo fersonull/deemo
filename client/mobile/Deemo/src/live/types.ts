@@ -50,6 +50,7 @@ export type LiveState = {
   followUps: Record<string, number>;
   followUpLimit: number; // per topic, chosen in setup (plan F8)
   level: number; // 0..1 mic level for the mic ring
+  unasked?: { question: Question | null; followUps: Record<string, number> }; // panel spoke before ask_question this turn
 };
 
 export type AskQuestion = Omit<Question, "followUp" | "number">;

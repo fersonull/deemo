@@ -7,6 +7,7 @@ import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
 import { getRecorder } from "@/utils/recorder";
 
 import type { AskQuestion, Inconsistency, LiveEngine, LiveEvent, QuestionType } from "./types";
+import { alreadySaid } from "./said";
 import { envelope, rms } from "./voice-envelope";
 import { panelVoice } from "./voice-level";
 
@@ -79,6 +80,7 @@ export class GeminiEngine implements LiveEngine {
   private asked = false; // a question was approved since the student's last turn
   private spokeQuestion = false; // the panel's voice was heard after that approval
   private quiet = false; // the panel ran on after its question: drop its voice and words until the student's turn
+  private spoken = ""; // what the panel has said since the student's turn ended
   private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private setup: SessionSetup) {}
@@ -269,7 +271,10 @@ export class GeminiEngine implements LiveEngine {
     }
     for (const part of c.modelTurn?.parts ?? []) if (part.inlineData?.data) this.play(part.inlineData.data);
     const said = this.quiet ? "" : c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
-    if (said?.trim()) this.emit({ type: "panelText", text: said });
+    if (said?.trim()) {
+      this.spoken += said;
+      this.emit({ type: "panelText", text: said });
+    }
     if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
     if (c.turnComplete) {
       this.turnDone = true;
@@ -302,6 +307,14 @@ export class GeminiEngine implements LiveEngine {
         panelist: Math.max(0, role) % this.setup.panelists,
       };
       if (this.canAsk(q)) {
+        // Spoken first, tool call after: put it on screen under the right panelist, but don't let it be said again.
+        if (alreadySaid(this.spoken, q.text)) {
+          this.asked = true;
+          this.spokeQuestion = true;
+          this.quiet = true;
+          this.emit({ type: "ask", question: q });
+          return { id, name, response: { allowed: true, instruction: "Recorded. Say nothing more this turn." } };
+        }
         this.asked = true;
         this.spokeQuestion = false;
         this.emit({ type: "ask", question: q });
@@ -409,6 +422,7 @@ export class GeminiEngine implements LiveEngine {
     this.asked = false;
     this.spokeQuestion = false;
     this.quiet = false;
+    this.spoken = "";
     this.awaitPanel();
     this.emit({ type: "level", value: 0 });
     this.emit({ type: "youDone" });

@@ -45,6 +45,15 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       return { ...s, phase: "presentation" };
 
     case "ask": {
+      // The panel spoke first this turn (a guessed follow-up, labeled with the last asker). The tool call says who
+      // really asked: undo the guess and keep that speech as this question's line, under the right name.
+      if (s.unasked) {
+        const base = { ...s, question: s.unasked.question, followUps: s.unasked.followUps, unasked: undefined };
+        if (!canAsk(base, e.question)) return { ...s, unasked: undefined };
+        const asked = liveReducer({ ...base, partial: null }, e);
+        const partial = s.partial && s.partial.who !== "you" ? { ...s.partial, who: e.question.panelist } : s.partial;
+        return { ...asked, lines: s.lines, partial };
+      }
       if (!canAsk(s, e.question)) return s;
       const q = e.question;
       const followUp = q.isFollowUp ? (s.followUps[q.topicId] ?? 0) + 1 : 0;
@@ -73,13 +82,14 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
         phase: "speaking",
         question: { ...q, isFollowUp: true, followUp },
         followUps: { ...s.followUps, [q.topicId]: followUp },
+        unasked: { question: s.question, followUps: s.followUps },
       };
     }
 
     case "panelDone": {
-      if (s.phase === "ending") return { ...s, lines: finish(s), partial: null };
+      if (s.phase === "ending") return { ...s, lines: finish(s), partial: null, unasked: undefined };
       const phase = s.question ? "listening" : "presentation"; // no question yet: the panel let the presentation run on
-      return { ...s, phase, lines: finish(s), partial: null, responseMs: 0, firstSpeechMs: null };
+      return { ...s, phase, lines: finish(s), partial: null, responseMs: 0, firstSpeechMs: null, unasked: undefined };
     }
 
     case "youText": {
