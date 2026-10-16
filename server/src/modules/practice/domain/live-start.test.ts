@@ -49,6 +49,7 @@ test("Manila calendar days", () => {
 
 test("daily starts: caps, retries, refunds, leases and Manila midnight", () => {
   const h = harness();
+  for (let i = 0; i < 3; i++) h.start("free", `earlier${i}`); // three of today's five free sessions already used
   const a = h.start("free", "a");
   const b = h.start("free", "b");
   expect(() => h.start("free", "c")).toThrow(expect.objectContaining({ status: 429 }));
@@ -56,18 +57,18 @@ test("daily starts: caps, retries, refunds, leases and Manila midnight", () => {
   h.finish("free", "a", a.lease, "single-use-token");
   expect(h.start("free", "a").token).toBe("single-use-token");
   expect(h.start("free", "a", true).expiresAt).toBe(a.expiresAt);
-  expect(h.account("free").sessionCount).toBe(2);
+  expect(h.account("free").sessionCount).toBe(5);
   expect(() => h.start("free", "a", true, { ...h.setup, followUps: 1 })).toThrow(expect.objectContaining({ status: 400 }));
   expect(() => h.start("other", "a", true)).toThrow(expect.objectContaining({ status: 404 }));
 
   h.finish("free", "b", b.lease); // a failed mint refunds the slot
-  expect(h.account("free").sessionCount).toBe(1);
+  expect(h.account("free").sessionCount).toBe(4);
   const retry = h.start("free", "b");
   h.clock.add(31_000); // a crashed server's pending lease can be taken over without another slot
   const recovered = h.start("free", "b");
   expect(recovered.lease).not.toBe(retry.lease);
   h.finish("free", "b", retry.lease); // the old lease no longer owns it: ignored
-  expect(h.account("free").sessionCount).toBe(2);
+  expect(h.account("free").sessionCount).toBe(5);
   expect(() => h.finish("free", "b", retry.lease, "stale")).toThrow(expect.objectContaining({ status: 503 }));
   h.finish("free", "b", recovered.lease);
 
@@ -80,11 +81,11 @@ test("daily starts: caps, retries, refunds, leases and Manila midnight", () => {
   expect(() => h.start("free", "a", true)).toThrow(expect.objectContaining({ status: 410 }));
 });
 
-test("Premium: ten a day, up to 25 minutes", () => {
+test("Premium: unlimited sessions a day, up to 25 minutes", () => {
   const h = harness();
   h.accounts.set("premium", { premium: true, sessionDay: null, sessionCount: 0 });
-  for (let i = 0; i < 10; i++) h.start("premium", `p${i}`);
-  expect(() => h.start("premium", "p10")).toThrow(expect.objectContaining({ status: 429 }));
+  for (let i = 0; i < 40; i++) h.start("premium", `p${i}`); // no daily cap
+  expect(h.account("premium").sessionCount).toBe(40);
   expect(() => h.start("long", "x", false, { ...h.setup, minutes: 15 })).toThrow(expect.objectContaining({ status: 403 }));
   h.accounts.set("long", { premium: true, sessionDay: null, sessionCount: 0 });
   expect(() => h.start("long", "x", false, { ...h.setup, minutes: 30 })).toThrow(expect.objectContaining({ status: 400 }));

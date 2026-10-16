@@ -159,12 +159,14 @@ export function UsersView() {
                       <TableCell className="hidden text-right tabular-nums md:table-cell">
                         <span
                           className={
-                            u.usedToday >= u.dailyCap
+                            u.dailyCap !== null && u.usedToday >= u.dailyCap
                               ? "font-semibold"
                               : "text-muted-foreground"
                           }
                         >
-                          {u.usedToday} / {u.dailyCap}
+                          {u.dailyCap === null
+                            ? `${u.usedToday} · no limit`
+                            : `${u.usedToday} / ${u.dailyCap}`}
                         </span>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">

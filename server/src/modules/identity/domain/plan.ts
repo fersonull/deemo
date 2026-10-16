@@ -2,8 +2,8 @@
 // and practice ask here instead of checking `premium` themselves.
 
 export const PLAN = {
-  free: { manuscripts: 1, dailySessions: 2, maxMinutes: 10, maxPanelists: 1, finalDefense: false },
-  premium: { manuscripts: Infinity, dailySessions: 10, maxMinutes: 25, maxPanelists: 3, finalDefense: true },
+  free: { manuscripts: 1, dailySessions: 5, maxMinutes: 10, maxPanelists: 1, finalDefense: false },
+  premium: { manuscripts: Infinity, dailySessions: Infinity, maxMinutes: 25, maxPanelists: 3, finalDefense: true }, // unlimited practice
 } as const;
 
 export const planOf = (premium: boolean) => (premium ? PLAN.premium : PLAN.free);

@@ -6,7 +6,7 @@ import { dailyUsage } from "./daily";
 const now = Date.UTC(2026, 9, 16, 2);
 
 test("today's count only counts on today's Philippine day, against the plan's cap", () => {
-  expect(dailyUsage({ premium: false, sessionDay: "2026-10-16", sessionCount: 2 }, now)).toEqual({ usedToday: 2, dailyCap: 2 });
-  expect(dailyUsage({ premium: true, sessionDay: "2026-10-15", sessionCount: 7 }, now)).toEqual({ usedToday: 0, dailyCap: 10 });
-  expect(dailyUsage({ premium: false, sessionDay: null, sessionCount: 0 }, now)).toEqual({ usedToday: 0, dailyCap: 2 });
+  expect(dailyUsage({ premium: false, sessionDay: "2026-10-16", sessionCount: 2 }, now)).toEqual({ usedToday: 2, dailyCap: 5 });
+  expect(dailyUsage({ premium: true, sessionDay: "2026-10-15", sessionCount: 7 }, now)).toEqual({ usedToday: 0, dailyCap: null }); // Premium: unlimited
+  expect(dailyUsage({ premium: false, sessionDay: null, sessionCount: 0 }, now)).toEqual({ usedToday: 0, dailyCap: 5 });
 });

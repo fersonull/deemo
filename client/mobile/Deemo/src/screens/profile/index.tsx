@@ -17,7 +17,7 @@ import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
 
-const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, one manuscript.";
+const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, five sessions a day, one manuscript.";
 
 // Profile (prototype profile screen): account (tap the face to pick a look, the name to change it), plan, the typed-answer setting, download and delete my data, sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).

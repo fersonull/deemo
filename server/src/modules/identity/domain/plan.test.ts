@@ -19,8 +19,8 @@ test("Premium opens everything up to 25 minutes", () => {
 });
 
 test("daily sessions and manuscripts per plan", () => {
-  expect(planOf(false).dailySessions).toBe(2);
-  expect(planOf(true).dailySessions).toBe(10);
+  expect(planOf(false).dailySessions).toBe(5);
+  expect(planOf(true).dailySessions).toBe(Infinity);
   expect(planOf(false).manuscripts).toBe(1);
   expect(planOf(true).manuscripts).toBe(Infinity);
 });

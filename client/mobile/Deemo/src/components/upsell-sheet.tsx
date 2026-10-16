@@ -8,6 +8,7 @@ import { colors, type } from "@/theme";
 
 const PERKS = [
   "Deemo suits up, with a shining gold pin",
+  "Unlimited practice sessions",
   "Final Defense mode",
   "Up to 3 panelists at once",
   "More than one manuscript",

@@ -41,7 +41,7 @@ export type UserRow = {
   sessions: number
   lastSessionAt: string | null
   usedToday: number
-  dailyCap: number
+  dailyCap: number | null // null: unlimited (Premium)
 }
 
 export type UserPage = Paged & { users: UserRow[] }

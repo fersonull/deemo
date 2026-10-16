@@ -283,34 +283,45 @@ function Actions({
         />
       </div>
 
-      <div className="flex items-center gap-3 text-sm">
-        <div className="flex-1">
-          <p className="font-medium">
-            Practice today: {user.usedToday} of {user.dailyCap}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {user.usedToday >= user.dailyCap
-              ? "At today's limit."
-              : "Resets at midnight, Philippine time."}{" "}
-            Reset gives today&apos;s sessions back.
-          </p>
+      {user.dailyCap === null ? (
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex-1">
+            <p className="font-medium">Practice today: {user.usedToday}</p>
+            <p className="text-xs text-muted-foreground">
+              Premium has no daily limit.
+            </p>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={busy !== null || user.usedToday === 0}
-          onClick={() =>
-            run(
-              "daily",
-              () => adminApi(`${path}/reset-daily`, { method: "POST" }),
-              onChanged,
-              `Today's sessions given back to ${who}.`
-            )
-          }
-        >
-          {busy === "daily" ? "Resetting…" : "Reset"}
-        </Button>
-      </div>
+      ) : (
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex-1">
+            <p className="font-medium">
+              Practice today: {user.usedToday} of {user.dailyCap}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {user.usedToday >= (user.dailyCap ?? Infinity)
+                ? "At today's limit."
+                : "Resets at midnight, Philippine time."}{" "}
+              Reset gives today&apos;s sessions back.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy !== null || user.usedToday === 0}
+            onClick={() =>
+              run(
+                "daily",
+                () => adminApi(`${path}/reset-daily`, { method: "POST" }),
+                onChanged,
+                `Today's sessions given back to ${who}.`
+              )
+            }
+          >
+            {busy === "daily" ? "Resetting…" : "Reset"}
+          </Button>
+        </div>
+      )}
 
       {user.firebase ? (
         <div className="flex items-center gap-3 text-sm">
