@@ -1,18 +1,21 @@
 "use client"
 
-import { ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "lucide-react"
+import { SearchIcon } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
+import { Pager } from "@/components/pager"
 import { UserSheet } from "@/components/user-sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Kbd } from "@/components/ui/kbd"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { adminApi, type UserPage } from "@/lib/api"
+import { useAdminData } from "@/hooks/use-admin-data"
+import type { UserPage } from "@/lib/api"
 import { avatarUrl, formatDay, initials } from "@/lib/format"
 
 const PLAN = [
@@ -27,6 +30,7 @@ const VERIFIED = [
 ]
 
 // The user table. Search, filters, page and the open user live in the URL, so a view can be reloaded or shared.
+// Pages come from the server, 25 at a time.
 export function UsersView() {
   const router = useRouter()
   const pathname = usePathname()
@@ -36,24 +40,18 @@ export function UsersView() {
   const verified = params.get("verified") ?? "all"
   const page = Math.max(1, Number(params.get("page")) || 1)
   const open = params.get("user")
-
   const [draft, setDraft] = useState(q)
-  const [attempt, setAttempt] = useState(0)
+
   const query = new URLSearchParams({ page: String(page) })
   if (q) query.set("q", q)
   if (plan !== "all") query.set("plan", plan)
   if (verified !== "all") query.set("verified", verified)
-  // An answer counts only for the request it belongs to: a new search or a retry shows skeletons until its own arrives.
-  const key = `${query}#${attempt}`
-  const [result, setResult] = useState<{ key: string; data?: UserPage; error?: string } | null>(null)
-  const current = result?.key === key ? result : null
-  const data = current?.data ?? null
-  const error = current?.error ?? ""
+  const { data, error, reload } = useAdminData<UserPage>(`/admin/users?${query}`)
 
   const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params)
     for (const [k, v] of Object.entries(patch)) {
-      if (v === null || v === "" || v === "all") next.delete(k)
+      if (v === null || v === "" || v === "all" || (k === "page" && v === "1")) next.delete(k)
       else next.set(k, v)
     }
     if (!("page" in patch) && !("user" in patch)) next.delete("page") // a new search starts at page 1
@@ -68,30 +66,21 @@ export function UsersView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft])
 
-  useEffect(() => {
-    let alive = true
-    adminApi<UserPage>(`/admin/users?${key.split("#")[0]}`)
-      .then((d) => alive && setResult({ key, data: d }))
-      .catch((e: Error) => alive && setResult({ key, error: e.message }))
-    return () => {
-      alive = false
-    }
-  }, [key])
-
-  const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
           <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
+            id="list-search"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Escape" && e.currentTarget.blur()}
             placeholder="Search by name or email"
             aria-label="Search users"
-            className="pl-9"
+            className="pr-10 pl-9"
           />
+          <Kbd className="absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
         </div>
         <Select items={PLAN} value={plan} onValueChange={(v) => update({ plan: v as string })}>
           <SelectTrigger className="w-36" aria-label="Plan">
@@ -122,16 +111,16 @@ export function UsersView() {
         </p>
       </div>
 
-      {error ? (
-        <div className="flex flex-col items-start gap-3 rounded-lg border p-6">
+      {error && !data ? (
+        <div className="flex flex-col items-start gap-3 border p-6">
           <p className="text-sm font-medium">Couldn&apos;t load users</p>
           <p className="text-sm text-muted-foreground">{error}</p>
-          <Button variant="outline" size="sm" onClick={() => setAttempt((a) => a + 1)}>
+          <Button variant="outline" size="sm" onClick={reload}>
             Try again
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <div className="border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -202,21 +191,9 @@ export function UsersView() {
         </div>
       )}
 
-      {data && pages > 1 ? (
-        <div className="flex items-center justify-end gap-2">
-          <p className="text-sm text-muted-foreground tabular-nums">
-            Page {page} of {pages}
-          </p>
-          <Button variant="outline" size="icon-sm" aria-label="Previous page" disabled={page <= 1} onClick={() => update({ page: String(page - 1) })}>
-            <ChevronLeftIcon />
-          </Button>
-          <Button variant="outline" size="icon-sm" aria-label="Next page" disabled={page >= pages} onClick={() => update({ page: String(page + 1) })}>
-            <ChevronRightIcon />
-          </Button>
-        </div>
-      ) : null}
+      {data ? <Pager page={page} total={data.total} pageSize={data.pageSize} onPage={(p) => update({ page: String(p) })} /> : null}
 
-      <UserSheet id={open} onClose={() => update({ user: null })} />
+      <UserSheet id={open} onClose={() => update({ user: null })} onChanged={reload} />
     </div>
   )
 }

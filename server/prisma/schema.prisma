@@ -358,3 +358,18 @@ model RateLimitCounter {
   @@id([key, windowStart])
   @@map("rate_limit_counters")
 }
+
+// The web admin's audit log: every change an admin makes (client/web/admin). No foreign keys, so the record outlives
+// a deleted user; the target's email is copied for the same reason.
+model AdminAction {
+  id          Int      @id @default(autoincrement())
+  adminId     String   @map("admin_id") @db.VarChar(128)
+  adminEmail  String?  @map("admin_email") @db.VarChar(320)
+  action      String   @db.VarChar(40) // premium_on, premium_off, sign_in_disabled, sign_in_enabled, account_deleted
+  targetId    String   @map("target_id") @db.VarChar(128)
+  targetEmail String?  @map("target_email") @db.VarChar(320)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("admin_actions")
+}

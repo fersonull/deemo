@@ -1,6 +1,6 @@
 import { AppError } from "../../../shared/errors";
 import { claimsPatch, type Account, type Claims } from "../domain/account";
-import { deleteFirebaseUser, setFirebaseName } from "../infrastructure/firebase-users";
+import { deleteFirebaseUser, setFirebaseDisabled, setFirebaseName } from "../infrastructure/firebase-users";
 import { userRepo } from "../infrastructure/user-repo";
 
 // Firebase → DEEMO: every authenticated request makes sure the account exists and follows Firebase (one read; a write
@@ -57,3 +57,7 @@ export async function deleteAccount(id: string) {
 }
 
 export const accountsByIds = (ids: string[]) => userRepo.findMany(ids);
+
+// Web admin (client/web/admin): Premium both ways, and turning Firebase sign-in off or on.
+export const setPremium = (id: string, premium: boolean) => userRepo.update(id, { premium });
+export const setSignInDisabled = setFirebaseDisabled;

@@ -16,12 +16,13 @@ _Last updated: 2026-10-16_
 
 ## Next task
 
-**Web admin test (user action, branch `feat/admin`):** read-only user lookup in `client/web/admin/` (Next.js 16 + shadcn preset `b1oVxsfY`) over new server routes `GET /admin/users` and `GET /admin/users/:id`. To try it:
-1. Firebase console → Project settings → add a **Web app**; copy its config into `client/web/admin/.env.local` (see `.env.example`; `NEXT_PUBLIC_API_URL=http://localhost:3000` locally). Google sign-in must be enabled (it is, for the app).
-2. `cd server && bun scripts/set-admin.ts <your Google email>` (remove with `--remove`).
-3. `bun run dev` in `server/`, then the `admin` launch config (or `bun run dev` in `client/web/admin`, port 3001); sign in, search, filter, open a user and compare with Prisma Studio. A non-admin Google account must see "Not an admin".
-4. Vercel: project root `client/web/admin`, the same env vars with `NEXT_PUBLIC_API_URL=https://api.deemo-ai.com/api`; add the Vercel domain to Firebase Auth → Authorized domains and to `ADMIN_ORIGINS` in `server/.env`, restart the server. The hosted admin only works while the PC and tunnel run.
-Merge `feat/admin` into `dev` after it works, then delete the branch. Not yet seen signed in (the table and sheet were only type-checked and built).
+**Web admin (branch `feat/admin`, keep it off `dev` until the whole admin is done):** `client/web/admin/` (Next.js 16 + shadcn preset `b1oVxsfY`). Users (search, filters, server pages, detail sheet with paged sessions), Premium on/off, sign-in off/on (Firebase disable + revoke), delete account (the app's Delete my data, typed confirmation), and an Audit log page (`admin_actions` table). Shell: sidebar collapsing to icons (Ctrl B, rail), Ctrl/⌘ K palette (pages, server user search, theme, sign out), shortcuts (`?` list, `/` search, `G U`, `G A`, `D` theme), Light/Dark/System menu. To try it:
+1. **Apply the new migration first:** `cd server && bun run db:migrate` (adds `admin_actions`, `prisma/migrations/20261016000000_admin_actions`). Without it, actions and the audit page fail.
+2. Firebase console → Project settings → add a **Web app**; copy its config into `client/web/admin/.env.local` (see `.env.example`; `NEXT_PUBLIC_API_URL=http://localhost:3000` locally).
+3. `cd server && bun scripts/set-admin.ts <your Google email>` (remove with `--remove`), then sign out and in.
+4. `bun run dev` in `server/`, then the `admin` launch config (port 3001). Try: search, filter, page, open a user, page their sessions, Premium on/off (check the phone app), turn sign-in off (the phone gets signed out) and on, delete a throwaway `*@deemo.test` account, and see each change on Audit log. A non-admin account must see "Not an admin"; an admin can't act on their own account.
+5. Vercel: project root `client/web/admin`, the same env vars with `NEXT_PUBLIC_API_URL=https://api.deemo-ai.com/api`; add the Vercel domain to Firebase Auth → Authorized domains and to `ADMIN_ORIGINS` in `server/.env`, restart the server. The hosted admin only works while the PC and tunnel run.
+Not yet seen signed in: everything after the sign-in screen was only type-checked, linted and built (a fake-admin preview was refused, correctly).
 
 **Presentation follow-up (user action):** `client/web/presentation/` is filled from the paper; nothing is a placeholder any more. In the GitHub repo's Settings → Pages, set **Source = GitHub Actions** once so `deploy-presentation.yml` (push to `main` under `client/web/presentation/**`, or run it by hand from the Actions tab) publishes it to https://fersonull.github.io/deemo/ (repo is public; Pages was not enabled as of 2026-10-15). Preview locally with the `presentation` launch config (`bunx serve client/web/presentation -l 5055`); open via http, not `file://` (ES modules). If Chapter II changes (target market, technologies, Table 1), update slides 4–6 to match.
 
@@ -41,6 +42,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Web admin, round 2**: theme menu (Light/Dark/System), Ctrl/⌘ K command palette with server user search, keyboard shortcuts and a shortcuts dialog, icon-collapsible sidebar, server-side pagination shown only past one page (users, a user's sessions, audit log), and admin actions with an audit log: Premium on/off, Firebase sign-in off/on, delete account; new `admin_actions` table + migration; an admin can't act on their own account. Still on `feat/admin`. | `feat/admin` |
 | 2026-10-16 | **Web admin (read-only user lookup)**: `client/web/admin/` (Next.js 16, Tailwind, shadcn preset `b1oVxsfY`; sidebar, searchable/filterable user table, detail sheet with projects, recent sessions, groups and Firebase sign-in facts). Server: `admin` claim on `AuthClaims`, `requireAdmin`, `src/modules/admin/` with `GET /admin/users` and `/admin/users/:id`, CORS for `ADMIN_ORIGINS`, `scripts/set-admin.ts`. On `feat/admin`, not merged. | `feat/admin` |
 | 2026-10-16 | **Try Premium button**: new `premium` variant on `Button` (ink pill, goldInk hairline, gold sheen, goldLight label) with Deemo's filled `workspace_premium` medal icon in gold; used only by the upsell sheet. JS only. | `client/mobile/Deemo/src/components/button.tsx`, `upsell-sheet.tsx` |
 | 2026-10-16 | **Premium card on Profile**: Premium accounts get a member's-card look (ink card, goldInk hairline, a gold light sheen top right, Deemo's medal with its glint, Premium in goldLight with a Demo tag, the perks as a gold-check list). Free card unchanged. JS only. | `client/mobile/Deemo/src/screens/profile/premium-card.tsx` |
@@ -130,6 +132,7 @@ Older history: `git log dev`.
 
 ## Gotchas
 
+- **Web admin audit rows have no foreign keys** (`admin_actions`): they outlive a deleted student, and the target's email is copied in. Write every new admin action through `record()` in `server/src/modules/admin/application/actions.ts`.
 - **Web admin auth:** `/admin/*` uses `authenticate` + `requireAdmin` only, never `syncUser`, so an admin's Google account never becomes a `users` row. The `admin` custom claim reaches the token only after the admin signs out and back in. Browsers can call `/admin` only from `ADMIN_ORIGINS` (plus `http://localhost:3001`).
 - **Admin Firebase init is lazy** (`client/web/admin/lib/firebase.ts` `getAuth()`): Next prerenders pages at build time without the API key, so never call Firebase at module load.
 

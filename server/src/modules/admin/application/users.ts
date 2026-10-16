@@ -3,7 +3,9 @@ import { AppError } from "../../../shared/errors";
 import { prisma } from "../../../shared/prisma";
 import { PAGE_SIZE, userWhere, type UserFilter } from "../domain/filters";
 
-// Read-only views of the students for the web admin (client/web/admin). Nothing here writes.
+// Views of the students for the web admin (client/web/admin). Nothing here writes; changes are in actions.ts.
+
+export const SESSIONS_PAGE_SIZE = 10;
 
 export async function listUsers(filter: UserFilter, page: number) {
   const where = userWhere(filter);
@@ -66,11 +68,6 @@ export async function getUser(id: string) {
       createdAt: true,
       deletedAt: true,
       projects: { orderBy: { createdAt: "desc" }, select: { id: true, name: true, domain: true, status: true, createdAt: true } },
-      sessions: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: { id: true, mode: true, status: true, title: true, createdAt: true, report: { select: { score: true, band: true } } },
-      },
       memberships: { select: { groupCode: true, joinedAt: true, group: { select: { ownerId: true } } } },
       _count: { select: { sessions: true } },
     },
@@ -83,12 +80,32 @@ export async function getUser(id: string) {
     .then((u) => ({ disabled: u.disabled, lastSignInAt: u.metadata.lastSignInTime ?? null }))
     .catch(() => null);
 
-  const { memberships, sessions, _count, ...rest } = user;
+  const { memberships, _count, ...rest } = user;
   return {
     ...rest,
     totalSessions: _count.sessions,
-    sessions: sessions.map(({ report, ...s }) => ({ ...s, score: report?.score ?? null, band: report?.band ?? null })),
     groups: memberships.map((m) => ({ code: m.groupCode, role: m.group.ownerId === id ? "owner" : "member", joinedAt: m.joinedAt })),
     firebase,
+  };
+}
+
+// A student's sessions, newest first, a page at a time (the user sheet pages through them).
+export async function listUserSessions(id: string, page: number) {
+  const where = { userId: id };
+  const [total, sessions] = await Promise.all([
+    prisma.session.count({ where }),
+    prisma.session.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * SESSIONS_PAGE_SIZE,
+      take: SESSIONS_PAGE_SIZE,
+      select: { id: true, mode: true, status: true, title: true, createdAt: true, report: { select: { score: true, band: true } } },
+    }),
+  ]);
+  return {
+    total,
+    page,
+    pageSize: SESSIONS_PAGE_SIZE,
+    sessions: sessions.map(({ report, ...s }) => ({ ...s, score: report?.score ?? null, band: report?.band ?? null })),
   };
 }

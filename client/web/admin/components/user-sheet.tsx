@@ -1,45 +1,44 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 
+import { useAdmin } from "@/components/auth-gate"
+import { Pager } from "@/components/pager"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
-import { adminApi, type UserDetail } from "@/lib/api"
+import { Switch } from "@/components/ui/switch"
+import { useAdminData } from "@/hooks/use-admin-data"
+import { adminApi, type SessionPage, type UserDetail } from "@/lib/api"
 import { avatarUrl, formatDay, formatDayTime, initials, MODE_LABELS } from "@/lib/format"
 
-// One student, read-only: account, sign-in facts from Firebase, projects, recent sessions and groups.
-export function UserSheet({ id, onClose }: { id: string | null; onClose: () => void }) {
-  const [attempt, setAttempt] = useState(0)
-  // Each answer remembers which request it belongs to, so a new user or a retry shows the skeleton until its own arrives.
-  const key = `${id}#${attempt}`
-  const [result, setResult] = useState<{ key: string; user?: UserDetail; error?: string } | null>(null)
-  const current = result?.key === key ? result : null
-  const user = current?.user ?? null
-  const error = current?.error ?? ""
-
-  useEffect(() => {
-    if (!id) return
-    let alive = true
-    adminApi<UserDetail>(`/admin/users/${encodeURIComponent(id)}`)
-      .then((u) => alive && setResult({ key, user: u }))
-      .catch((e: Error) => alive && setResult({ key, error: e.message }))
-    return () => {
-      alive = false
-    }
-  }, [id, key])
+// One student: account, sign-in facts from Firebase, projects, sessions (paged on the server), groups, and the admin
+// actions (Premium, sign-in on or off, delete). Every action is recorded in the audit log by the server.
+export function UserSheet({ id, onClose, onChanged }: { id: string | null; onClose: () => void; onChanged: () => void }) {
+  const { data: user, error, reload } = useAdminData<UserDetail>(id ? `/admin/users/${encodeURIComponent(id)}` : null)
 
   return (
     <Sheet open={id !== null} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-md">
-        {error ? (
+        {error && !user ? (
           <div className="flex flex-col items-start gap-3 p-6">
             <SheetTitle>Couldn&apos;t load this user</SheetTitle>
             <p className="text-sm text-muted-foreground">{error}</p>
-            <Button variant="outline" size="sm" onClick={() => setAttempt((a) => a + 1)}>
+            <Button variant="outline" size="sm" onClick={reload}>
               Try again
             </Button>
           </div>
@@ -76,6 +75,18 @@ export function UserSheet({ id, onClose }: { id: string | null; onClose: () => v
             </SheetHeader>
 
             <div className="flex flex-col gap-6 px-6 pb-8">
+              <Actions
+                user={user}
+                onChanged={() => {
+                  reload()
+                  onChanged()
+                }}
+                onDeleted={() => {
+                  onChanged()
+                  onClose()
+                }}
+              />
+
               <Section title="Account">
                 <Facts
                   rows={[
@@ -110,34 +121,7 @@ export function UserSheet({ id, onClose }: { id: string | null; onClose: () => v
                 )}
               </Section>
 
-              <Section title={`Recent sessions (${user.sessions.length} of ${user.totalSessions})`}>
-                {user.sessions.length ? (
-                  <ul className="flex flex-col divide-y">
-                    {user.sessions.map((s) => (
-                      <li key={s.id} className="flex items-center gap-3 py-2 text-sm">
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{s.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {MODE_LABELS[s.mode]} · {formatDay(s.createdAt)}
-                          </p>
-                        </div>
-                        <span className="tabular-nums text-sm">
-                          {s.status === "ready" && s.score !== null ? (
-                            <>
-                              <span className="font-semibold">{s.score}</span>
-                              <span className="text-muted-foreground"> · {s.band}</span>
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">{s.status}</span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <Empty>No sessions yet.</Empty>
-                )}
-              </Section>
+              <Sessions userId={user.id} total={user.totalSessions} />
 
               <Section title={`Groups (${user.groups.length})`}>
                 {user.groups.length ? (
@@ -162,9 +146,192 @@ export function UserSheet({ id, onClose }: { id: string | null; onClose: () => v
   )
 }
 
+function Actions({ user, onChanged, onDeleted }: { user: UserDetail; onChanged: () => void; onDeleted: () => void }) {
+  const admin = useAdmin()
+  const [busy, setBusy] = useState<"premium" | "sign-in" | "delete" | null>(null)
+  const [error, setError] = useState("")
+  const [confirm, setConfirm] = useState<"disable" | "delete" | null>(null)
+  const [typed, setTyped] = useState("")
+  const path = `/admin/users/${encodeURIComponent(user.id)}`
+  const disabled = user.firebase?.disabled ?? false
+  const deleteWord = user.email ?? "delete"
+
+  if (user.id === admin.uid)
+    return (
+      <Section title="Actions">
+        <Empty>This is your own account; change it in the app instead.</Empty>
+      </Section>
+    )
+
+  const run = async (kind: "premium" | "sign-in" | "delete", call: () => Promise<unknown>, after: () => void) => {
+    setBusy(kind)
+    setError("")
+    try {
+      await call()
+      setConfirm(null)
+      after()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Section title="Actions">
+      <div className="flex items-center gap-3 text-sm">
+        <div className="flex-1">
+          <p className="font-medium">Premium</p>
+          <p className="text-xs text-muted-foreground">The simulated tier: every stage, three panelists, the full report.</p>
+        </div>
+        <Switch
+          checked={user.premium}
+          disabled={busy !== null}
+          aria-label="Premium"
+          onCheckedChange={(premium) => run("premium", () => adminApi(`${path}/premium`, { method: "PATCH", body: { premium } }), onChanged)}
+        />
+      </div>
+
+      {user.firebase ? (
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex-1">
+            <p className="font-medium">Sign-in</p>
+            <p className="text-xs text-muted-foreground">
+              {disabled ? "Turned off: the student can't sign in." : "On. Turning it off signs them out everywhere."}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy !== null}
+            onClick={() =>
+              disabled ? run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: false } }), onChanged) : setConfirm("disable")
+            }
+          >
+            {busy === "sign-in" ? "Saving…" : disabled ? "Turn on" : "Turn off"}
+          </Button>
+        </div>
+      ) : null}
+
+      <div className="flex items-center gap-3 text-sm">
+        <div className="flex-1">
+          <p className="font-medium">Delete account</p>
+          <p className="text-xs text-muted-foreground">Removes the sign-in account and all their data. Can&apos;t be undone.</p>
+        </div>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={busy !== null}
+          onClick={() => {
+            setTyped("")
+            setConfirm("delete")
+          }}
+        >
+          Delete
+        </Button>
+      </div>
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && busy === null && setConfirm(null)}>
+        <AlertDialogContent>
+          {confirm === "disable" ? (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Turn off sign-in?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {user.email ?? "This student"} is signed out on every device and can&apos;t sign in until you turn it back on. Their
+                  data stays.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy !== null}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={busy !== null}
+                  onClick={() => run("sign-in", () => adminApi(`${path}/sign-in`, { method: "PATCH", body: { disabled: true } }), onChanged)}
+                >
+                  {busy === "sign-in" ? "Turning off…" : "Turn off sign-in"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          ) : (
+            <>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this account?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The same as Delete my data in the app: the sign-in account, manuscript analyses, sessions, reports and group
+                  memberships are removed for good. Type <span className="font-medium text-foreground">{deleteWord}</span> to confirm.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Input value={typed} onChange={(e) => setTyped(e.target.value)} aria-label="Type to confirm" autoComplete="off" />
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy !== null}>Keep the account</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  disabled={busy !== null || typed.trim() !== deleteWord}
+                  onClick={() => run("delete", () => adminApi(path, { method: "DELETE" }), onDeleted)}
+                >
+                  {busy === "delete" ? "Deleting…" : "Delete for good"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </>
+          )}
+        </AlertDialogContent>
+      </AlertDialog>
+    </Section>
+  )
+}
+
+function Sessions({ userId, total }: { userId: string; total: number }) {
+  const [page, setPage] = useState(1)
+  const { data, error, reload } = useAdminData<SessionPage>(`/admin/users/${encodeURIComponent(userId)}/sessions?page=${page}`)
+  return (
+    <Section title={`Sessions (${total})`}>
+      {error && !data ? (
+        <div className="flex items-center gap-3 py-2 text-sm">
+          <span className="flex-1 text-muted-foreground">{error}</span>
+          <Button variant="outline" size="sm" onClick={reload}>
+            Try again
+          </Button>
+        </div>
+      ) : !data ? (
+        <Skeleton className="h-24 w-full" />
+      ) : data.sessions.length ? (
+        <>
+          <ul className="flex flex-col divide-y">
+            {data.sessions.map((s) => (
+              <li key={s.id} className="flex items-center gap-3 py-2 text-sm">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{s.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {MODE_LABELS[s.mode]} · {formatDay(s.createdAt)}
+                  </p>
+                </div>
+                <span className="text-sm tabular-nums">
+                  {s.status === "ready" && s.score !== null ? (
+                    <>
+                      <span className="font-semibold">{s.score}</span>
+                      <span className="text-muted-foreground"> · {s.band}</span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">{s.status}</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Pager page={page} total={data.total} pageSize={data.pageSize} onPage={setPage} />
+        </>
+      ) : (
+        <Empty>No sessions yet.</Empty>
+      )}
+    </Section>
+  )
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-3">
       <h3 className="text-sm font-semibold">{title}</h3>
       <Separator />
       {children}
