@@ -32,3 +32,6 @@ export function decorate(
 }
 
 export const PROJECT_ID = /^[A-Za-z0-9_-]{1,100}$/;
+
+// One group per student, on every plan (issue #12): a member or leader of one group can't join or start another.
+export const ONE_GROUP_MESSAGE = "You're already in a group. Leave it before joining or sharing another.";

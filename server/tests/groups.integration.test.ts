@@ -109,6 +109,18 @@ test.skipIf(process.env.DEEMO_GROUP_INTEGRATION !== "1")(
       const joinedRace = race[0].status === "fulfilled" && race[0].value.status === 200;
       expect(Number(joinedRace) + Number(race[1].status === "fulfilled")).toBe(1);
 
+      // One group per student on every plan (issue #12): a Premium leader of their own group can't join another, and a
+      // member can't start a second one.
+      const premium = await createStudent("Premium", { premium: true });
+      students.push(premium);
+      const ownId = await createProject(premium.uid);
+      const own = await request(premium.token, `/projects/${ownId}/group`, "POST");
+      expect(own.status).toBe(200);
+      const second = await request(premium.token, "/groups/join", "POST", { code });
+      expect(second.status).toBe(409);
+      expect(second.body.error).toContain("already in a group");
+      expect((await request(leader.token, "/groups/join", "POST", { code: own.body.group.code })).status).toBe(409);
+
       const exported = (await request(member.token, "/me/export")).body;
       expect(exported.name).toBe("Member");
       expect(exported.sessions.map((x: any) => x.id)).toContain(privateId);

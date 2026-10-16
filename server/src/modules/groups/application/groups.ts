@@ -4,7 +4,7 @@ import { defaultAvatar, type Account } from "../../identity/domain/account";
 import { MANUSCRIPT_LIMIT_MESSAGE, planOf } from "../../identity/domain/plan";
 import { projectRepo } from "../../manuscripts/infrastructure/project-repo";
 import { latestSharedScore } from "../../scoring/infrastructure/session-repo";
-import { CODE, MAX_MEMBERS, PROJECT_ID, newCode, sharedId } from "../domain/group";
+import { CODE, MAX_MEMBERS, ONE_GROUP_MESSAGE, PROJECT_ID, newCode, sharedId } from "../domain/group";
 import { groupRepo } from "../infrastructure/group-repo";
 import { accessibleProject } from "./access";
 
@@ -24,6 +24,7 @@ export async function createGroup(account: Account, projectId: string) {
         });
         if (!project) throw unavailable();
         if (project.group) return;
+        if (await tx.groupMember.count({ where: { userId: account.id } })) throw new AppError(409, ONE_GROUP_MESSAGE);
         if (!project.confirmedAt || !project.analysis) throw new AppError(400, "Review the manuscript summary before sharing it.");
         await tx.group.create({ data: { code, ownerId: account.id, projectId, members: { create: { userId: account.id } } } });
       });
@@ -44,6 +45,7 @@ export async function joinGroup(account: Account, code: string) {
     const id = sharedId(g.code, g.ownerId, uid, g.projectId);
     if (g.members.some((m) => m.userId === uid)) return id;
     if (g.members.length >= MAX_MEMBERS) throw new AppError(409, `This group is full (${MAX_MEMBERS} members).`);
+    if (await tx.groupMember.count({ where: { userId: uid } })) throw new AppError(409, ONE_GROUP_MESSAGE);
     const held = (await projectRepo.countHeld(tx, uid)) + (await groupRepo.countJoined(tx, uid));
     if (held >= planOf(account.premium).manuscripts) throw new AppError(403, MANUSCRIPT_LIMIT_MESSAGE);
     await tx.groupMember.create({ data: { groupCode: g.code, userId: uid } });
