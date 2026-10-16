@@ -72,6 +72,8 @@ export class GeminiEngine implements LiveEngine {
   private marker: string | null = null; // closing char of a transcript marker still open across chunks
   private nudged = false; // asked a silent panel to go ahead once this turn
   private asked = false; // a question was approved since the student's last turn
+  private spokeQuestion = false; // the panel's voice was heard after that approval
+  private quiet = false; // the panel ran on after its question: drop its voice and words until the student's turn
   private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private setup: SessionSetup) {}
@@ -253,7 +255,7 @@ export class GeminiEngine implements LiveEngine {
       return;
     }
     for (const part of c.modelTurn?.parts ?? []) if (part.inlineData?.data) this.play(part.inlineData.data);
-    const said = c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
+    const said = this.quiet ? "" : c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
     if (said?.trim()) this.emit({ type: "panelText", text: said });
     if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
     if (c.turnComplete) {
@@ -268,18 +270,16 @@ export class GeminiEngine implements LiveEngine {
     if (name === "ask_question") {
       if (this.ending !== "no")
         return { id, name, response: { allowed: false, instruction: "Practice has ended. Say only a short closing sentence." } };
-      // One question per panel turn. Approving a second one before the student answered let the panel run on by itself:
-      // it reacted to answers never given and asked question after question until it ended the session.
-      if (this.asked)
-        return {
-          id,
-          name,
-          response: {
-            allowed: false,
-            instruction:
-              "You already asked a question this turn. Do not ask another. If you have not said it out loud yet, say it now; otherwise stop talking and wait for the student's answer.",
-          },
-        };
+      // One question per panel turn. The model sometimes calls ask_question again for the question it just asked.
+      // Approving it let the panel run on (reacting to answers never given, question after question); refusing it with
+      // "say it now" made it repeat the question, and it once read the refusal out loud. So: a repeat before any of the
+      // question was heard is approved again, quietly (the first stays on screen); after that, the call is refused and
+      // whatever the panel still says this turn is dropped, unheard and untranscribed, until the student's turn.
+      if (this.asked) {
+        if (!this.spokeQuestion) return { id, name, response: { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." } };
+        this.quiet = true;
+        return { id, name, response: { allowed: false, instruction: "Already asked. Say nothing more this turn." } };
+      }
       const role = ROLES.indexOf(String(args.panelist));
       const q: AskQuestion = {
         topicId: String(args.topicId ?? "general"),
@@ -290,6 +290,7 @@ export class GeminiEngine implements LiveEngine {
       };
       if (this.canAsk(q)) {
         this.asked = true;
+        this.spokeQuestion = false;
         this.emit({ type: "ask", question: q });
         response = { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." }; // a bare ok sometimes ended the turn silently
       } else {
@@ -303,8 +304,10 @@ export class GeminiEngine implements LiveEngine {
       response = { ok: true, scheduling: "SILENT" };
     } else if (name === "end_session") {
       // Not while a question is still waiting for its answer (the same run-on, ending without the student).
-      if (this.asked)
-        return { id, name, response: { ok: false, instruction: "The student hasn't answered your question yet. Stop talking and wait for the answer." } };
+      if (this.asked) {
+        this.quiet = true;
+        return { id, name, response: { ok: false, instruction: "Not yet. Say nothing more this turn." } };
+      }
       if (this.ending === "no") {
         this.ending = "asked";
         this.emit({ type: "end" });
@@ -314,7 +317,8 @@ export class GeminiEngine implements LiveEngine {
   }
 
   private play(b64: string) {
-    if (!this.ctx || !this.voice) return;
+    if (!this.ctx || !this.voice || this.quiet) return;
+    if (this.asked) this.spokeQuestion = true;
     const samples = decodePcm16(b64);
     const buffer = this.ctx.createBuffer(1, samples.length, VOICE_RATE);
     buffer.copyToChannel(samples, 0);
@@ -378,6 +382,8 @@ export class GeminiEngine implements LiveEngine {
     this.turnDone = false;
     this.nudged = false;
     this.asked = false;
+    this.spokeQuestion = false;
+    this.quiet = false;
     this.awaitPanel();
     this.emit({ type: "level", value: 0 });
     this.emit({ type: "youDone" });

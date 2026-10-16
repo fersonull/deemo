@@ -83,22 +83,32 @@ test("the same start ID is sent on retries and resumption; quota errors stop ret
   }
 });
 
-test("one question per panel turn: a second ask or an early end waits for the student's answer", () => {
+test("one question per panel turn: a repeat before it's heard is fine; after it, the panel is cut off until the student's turn", () => {
   const engine = new GeminiEngine(setup);
-  const internals = engine as unknown as Internals & { endStudentTurn: () => void };
+  const internals = engine as unknown as Internals & { endStudentTurn: () => void; play: (b64: string) => void; quiet: boolean; queued: number };
   const events: LiveEvent[] = [];
   internals.emit = (e) => events.push(e);
   const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
+  const enqueued: unknown[] = [];
+  (internals as unknown as { ctx: object; voice: object }).ctx = { createBuffer: () => ({ copyToChannel: () => {} }), close: async () => {} };
+  (internals as unknown as { voice: object }).voice = { enqueueBuffer: (b: unknown) => enqueued.push(b), stop: () => {} };
   const ask = (topicId: string) =>
     internals.onToolCall({ id: topicId, name: "ask_question", args: { topicId, questionText: "Why?", questionType: "CONCEPTUAL", isFollowUp: false, panelist: "Chair" } })
       .response.allowed;
+  const voice = "AAAA"; // two silent PCM16 samples
   try {
     expect(ask("scope")).toBe(true);
-    expect(ask("method")).toBe(false); // the run-on: no answer yet
-    expect((internals.onToolCall({ id: "e", name: "end_session" }).response as { ok?: boolean }).ok).toBe(false);
+    expect(ask("scope")).toBe(true); // the same call again, nothing heard yet: approved, not counted twice
     expect(events.filter((e) => e.type === "ask")).toHaveLength(1);
+    internals.play(voice); // the question is heard
+    expect(ask("method")).toBe(false); // the run-on
+    expect(internals.quiet).toBe(true);
+    internals.play(voice); // whatever it says next is dropped
+    expect(enqueued).toHaveLength(1);
+    expect((internals.onToolCall({ id: "e", name: "end_session" }).response as { ok?: boolean }).ok).toBe(false);
     expect(events.some((e) => e.type === "end")).toBe(false);
     internals.endStudentTurn(); // the student answered
+    expect(internals.quiet).toBe(false);
     expect(ask("method")).toBe(true);
   } finally {
     engine.stop();

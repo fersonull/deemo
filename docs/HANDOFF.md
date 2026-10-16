@@ -42,6 +42,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-16 | **Fix: panel repeated its question / read the refusal aloud.** The model sometimes calls `ask_question` again for the question it just asked; the earlier refusal ("say it now") made it repeat the question and once speak the refusal. Now a repeat before any of the question is heard is approved again quietly (counted once); after the question is heard the call is refused and the panel is muted (`quiet`: its audio and transcript dropped) until the student's turn; an early `end_session` mutes it too. Prompt no longer mentions the app's rule. Test updated. | `client/mobile/Deemo/src/live/gemini-engine.ts`, `server/src/modules/practice/domain/panel.ts` |
 | 2026-10-16 | **Admin detail pages + breadcrumb**: a student and a session now open as full pages (`/users/[id]`, `/sessions/[id]`, two columns on wide screens) instead of right-hand sheets; every link points there (overview, audit, groups, manuscripts, palette). Header breadcrumb Admin › Section › item; the section crumb returns to the list with its search, filters and page (`useRememberList` in `components/breadcrumbs.tsx`). Admin files reformatted with the project Prettier config. | `client/web/admin` |
 | 2026-10-16 | **Fix: panel ran on after one answer.** The device approved every `ask_question`, so a second call in the same panel turn was told "say the question out loud now": the panel reacted to answers never given, asked question after question and ended the session. `GeminiEngine.onToolCall` now approves one question per panel turn (until the student's turn ends) and refuses `end_session` while a question is unanswered; the prompt says one question per turn. Regression test in `gemini-engine.test.ts`. JS + server prompt; restart the server, reload Metro. | `client/mobile/Deemo/src/live/gemini-engine.ts`, `server/src/modules/practice/domain/panel.ts` |
 | 2026-10-16 | **Merged `feat/admin` into `dev`** (user's request) and deleted the branch. Server checks re-run on `dev`: type check and 45 tests pass. | merge commit |
@@ -137,7 +138,7 @@ Older history: `git log dev`.
 
 ## Gotchas
 
-- **One question per panel turn is enforced on the device** (`asked` in `GeminiEngine`, reset in `endStudentTurn`). Any new path that hands the floor back to the student without `endStudentTurn` must reset it, or the panel's next question is refused.
+- **One question per panel turn is enforced on the device** (`asked`, `spokeQuestion`, `quiet` in `GeminiEngine`, all reset in `endStudentTurn`). Never word a tool refusal as something the model could say aloud or act on ("say it now"); mute instead. Any new path that hands the floor back to the student without `endStudentTurn` must reset it, or the panel's next question is refused.
 
 - **The admin never shows transcripts, answers or manuscript analyses** (students' unpublished work, RA 10173): the session sheet is the report summary only, Manuscripts is status only. Keep it that way unless every view is audited and the consent text says admins can see them.
 - **Web admin audit rows have no foreign keys** (`admin_actions`): they outlive a deleted student, and the target's email is copied in. Write every new admin action through `record()` in `server/src/modules/admin/application/actions.ts`.
