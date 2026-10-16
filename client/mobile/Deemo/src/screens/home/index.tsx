@@ -18,7 +18,7 @@ import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { useSession } from "@/hooks/use-session";
-import { useSpotlight, useSpotlightStyle } from "@/hooks/spotlight";
+import { useScrimStyle, useSpotlight } from "@/hooks/spotlight";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { homeBrief } from "@/utils/home-brief";
@@ -49,7 +49,7 @@ const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: 
 // when they first appear.
 export function Home() {
   const { name, email, avatar, premium } = useSession();
-  const { bottom } = useSafeAreaInsets();
+  const { bottom, top } = useSafeAreaInsets();
   const { list, loaded, error } = useSessions();
   const { projectId } = usePracticeSetup();
   const { projects: mine, loaded: projectsLoaded } = useProjects();
@@ -62,8 +62,10 @@ export function Home() {
   const reduced = useReducedMotion();
   const ready = loaded && projectsLoaded;
   // Once per launch: Deemo and its brief in the spotlight (hooks/spotlight.ts); offline ends it at once.
-  const { greet, end: endSpotlight } = useSpotlight(ready || (loaded && error));
-  const restStyle = useSpotlightStyle();
+  // Once per launch, after everything has loaded: a spotlight on Deemo and its brief (hooks/spotlight.ts). The scrim
+  // lies over the scroll content with the brief raised above it; a second strip covers the status bar area.
+  const { greet, end: endSpotlight } = useSpotlight(ready && !error);
+  const scrim = useScrimStyle();
 
   useFocusEffect(
     useCallback(() => {
@@ -86,15 +88,16 @@ export function Home() {
         refreshControl={refresh}
         onTouchStart={endSpotlight}
       >
-        <Animated.View style={[styles.head, restStyle]}>
+        <Animated.View pointerEvents="none" style={[styles.scrim, scrim]} />
+        <View style={styles.head}>
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
           </Text>
           <Avatar seed={avatar} name={name} email={email} size={42} premium={premium} />
-        </Animated.View>
+        </View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (
-          <Animated.View entering={riseIn(60, reduced)}>
+          <Animated.View entering={riseIn(60, reduced)} style={styles.lit}>
             <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} greet={greet} />
           </Animated.View>
         ) : (
@@ -106,7 +109,7 @@ export function Home() {
           </Skeleton>
         )}
 
-        <Animated.View style={restStyle}>
+        <View>
           <StartButton
             label={practiced ? "Start practice" : "Add your manuscript"}
             icon={practiced ? "mic" : "upload_file"}
@@ -198,8 +201,9 @@ export function Home() {
               ))}
             </>
           ) : null}
-        </Animated.View>
+        </View>
       </ScrollView>
+      <Animated.View pointerEvents="none" style={[styles.topScrim, { height: top }, scrim]} />
     </SafeAreaView>
   );
 }
@@ -208,6 +212,10 @@ const styles = StyleSheet.create({
   briefBones: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14 },
+  // Reaches far past the content on every side, so the whole screen darkens however far it scrolls.
+  scrim: { position: "absolute", top: -2000, bottom: -2000, left: -40, right: -40, backgroundColor: colors.scrim, zIndex: 1 },
+  lit: { zIndex: 2 },
+  topScrim: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: colors.scrim },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   bones: { gap: 8 },

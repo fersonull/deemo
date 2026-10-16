@@ -8,7 +8,7 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
 
 import { Blob } from "@/components/blob";
 import { Icon } from "@/components/icon";
-import { useSpotlightStyle } from "@/hooks/spotlight";
+import { useScrimStyle, useUnderScrimStyle } from "@/hooks/spotlight";
 import { useProjects } from "@/hooks/use-projects";
 import { useSessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts } from "@/theme";
@@ -33,7 +33,9 @@ export function TabBar({ state, descriptors, navigation }: Props) {
   const { bottom } = useSafeAreaInsets();
   const sessionsDown = useSessions().error;
   const projectsDown = useProjects().error;
-  const dim = useSpotlightStyle(); // Home's launch spotlight dims the bar too (hooks/spotlight.ts)
+  // Home's launch spotlight darkens the bar too, and the paper fade above it steps aside (hooks/spotlight.ts).
+  const scrim = useScrimStyle();
+  const under = useUnderScrimStyle();
 
   // When the current tab is showing the full-screen offline state (components/offline.tsx), the bar steps aside so
   // only the offline notice is visible. Profile has no offline state, so it keeps the bar.
@@ -69,16 +71,19 @@ export function TabBar({ state, descriptors, navigation }: Props) {
   const fadeHeight = tabBarSpace(bottom);
   return (
     <>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[`${colors.paper}00`, `${colors.paper}D9`, colors.paper]}
-        locations={[0, FADE / fadeHeight, 1]}
-        style={[styles.fade, { height: fadeHeight }]}
-      />
-      <Animated.View style={[styles.bar, { bottom: 12 + bottom }, dim]}>
+      <Animated.View pointerEvents="none" style={[styles.fade, { height: fadeHeight }, under]}>
+        <LinearGradient
+          pointerEvents="none"
+          colors={[`${colors.paper}00`, `${colors.paper}D9`, colors.paper]}
+          locations={[0, FADE / fadeHeight, 1]}
+          style={StyleSheet.absoluteFill}
+        />
+      </Animated.View>
+      <Animated.View style={[styles.bar, { bottom: 12 + bottom }]}>
         {state.routes.slice(0, 2).map((r, i) => tab(r, i))}
         <PracticeButton />
         {state.routes.slice(2).map((r, i) => tab(r, i + 2))}
+        <Animated.View pointerEvents="none" style={[styles.barScrim, scrim]} />
       </Animated.View>
     </>
   );
@@ -92,6 +97,7 @@ const GLOW = 132; // the glow's diameter, well past the button so its edge fades
 function PracticeButton() {
   const reduced = useReducedMotion();
   const glow = useSharedValue(0);
+  const scrim = useScrimStyle(); // the launch spotlight darkens it with the bar
   const halo = useAnimatedStyle(() => ({
     opacity: glow.value,
     transform: [{ scale: reduced ? 1 : 0.8 + 0.25 * glow.value }],
@@ -123,6 +129,9 @@ function PracticeButton() {
           <Icon name="mic" size={28} color={colors.paper} filled />
         </Blob>
       </Blob>
+      <Animated.View pointerEvents="none" style={[styles.practiceScrim, scrim]}>
+        <Blob width={78} height={70} color={colors.scrim} />
+      </Animated.View>
     </Pressable>
   );
 }
@@ -141,10 +150,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 8,
   },
+  barScrim: { position: "absolute", top: 0, bottom: 0, left: 0, right: 0, borderRadius: 35, backgroundColor: colors.scrim },
   tab: { width: 56, height: 56, alignItems: "center", justifyContent: "center", gap: 2 },
   label: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10 },
   // Raised well above the row, so Practice reads as the main action rather than a fifth tab.
   practice: { transform: [{ translateY: -26 }] },
+  practiceScrim: { position: "absolute", left: 0, top: 0 },
   // Centered on the button and larger than it; the button's own box doesn't clip it.
   glow: { position: "absolute", width: GLOW, height: GLOW, left: (78 - GLOW) / 2, top: (70 - GLOW) / 2 },
 });
