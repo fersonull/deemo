@@ -1,6 +1,6 @@
 import { AudioContext, type AnalyserNode, type AudioBufferQueueSourceNode } from "react-native-audio-api";
 
-import { type Difficulty, type Mode } from "@/constants";
+import { PANEL, type Difficulty, type Mode } from "@/constants";
 import { ApiError, api } from "@/utils/api";
 import { createNoiseGate } from "@/utils/noise-gate";
 import { decodePcm16, encodePcm16, utf8 } from "@/utils/pcm";
@@ -26,6 +26,7 @@ const RETRY_MS = 2000;
 const QUIET_TURN_MS = 5000; // a turn that ended without a voice: wait this long for late audio
 const CLOSE_GRACE_MS = 8000; // end_session but no spoken closing
 const PANEL_WAIT_MS = 15000; // 3.8 Live may stay silent (proactive audio); nudge it after this
+const STALL_MS = 12000; // the panel went quiet mid-turn and never sent turnComplete: treat the turn as over
 
 export type SessionSetup = {
   mode: Mode;
@@ -60,6 +61,7 @@ export class GeminiEngine implements LiveEngine {
   private passing = false; // this panelist is done: hand over once their turn settles
   private switching = false; // connecting the next panelist's session
   private prefetched: { seat: number; token: string; model: string; voice?: string; at: number } | null = null;
+  private stall: ReturnType<typeof setTimeout> | null = null;
   private ws: WebSocket | null = null;
   private ready = false; // setupComplete on the current socket
   private connected = false; // first setupComplete seen
@@ -117,6 +119,7 @@ export class GeminiEngine implements LiveEngine {
 
   finishTurn() {
     if (!this.studentFloor) return;
+    if (this.passing) return this.passAfterStudent();
     this.endStudentTurn();
     const last = this.gate.flush();
     if (last) this.sendMic(last);
@@ -130,6 +133,7 @@ export class GeminiEngine implements LiveEngine {
   sendText(text: string) {
     if (!this.studentFloor || !text.trim()) return;
     this.emit({ type: "youText", text: ` ${text.trim()}` });
+    if (this.passing) return this.passAfterStudent();
     this.gate.flush();
     this.endStudentTurn();
     this.sendTurn(text.trim());
@@ -170,6 +174,7 @@ export class GeminiEngine implements LiveEngine {
   stop() {
     if (this.stopped) return;
     this.stopped = true;
+    this.clearStall();
     if (this.lipSync) clearInterval(this.lipSync);
     this.lipSync = null;
     panelVoice.value = 0;
@@ -274,10 +279,22 @@ export class GeminiEngine implements LiveEngine {
 
   // The next panelist takes over: the current session closes, theirs opens in their voice, and once it's ready they're
   // told what was covered (note) and begin.
+  // The panelist handed over while the student held the floor: close their turn here, and the next panelist takes over
+  // (what they said is in the transcript and the handover note, not sent to the panelist who left).
+  private passAfterStudent() {
+    this.gate.flush();
+    this.activity = false;
+    this.endStudentTurn();
+    this.handOver();
+  }
+
   private handOver() {
     const from = this.seat;
     this.clearTimer();
+    this.clearStall();
     this.panelResponded();
+    this.studentFloor = false;
+    this.emit({ type: "level", value: 0 });
     const ws = this.ws;
     this.ws = null; // before close(): its onclose must not reconnect
     ws?.close();
@@ -347,6 +364,7 @@ export class GeminiEngine implements LiveEngine {
       if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
       return;
     }
+    if (c.modelTurn || c.outputTranscription) this.armStall();
     for (const part of c.modelTurn?.parts ?? []) if (part.inlineData?.data) this.play(part.inlineData.data);
     const said = this.quiet ? "" : c.outputTranscription?.text && this.stripMarkers(c.outputTranscription.text);
     if (said?.trim()) {
@@ -355,6 +373,7 @@ export class GeminiEngine implements LiveEngine {
     }
     if (c.inputTranscription?.text) this.emit({ type: "youText", text: c.inputTranscription.text });
     if (c.turnComplete) {
+      this.clearStall();
       this.turnDone = true;
       this.settle();
     }
@@ -422,6 +441,9 @@ export class GeminiEngine implements LiveEngine {
       if (!this.lastSeat) {
         this.passing = true;
         this.prefetch();
+        // It came after the turn ended and the floor went back to the student: if they haven't spoken, hand over now;
+        // if they're speaking, it happens when they finish (finishTurn).
+        if (this.studentFloor && !this.activity) this.handOver();
         return { id, name, response: { ok: true } };
       }
       return this.onToolCall({ id, name: "end_session", args }); // the last panelist ends the session
@@ -449,6 +471,30 @@ export class GeminiEngine implements LiveEngine {
     }
     const next = envelope(panelVoice.value, level);
     if (next !== panelVoice.value) panelVoice.value = next;
+  }
+
+  // A turn with no question that names the next panelist ("…I'll pass the questioning to Engr. Santos") is a handover
+  // even if the model never called pass_to_next.
+  private saidHandover() {
+    if (!this.sequential || this.lastSeat || this.asked) return false;
+    const next = PANEL[this.seat + 1]?.name;
+    return !!next && this.spoken.toLowerCase().includes(next.toLowerCase());
+  }
+
+  // Re-armed by every bit of panel output; if the panel goes quiet without ending its turn, end it here.
+  private armStall() {
+    this.clearStall();
+    this.stall = setTimeout(() => {
+      if (this.stopped || this.paused || this.studentFloor || this.turnDone) return;
+      this.turnDone = true;
+      this.queued = 0;
+      this.settle();
+    }, STALL_MS);
+  }
+
+  private clearStall() {
+    if (this.stall) clearTimeout(this.stall);
+    this.stall = null;
   }
 
   // A main question counts toward this panelist's share; reaching it fetches the next panelist's token early.
@@ -481,7 +527,7 @@ export class GeminiEngine implements LiveEngine {
       this.timer = setTimeout(() => this.finish(), 1200);
     } else if (this.ending === "asked") {
       this.timer = setTimeout(() => this.finish(), CLOSE_GRACE_MS); // the goodbye usually follows as its own turn
-    } else if (this.passing) {
+    } else if (this.passing || this.saidHandover()) {
       this.handOver();
     } else if (this.heard) {
       this.giveFloor();

@@ -100,9 +100,9 @@ export const PANEL_TOOLS = [
   },
   {
     name: "pass_to_next",
-    behavior: "NON_BLOCKING",
+    behavior: "BLOCKING", // called first, so the app knows before the handover line is spoken
     description:
-      "Multi-panelist sessions only: call once when you are satisfied with your part (or your share of questions is done), then say one short line handing over to the next panelist, and stop.",
+      "Multi-panelist sessions only: when you are satisfied with your part (or your share of questions is done), call this FIRST, then say one short line handing over to the next panelist, and stop. Ask nothing else in that turn.",
     parameters: { type: "OBJECT", properties: { reason: { type: "STRING" } } },
   },
   {
@@ -163,7 +163,7 @@ PANEL (one voice; the student sees who is asking):
     ? "- When the main questions are done, call end_session and say one short closing sentence. Never score or give results out loud."
     : last
       ? "- When your questions are done, call end_session and say one short closing sentence for the whole panel. Never score or give results out loud."
-      : `- When you are satisfied with your part, or after about ${mains} main questions, call pass_to_next and say one short line handing over to ${next!.name}, then stop. Never score or give results out loud.`
+      : `- When you are satisfied with your part, or after about ${mains} main questions, FIRST call pass_to_next, THEN say one short line handing over to ${next!.name} (no question in that turn), then stop. Never score or give results out loud.`
   return `${who}
 
 HOW THE SESSION RUNS

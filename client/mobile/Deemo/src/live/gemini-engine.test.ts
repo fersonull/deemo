@@ -168,3 +168,59 @@ test("in turns: each panelist asks their share, then the next takes over in thei
     timers.mockRestore();
   }
 });
+
+test("handover never strands the floor: a late pass_to_next, a spoken handover, or a stalled turn all move on", () => {
+  const make = () => {
+    const engine = new GeminiEngine({ ...setup, panelists: 2, minutes: 15 });
+    const i = engine as unknown as Internals & {
+      endStudentTurn: () => void;
+      settle: () => void;
+      armStall: () => void;
+      giveFloor: () => void;
+      seat: number;
+      spoken: string;
+      turnDone: boolean;
+      queued: number;
+    };
+    const events: LiveEvent[] = [];
+    i.emit = (e) => events.push(e);
+    i.ready = true;
+    i.ws = { send: () => {}, close: () => {} };
+    return { engine, i, events };
+  };
+  const jobs: { run: () => void; ms: number }[] = [];
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation(((run: () => void, ms: number) => {
+    jobs.push({ run, ms });
+    return jobs.length;
+  }) as typeof setTimeout);
+  try {
+    // 1. pass_to_next arrives after the floor went back to a student who hasn't spoken: hand over now.
+    const a = make();
+    a.i.giveFloor();
+    expect(a.i.studentFloor).toBe(true);
+    a.i.onToolCall({ id: "p", name: "pass_to_next" });
+    expect(a.i.seat).toBe(1);
+    expect(a.i.studentFloor).toBe(false);
+    expect(a.events.at(-1)).toEqual({ type: "handover", seat: 1 });
+    a.engine.stop();
+
+    // 2. No tool call, but the turn named the next panelist and asked nothing: a handover.
+    const b = make();
+    b.i.spoken = "I'm satisfied, so I will now pass the questioning to Engr. Santos.";
+    b.i.turnDone = true;
+    b.i.queued = 0;
+    b.i.settle();
+    expect(b.i.seat).toBe(1);
+    b.engine.stop();
+
+    // 3. The panel went quiet without turnComplete: after the stall the floor goes back to the student.
+    const c = make();
+    c.i.armStall();
+    (c.i as unknown as { heard: boolean }).heard = true;
+    jobs.filter((j) => j.ms === 12000).at(-1)!.run();
+    expect(c.i.studentFloor).toBe(true);
+    c.engine.stop();
+  } finally {
+    timers.mockRestore();
+  }
+});
