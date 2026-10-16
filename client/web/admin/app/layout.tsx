@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata = {
   title: "DEEMO admin",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster position="bottom-right" />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
