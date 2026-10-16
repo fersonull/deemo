@@ -2,6 +2,7 @@
 
 import { signOut } from "firebase/auth"
 import { KeyboardIcon, LogOutIcon, SearchIcon } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState, type ReactNode } from "react"
@@ -97,9 +98,14 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   tooltip="DEEMO admin"
                   render={<Link href="/overview" />}
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center bg-primary font-heading text-sm font-bold text-primary-foreground">
-                    D
-                  </span>
+                  {/* The DEEMO app icon in greyscale, to sit with the admin's neutral theme */}
+                  <Image
+                    src="/deemo-icon.png"
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="size-8 shrink-0"
+                  />
                   <span className="flex flex-col leading-tight">
                     <span className="font-heading font-semibold tracking-tight">
                       DEEMO
