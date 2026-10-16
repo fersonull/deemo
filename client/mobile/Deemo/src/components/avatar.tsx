@@ -10,12 +10,12 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Circle, ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { PremiumBadge } from "@/components/deemo/badge";
 import { colors, fonts } from "@/theme";
 import { avatarUrl } from "@/utils/avatar";
 import { initials } from "@/utils/initials";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 const SWEEP = Easing.bezier(0.77, 0, 0.175, 1); // the badge's glint curve
 
 type Props = {
@@ -27,8 +27,8 @@ type Props = {
 };
 
 // A student's face (DiceBear, see utils/avatar.ts). The initials sit underneath, so they show while the image loads,
-// before the account record arrives, offline, or if DiceBear is down. Premium students wear it in Deemo's medal ring,
-// with Deemo's badge (the gold medal on its ribbon) pinned to the rim at the top right.
+// before the account record arrives, offline, or if DiceBear is down. For Premium students the avatar is the body of
+// Deemo's medal: the gold ring is its rim, and the medal's two ribbon tails hang behind it below.
 export function Avatar({ seed, name, email = null, size, premium }: Props) {
   const [failed, setFailed] = useState<string | null>(null); // the seed whose image failed
   const band = premium ? ringWidth(size) : 0;
@@ -36,6 +36,7 @@ export function Avatar({ seed, name, email = null, size, premium }: Props) {
   const round = { width: face, height: face, borderRadius: face / 2 };
   return (
     <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      {premium ? <RibbonTails size={size} /> : null}
       <View style={[styles.avatar, round]}>
         <Text style={[styles.initials, { fontSize: face * 0.36 }]}>{initials(name, email)}</Text>
         {seed && failed !== seed ? (
@@ -48,31 +49,23 @@ export function Avatar({ seed, name, email = null, size, premium }: Props) {
         ) : null}
       </View>
       {premium ? <MedalRing size={size} band={band} /> : null}
-      {premium ? <PinnedBadge size={size} band={band} /> : null}
     </View>
   );
 }
 
-// Deemo's badge pinned on the ring at about half past one, overhanging the avatar's box (nothing clips it). The badge
-// is drawn around (0, 0): medal r 9, ribbon tails down to y 16, its sparkle up to y -13 (viewBox below). The medal is
-// about a third of the avatar wide: 14 px on a 42 px avatar, 38 px on the 112 px preview.
-const VIEW = { x: -14, y: -14, w: 28, h: 31 };
-function PinnedBadge({ size, band }: { size: number; band: number }) {
-  const reduced = useReducedMotion();
-  const w = size * 0.53;
-  const h = (w * VIEW.h) / VIEW.w;
-  const r = size / 2 - band / 2; // on the ring's middle
-  const x = size / 2 + r * Math.cos(Math.PI / 4);
-  const y = size / 2 - r * Math.sin(Math.PI / 4);
+// The medal's ribbon tails (as on components/deemo/badge.tsx: a deep-gold tail and a gold one, each with a V cut),
+// starting behind the avatar and hanging about a fifth of its size below it. They overhang the avatar's box (nothing
+// clips them), so the medal keeps the avatar's layout size.
+function RibbonTails({ size: s }: { size: number }) {
+  const c = s / 2;
+  const tail = (dir: 1 | -1) => {
+    const x = (k: number) => c + dir * k * s;
+    return `M${x(0.3)} ${c + 0.25 * s} L${x(0.37)} ${s + 0.2 * s} L${x(0.25)} ${s + 0.12 * s} L${x(0.15)} ${s + 0.24 * s} L${x(0.04)} ${c + 0.38 * s}Z`;
+  };
   return (
-    <Svg
-      width={w}
-      height={h}
-      viewBox={`${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`}
-      style={{ position: "absolute", left: x - (w * -VIEW.x) / VIEW.w, top: y - (h * -VIEW.y) / VIEW.h }}
-      pointerEvents="none"
-    >
-      <PremiumBadge cx={0} cy={0} still={reduced} />
+    <Svg width={s} height={s * 1.3} style={{ position: "absolute", left: 0, top: 0 }} pointerEvents="none">
+      <Path d={tail(-1)} fill={colors.goldInk} />
+      <Path d={tail(1)} fill={colors.gold} />
     </Svg>
   );
 }
@@ -82,8 +75,8 @@ const ringWidth = (size: number) => Math.max(4, Math.round(size * 0.105));
 
 // Deemo's Premium medal (components/deemo/badge.tsx) as a ring: polished gold (light at the top left, deep gold at
 // the bottom right), goldInk bevels at both edges and a goldLight hairline inside. Like the badge, a glint sweeps
-// across it every 6–9 s (a timer, not a frame loop); the pinned badge has its own glint and sparkle. Reduce motion
-// keeps it still. Rings in a row start at different times, so a group card never flashes in unison.
+// across it every 6–9 s (a timer, not a frame loop) and a small sparkle flares at the rim; reduce motion keeps it
+// still. Rings in a row start at different times, so a group card never flashes in unison.
 function MedalRing({ size, band }: { size: number; band: number }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const reduced = useReducedMotion();
@@ -109,9 +102,16 @@ function MedalRing({ size, band }: { size: number; band: number }) {
     x: -size * 0.4 + size * 1.8 * shine.value,
     opacity: shine.value > 0 && shine.value < 1 ? 1 : 0,
   }));
+  const sparkle = useAnimatedProps(() => ({ opacity: Math.max(0, 1 - Math.abs(shine.value - 0.7) * 5) }));
 
   // The band's shape, for clipping the glint: the outer circle minus the inner one.
   const circle = (r: number) => `M${c - r} ${c} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
+  // A four-point sparkle on the rim at the top right (about 1–2 o'clock), scaled with the band.
+  const sx = c + (c - band / 2) * Math.cos(-Math.PI / 4);
+  const sy = c + (c - band / 2) * Math.sin(-Math.PI / 4);
+  const k = Math.max(3, band * 0.9);
+  const star = `M${sx} ${sy - k} Q${sx + k * 0.15} ${sy - k * 0.15} ${sx + k} ${sy} Q${sx + k * 0.15} ${sy + k * 0.15} ${sx} ${sy + k} Q${sx - k * 0.15} ${sy + k * 0.15} ${sx - k} ${sy} Q${sx - k * 0.15} ${sy - k * 0.15} ${sx} ${sy - k}Z`;
+
   return (
     <Svg width={size} height={size} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
@@ -149,6 +149,7 @@ function MedalRing({ size, band }: { size: number; band: number }) {
           />
         </G>
       </G>
+      <AnimatedPath animatedProps={sparkle} d={star} fill={colors.paper} opacity={0} />
     </Svg>
   );
 }
