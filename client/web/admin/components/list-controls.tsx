@@ -5,10 +5,24 @@ import { useEffect, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import { Kbd } from "@/components/ui/kbd"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // The list's search box: searches after a short pause, "/" focuses it (the shell's shortcut), Esc leaves it.
-export function ListSearch({ value, onSearch, placeholder }: { value: string; onSearch: (q: string) => void; placeholder: string }) {
+export function ListSearch({
+  value,
+  onSearch,
+  placeholder,
+}: {
+  value: string
+  onSearch: (q: string) => void
+  placeholder: string
+}) {
   const [draft, setDraft] = useState(value)
   useEffect(() => {
     if (draft === value) return
@@ -47,7 +61,11 @@ export function FilterSelect({
   className?: string
 }) {
   return (
-    <Select items={options} value={value} onValueChange={(v) => onChange(v as string)}>
+    <Select
+      items={options}
+      value={value}
+      onValueChange={(v) => onChange(v as string)}
+    >
       <SelectTrigger className={className} aria-label={label}>
         <SelectValue />
       </SelectTrigger>
@@ -63,12 +81,24 @@ export function FilterSelect({
 }
 
 // Shown when a list fails to load: what went wrong and a retry.
-export function LoadError({ what, error, onRetry }: { what: string; error: string; onRetry: () => void }) {
+export function LoadError({
+  what,
+  error,
+  onRetry,
+}: {
+  what: string
+  error: string
+  onRetry: () => void
+}) {
   return (
     <div className="flex flex-col items-start gap-3 border p-6">
       <p className="text-sm font-medium">Couldn&apos;t load {what}</p>
       <p className="text-sm text-muted-foreground">{error}</p>
-      <button type="button" onClick={onRetry} className="text-sm font-medium underline underline-offset-4">
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-sm font-medium underline underline-offset-4"
+      >
         Try again
       </button>
     </div>

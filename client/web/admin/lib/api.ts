@@ -1,18 +1,27 @@
 import { getAuth } from "@/lib/firebase"
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000").replace(/\/$/, "")
+const BASE = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
+).replace(/\/$/, "")
 
 // Calls the server's admin API with the signed-in admin's Firebase ID token. GET by default; `send` for changes.
-export async function adminApi<T>(path: string, init?: { method: "PATCH" | "POST" | "DELETE"; body?: object }): Promise<T> {
+export async function adminApi<T>(
+  path: string,
+  init?: { method: "PATCH" | "POST" | "DELETE"; body?: object }
+): Promise<T> {
   const token = await getAuth().currentUser?.getIdToken()
   if (!token) throw new Error("Sign in first.")
   const res = await fetch(`${BASE}${path}`, {
     method: init?.method ?? "GET",
-    headers: { Authorization: `Bearer ${token}`, ...(init?.body && { "content-type": "application/json" }) },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(init?.body && { "content-type": "application/json" }),
+    },
     body: init?.body ? JSON.stringify(init.body) : undefined,
   })
   const body = await res.json().catch(() => null)
-  if (!res.ok) throw new Error(body?.error ?? `The server answered ${res.status}.`)
+  if (!res.ok)
+    throw new Error(body?.error ?? `The server answered ${res.status}.`)
   return body as T
 }
 
@@ -37,14 +46,23 @@ export type UserRow = {
 
 export type UserPage = Paged & { users: UserRow[] }
 
-export type UserDetail = Omit<UserRow, "projects" | "sessions" | "lastSessionAt"> & {
+export type UserDetail = Omit<
+  UserRow,
+  "projects" | "sessions" | "lastSessionAt"
+> & {
   allowTyping: boolean
   consentVersion: string | null
   consentAt: string | null
   sessionDay: string | null
   sessionCount: number
   totalSessions: number
-  projects: { id: string; name: string; domain: string; status: "analyzing" | "ready" | "failed"; createdAt: string }[]
+  projects: {
+    id: string
+    name: string
+    domain: string
+    status: "analyzing" | "ready" | "failed"
+    createdAt: string
+  }[]
   groups: { code: string; role: "owner" | "member"; joinedAt: string }[]
   firebase: { disabled: boolean; lastSignInAt: string | null } | null
 }
@@ -83,13 +101,36 @@ export type AuditPage = Paged & { actions: AdminAction[] }
 export type Person = { id: string; email: string | null; name: string | null }
 
 export type Overview = {
-  counts: { users: number; verified: number; premium: number; newThisWeek: number; sessionsThisWeek: number }
+  counts: {
+    users: number
+    verified: number
+    premium: number
+    newThisWeek: number
+    sessionsThisWeek: number
+  }
   readiness: { average: number | null; scored: number; days: number }
   signups: { day: string; n: number }[]
   sessions: { day: string; n: number }[]
   attention: {
-    projects: { id: string; name: string; status: string; error: string | null; updatedAt: string; stuck: boolean; user: Person }[]
-    sessions: { id: string; title: string; mode: SessionRow["mode"]; status: string; error: string | null; updatedAt: string; stuck: boolean; user: Person }[]
+    projects: {
+      id: string
+      name: string
+      status: string
+      error: string | null
+      updatedAt: string
+      stuck: boolean
+      user: Person
+    }[]
+    sessions: {
+      id: string
+      title: string
+      mode: SessionRow["mode"]
+      status: string
+      error: string | null
+      updatedAt: string
+      stuck: boolean
+      user: Person
+    }[]
   }
 }
 
@@ -135,8 +176,17 @@ export type SessionReport = {
     answered: number
     planned: number
     model: string | null
-    criteria: { name: string; weight: number; level: number | null; why: string }[]
-    contradictions: { spokenClaim: string; manuscriptEvidence: string; severity: "LOW" | "MEDIUM" | "HIGH" }[]
+    criteria: {
+      name: string
+      weight: number
+      level: number | null
+      why: string
+    }[]
+    contradictions: {
+      spokenClaim: string
+      manuscriptEvidence: string
+      severity: "LOW" | "MEDIUM" | "HIGH"
+    }[]
     fixes: { text: string }[]
   } | null
 }
@@ -163,8 +213,18 @@ export type AdminGroup = {
   createdAt: string
   owner: Person
   project: { id: string; name: string }
-  members: { shareScore: boolean; focusArea: string; joinedAt: string; user: Person }[]
+  members: {
+    shareScore: boolean
+    focusArea: string
+    joinedAt: string
+    user: Person
+  }[]
 }
 export type AdminGroupPage = Paged & { groups: AdminGroup[] }
 
-export type AdminAccount = { uid: string; email: string | null; name: string | null; lastSignInAt: string | null }
+export type AdminAccount = {
+  uid: string
+  email: string | null
+  name: string | null
+  lastSignInAt: string | null
+}

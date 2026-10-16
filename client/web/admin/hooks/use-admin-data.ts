@@ -8,14 +8,21 @@ import { adminApi } from "@/lib/api"
 // keeps the current rows on screen while the fresh ones load. `path: null` fetches nothing.
 export function useAdminData<T>(path: string | null) {
   const [attempt, setAttempt] = useState(0)
-  const [result, setResult] = useState<{ path: string; attempt: number; data?: T; error?: string } | null>(null)
+  const [result, setResult] = useState<{
+    path: string
+    attempt: number
+    data?: T
+    error?: string
+  } | null>(null)
 
   useEffect(() => {
     if (!path) return
     let alive = true
     adminApi<T>(path)
       .then((data) => alive && setResult({ path, attempt, data }))
-      .catch((e: Error) => alive && setResult({ path, attempt, error: e.message }))
+      .catch(
+        (e: Error) => alive && setResult({ path, attempt, error: e.message })
+      )
     return () => {
       alive = false
     }

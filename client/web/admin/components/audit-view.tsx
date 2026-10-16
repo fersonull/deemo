@@ -3,16 +3,27 @@
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
+import { useRememberList } from "@/components/breadcrumbs"
 import { Pager } from "@/components/pager"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { useAdminData } from "@/hooks/use-admin-data"
 import type { AdminAction, AuditPage } from "@/lib/api"
 import { formatDayTime } from "@/lib/format"
 
-const LABELS: Record<AdminAction["action"], { label: string; destructive?: boolean }> = {
+const LABELS: Record<
+  AdminAction["action"],
+  { label: string; destructive?: boolean }
+> = {
   premium_on: { label: "Premium on" },
   premium_off: { label: "Premium off" },
   sign_in_disabled: { label: "Sign-in turned off", destructive: true },
@@ -26,20 +37,27 @@ const LABELS: Record<AdminAction["action"], { label: string; destructive?: boole
 
 // Every change an admin made, newest first, 25 to a page (from the server).
 export function AuditView() {
+  useRememberList()
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
   const page = Math.max(1, Number(params.get("page")) || 1)
-  const { data, error, reload } = useAdminData<AuditPage>(`/admin/audit?page=${page}`)
+  const { data, error, reload } = useAdminData<AuditPage>(
+    `/admin/audit?page=${page}`
+  )
 
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
-        {data ? `${data.total.toLocaleString()} ${data.total === 1 ? "change" : "changes"} recorded` : "Every change an admin makes is recorded here."}
+        {data
+          ? `${data.total.toLocaleString()} ${data.total === 1 ? "change" : "changes"} recorded`
+          : "Every change an admin makes is recorded here."}
       </p>
       {error && !data ? (
         <div className="flex flex-col items-start gap-3 border p-6">
-          <p className="text-sm font-medium">Couldn&apos;t load the audit log</p>
+          <p className="text-sm font-medium">
+            Couldn&apos;t load the audit log
+          </p>
           <p className="text-sm text-muted-foreground">{error}</p>
           <Button variant="outline" size="sm" onClick={reload}>
             Try again
@@ -67,25 +85,49 @@ export function AuditView() {
                   ))
                 : data.actions.map((a) => (
                     <TableRow key={a.id}>
-                      <TableCell className="whitespace-nowrap tabular-nums">{formatDayTime(a.createdAt)}</TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">
+                        {formatDayTime(a.createdAt)}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={LABELS[a.action]?.destructive ? "destructive" : "outline"}>{LABELS[a.action]?.label ?? a.action}</Badge>
+                        <Badge
+                          variant={
+                            LABELS[a.action]?.destructive
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {LABELS[a.action]?.label ?? a.action}
+                        </Badge>
                       </TableCell>
                       <TableCell className="max-w-64">
-                        {["account_deleted", "admin_granted", "admin_revoked"].includes(a.action) ? (
-                          <span className="truncate text-muted-foreground">{a.targetEmail ?? a.targetId}</span>
+                        {[
+                          "account_deleted",
+                          "admin_granted",
+                          "admin_revoked",
+                        ].includes(a.action) ? (
+                          <span className="truncate text-muted-foreground">
+                            {a.targetEmail ?? a.targetId}
+                          </span>
                         ) : (
-                          <Link href={`/users?user=${encodeURIComponent(a.targetId)}`} className="truncate underline-offset-4 hover:underline">
+                          <Link
+                            href={`/users/${encodeURIComponent(a.targetId)}`}
+                            className="truncate underline-offset-4 hover:underline"
+                          >
                             {a.targetEmail ?? a.targetId}
                           </Link>
                         )}
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground md:table-cell">{a.adminEmail ?? a.adminId}</TableCell>
+                      <TableCell className="hidden text-muted-foreground md:table-cell">
+                        {a.adminEmail ?? a.adminId}
+                      </TableCell>
                     </TableRow>
                   ))}
               {data && !data.actions.length ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={4}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
                     No changes yet.
                   </TableCell>
                 </TableRow>
@@ -99,7 +141,11 @@ export function AuditView() {
           page={page}
           total={data.total}
           pageSize={data.pageSize}
-          onPage={(p) => router.replace(p > 1 ? `${pathname}?page=${p}` : pathname, { scroll: false })}
+          onPage={(p) =>
+            router.replace(p > 1 ? `${pathname}?page=${p}` : pathname, {
+              scroll: false,
+            })
+          }
         />
       ) : null}
     </div>

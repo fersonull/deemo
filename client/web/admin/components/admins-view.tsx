@@ -27,7 +27,9 @@ import { formatDayTime } from "@/lib/format"
 // reaches the person when they next sign in. Every grant and removal goes to the audit log.
 export function AdminsView() {
   const me = useAdmin()
-  const { data, error, reload } = useAdminData<{ admins: AdminAccount[] }>("/admin/admins")
+  const { data, error, reload } = useAdminData<{ admins: AdminAccount[] }>(
+    "/admin/admins"
+  )
   const [email, setEmail] = useState("")
   const [busy, setBusy] = useState(false)
   const [removing, setRemoving] = useState<AdminAccount | null>(null)
@@ -56,17 +58,31 @@ export function AdminsView() {
           e.preventDefault()
           const value = email.trim()
           if (value)
-            void act(() => adminApi("/admin/admins", { method: "POST", body: { email: value } }), `${value} is now an admin. They'll get access after signing in again.`).then(
-              (ok) => ok && setEmail(""),
-            )
+            void act(
+              () =>
+                adminApi("/admin/admins", {
+                  method: "POST",
+                  body: { email: value },
+                }),
+              `${value} is now an admin. They'll get access after signing in again.`
+            ).then((ok) => ok && setEmail(""))
         }}
       >
         <label htmlFor="grant" className="text-sm font-semibold">
           Add an admin
         </label>
-        <p className="text-xs text-muted-foreground">They need to have signed in to the DEEMO app or this admin once.</p>
+        <p className="text-xs text-muted-foreground">
+          They need to have signed in to the DEEMO app or this admin once.
+        </p>
         <div className="flex gap-2">
-          <Input id="grant" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" autoComplete="off" />
+          <Input
+            id="grant"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@example.com"
+            autoComplete="off"
+          />
           <Button type="submit" disabled={busy || !email.trim()}>
             {busy && !removing ? "Adding…" : "Add"}
           </Button>
@@ -80,17 +96,28 @@ export function AdminsView() {
       ) : (
         <ul className="flex flex-col divide-y border">
           {data.admins.map((a) => (
-            <li key={a.uid} className="flex flex-wrap items-center gap-3 p-3 text-sm">
+            <li
+              key={a.uid}
+              className="flex flex-wrap items-center gap-3 p-3 text-sm"
+            >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">
-                  {a.name ?? a.email ?? a.uid} {a.uid === me.uid ? <Badge variant="outline">You</Badge> : null}
+                  {a.name ?? a.email ?? a.uid}{" "}
+                  {a.uid === me.uid ? (
+                    <Badge variant="outline">You</Badge>
+                  ) : null}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {a.email} · last sign-in {formatDayTime(a.lastSignInAt)}
                 </p>
               </div>
               {a.uid === me.uid ? null : (
-                <Button variant="outline" size="sm" disabled={busy} onClick={() => setRemoving(a)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setRemoving(a)}
+                >
                   Remove
                 </Button>
               )}
@@ -99,12 +126,16 @@ export function AdminsView() {
         </ul>
       )}
 
-      <AlertDialog open={removing !== null} onOpenChange={(o) => !o && !busy && setRemoving(null)}>
+      <AlertDialog
+        open={removing !== null}
+        onOpenChange={(o) => !o && !busy && setRemoving(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove admin access?</AlertDialogTitle>
             <AlertDialogDescription>
-              {removing?.email ?? "They"} will be signed out of the admin right away. Their DEEMO app account isn&apos;t affected.
+              {removing?.email ?? "They"} will be signed out of the admin right
+              away. Their DEEMO app account isn&apos;t affected.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -114,7 +145,14 @@ export function AdminsView() {
               disabled={busy}
               onClick={() =>
                 removing &&
-                act(() => adminApi(`/admin/admins/${encodeURIComponent(removing.uid)}`, { method: "DELETE" }), `${removing.email ?? "They"} no longer have admin access.`)
+                act(
+                  () =>
+                    adminApi(
+                      `/admin/admins/${encodeURIComponent(removing.uid)}`,
+                      { method: "DELETE" }
+                    ),
+                  `${removing.email ?? "They"} no longer have admin access.`
+                )
               }
             >
               {busy ? "Removing…" : "Remove access"}

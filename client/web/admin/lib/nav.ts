@@ -1,4 +1,12 @@
-import { FileTextIcon, GaugeIcon, MicIcon, ScrollTextIcon, ShieldIcon, UsersIcon, UsersRoundIcon } from "lucide-react"
+import {
+  FileTextIcon,
+  GaugeIcon,
+  MicIcon,
+  ScrollTextIcon,
+  ShieldIcon,
+  UsersIcon,
+  UsersRoundIcon,
+} from "lucide-react"
 
 // The admin's sections, in sidebar order. `key` is the second key of its "G then …" shortcut.
 export const NAV = [

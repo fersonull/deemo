@@ -26,7 +26,9 @@ export function ThemeMenu() {
   const current = THEMES.find((t) => t.value === theme) ?? THEMES[2]
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<SidebarMenuButton tooltip={`Theme: ${current.label}`} />}>
+      <DropdownMenuTrigger
+        render={<SidebarMenuButton tooltip={`Theme: ${current.label}`} />}
+      >
         <current.icon />
         <span>Theme: {current.label}</span>
       </DropdownMenuTrigger>
@@ -34,7 +36,10 @@ export function ThemeMenu() {
         <DropdownMenuGroup>
           <DropdownMenuLabel>Theme</DropdownMenuLabel>
         </DropdownMenuGroup>
-        <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as string)}>
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(v) => setTheme(v as string)}
+        >
           {THEMES.map((t) => (
             <DropdownMenuRadioItem key={t.value} value={t.value}>
               <t.icon />

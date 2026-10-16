@@ -3,10 +3,18 @@
 import Link from "next/link"
 
 import { FilterSelect, ListSearch, LoadError } from "@/components/list-controls"
+import { useRememberList } from "@/components/breadcrumbs"
 import { Pager } from "@/components/pager"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { useAdminData } from "@/hooks/use-admin-data"
 import { useUrlParams } from "@/hooks/use-url-params"
 import type { AdminProjectPage } from "@/lib/api"
@@ -19,20 +27,37 @@ const STATUSES = [
   { value: "failed", label: "Failed" },
 ]
 
-const size = (bytes: number) => (bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`)
+const size = (bytes: number) =>
+  bytes >= 1_048_576
+    ? `${(bytes / 1_048_576).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`
 
 // Every uploaded manuscript with its analysis status, and the reason when it failed. The analysis itself isn't shown.
 export function ProjectsView() {
+  useRememberList()
   const { get, page, update, query } = useUrlParams()
-  const { data, error, reload } = useAdminData<AdminProjectPage>(`/admin/projects?${query(["q", "status"])}`)
+  const { data, error, reload } = useAdminData<AdminProjectPage>(
+    `/admin/projects?${query(["q", "status"])}`
+  )
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <ListSearch value={get("q")} onSearch={(q) => update({ q })} placeholder="Search by project, file or student" />
-        <FilterSelect label="Status" value={get("status", "all")} options={STATUSES} onChange={(v) => update({ status: v })} />
+        <ListSearch
+          value={get("q")}
+          onSearch={(q) => update({ q })}
+          placeholder="Search by project, file or student"
+        />
+        <FilterSelect
+          label="Status"
+          value={get("status", "all")}
+          options={STATUSES}
+          onChange={(v) => update({ status: v })}
+        />
         <p className="ml-auto text-sm text-muted-foreground tabular-nums">
-          {data ? `${data.total.toLocaleString()} ${data.total === 1 ? "manuscript" : "manuscripts"}` : ""}
+          {data
+            ? `${data.total.toLocaleString()} ${data.total === 1 ? "manuscript" : "manuscripts"}`
+            : ""}
         </p>
       </div>
 
@@ -69,7 +94,10 @@ export function ProjectsView() {
                         </p>
                       </TableCell>
                       <TableCell className="max-w-48">
-                        <Link href={`/users?user=${encodeURIComponent(p.user.id)}`} className="truncate underline-offset-4 hover:underline">
+                        <Link
+                          href={`/users/${encodeURIComponent(p.user.id)}`}
+                          className="truncate underline-offset-4 hover:underline"
+                        >
                           {displayName(p.user)}
                         </Link>
                       </TableCell>
@@ -79,23 +107,38 @@ export function ProjectsView() {
                             <Badge variant="destructive" className="w-fit">
                               {p.stuck ? "Stuck" : "Failed"}
                             </Badge>
-                            {p.error ? <span className="text-xs whitespace-normal text-muted-foreground">{p.error}</span> : null}
+                            {p.error ? (
+                              <span className="text-xs whitespace-normal text-muted-foreground">
+                                {p.error}
+                              </span>
+                            ) : null}
                           </div>
                         ) : p.status === "analyzing" ? (
                           <Badge variant="outline">Analyzing</Badge>
                         ) : (
-                          <span className="text-sm text-muted-foreground">{p.confirmedAt ? "Confirmed" : "Analyzed, not confirmed"}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {p.confirmedAt
+                              ? "Confirmed"
+                              : "Analyzed, not confirmed"}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="hidden max-w-48 lg:table-cell">
-                        <span className="truncate text-sm text-muted-foreground">{p.rubric ?? "Default criteria"}</span>
+                        <span className="truncate text-sm text-muted-foreground">
+                          {p.rubric ?? "Default criteria"}
+                        </span>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">{formatDay(p.createdAt)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {formatDay(p.createdAt)}
+                      </TableCell>
                     </TableRow>
                   ))}
               {data && !data.projects.length ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
                     No manuscripts match.
                   </TableCell>
                 </TableRow>
@@ -105,7 +148,14 @@ export function ProjectsView() {
         </div>
       )}
 
-      {data ? <Pager page={page} total={data.total} pageSize={data.pageSize} onPage={(p) => update({ page: String(p) })} /> : null}
+      {data ? (
+        <Pager
+          page={page}
+          total={data.total}
+          pageSize={data.pageSize}
+          onPage={(p) => update({ page: String(p) })}
+        />
+      ) : null}
     </div>
   )
 }
