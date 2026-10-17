@@ -17,11 +17,26 @@ export function NoticeDelivery({ enabled }: { enabled: boolean }) {
   const held = path === "/session" || path === "/mic-check" || path === "/scoring";
   const uid = enabled ? getAuth().currentUser?.uid : undefined;
   usePushNotices(enabled && !!uid);
+  // Notices already waiting when the app opened (launch or back from the background) stay in the inbox; push
+  // notifications covered them. Only ones that arrive while the app is open float in as Deemo.
+  const [waiting, setWaiting] = useState<{ uid: string; ids: Set<string> } | null>(null);
 
   useEffect(() => {
-    const sub = AppState.addEventListener("change", (s) => setActive(s === "active"));
+    const sub = AppState.addEventListener("change", (s) => {
+      setActive(s === "active");
+      if (s !== "active") setWaiting(null);
+    });
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    if (!uid || !active) return;
+    let live = true;
+    void notices.refresh().then(() => {
+      if (live) setWaiting({ uid, ids: new Set(notices.store.get().notices.map((n) => n.id)) });
+    });
+    return () => { live = false; };
+  }, [uid, active]);
 
   useEffect(() => { notices.reset(uid ?? null); }, [uid]);
 
@@ -66,7 +81,8 @@ export function NoticeDelivery({ enabled }: { enabled: boolean }) {
     return () => { stopped = true; controller?.abort(); if (timer) clearTimeout(timer); };
   }, [uid, active, held]);
 
-  const unread = state.notices.filter((n) => !n.readAt && !state.dismissed.includes(n.id));
+  const opened = waiting && waiting.uid === uid ? waiting.ids : null;
+  const unread = state.notices.filter((n) => !n.readAt && !state.dismissed.includes(n.id) && opened && !opened.has(n.id));
   const current = unread[0];
   if (!enabled || !active || held || state.owner !== uid || path.startsWith("/notice") || !current) return null;
   return (
