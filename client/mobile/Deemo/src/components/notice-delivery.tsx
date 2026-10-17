@@ -7,6 +7,7 @@ import { AppState } from "react-native";
 import { FloatingNotice } from "@/components/floating-notice";
 import { API_URL } from "@/constants";
 import { notices, useNotices } from "@/hooks/use-notices";
+import { usePushNotices } from "@/hooks/use-push-notices";
 import { noticeFrames } from "@/utils/notice-stream";
 
 export function NoticeDelivery({ enabled }: { enabled: boolean }) {
@@ -15,6 +16,7 @@ export function NoticeDelivery({ enabled }: { enabled: boolean }) {
   const state = useNotices();
   const held = path === "/session" || path === "/mic-check" || path === "/scoring";
   const uid = enabled ? getAuth().currentUser?.uid : undefined;
+  usePushNotices(enabled && !!uid);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (s) => setActive(s === "active"));

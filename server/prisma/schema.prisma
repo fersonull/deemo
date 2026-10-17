@@ -73,6 +73,7 @@ model User {
   notices     Notice[]
   noticeReads NoticeRead[]
   noticeInbox NoticeRecipient[]
+  pushTokens  PushToken[]
 
   @@map("users")
 }
@@ -396,6 +397,19 @@ model Notice {
   @@index([createdAt])
   @@index([targetId, createdAt])
   @@map("notices")
+}
+
+// A phone's Firebase Cloud Messaging token, so notices reach it while the app is closed. One row per device; a
+// token that signs in to another account moves to it.
+model PushToken {
+  token     String   @id @db.VarChar(512)
+  userId    String   @map("user_id") @db.VarChar(128)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
 }
 
 // Who a filtered notice went to, fixed when it was sent.

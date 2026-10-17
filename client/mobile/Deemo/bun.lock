@@ -13,6 +13,7 @@
         "@react-native-community/netinfo": "12.0.1",
         "@react-native-firebase/app": "^26.4.0",
         "@react-native-firebase/auth": "^26.4.0",
+        "@react-native-firebase/messaging": "26.4.0",
         "expo": "~57.0.27",
         "expo-constants": "~57.0.21",
         "expo-dev-client": "~57.0.19",
@@ -496,6 +497,8 @@
     "@react-native-firebase/app": ["@react-native-firebase/app@26.4.0", "", { "dependencies": { "firebase": "12.17.1" }, "peerDependencies": { "expo": ">=47.0.0", "react": "*", "react-native": "*" }, "optionalPeers": ["expo"] }, "sha512-lqs9vgPcniEw5a+NPRjGNXCQKwuGdVJoSB0iW0HvExR7aGEON/VZYOtSfElBCj3zTwQSiN732zREmqmKrW7Ixw=="],
 
     "@react-native-firebase/auth": ["@react-native-firebase/auth@26.4.0", "", { "dependencies": { "@expo/plist": "^0.8.1" }, "peerDependencies": { "@react-native-firebase/app": "26.4.0", "expo": ">=47.0.0" }, "optionalPeers": ["expo"] }, "sha512-uNOI7UpR2jzrLQMRwRiIM/mgVkj18j0DQiP/jy8ZiryPJanYS1qmIOk3q2glFvJ8mlYfLCGZgBkIOpV9hwFLWQ=="],
+
+    "@react-native-firebase/messaging": ["@react-native-firebase/messaging@26.4.0", "", { "peerDependencies": { "@react-native-firebase/app": "26.4.0", "expo": ">=47.0.0" }, "optionalPeers": ["expo"] }, "sha512-OmUyc/C6urbzBbOlUQP2sob71gn2irbbWQQtK8VPCh/rwdCTw1YMhVA+CR7NroKTHKnU+iOyGYVohbxFQlGVLA=="],
 
     "@react-native-masked-view/masked-view": ["@react-native-masked-view/masked-view@0.3.2", "", { "peerDependencies": { "react": ">=16", "react-native": ">=0.57" } }, "sha512-XwuQoW7/GEgWRMovOQtX3A4PrXhyaZm0lVUiY8qJDvdngjLms9Cpdck6SmGAUNqQwcj2EadHC1HwL0bEyoa/SQ=="],
 

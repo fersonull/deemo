@@ -20,6 +20,7 @@ import {
 } from "react-native-nitro-google-signin";
 
 import type { Course } from "@/constants";
+import { forgetPushToken } from "@/hooks/use-push-notices";
 import { api } from "@/utils/api";
 import { cleanName } from "@/utils/auth-form";
 import { createStore } from "@/utils/store";
@@ -216,6 +217,7 @@ export const session = {
   },
 
   async signOut() {
+    await forgetPushToken(); // while still signed in, so the server knows whose token it is
     await google()
       .signOut()
       .catch(() => {}); // not signed in with Google

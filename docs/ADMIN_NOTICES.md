@@ -26,6 +26,24 @@ Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merg
 - **Recipients are fixed at send time:** the server resolves the matching students into `notice_recipients` when the notice is sent. A student who matches later doesn't receive it, and history shows the filters and **Sent to N**.
 - **No email-verification filter:** unverified students can't reach any signed-in route, so they could never read the notice.
 
+## Push notifications (app closed or in the background)
+
+Branch `feat/notice-push`, on top of `feat/notice-audiences`. **It needs a native rebuild** for the new `@react-native-firebase/messaging` module and the `POST_NOTIFICATIONS` permission in `app.json`.
+
+- **Registering the phone:** once the student is signed in, the app asks for notification permission on Android 13+ (Android shows the prompt at most twice). It saves the phone's FCM token (`PUT /notices/push-token`) and re-saves it whenever Firebase rotates it. Refusing permission just keeps notices in the app.
+- **Sending:** after a notice is saved (new sends only, not retries), the server sends it through Firebase Admin (`notices/infrastructure/push.ts`) to:
+  - the named student's phones for a one-student notice;
+  - the recipients' phones for a filtered notice;
+  - every non-deleted student's phones for a broadcast.
+- **What it looks like:** the notification shows the title and the first ~160 characters of the message. A push failure never fails the send, because the inbox has the notice anyway.
+- **Cleanup:** tokens FCM rejects for good (uninstalled app, rotated token) are deleted. Signing out deletes this phone's token first (`DELETE /notices/push-token`). A token that signs in to another account moves to it (upsert by token), and account deletion cascades.
+- **Tapping a notification:** it opens the notice screen (`/notice?id=`), from the background (`onNotificationOpenedApp`) or from a closed app (`getInitialNotification`, once per launch).
+- **App open:** there's no system notification while the app is open (the floating Deemo shows it), so a live session is never interrupted by one.
+- **Not done yet:**
+  - A monochrome notification icon: Android uses the app icon, which may show as a plain shape. Setting one needs a drawable resource (for example through the `expo-notifications` plugin's `icon`) and a rebuild.
+  - A named notification channel: FCM's default channel shows as "Miscellaneous" in Android settings.
+- **Firebase setup:** the Firebase project's Cloud Messaging API (V1) must be enabled. It usually is by default; check it in Google Cloud console → APIs. The existing service account (`FIREBASE_SERVICE_ACCOUNT`) can send.
+
 ## Delivery and storage
 
 - Only verified, signed-in students use the student API. The existing Firebase admin claim protects composing and sent history. No tokens are put into URLs.
@@ -48,6 +66,7 @@ Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merg
 | GET | `/notices?before=UUID` | Verified student | Own inbox page, unread count, next cursor |
 | POST | `/notices/:id/read` | Verified recipient | Idempotent read receipt; another student's private ID returns 404 |
 | GET | `/notices/stream` | Verified student | SSE inbox invalidations |
+| PUT / DELETE | `/notices/push-token` | Verified student | `{ token }`: save or remove this phone's FCM token |
 
 The normal `/api` prefix is supported. Keep streaming unbuffered in any reverse proxy (`text/event-stream`, no transform/cache; the response includes `X-Accel-Buffering: no`). A healthy stream writes its first frame immediately. Test through the actual tunnel/host before merging, as proxy buffering can delay events.
 
@@ -73,6 +92,7 @@ Use disposable student accounts; avoid broadcasting test text to real students. 
 - [ ] Retry an uncertain send and confirm one stored notice and one audit row. Confirm a student token cannot POST `/admin/notices`.
 - [ ] Check two server processes against the test database and the actual proxy for cross-instance updates and unbuffered SSE.
 - [ ] Apply `20261017180000_notice_segments`, send to a filtered group (e.g. Plan: Free + Practice: Never) and check that only matching test students get it, that the composer count matches **Sent to N**, and that a student who matches afterwards doesn't see it.
+- [ ] After the native rebuild, apply `20261017200000_push_tokens` and allow notifications. With the app closed, send a private notice and a broadcast: both arrive in the tray, and tapping opens that notice. Also check: with the app open, there's no system notification (only the floating Deemo); after signing out, no more notifications arrive; after uninstalling, the token row disappears on the next send.
 - [ ] Check inbox scrolling, expanded long messages, large font sizes, banner close target and safe-area placement on the phone.
 
 These are feature acceptance checks, not a claim of completed device or database integration testing.

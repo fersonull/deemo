@@ -5,8 +5,9 @@ import { claimsOf } from "../../../shared/auth/authenticate";
 import { rateLimit } from "../../../shared/rate-limit";
 import { bodyOf, validate } from "../../../shared/validate";
 import { accountOf } from "../../identity/http/gates";
-import { audienceCount, readNotice, sendNotice, sentNotices } from "../application/notices";
+import { audienceCount, dropPushToken, readNotice, savePushToken, sendNotice, sentNotices } from "../application/notices";
 import { AudienceInput, InboxQuery, NoticeId, NoticeInput } from "../domain/notice";
+import { PushTokenInput } from "../domain/push";
 import { inbox, noticeHub } from "../infrastructure/notice-repo";
 
 export const noticesRouter = Router();
@@ -16,6 +17,15 @@ noticesRouter.get("/notices", validate({ query: InboxQuery }), async (req, res) 
 
 noticesRouter.post("/notices/:id/read", validate({ params: NoticeId }), async (req, res) => {
   await readNotice(accountOf(req).id, (req.params as z.infer<typeof NoticeId>).id);
+  res.json({ ok: true });
+});
+
+noticesRouter.put("/notices/push-token", validate({ body: PushTokenInput }), async (req, res) => {
+  await savePushToken(accountOf(req).id, bodyOf(req, PushTokenInput).token);
+  res.json({ ok: true });
+});
+noticesRouter.delete("/notices/push-token", validate({ body: PushTokenInput }), async (req, res) => {
+  await dropPushToken(accountOf(req).id, bodyOf(req, PushTokenInput).token);
   res.json({ ok: true });
 });
 

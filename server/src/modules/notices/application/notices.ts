@@ -4,9 +4,12 @@ import { isDuplicate, prisma, withSerializable } from "../../../shared/prisma";
 import { record } from "../../admin/application/actions";
 import { sameNotice, segmentText, segmentWhere, visibleTo, type NoticeInput, type Segment } from "../domain/notice";
 import { noticeHub } from "../infrastructure/notice-repo";
+import { pushNotice } from "../infrastructure/push";
 
 export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
+  let fresh = false; // created by this call, not a retry of one already sent
   const notice = await withSerializable(async (tx) => {
+    fresh = false;
     const existing = await tx.notice.findUnique({ where: { id: input.id } });
     if (existing) {
       if (!sameNotice(existing, input, admin.uid)) throw new AppError(409, "This notice was already sent with different content. Start a new notice.");
@@ -24,6 +27,7 @@ export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
     const created = await tx.notice.create({ data: { ...input, segment: segmentText(input.segment), createdBy: admin.uid } });
     if (recipients.length) await tx.noticeRecipient.createMany({ data: recipients.map((u) => ({ noticeId: input.id, userId: u.id })) });
     await record(admin, "notice_sent", { id: input.targetId ?? (input.segment ? `segment:${recipients.length}` : "all"), email: null }, tx);
+    fresh = true;
     return created;
   }).catch(async (error: unknown) => {
     if (!isDuplicate(error)) throw error;
@@ -32,6 +36,7 @@ export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
     return existing;
   });
   noticeHub.notify(notice.targetId);
+  if (fresh) void pushNotice(notice).catch((e: unknown) => console.error("notice push failed:", e));
   return { id: notice.id };
 }
 
@@ -65,3 +70,9 @@ export async function sentNotices(page: number) {
 
 // How many students a set of filters reaches right now (the composer shows it before sending).
 export const audienceCount = (segment: Segment) => prisma.user.count({ where: segmentWhere(segment) });
+
+// The phone's push token, saved on sign-in and removed on sign-out. Upserted by token, so a phone that signs in to
+// another account stops getting the previous one's notices.
+export const savePushToken = (uid: string, token: string) =>
+  prisma.pushToken.upsert({ where: { token }, create: { token, userId: uid }, update: { userId: uid } });
+export const dropPushToken = (uid: string, token: string) => prisma.pushToken.deleteMany({ where: { token, userId: uid } });
