@@ -21,6 +21,16 @@
         "dev"
       ],
       "port": 3001
+    },
+    {
+      "name": "site",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd=client/web/site",
+        "dev"
+      ],
+      "port": 5056
     }
   ]
 }

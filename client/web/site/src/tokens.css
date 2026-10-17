@@ -1,0 +1,50 @@
+/* DEEMO's design tokens, ported from client/mobile/Deemo/src/colors.ts + theme.ts (also mirrored in
+   client/web/presentation/styles.css — keep all three in step if a value changes). Light only, like the app. */
+:root {
+  --paper: #f7f3ec;
+  --sand: #ede5d8;
+  --banner: #f1e6d6;
+  --ink: #2a2420;
+  --ink-soft: #3e3731;
+  --ink-muted: #5e554d;
+  --muted: #8a7f74;
+  --faint: #b0a698;
+  --border: rgba(42, 36, 32, 0.12);
+
+  --dusk: #5a66c7;
+  --dusk-icon: #4d57b7;
+  --dusk-link: #4851b0;
+  --dusk-ink: #343996;
+  --dusk-tint: #dce3ff;
+  --dusk-soft: #cfd6f3;
+
+  --amber: #ebb353;
+  --amber-ink: #6c4302;
+  --amber-tint: #f7e1c0;
+  --warn: #875814;
+
+  --sage: #4a9266;
+  --sage-ink: #2a7449;
+  --sage-tint: #cbefd6;
+  --sage-soft: #bee2c9;
+
+  --gold: #d9a521;
+  --gold-light: #f6dc86;
+  --gold-ink: #8c6310;
+
+  --chair: #e4d9c6;
+
+  --r-sm: 12px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-pill: 29px;
+  --blob: 58% 42% 52% 48% / 55% 50% 50% 45%;
+
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --body: "DM Sans", system-ui, sans-serif;
+  --mono: "DM Mono", ui-monospace, monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  color-scheme: light;
+}

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DEEMO — practice your capstone defense with an AI panel</title>
+  <meta name="description" content="DEEMO reads your manuscript, builds the right panel for your field, and runs a voice mock defense that catches contradictions and scores you against your rubric." />
+  <meta property="og:title" content="DEEMO — an AI panel that has actually read your paper" />
+  <meta property="og:description" content="Practice your capstone defense out loud. Any course, any field — DEEMO builds the right panel for your manuscript." />
+  <meta property="og:type" content="website" />
+  <!-- og:image added once a real share-card asset exists (docs/HANDOFF.md) -->
+  <meta name="theme-color" content="#F7F3EC" />
+  <link rel="icon" type="image/svg+xml" href="/deemo-mark.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Sans:ital,wght@0,400..700;1,400..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL@0..1" rel="stylesheet" />
+  <script type="module" src="/src/main.ts"></script>
+</head>
+<body>
+  <a class="vh" href="#hero-title">Skip to content</a>
+
+  <nav class="nav" aria-label="Primary">
+    <img class="nav__mark" src="/deemo-mark.svg" alt="" width="26" height="26" />
+    <span class="vh">DEEMO</span>
+    <div class="nav__links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#plans">Plans</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="btn btn--primary" href="#download" data-download-cta>Get the app</a>
+  </nav>
+
+  <main>
+    <section id="hero">
+      <div class="wrap hero">
+        <div class="hero__copy">
+          <span class="eyebrow"><span class="icon" aria-hidden="true">mic</span> AI mock defense panel</span>
+          <h1 id="hero-title">Practice your capstone defense with an AI panel that has actually read your paper.</h1>
+          <p class="lede">Upload your manuscript and DEEMO builds a panel for it: the right questions for your field,
+            asked out loud, with follow-ups that stay bounded and a panelist who catches it the moment your spoken
+            answer contradicts your own paper.</p>
+          <div class="hero__cta">
+            <a class="btn btn--primary" href="#download" data-download-cta>
+              <span class="icon" aria-hidden="true">download</span> Get the app
+            </a>
+            <a class="btn btn--ghost" href="#how">See how it works</a>
+          </div>
+        </div>
+
+        <div class="hero__demo card" data-reveal>
+          <div class="deemo deemo--hero" id="hero-deemo">
+            <div class="deemo__owl" aria-hidden="true"></div>
+            <div class="deemo__say"></div>
+          </div>
+
+          <p class="hero__demo-label eyebrow">Build your panel: what's your course?</p>
+          <div class="chips" id="course-chips" role="radiogroup" aria-label="Your course"></div>
+
+          <ul class="panel-demo" id="panel-demo" aria-live="polite"></ul>
+          <p class="hero__demo-note">This is the real logic DEEMO's panel uses. Pick any course and watch it reassemble.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">How a session works</span>
+          <h2>From manuscript to mock panel in five steps.</h2>
+          <p class="lede">Every step runs on your phone the same way a real defense would — DEEMO just makes sure you've rehearsed it first.</p>
+        </div>
+        <div class="flow" id="flow">
+          <ol class="flow__steps" id="flow-steps"></ol>
+          <div class="flow__visual card" id="flow-visual" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Features</span>
+          <h2>Everything a real panel would do to you — on your schedule.</h2>
+        </div>
+        <div class="grid grid--features" id="feature-grid"></div>
+      </div>
+    </section>
+
+    <section id="scope">
+      <div class="wrap wrap--narrow">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Be honest with yourself</span>
+          <h2>What DEEMO is — and what it isn't.</h2>
+        </div>
+        <div class="scope-cols" id="scope-cols" data-reveal></div>
+      </div>
+    </section>
+
+    <section id="plans">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Free vs Premium</span>
+          <h2>Start free. Go unlimited when you're serious.</h2>
+        </div>
+        <div class="plans" id="plans-grid"></div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="wrap wrap--narrow">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">FAQ</span>
+          <h2>Questions worth asking before your real panel does.</h2>
+        </div>
+        <div id="faq-list"></div>
+      </div>
+    </section>
+
+    <section id="download">
+      <div class="wrap footer-cta" data-reveal>
+        <div class="deemo deemo--footer" id="footer-deemo">
+          <div class="deemo__owl" aria-hidden="true"></div>
+        </div>
+        <h2>Ready to face the panel?</h2>
+        <p class="lede">Built for 4th-year BSIT capstone students at PMFTCI. Open to any course's manuscript.</p>
+        <div id="download-area"></div>
+        <ul class="footer-links">
+          <li><a href="https://fersonull.github.io/deemo/" target="_blank" rel="noopener">Watch the defense deck</a></li>
+          <li><a href="https://github.com/fersonull/deemo" target="_blank" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
