@@ -12,6 +12,7 @@ export const LIMITS = {
   rubricMap: { limit: 20, windowMs: 60 * 60_000 },
   scoring: { limit: 30, windowMs: 60 * 60_000 }, // saved sessions and rescoring
   groupJoin: { limit: 10, windowMs: 60_000 }, // code guesses
+  noticeSend: { limit: 10, windowMs: 60_000 }, // per administrator, broadcast or private
   liveToken: { limit: 10, windowMs: 60_000 }, // bursts; the daily practice cap is separate (practice module)
 } as const;
 

@@ -9,6 +9,7 @@ import { session, useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { trackTouch } from "@/hooks/touch-point";
 import { colors } from "@/theme";
+import { NoticeDelivery } from "@/components/notice-delivery";
 
 // Hold the splash until Firebase says whether someone is still signed in (no flash of the welcome screen).
 void SplashScreen.preventAutoHideAsync();
@@ -78,12 +79,14 @@ export default function RootLayout() {
           <Stack.Screen name="practice" />
           <Stack.Screen name="rubric" />
           <Stack.Screen name="premium" />
+          <Stack.Screen name="notices" />
           <Stack.Screen name="results" />
           <Stack.Screen name="mic-check" />
           <Stack.Screen name="session" options={{ gestureEnabled: false }} />
           <Stack.Screen name="scoring" options={{ gestureEnabled: false }} />
         </Stack.Protected>
       </Stack>
+      <NoticeDelivery enabled={inside && accountLoaded && !needsConsent && !needsCourse} />
     </View>
   );
 }

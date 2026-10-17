@@ -10,6 +10,7 @@ import { getSessionReport, listGroups, listProjects, listSessions } from "../app
 import { overview } from "../application/overview";
 import { getUser, listUserSessions, listUsers } from "../application/users";
 import { requireAdmin } from "./gate";
+import { adminNoticesRouter } from "../../notices/http/routes";
 
 // The web admin's API (client/web/admin): overview, users (and their actions), sessions, manuscripts, groups, admins and
 // the audit log. Admins sign in with the same Firebase project; only accounts with
@@ -30,6 +31,7 @@ adminRouter.use("/admin", (req, res, next) => {
 });
 
 adminRouter.use("/admin", authenticate, requireAdmin);
+adminRouter.use(adminNoticesRouter);
 
 const ListQuery = z.object({
   q: z.string().trim().max(100).optional().transform((q) => q || undefined),

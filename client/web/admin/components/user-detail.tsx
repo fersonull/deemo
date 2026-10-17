@@ -97,6 +97,17 @@ export function UserDetailView({ id }: { id: string }) {
         </div>
       </header>
 
+      <div>
+        <Button
+          variant="outline"
+          render={
+            <Link href={`/notices?user=${encodeURIComponent(user.id)}`} />
+          }
+        >
+          Send notice
+        </Button>
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="flex flex-col gap-8">
           <Actions

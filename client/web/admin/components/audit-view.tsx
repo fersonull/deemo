@@ -33,6 +33,7 @@ const LABELS: Record<
   session_rescored: { label: "Session scored again" },
   admin_granted: { label: "Admin access given" },
   admin_revoked: { label: "Admin access removed", destructive: true },
+  notice_sent: { label: "Notice sent" },
 }
 
 // Every change an admin made, newest first, 25 to a page (from the server).
@@ -100,11 +101,18 @@ export function AuditView() {
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-64">
-                        {[
-                          "account_deleted",
-                          "admin_granted",
-                          "admin_revoked",
-                        ].includes(a.action) ? (
+                        {a.action === "notice_sent" && a.targetId === "all" ? (
+                          <Link
+                            href="/notices"
+                            className="truncate underline-offset-4 hover:underline"
+                          >
+                            All students
+                          </Link>
+                        ) : [
+                            "account_deleted",
+                            "admin_granted",
+                            "admin_revoked",
+                          ].includes(a.action) ? (
                           <span className="truncate text-muted-foreground">
                             {a.targetEmail ?? a.targetId}
                           </span>

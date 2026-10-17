@@ -70,6 +70,8 @@ model User {
   liveStarts  LiveStart[]
   ownedGroups Group[]
   memberships GroupMember[]
+  notices     Notice[]
+  noticeReads NoticeRead[]
 
   @@map("users")
 }
@@ -374,4 +376,34 @@ model AdminAction {
 
   @@index([createdAt])
   @@map("admin_actions")
+}
+
+// targetId null = everyone; a private notice is deleted with its recipient's account.
+model Notice {
+  id           String   @id @db.VarChar(36)
+  title        String   @db.VarChar(120)
+  body         String   @db.VarChar(2000)
+  targetId     String?  @map("target_id") @db.VarChar(128)
+  createdBy    String   @map("created_by") @db.VarChar(128)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  target User?        @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  reads  NoticeRead[]
+
+  @@index([createdAt])
+  @@index([targetId, createdAt])
+  @@map("notices")
+}
+
+model NoticeRead {
+  userId   String   @map("user_id") @db.VarChar(128)
+  noticeId String   @map("notice_id") @db.VarChar(36)
+  readAt   DateTime @default(now()) @map("read_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, noticeId])
+  @@index([readAt])
+  @@map("notice_reads")
 }

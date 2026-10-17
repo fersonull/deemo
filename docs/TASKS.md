@@ -21,6 +21,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Planned features not built yet
 
+- [x] **Admin notices — implemented on `codex/admin-notices`, not merged:** broadcast or one student, composer preview/search, sent/read history and audit entry; persistent mobile inbox and banners; foreground SSE, held during practice. Unit/type/lint checks and admin webpack build pass. New additive migration not applied; acceptance checks below remain open. Setup: `docs/ADMIN_NOTICES.md`. **User explicitly requested no merge to dev yet.**
+- [ ] **Admin notices acceptance:** apply migration in a test environment; verify actual admin/student auth and private audience isolation, broadcast, read persistence, session deferral, reconnect/account switch, pagination and proxy/two-instance delivery on the phone (`docs/ADMIN_NOTICES.md`).
 - [x] **Panel-defense presentation deck** (not in the plan doc; requested directly): static HTML/CSS/JS slide deck at `client/web/presentation/` for presenting DEEMO to the capstone panel, themed with the app's design tokens, deployed to GitHub Pages via `.github/workflows/deploy-presentation.yml`. Chapter II/III competitor and market slides are placeholders pending the group's actual paper text.
 - [x] **Deck redesign: "the deck is a defense"**: each slide is a panel question with the answer underneath, a session HUD (elapsed time + Title/Pre-Oral/Final track), 14 slides in varied layouts.
 - [x] **Deck rebuild with three.js + GSAP**: 1920×1080 stage, one 3D phone that flies between slides and changes screens (canvas-drawn app screens), vendored libraries for offline presenting.

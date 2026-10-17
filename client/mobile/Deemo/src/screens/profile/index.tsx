@@ -4,6 +4,7 @@ import { StyleSheet, Switch, Text, TextInput, View } from "react-native";
 
 import { Avatar } from "@/components/avatar";
 import { CoursePicker } from "@/components/course-picker";
+import { useNotices } from "@/hooks/use-notices";
 import { AvatarSheet } from "./avatar-sheet";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -26,6 +27,7 @@ const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions
 // answers), your data (download, delete) and sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
+  const { unread } = useNotices();
   const { name, email, avatar, premium, allowTyping, course } = useSession();
   const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | null>(null);
   const [courseError, setCourseError] = useState("");
@@ -137,6 +139,11 @@ export function Profile() {
 
       <Text style={[type.label, styles.section]}>SETTINGS</Text>
       <View style={styles.group}>
+        <PressableScale accessibilityRole="button" accessibilityLabel={`Inbox, ${unread} unread notices`} onPress={() => router.push("/notices")} style={styles.row}>
+          <Icon name="inbox" size={22} color={colors.duskIcon} />
+          <View style={styles.flex}><Text style={styles.rowLabel}>Inbox</Text><Text style={styles.meta}>{unread ? `${unread} unread notices` : "Messages from DEEMO"}</Text></View>
+          <Icon name="chevron_right" size={20} color={colors.muted} />
+        </PressableScale>
         <PressableScale
           accessibilityRole="button"
           accessibilityHint="Change your course"

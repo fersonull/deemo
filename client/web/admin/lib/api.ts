@@ -93,6 +93,7 @@ export type AdminAction = {
     | "session_rescored"
     | "admin_granted"
     | "admin_revoked"
+    | "notice_sent"
   targetId: string
   targetEmail: string | null
   createdAt: string
@@ -100,6 +101,18 @@ export type AdminAction = {
 export type AuditPage = Paged & { actions: AdminAction[] }
 
 export type Person = { id: string; email: string | null; name: string | null }
+
+export type SentNoticePage = Paged & {
+  notices: {
+    id: string
+    title: string
+    body: string
+    targetId: string | null
+    target: Person | null
+    createdAt: string
+    readCount: number
+  }[]
+}
 
 export type Overview = {
   counts: {

@@ -1,6 +1,6 @@
 import type { AuthClaims } from "../../../shared/auth/authenticate";
 import { AppError } from "../../../shared/errors";
-import { prisma } from "../../../shared/prisma";
+import { prisma, type Tx } from "../../../shared/prisma";
 import { deleteAccount, resetDailyCount, setPremium, setSignInDisabled } from "../../identity/application/accounts";
 import { rescore } from "../../scoring/application/sessions";
 import { STUCK_MS } from "./overview";
@@ -17,7 +17,8 @@ export type AdminActionKind =
   | "daily_reset"
   | "session_rescored"
   | "admin_granted"
-  | "admin_revoked";
+  | "admin_revoked"
+  | "notice_sent";
 
 export const AUDIT_PAGE_SIZE = 25;
 
@@ -28,8 +29,8 @@ async function target(admin: AuthClaims, id: string) {
   return user;
 }
 
-export const record = (admin: AuthClaims, action: AdminActionKind, user: { id: string; email: string | null }) =>
-  prisma.adminAction.create({
+export const record = (admin: AuthClaims, action: AdminActionKind, user: { id: string; email: string | null }, db: Tx | typeof prisma = prisma) =>
+  db.adminAction.create({
     data: { adminId: admin.uid, adminEmail: admin.email, action, targetId: user.id, targetEmail: user.email },
   });
 

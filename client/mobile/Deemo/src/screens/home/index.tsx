@@ -5,6 +5,7 @@ import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/avatar";
+import { InboxButton } from "@/components/inbox-button";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
@@ -93,6 +94,7 @@ export function Home() {
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
             {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
           </Text>
+          <InboxButton />
           <Avatar seed={avatar} name={name} email={email} size={42} premium={premium} />
         </View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
