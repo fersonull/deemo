@@ -8,7 +8,7 @@ import type React from "react";
 import { Easing, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { deemoSVG, type DeemoMood } from "./art/deemo";
 import { panelFaceSVG } from "./art/panel-face";
-import { hasSfx, hasVoice, VO_DELAY, type Line, type Sfx as SfxId } from "./script";
+import { B, hasSfx, hasVoice, VO_LEAD, type Line, type Sfx as SfxId } from "./script";
 
 export const C = {
   paper: "#F7F3EC",
@@ -58,12 +58,17 @@ export function useT(from: number, to: number, easing = easeOut) {
 
 export const lerp = (t: number, a: number, b: number) => a + (b - a) * t;
 
-// One scene's voiceover, starting VO_DELAY frames in. Silent until `bun run audio` has made the file.
+// A beat's voiceover at its start (+VO_LEAD). Silent until `bun run audio` has made the file.
 export const Voice: React.FC<{ line: Line }> = ({ line }) =>
-  hasVoice(line) ? <Audio name={`VO ${line}`} from={VO_DELAY} src={staticFile(`audio/vo-${line}.mp3`)} /> : null;
+  hasVoice(line) ? <Audio name={`VO ${line}`} from={B[line] + VO_LEAD} src={staticFile(`audio/vo-${line}.mp3`)} /> : null;
 
 export const Sfx: React.FC<{ id: SfxId; at: number; volume?: number }> = ({ id, at, volume = 0.6 }) =>
-  hasSfx(id) ? <Audio name={`SFX ${id}`} from={Math.round(at)} volume={volume} src={staticFile(`audio/sfx-${id}.mp3`)} /> : null;
+  hasSfx(id) ? <Audio name={`SFX ${id}`} from={Math.max(0, Math.round(at))} volume={volume} src={staticFile(`audio/sfx-${id}.mp3`)} /> : null;
+
+// Keyframes: kf(frame, [t0, t1, …], [v0, v1, …]) with the same easing on every segment.
+export const inOut = Easing.bezier(0.65, 0, 0.35, 1);
+export const kf = (frame: number, times: number[], values: number[], easing = inOut) =>
+  interpolate(frame, times, values, { ...clamp, easing });
 
 export const Owl: React.FC<{ mood?: DeemoMood; size: number; style?: React.CSSProperties }> = ({ mood = "idle", size, style }) => (
   <div style={{ width: size, height: size * (364 / 344), ...style }} dangerouslySetInnerHTML={{ __html: deemoSVG(mood) }} />

@@ -1,15 +1,15 @@
-// The promo's words and sounds, in scene order. Edit a line, then `bun run audio` regenerates only what's missing
-// (delete public/audio/vo-<id>.mp3, or pass --force, to redo one that changed).
+// The promo's words and sounds, in beat order. Edit a line, delete its public/audio/vo-<id>.mp3, then
+// `bun run audio` regenerates what's missing; each beat stretches to fit its measured line (src/audio.json).
 import audio from "./audio.json";
 
 export const LINES = {
-  hook: "Three days until your defense. And your panel has read every page.",
-  meet: "Meet DEEMO. The A.I. mock panel that lets you practice your research defense, out loud.",
-  upload: "Upload your manuscript. DEEMO reads it, maps your objectives and methods, and finds every fact a panel could check.",
-  panel: "Then it seats a panel built for your field. A capstone faces an engineer. A nursing study faces a clinician.",
-  ask: "They ask out loud, listen to your answer, and follow up when it's thin. Just like the real thing.",
-  flag: "Say something your paper doesn't, and DEEMO catches it, gently, before your real panel does.",
-  report: "After every session, you get a readiness score, and feedback you can actually use.",
+  hook: "Your defense is in three days.",
+  meet: "Meet DEEMO, your A.I. mock panel.",
+  upload: "Upload your manuscript. It reads every page.",
+  panel: "Then seats a panel built for your field.",
+  ask: "They ask out loud, and follow up.",
+  flag: "Contradict your paper? DEEMO catches it.",
+  report: "Then it scores how ready you are.",
   cta: "DEEMO. Practice the defense, before the defense.",
 } as const;
 export type Line = keyof typeof LINES;
@@ -33,27 +33,29 @@ export type Sfx = keyof typeof SFX;
 
 export const MUSIC = {
   prompt: "Upbeat, warm, playful electronic pop background for a student app promo. Light plucks, soft claps, bright marimba, steady 112 bpm, optimistic, no vocals.",
-  seconds: 60,
+  seconds: 30,
 };
 
 export const FPS = 30;
-export const TRANSITION = 12; // frames each scene overlaps the next
-export const VO_DELAY = 10; // frames into a scene before its line starts
+export const VO_LEAD = 4; // frames into a beat before its line starts
 
-// Fallback lengths (seconds) until `bun run audio` measures the real ones.
-const FALLBACK: Record<Line, number> = { hook: 4.5, meet: 5.5, upload: 6.5, panel: 6.5, ask: 5.5, flag: 5.5, report: 5, cta: 3.5 };
-const MIN: Partial<Record<Line, number>> = { cta: 6 }; // let the end card breathe
+// A beat never runs shorter than this (seconds): room for its choreography even with a short line.
+const MIN: Record<Line, number> = { hook: 2.4, meet: 2.6, upload: 3.4, panel: 3.4, ask: 3, flag: 2.8, report: 2.8, cta: 3.8 };
+const FALLBACK: Record<Line, number> = { hook: 1.8, meet: 2, upload: 2.8, panel: 2.3, ask: 2, flag: 2.4, report: 1.8, cta: 2.9 };
 
 const voice = audio.voice as Partial<Record<Line, number>>;
 export const hasVoice = (line: Line) => voice[line] !== undefined;
 export const hasSfx = (id: Sfx) => (audio.sfx as string[]).includes(id);
 export const hasMusic = audio.music;
 
-// A scene lasts its line plus room either side, never shorter than its minimum.
-export function sceneFrames(line: Line) {
-  const spoken = voice[line] ?? FALLBACK[line];
-  return Math.ceil(Math.max(spoken * FPS + VO_DELAY + 24 + TRANSITION, (MIN[line] ?? 0) * FPS));
-}
+export const ORDER = Object.keys(LINES) as Line[];
+const len = (l: Line) => Math.ceil(Math.max(MIN[l] * FPS, (voice[l] ?? FALLBACK[l]) * FPS + VO_LEAD + 10));
 
-export const SCENES = Object.keys(LINES) as Line[];
-export const TOTAL = SCENES.reduce((t, s) => t + sceneFrames(s), 0) - TRANSITION * (SCENES.length - 1);
+// Beat start frames: B.upload is when the upload beat begins, and so on.
+export const B = {} as Record<Line, number>;
+let at = 0;
+for (const l of ORDER) {
+  B[l] = at;
+  at += len(l);
+}
+export const TOTAL = at;

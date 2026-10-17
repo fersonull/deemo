@@ -1,13 +1,13 @@
 {
   "voice": {
-    "hook": 4.319,
-    "meet": 6.548,
-    "upload": 8.127,
-    "panel": 7.059,
-    "ask": 5.898,
-    "flag": 4.644,
-    "report": 4.458,
-    "cta": 2.879
+    "hook": 1.718,
+    "meet": 2.694,
+    "upload": 2.786,
+    "panel": 2.136,
+    "ask": 1.95,
+    "flag": 3.019,
+    "report": 1.672,
+    "cta": 3.622
   },
   "sfx": [
     "hit",
