@@ -39,9 +39,11 @@ Branch `feat/notice-push`, on top of `feat/notice-audiences`. **It needs a nativ
 - **Cleanup:** tokens FCM rejects for good (uninstalled app, rotated token) are deleted. Signing out deletes this phone's token first (`DELETE /notices/push-token`). A token that signs in to another account moves to it (upsert by token), and account deletion cascades.
 - **Tapping a notification:** it opens the notice screen (`/notice?id=`), from the background (`onNotificationOpenedApp`) or from a closed app (`getInitialNotification`, once per launch).
 - **App open:** there's no system notification while the app is open (the floating Deemo shows it), so a live session is never interrupted by one.
-- **Not done yet:**
-  - A monochrome notification icon: Android uses the app icon, which may show as a plain shape. Setting one needs a drawable resource (for example through the `expo-notifications` plugin's `icon`) and a rebuild.
-  - A named notification channel: FCM's default channel shows as "Miscellaneous" in Android settings.
+- **Icon and channel** (`client/mobile/Deemo/plugins/with-notice-notifications.js`, applied at prebuild):
+  - **Status-bar icon:** a white owl silhouette, cut from the adaptive icon's monochrome layer, in five densities under `assets/notification/`.
+  - **Accent colour:** dusk `#5A66C7`. `firebase.json` points RN Firebase's colour metadata at `@color/notification_icon_color`.
+  - **Settings name:** FCM's fallback channel is named "Notices from DEEMO" instead of "Miscellaneous" (the `fcm_fallback_notification_channel_label` string). It keeps the default importance (tray, sound, no heads-up banner). A channel of our own with higher importance would need native code to create it.
+  - **Changing them:** the icon and channel name can only change with a rebuild.
 - **Firebase setup:** the Firebase project's Cloud Messaging API (V1) must be enabled. It usually is by default; check it in Google Cloud console → APIs. The existing service account (`FIREBASE_SERVICE_ACCOUNT`) can send.
 
 ## Delivery and storage
