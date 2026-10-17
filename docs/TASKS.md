@@ -54,7 +54,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **General-purpose scope + course profile** (onboarding survey, Profile course row, IT field only for BSIT/BSCS), **course-adapted panel** (field expert, best-fit seating, Setup preview) and **manuscript-field detection** (FIELD card on the summary). Merged into `dev` 2026-10-17; **phone test pending**.
 - [x] **Profile hierarchy + Premium benefits screen**, **Premium avatar medal**, **History sort/filter**, **Home stage icons**, **Home launch spotlight**. On `dev`; **phone check pending**.
 - [ ] **Public marketing site** (`client/web/site/`, on `dev`): scroll-following 3D phone, six chapters with live panel and consistency demos, smart navbar. User to build a release APK and set `DOWNLOAD_URL`, pick a domain, deploy to Vercel, add an og-image.
-- [ ] **Paper figures** (user action): replace Figure 2, Figure 3 and both System Flowchart images with the PNGs in `docs/diagrams/`.
+- [x] **Paper figures inserted:** the expanded DFD, PostgreSQL ERD and both flowcharts are in the paper (re-checked Oct 17). Further course/admin/stage updates remain below; the old five-table-ERD finding is obsolete.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.
 - [x] **Pull to refresh** on Home, History and Projects.
@@ -73,11 +73,14 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Documentation (manuscript, not code)
 
-- [ ] **General-purpose scope + course profile (F4)** (app side merged 2026-10-17): Ch. 1 scope and delimitation (any course accepted; evaluation limited to 4th-year BSIT at PMFTCI), F4 wording (course in onboarding/Profile, IT field for computing courses), Ch. 3 data dictionary and ERD (`users.course`), "features or output" in Document Logic Analysis, Ch. 5 recommendation. Exact text: `docs/COURSE_PROFILE_PLAN.md` §7.
+- [x] **Fresh paper/app comparison and local checklist:** re-read live Chapters 1–3 on Oct 17 and created `docs/PAPER_TODO.md` with only remaining edits, exact wording, code evidence, dictionary rows and formula. Paper and online audit unchanged; this completes the review, not the listed fixes.
+- [ ] **Apply the remaining paper corrections:** use `docs/PAPER_TODO.md` as the current checklist (plan-limit contradiction, profiling remnants, missing schema fields/admin table, deletion/export claims, scoring, ISO edition, delimitations, stage filtering, paid-tier verification, comparison table and references). Re-read before ticking; the group is editing the live paper.
+- [ ] **General-purpose scope + course profile (F4):** Ch. 1 cross-course scope and profiling definition are fixed; finish the scope paragraph, Ch. 3 profiling/onboarding/Profile descriptions, dictionary (`users.course`, `analyses.field`) and diagrams. Exact remaining wording: `docs/PAPER_TODO.md` §§1, 4, 13. Ch. 5 is not present in the reviewed document; future text is in `docs/COURSE_PROFILE_PLAN.md` §7.
+- [ ] **Refresh diagram sources and embedded figures:** add course/field/admin schema changes, remove Coach/Panel from the flowchart, and represent course onboarding/sequential panel handover/stage filtering. Regenerate first; re-inserting the current PNG alone is insufficient (`docs/PAPER_TODO.md` §13).
 - [ ] **Chapter 3, readiness formula.** The app now uses: level points = (level − 1) / 4; coverage = answered ÷ planned with no floor, counting only real answers (the panel closing early doesn't count against the student); unmeasurable delivery drops out of the weights; sessions with no answer aren't scored. The addendum's worked example becomes 54 (was 62).
-- [ ] **Chapter 3, feature list:** add Group Project Sharing (Q10).
-- [ ] **Chapter 3, rubric:** the five criteria are the default; a panel's uploaded rubric replaces them (its criteria and weights; written-paper and demo criteria aren't scored in practice). The readiness formula is unchanged: weighted levels × coverage − consistency penalty.
-- [ ] **Delimitations:** simulated payments, no adviser dashboard (Q1, Q2).
+- [x] **Chapter 3, feature list:** Group Projects and optional score sharing are already described (verified Oct 17).
+- [x] **Chapter 3, rubric description:** default five criteria, replacement by an uploaded rubric and exclusion of written-paper/demo criteria are described (verified Oct 17). The numerical formula remains open above.
+- [ ] **Delimitations:** simulated payments are already described; add explicit Android/English/18+ limits and no adviser dashboard, and clarify advisers as report recipients (`docs/PAPER_TODO.md` §8).
 - [ ] **Privacy notice / Chapter 3:** Google (Gemini) is the only AI processor, for the live panel, analysis, rubric reading and scoring (the OpenAI backup was removed, consent 2026-10.3).
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 
