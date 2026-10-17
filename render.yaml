@@ -1,0 +1,23 @@
+# Render Blueprint (render.com > New > Blueprint > this repo): the DEEMO server on the free plan, for development.
+# Free instances sleep after 15 minutes without traffic; the first request after that waits about a minute.
+# Secrets are entered in the Render dashboard (sync: false), never committed.
+services:
+  - type: web
+    name: deemo-server
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: server
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: dev
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT # the key's JSON, on one line
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_ORIGINS
+        sync: false

@@ -6,7 +6,7 @@ const Env = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is not set. Add the Prisma Postgres connection string to server/.env."),
   FIREBASE_SERVICE_ACCOUNT: z
     .string()
-    .min(1, "FIREBASE_SERVICE_ACCOUNT is not set. Add the service-account key path to server/.env."),
+    .min(1, "FIREBASE_SERVICE_ACCOUNT is not set. Add the service-account key path (or its JSON) to server/.env."),
   GEMINI_API_KEY: z.string().default(""),
   PORT: z.coerce.number().int().positive().default(3000),
   // Web origins allowed to call /admin from a browser (the Vercel admin), comma-separated. Local dev is always allowed.
