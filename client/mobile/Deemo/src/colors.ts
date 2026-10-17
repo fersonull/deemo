@@ -7,7 +7,6 @@ export const colors = {
   sand: "#EDE5D8", // cards, inputs, chips
   banner: "#F1E6D6", // info / reconnecting banners
   ink: "#2A2420", // primary text, primary buttons
-  scrim: "#000000", // the launch spotlight's darkening (hooks/spotlight.ts), at partial opacity
   inkSoft: "#3E3731", // long-form body text
   inkMuted: "#5E554D", // secondary text
   muted: "#8A7F74", // meta text, chevrons
