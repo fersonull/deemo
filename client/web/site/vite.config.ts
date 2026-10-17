@@ -5,5 +5,6 @@ import { defineConfig } from "vite";
 // operate, nothing a router or component tree would help).
 export default defineConfig({
   server: { port: 5056 },
-  build: { target: "es2022" },
+  // three.js is ~150 KB gzipped, loaded lazily after first paint as its own chunk (src/main.ts).
+  build: { target: "es2022", chunkSizeWarningLimit: 700 },
 });
