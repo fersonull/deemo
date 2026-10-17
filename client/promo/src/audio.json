@@ -1,0 +1,28 @@
+{
+  "voice": {
+    "hook": 4.319,
+    "meet": 6.548,
+    "upload": 8.127,
+    "panel": 7.059,
+    "ask": 5.898,
+    "flag": 4.644,
+    "report": 4.458,
+    "cta": 2.879
+  },
+  "sfx": [
+    "hit",
+    "tick",
+    "pop",
+    "whoosh",
+    "sparkle",
+    "paper",
+    "scan",
+    "click",
+    "chime",
+    "nudge",
+    "riser",
+    "ding",
+    "sting"
+  ],
+  "music": true
+}

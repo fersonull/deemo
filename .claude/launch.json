@@ -31,6 +31,16 @@
         "dev"
       ],
       "port": 5056
+    },
+    {
+      "name": "promo",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": [
+        "run",
+        "--cwd=client/promo",
+        "dev"
+      ],
+      "port": 3002
     }
   ]
 }
