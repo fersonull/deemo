@@ -498,7 +498,11 @@ export class GeminiEngine implements LiveEngine {
         this.spokeQuestion = false;
         this.countMain(q);
         this.emit({ type: "ask", question: q });
-        response = { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." }; // a bare ok sometimes ended the turn silently
+        // A bare ok sometimes ended the turn silently, so the approval says what to do. If the reaction was already
+        // heard before this call, asking for "your reaction, then the question" made it say the reaction twice.
+        response = this.spoken.trim()
+          ? { allowed: true, instruction: "Approved. Your reaction was already heard: say only the question now, without repeating anything." }
+          : { allowed: true, instruction: "Approved. Say your short reaction, then the question, out loud now." };
       } else {
         response = {
           allowed: false,

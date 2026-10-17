@@ -276,3 +276,22 @@ test("after the presentation a silent panel is nudged in 4 s, later turns keep t
     timers.mockRestore();
   }
 });
+
+test("a reaction heard before ask_question isn't asked for again (it was said twice)", () => {
+  const engine = new GeminiEngine(setup);
+  const internals = engine as unknown as Internals & { spoken: string };
+  internals.emit = () => {};
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
+  const ask = (topicId: string) =>
+    internals.onToolCall({ id: topicId, name: "ask_question", args: { topicId, questionText: "How does it differ?", questionType: "TECHNICAL", isFollowUp: false, panelist: "Chair" } })
+      .response as { allowed: boolean; instruction: string };
+  try {
+    internals.spoken = "Okay. Moving on to another technical aspect. ";
+    const r = ask("checker");
+    expect(r.allowed).toBe(true);
+    expect(r.instruction).toContain("say only the question");
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});

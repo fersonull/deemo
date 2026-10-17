@@ -36,8 +36,12 @@ function finish(s: LiveState): Line[] {
 }
 
 // Adds a transcription chunk; a different speaker's unfinished line is closed first, never dropped.
+// A new sentence that arrives as its own chunk ("testing?" + "Okay.") gets a space, not "testing?Okay.".
 function append(s: LiveState, who: Line["who"], text: string): Pick<LiveState, "lines" | "partial"> {
-  if (s.partial?.who === who) return { lines: s.lines, partial: { ...s.partial, text: s.partial.text + text } };
+  if (s.partial?.who === who) {
+    const gap = /[.?!,;:]$/.test(s.partial.text) && /^[^\s.,?!]/.test(text) ? " " : "";
+    return { lines: s.lines, partial: { ...s.partial, text: s.partial.text + gap + text } };
+  }
   return { lines: finish(s), partial: { who, text } };
 }
 
@@ -82,7 +86,12 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       // Count it as a follow-up on the current topic so the limit still holds for the next tool call.
       const q = s.question;
       if (!q) return { ...s, ...append(s, who, e.text), phase: "speaking" };
-      const followUp = (s.followUps[q.topicId] ?? 0) + 1;
+      // At the limit already, it can't be a follow-up (a handover line, a closing remark): keep the question as it is.
+      // It's still marked unasked, so a tool call that follows can relabel it.
+      const prev = s.followUps[q.topicId] ?? 0;
+      if (prev >= s.followUpLimit)
+        return { ...s, ...append(s, who, e.text), phase: "speaking", unasked: { question: s.question, followUps: s.followUps } };
+      const followUp = prev + 1;
       return {
         ...s,
         ...append(s, who, e.text),

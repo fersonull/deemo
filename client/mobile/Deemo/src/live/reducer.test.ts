@@ -175,3 +175,20 @@ test("handover: the next panelist holds the floor, their intro and question are 
   expect(s.question?.number).toBe(2);
   expect(s.lines.map((l) => l.who)).toEqual([0, "you", 1]); // continuous: Chair, student, Santos's intro
 });
+
+test("speech without ask_question never pushes a follow-up past the limit (a handover line, a closing remark)", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }], { ...initialLiveState, followUpLimit: 1 });
+  s = liveReducer(s, { type: "ask", question: follow });
+  s = { ...liveReducer(s, { type: "panelDone" }), phase: "thinking" }; // the student answered; the panel's turn
+  s = liveReducer(s, { type: "panelText", text: "Thank you; I'll hand it over to Engr. Santos." });
+  expect(s.question?.followUp).toBe(1); // not "2 of 1"
+  expect(s.followUps.t1).toBe(1);
+});
+
+test("a new sentence in its own chunk gets a space", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }]);
+  s = run([{ type: "panelText", text: "are you planning to measure?" }, { type: "panelText", text: "Okay. Moving on." }], s);
+  expect(s.partial?.text).toBe("are you planning to measure? Okay. Moving on.");
+  s = liveReducer(s, { type: "panelText", text: " Next," });
+  expect(s.partial?.text).toBe("are you planning to measure? Okay. Moving on. Next,");
+});

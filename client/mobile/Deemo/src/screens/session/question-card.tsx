@@ -29,9 +29,11 @@ type Props = {
 };
 
 export function QuestionCard({ phase, question, closing, takeover, seats, course, count, followUpLimit, onDonePresenting }: Props) {
-  const showQuestion = question && phase !== "connecting" && phase !== "presentation" && phase !== "ending" && phase !== "ended";
+  const takingOver = takeover !== null && phase === "thinking";
+  // While a new panelist takes over, the old question's chips and asker would be wrong: only the takeover line shows.
+  const showQuestion = question && !takingOver && phase !== "connecting" && phase !== "presentation" && phase !== "ending" && phase !== "ended";
   const text =
-    takeover !== null && phase === "thinking"
+    takingOver
       ? `${PANEL[seats[takeover] ?? 0]?.name} is taking over…`
       : phase === "connecting"
       ? "Getting the panel ready…"
