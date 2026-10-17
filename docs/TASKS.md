@@ -1,6 +1,6 @@
 # DEEMO — Task list
 
-What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature, S = screen, § = section) and `DEEMO_Plan_Addendum.md` (Q = decision). Updated 2026-10-10. Checked items marked pending are implemented/tested on a feature branch and still need user verification and merging into `dev`.
+What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature, S = screen, § = section) and `DEEMO_Plan_Addendum.md` (Q = decision). Updated 2026-10-17. Checked items marked pending are implemented/tested on a feature branch and still need user verification and merging into `dev`.
 
 ## Blocker
 
@@ -8,9 +8,9 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Must do before the 40-student evaluation
 
-- [ ] **Deploy the server** to a public host and point the app at it (`EXPO_PUBLIC_API_URL`). Build a release APK with EAS Build. Add the release and Play signing SHA-1/SHA-256 to Firebase, then re-download `google-services.json` (Google sign-in). Today the app only reaches `localhost` through `adb reverse`.
-- [x] **Session time limit** (§9.4, F13): app clamps the active timer to the selected duration, preserves the final answer and asks for a closing line; stops within 8 seconds even if Gemini stays silent. Paused/reconnecting time is excluded. **Pending:** uncommitted on `codex/session-rules`; phone verification and user commit/merge.
-- [x] **Daily session cap** (addendum Q1, §16 cost control): 2 starts/day Free, 10 Premium at `POST /live/token`, enforced with Firestore transactions; Manila midnight reset, idempotent retries/resumption, failed-mint refunds and an actionable cap error. Unit and real Firebase/fake-Gemini integration checks pass. **Pending:** uncommitted on `codex/session-rules`; phone verification and user commit/merge.
+- [ ] **Deploy the server** to a public host and point the app at it (`EXPO_PUBLIC_API_URL`). Render config is ready (`render.yaml`, `server/Dockerfile`, free plan for development; steps in `docs/HANDOFF.md`). Build a release APK with EAS Build. Add the release and Play signing SHA-1/SHA-256 to Firebase, then re-download `google-services.json` (Google sign-in). Today the app only reaches `localhost` through `adb reverse`.
+- [x] **Session time limit** (§9.4, F13): app clamps the active timer to the selected duration, preserves the final answer and asks for a closing line; stops within 8 seconds even if Gemini stays silent. Paused/reconnecting time is excluded. On `dev`.
+- [x] **Daily session cap** (addendum Q1, §16 cost control): 5 starts/day Free, unlimited Premium (counted, not capped) at `POST /live/token`, enforced in serializable Postgres transactions (`live_starts`); Manila midnight reset, idempotent retries/resumption, failed-mint refunds and an actionable cap error. The admin can reset a student's count. On `dev`.
 - [ ] **Recover a session** after the app is backgrounded or the connection drops, and keep the transcript so far (§16 reliability, connectivity).
 - [ ] **Latency logging** (addendum B6): log "student stops speaking → first panel audio" per turn, for Chapter 4 (ISO 25010 performance efficiency).
 - [ ] **Accuracy and integration tests** (§18.1):
@@ -51,6 +51,9 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Audit doc back to PostgreSQL:** data dictionary (Tables 2-18) in the Tables tab and in the paper; Audit tab trimmed to open items; paper text fixes applied (2026-10-15).
 - [ ] **Web admin** (`client/web/admin/`, merged into `dev` 2026-10-16): overview, users (+ actions, daily reset), sessions (+ Score again), manuscripts, groups, admins, audit log, Ctrl K palette, shortcuts, theme menu, icon sidebar, server pages. User to apply the migration, set up the Firebase Web app, grant the first admin, test, deploy to Vercel.
 - [x] **Panel faces + sequential panel with a voice each**: tested by the user, merged into `dev` (2026-10-16).
+- [x] **General-purpose scope + course profile** (onboarding survey, Profile course row, IT field only for BSIT/BSCS), **course-adapted panel** (field expert, best-fit seating, Setup preview) and **manuscript-field detection** (FIELD card on the summary). Merged into `dev` 2026-10-17; **phone test pending**.
+- [x] **Profile hierarchy + Premium benefits screen**, **Premium avatar medal**, **History sort/filter**, **Home stage icons**, **Home launch spotlight**. On `dev`; **phone check pending**.
+- [ ] **Public marketing site** (`client/web/site/`, on `dev`): scroll-following 3D phone, six chapters with live panel and consistency demos, smart navbar. User to build a release APK and set `DOWNLOAD_URL`, pick a domain, deploy to Vercel, add an og-image.
 - [ ] **Paper figures** (user action): replace Figure 2, Figure 3 and both System Flowchart images with the PNGs in `docs/diagrams/`.
 - [ ] **Dark mode** (§16 usability; the design's "dark for sessions") and **panel voice speed** (S-15, Profile).
 - [x] **Loading states**: a Fetching illustration when opening an existing report or manuscript summary, and skeletons for Home (last score, recent), History, Projects and Setup's manuscript row.

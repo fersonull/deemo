@@ -2,29 +2,48 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-17_
+_Last updated: 2026-10-17 (after site v2, `e6b052a`)_
 
 ## Current state
 
-- **`client/web/site/`** (v2, on `dev`): the public marketing site. A scroll story: the deck's three.js phone follows the visitor through a hero and six chapters (Lenis smooth scroll, smart hide/show navbar, chapter rail), then full-width scope band, plans, FAQ and footer. No reveal animations. Reuses the app's tokens, the Deemo mascot and `panel-face.ts`. Its hero "Build your panel" demo runs the real course→panel logic copied into `src/panel-data.ts`. No download yet — the CTA shows an honest "release coming soon" state (`src/sections/footer.ts` `DOWNLOAD_URL`). Plans: `docs/DEEMO_SITE_PLAN.md`, `docs/DEEMO_SITE_V2_PLAN.md`.
-- **`feat/course-panel` merged into `dev` (2026-10-17)**, then deleted, at the user's request before a phone test: the panel adapts to the field (Santos is the field expert; best-fit personas with 1–2 panelists; Setup preview), and the manuscript's detected field decides it (account course as fallback). Other databases need `bun run db:migrate` (`add_analysis_field`). Plans: `docs/COURSE_PANEL_PLAN.md`, `docs/MANUSCRIPT_FIELD_PLAN.md`.
-- **`feat/course-profile` merged into `dev` (2026-10-17)**, then deleted: DEEMO is general-purpose (any course and kind of study), the study stays BSIT at PMFTCI; onboarding survey asks the course, Profile edits it, computing courses keep the IT field per project; Profile hierarchy and the Premium benefits screen. Merged at the user's request before a phone test. Any other database needs `cd server && bun run db:migrate` (`20261016160148_add_user_course`). Plan: `docs/COURSE_PROFILE_PLAN.md`.
-- **Branch:** `dev`. `feat/panel-faces` and `feat/sequential-panel` (illustrated panel faces with lip-sync; panelists in turn, each in their own voice) were tested by the user and merged into `dev` on 2026-10-16, then deleted.
-- **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`), Metro on the PC. The native build includes Firebase, Google sign-in, the document picker, the VoiceCommunication mic patch, `react-native-svg`, print and sharing, and the owl app icon and splash.
-- **Server:** `server/`, `bun run dev` on :3000. The phone reaches it through the user's Cloudflare tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored). Without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix.
-- **Data:** Firebase Authentication for sign-in only (email/password with email verification, Google); all app data in PostgreSQL through Prisma 7 (`server/prisma/schema.prisma`, 18 tables: users, projects, analyses, rubrics, rubric_criteria, sessions, session_turns, session_flags, reports, report_criteria, report_contradictions, report_turns, report_fixes, groups, group_members, live_starts, rate_limit_counters, admin_actions). Only the server reads and writes it (`DATABASE_URL` in `server/.env`).
-- **AI:** Gemini Live (`gemini-3.8-live`) for the panel. Analysis, rubric reading and scoring use a Gemini-only fallback chain (`FLASH_MODELS` in `server/src/shared/ai/gemini.ts`): 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. The OpenAI backup is gone (consent `2026-10.3`).
-- **Recently landed (2026-10-14):** Deemo is an owl; email verification; names for email accounts; DiceBear avatars with a picker (saved per account) and a shining gold ring for Premium; compact Group readiness (Home) and capstone group (summary screen) cards; GitHub issues #2, #3, #7, #8, #9 fixed (#4, #5 kept as is by the user's decision).
+- **Branch:** `dev`, clean, everything committed (latest feature commit `e6b052a`, site v2). Never commit on `main`. No open feature branches.
+- **Untested on the phone (merged into `dev` at the user's request):** the course profile, the course-adapted panel and manuscript-field detection, the Profile hierarchy + Premium benefits screen, the Premium avatar medal, History sort/filter, Home stage icons and the Home launch spotlight. Checklists are under Next task.
+- **Projects in the repo:**
+
+  | Path | What | Run | Hosting |
+  |---|---|---|---|
+  | `client/mobile/Deemo/` | Expo app (Android) | `bun start` (Metro) on the dev build | EAS (preview channel OTA) |
+  | `server/` | Bun + Express + Prisma 7 | `bun run dev` (:3000) | today: the user's Cloudflare tunnel to the PC; `render.yaml` + `server/Dockerfile` ready for Render (not deployed yet) |
+  | `client/web/admin/` | Next.js 16 admin | `admin` launch config (:3001) | Vercel (not deployed yet) |
+  | `client/web/presentation/` | defense deck (static, three.js) | `presentation` launch config (:5055) | GitHub Pages via `deploy-presentation.yml` (Pages not enabled yet) |
+  | `client/web/site/` | public marketing site (Vite, three.js, Lenis) | `site` launch config (:5056) | Vercel planned (not deployed; no domain yet) |
+
+- **App:** Expo SDK 57 dev build on the user's Android phone (`ai.deemo.app`). The native build includes Firebase, Google sign-in, the document picker, the VoiceCommunication mic patch, `react-native-svg`, print and sharing, and the owl app icon and splash. Everything since then is JS only (no rebuild needed).
+- **Server:** the phone reaches it through the tunnel (`https://api.deemo-ai.com/api` → localhost:3000), set in `client/mobile/Deemo/.env.local` (`EXPO_PUBLIC_API_URL`, gitignored); without that file the app falls back to `http://localhost:3000` over `adb reverse tcp:3000 tcp:3000`. The server strips the tunnel's `/api` prefix. `FIREBASE_SERVICE_ACCOUNT` takes a file path (local) or the key's JSON (hosts).
+- **Data:** Firebase Authentication for sign-in only (email/password with verification, Google); all app data in PostgreSQL (Prisma Postgres) through Prisma 7 (`server/prisma/schema.prisma`, 18 tables: users, projects, analyses, rubrics, rubric_criteria, sessions, session_turns, session_flags, reports, report_criteria, report_contradictions, report_turns, report_fixes, groups, group_members, live_starts, rate_limit_counters, admin_actions). Latest migrations: `add_user_course`, `add_analysis_field` (applied on the user's database; any other database needs `cd server && bun run db:migrate`).
+- **AI:** Gemini Live (`gemini-3.8-live`) for the panel, one session and voice per panelist (Kore, Charon, Orus). Analysis, rubric reading and scoring use the Gemini-only fallback chain (`FLASH_MODELS` in `server/src/shared/ai/gemini.ts`): 3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite. The key is still on the **free tier** (blocker, see Next task).
+- **Plans:** Free = 1 manuscript, 5 sessions/day, 1 panelist, 10 min, Title + Pre-Oral; Premium (simulated, no payments) = unlimited manuscripts and sessions, 3 panelists, 25 min, Final Defense (`server/src/modules/identity/domain/plan.ts`).
+- **Scope (decided 2026-10-17):** DEEMO accepts any course's manuscript; the study (and the paper's claims) stays 4th-year BSIT at PMFTCI. The manuscript's detected field decides the panel (field expert, best-fit seating for 1–2 panelists); the onboarding course is the fallback. Prompts are program-neutral.
+- **Recently landed (2026-10-16 → 17):** sequential panel with a face and voice each; unlimited Premium practice; general-purpose scope with the course profile, course-adapted panel and manuscript-field detection; Profile hierarchy and Premium benefits screen; Premium avatar as a medal with ribbon tails; History sort/filter; Home stage icons and launch spotlight; Render deploy config; the public marketing site (v2: scroll-following 3D phone).
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
 
-**Fill in the marketing site's real parts, then merge/deploy:**
-1. `cd client/web/site && bun run dev` (or the `site` launch config, port 5056) to preview.
+**Start here (priority order):**
+1. **Phone-test what was merged untested** (checklists below: course-adapted panel, course profile; also glance at Home's launch spotlight, History sort/filter, the Premium avatar medal and the Premium benefits screen). Restart the server and reload Metro first; no rebuild needed.
+2. **Gemini paid tier** (user action, blocker): free-tier inputs may be human-reviewed, which the plan forbids for unpublished manuscripts; the 20-requests/day cap also stalls testing.
+3. **Deploy the server** (Render free tier for development, steps below) so the app, the admin and the site don't depend on the PC and tunnel; move to an always-on plan before the 40-student evaluation.
+4. **Release build + site download:** build a signed release APK with EAS (add the release/Play SHA-1/SHA-256 to Firebase first), host it, and set `DOWNLOAD_URL` in `client/web/site/src/sections/footer.ts`.
+5. **Deploy the web clients:** the admin and the site to Vercel, the deck to GitHub Pages (steps below).
+6. Then the backlog list at the end of this section (session recovery, fallback waits, Chapter 4 evidence).
+
+**Marketing site (`client/web/site`, on `dev`) — finish and deploy:**
+1. `cd client/web/site && bun run dev` (or the `site` launch config, port 5056) to preview. In the desktop app's browser pane, keep the pane visible or the 3D phone never draws (a hidden pane pauses requestAnimationFrame).
 2. Publish a signed release APK (EAS) and set `DOWNLOAD_URL` in `src/sections/footer.ts` — the button is wired, just empty.
-3. Pick and point a domain at it (e.g. the root `deemo-ai.com`, leaving `admin.`/`api.` as the subdomains already in use); deploy to Vercel like `admin` (no server needed, it's a static Vite build) or GitHub Pages like `presentation`.
+3. Pick a domain (e.g. the root `deemo-ai.com`, leaving `admin.`/`api.` as the subdomains already in use) and deploy to Vercel: project root `client/web/site`, framework Vite, build `bun run build`, output `dist`. No env vars or server needed.
 4. Add a real `og-image.png` (1200×630) for link previews — the `<meta property="og:image">` tag was left out until one exists.
-5. Nice-to-have: a formal `DESIGN.md`/surface-brief writeup for this surface (impeccable skill's documenter step) — skipped this round in favor of this handoff note.
+5. Nice-to-have: a formal `DESIGN.md`/surface-brief writeup for this surface (impeccable skill's documenter step), and a real 1440px desktop review (verified so far at 900×620 desktop layout and 375×812).
+6. If the server's panel logic changes (courses, focus text, seating priority), mirror it in `src/panel-data.ts`; if the deck's phone or screens change, mirror them in `src/three/`.
 
 **Deploy the server on Render (free tier, development):**
 1. render.com → New → Blueprint → connect the GitHub repo; it reads `render.yaml` (service `deemo-server`, branch `dev`).
