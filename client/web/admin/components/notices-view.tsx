@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { SendIcon, XIcon } from "lucide-react"
+import { SendIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { LoadError } from "@/components/list-controls"
@@ -293,28 +293,25 @@ export function NoticesView() {
         </form>
         <aside className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">Preview</h3>
-          {/* Mirrors the app's toast (client/mobile/Deemo/src/components/notice-delivery.tsx): an ink card over
-              the app's paper screen, in the app's own colours whatever the admin theme. */}
-          <div className="overflow-hidden rounded-[28px] border-[6px] border-[#2A2420] bg-[#F7F3EC] px-3 pt-3 pb-24">
-            <div className="mx-auto mb-3 h-4 w-20 rounded-full bg-[#2A2420]" />
-            <div className="flex items-start rounded-[22px] bg-[#2A2420] shadow-[0_10px_28px_rgba(42,36,32,0.28)]">
-              <div className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-3.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/deemo-mark.svg" alt="" className="size-12 shrink-0 rounded-full" />
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <p className="font-mono text-[10px] font-medium tracking-[1.2px] text-[#B0A698]">FROM DEEMO</p>
-                  <p className="truncate font-heading text-[17px] font-bold text-[#F7F3EC]">
-                    {title.trim() || "Your notice title"}
-                  </p>
-                  <p className="line-clamp-2 text-[13.5px] leading-[19px] break-words text-[#EDE5D8]">
-                    {body.trim() || "Your message will appear here."}
-                  </p>
-                </div>
+          {/* Mirrors the app's floating notice (client/mobile/Deemo/src/components/floating-notice.tsx): Deemo at
+              the screen edge with the title in a bubble, in the app's own colours whatever the admin theme. */}
+          <div className="relative h-72 overflow-hidden rounded-[28px] border-[6px] border-[#2A2420] bg-[#F7F3EC]">
+            <div className="mx-auto mt-3 h-4 w-20 rounded-full bg-[#2A2420]" />
+            <div className="mx-4 mt-6 space-y-2" aria-hidden>
+              <div className="h-5 w-32 rounded bg-[#EDE5D8]" />
+              <div className="h-16 rounded-2xl bg-[#EDE5D8]" />
+              <div className="h-16 rounded-2xl bg-[#EDE5D8]" />
+            </div>
+            <div className="absolute top-24 right-2.5 flex items-center gap-2">
+              <div className="relative max-w-[200px] rounded-full bg-[#2A2420] px-4 py-2.5 shadow-[0_6px_18px_rgba(42,36,32,0.22)]">
+                <p className="truncate text-sm font-medium text-[#F7F3EC]">{title.trim() || "Your notice title"}</p>
+                <span className="absolute top-1/2 -right-1 size-3 -translate-y-1/2 rotate-45 bg-[#2A2420]" />
               </div>
-              <XIcon aria-hidden className="m-3.5 mt-4 size-[18px] shrink-0 text-[#B0A698]" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/deemo-mark.svg" alt="" className="size-[60px] shrink-0 rounded-full border-[2.5px] border-[#F7F3EC] shadow-[0_6px_18px_rgba(42,36,32,0.25)]" />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">To: {target}. Tapping the toast opens the student&apos;s inbox, where the full message shows.</p>
+          <p className="text-xs text-muted-foreground">To: {target}. Students see only the title here; tapping Deemo opens the full message.</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Closing the app stops live delivery. Students see missed notices
             when they return. Sending a notice also records an entry in the

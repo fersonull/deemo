@@ -2,7 +2,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { AppState, View } from "react-native";
+import { AppState } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { projects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
@@ -49,7 +50,7 @@ export default function RootLayout() {
 
   // Watch touches (without taking them) so Deemo can look where the student taps.
   return (
-    <View
+    <GestureHandlerRootView
       style={{ flex: 1 }}
       onTouchStart={(e) => trackTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, true)}
       onTouchMove={(e) => trackTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, true)}
@@ -87,6 +88,6 @@ export default function RootLayout() {
         </Stack.Protected>
       </Stack>
       <NoticeDelivery enabled={inside && accountLoaded && !needsConsent && !needsCourse} />
-    </View>
+    </GestureHandlerRootView>
   );
 }
