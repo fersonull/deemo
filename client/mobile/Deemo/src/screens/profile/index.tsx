@@ -27,7 +27,8 @@ const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions
 // answers), your data (download, delete) and sign out.
 // ponytail: panel voice speed and the theme row from the design come later (audio rate, a dark theme).
 export function Profile() {
-  const { unread } = useNotices();
+  const { unread, notices } = useNotices();
+  const latest = notices.find((n) => !n.readAt) ?? notices[0];
   const { name, email, avatar, premium, allowTyping, course } = useSession();
   const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | null>(null);
   const [courseError, setCourseError] = useState("");
@@ -137,13 +138,32 @@ export function Profile() {
         </View>
       )}
 
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={unread ? `Inbox, ${unread} unread. Latest: ${latest?.title}` : "Inbox, no unread notices"}
+        scaleTo={0.98}
+        onPress={() => router.push("/notices")}
+        style={[styles.inbox, unread > 0 && styles.inboxUnread]}
+      >
+        <View style={[styles.inboxIcon, unread > 0 && styles.inboxIconUnread]}>
+          <Icon name="inbox" size={22} filled={unread > 0} color={unread ? colors.paper : colors.duskIcon} />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.rowLabel}>Inbox</Text>
+          <Text style={styles.meta} numberOfLines={1}>
+            {unread && latest ? latest.title : latest ? "You're all caught up" : "Messages from DEEMO"}
+          </Text>
+        </View>
+        {unread > 0 ? (
+          <View style={styles.count}>
+            <Text style={styles.countText}>{unread > 99 ? "99+" : unread}</Text>
+          </View>
+        ) : null}
+        <Icon name="chevron_right" size={20} color={colors.muted} />
+      </PressableScale>
+
       <Text style={[type.label, styles.section]}>SETTINGS</Text>
       <View style={styles.group}>
-        <PressableScale accessibilityRole="button" accessibilityLabel={`Inbox, ${unread} unread notices`} onPress={() => router.push("/notices")} style={styles.row}>
-          <Icon name="inbox" size={22} color={colors.duskIcon} />
-          <View style={styles.flex}><Text style={styles.rowLabel}>Inbox</Text><Text style={styles.meta}>{unread ? `${unread} unread notices` : "Messages from DEEMO"}</Text></View>
-          <Icon name="chevron_right" size={20} color={colors.muted} />
-        </PressableScale>
         <PressableScale
           accessibilityRole="button"
           accessibilityHint="Change your course"
@@ -326,6 +346,12 @@ const styles = StyleSheet.create({
   name: { ...type.heading, fontSize: 20, letterSpacing: -0.3 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   planCard: { marginTop: 20 },
+  inbox: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, marginTop: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, backgroundColor: colors.sand },
+  inboxUnread: { backgroundColor: colors.duskTint },
+  inboxIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
+  inboxIconUnread: { backgroundColor: colors.dusk },
+  count: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 7, alignItems: "center", justifyContent: "center", backgroundColor: colors.dusk },
+  countText: { fontFamily: fonts.body, fontWeight: "700", fontSize: 12, color: colors.paper },
   plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 20 },
   planHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   planName: { ...type.heading },
