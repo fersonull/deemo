@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { SendIcon } from "lucide-react"
+import { SendIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { LoadError } from "@/components/list-controls"
@@ -293,18 +293,28 @@ export function NoticesView() {
         </form>
         <aside className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">Preview</h3>
-          <div className="rounded-xl border bg-muted/40 p-5">
-            <p className="text-xs font-medium text-muted-foreground">
-              FROM DEEMO
-            </p>
-            <h4 className="mt-2 font-heading text-lg font-semibold break-words">
-              {title.trim() || "Your notice title"}
-            </h4>
-            <p className="mt-2 text-sm leading-relaxed break-words whitespace-pre-wrap">
-              {body.trim() || "Your message will appear here."}
-            </p>
-            <p className="mt-4 text-xs text-muted-foreground">To: {target}</p>
+          {/* Mirrors the app's toast (client/mobile/Deemo/src/components/notice-delivery.tsx): an ink card over
+              the app's paper screen, in the app's own colours whatever the admin theme. */}
+          <div className="overflow-hidden rounded-[28px] border-[6px] border-[#2A2420] bg-[#F7F3EC] px-3 pt-3 pb-24">
+            <div className="mx-auto mb-3 h-4 w-20 rounded-full bg-[#2A2420]" />
+            <div className="flex items-start rounded-[22px] bg-[#2A2420] shadow-[0_10px_28px_rgba(42,36,32,0.28)]">
+              <div className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-3.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/deemo-mark.svg" alt="" className="size-12 shrink-0 rounded-full" />
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <p className="font-mono text-[10px] font-medium tracking-[1.2px] text-[#B0A698]">FROM DEEMO</p>
+                  <p className="truncate font-heading text-[17px] font-bold text-[#F7F3EC]">
+                    {title.trim() || "Your notice title"}
+                  </p>
+                  <p className="line-clamp-2 text-[13.5px] leading-[19px] break-words text-[#EDE5D8]">
+                    {body.trim() || "Your message will appear here."}
+                  </p>
+                </div>
+              </div>
+              <XIcon aria-hidden className="m-3.5 mt-4 size-[18px] shrink-0 text-[#B0A698]" />
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground">To: {target}. Tapping the toast opens the student&apos;s inbox, where the full message shows.</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Closing the app stops live delivery. Students see missed notices
             when they return. Sending a notice also records an entry in the
