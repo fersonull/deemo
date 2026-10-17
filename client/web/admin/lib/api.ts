@@ -1,4 +1,5 @@
 import { getAuth } from "@/lib/firebase"
+import type { Segment } from "@/lib/notice-audience"
 
 const BASE = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000"
@@ -109,6 +110,8 @@ export type SentNoticePage = Paged & {
     body: string
     targetId: string | null
     target: Person | null
+    segment: Segment | null
+    recipientCount: number | null // filtered notices only: how many students matched when sent
     createdAt: string
     readCount: number
   }[]

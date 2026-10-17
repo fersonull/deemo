@@ -2,7 +2,7 @@ import type { AuthClaims } from "../../../shared/auth/authenticate";
 import { AppError } from "../../../shared/errors";
 import { isDuplicate, prisma, withSerializable } from "../../../shared/prisma";
 import { record } from "../../admin/application/actions";
-import { canRead, sameNotice, type NoticeInput } from "../domain/notice";
+import { sameNotice, segmentText, segmentWhere, visibleTo, type NoticeInput, type Segment } from "../domain/notice";
 import { noticeHub } from "../infrastructure/notice-repo";
 
 export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
@@ -16,8 +16,14 @@ export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
       const user = await tx.user.findUnique({ where: { id: input.targetId }, select: { deletedAt: true } });
       if (!user || user.deletedAt) throw new AppError(404, "That student is unavailable.");
     }
-    const created = await tx.notice.create({ data: { ...input, createdBy: admin.uid } });
-    await record(admin, "notice_sent", { id: input.targetId ?? "all", email: null }, tx);
+    // A filtered notice goes to the students who match right now.
+    const recipients = input.segment
+      ? await tx.user.findMany({ where: segmentWhere(input.segment), select: { id: true } })
+      : [];
+    if (input.segment && !recipients.length) throw new AppError(422, "No students match these filters.");
+    const created = await tx.notice.create({ data: { ...input, segment: segmentText(input.segment), createdBy: admin.uid } });
+    if (recipients.length) await tx.noticeRecipient.createMany({ data: recipients.map((u) => ({ noticeId: input.id, userId: u.id })) });
+    await record(admin, "notice_sent", { id: input.targetId ?? (input.segment ? `segment:${recipients.length}` : "all"), email: null }, tx);
     return created;
   }).catch(async (error: unknown) => {
     if (!isDuplicate(error)) throw error;
@@ -30,8 +36,8 @@ export async function sendNotice(admin: AuthClaims, input: NoticeInput) {
 }
 
 export async function readNotice(uid: string, id: string) {
-  const n = await prisma.notice.findUnique({ where: { id }, select: { targetId: true } });
-  if (!n || !canRead(uid, n.targetId)) throw new AppError(404, "Notice not found.");
+  const n = await prisma.notice.findFirst({ where: { id, ...visibleTo(uid) }, select: { id: true } });
+  if (!n) throw new AppError(404, "Notice not found.");
   await prisma.noticeRead.upsert({ where: { userId_noticeId: { userId: uid, noticeId: id } }, create: { userId: uid, noticeId: id }, update: {} });
   noticeHub.notify(uid);
 }
@@ -41,8 +47,21 @@ export async function sentNotices(page: number) {
     prisma.notice.count(),
     prisma.notice.findMany({
       orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * 25, take: 25,
-      include: { target: { select: { id: true, name: true, email: true } }, _count: { select: { reads: true } } },
+      include: { target: { select: { id: true, name: true, email: true } }, _count: { select: { reads: true, recipients: true } } },
     }),
   ]);
-  return { total, page, pageSize: 25, notices: notices.map(({ _count, ...n }) => ({ ...n, readCount: _count.reads })) };
+  return {
+    total,
+    page,
+    pageSize: 25,
+    notices: notices.map(({ _count, segment, ...n }) => ({
+      ...n,
+      segment: segment ? (JSON.parse(segment) as Segment) : null,
+      recipientCount: segment ? _count.recipients : null,
+      readCount: _count.reads,
+    })),
+  };
 }
+
+// How many students a set of filters reaches right now (the composer shows it before sending).
+export const audienceCount = (segment: Segment) => prisma.user.count({ where: segmentWhere(segment) });

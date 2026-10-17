@@ -5,8 +5,8 @@ import { claimsOf } from "../../../shared/auth/authenticate";
 import { rateLimit } from "../../../shared/rate-limit";
 import { bodyOf, validate } from "../../../shared/validate";
 import { accountOf } from "../../identity/http/gates";
-import { readNotice, sendNotice, sentNotices } from "../application/notices";
-import { InboxQuery, NoticeId, NoticeInput } from "../domain/notice";
+import { audienceCount, readNotice, sendNotice, sentNotices } from "../application/notices";
+import { AudienceInput, InboxQuery, NoticeId, NoticeInput } from "../domain/notice";
 import { inbox, noticeHub } from "../infrastructure/notice-repo";
 
 export const noticesRouter = Router();
@@ -41,4 +41,7 @@ adminNoticesRouter.get("/admin/notices", validate({ query: Page }), async (_req,
 });
 adminNoticesRouter.post("/admin/notices", rateLimit("noticeSend", { who: (req) => claimsOf(req).uid }), validate({ body: NoticeInput }), async (req, res) => {
   res.status(201).json(await sendNotice(claimsOf(req), bodyOf(req, NoticeInput)));
+});
+adminNoticesRouter.post("/admin/notices/audience", validate({ body: AudienceInput }), async (req, res) => {
+  res.json({ count: await audienceCount(bodyOf(req, AudienceInput).segment) });
 });

@@ -1,13 +1,12 @@
 import { expect, test } from "bun:test";
-import { canRead, NoticeInput, sameNotice } from "./notice";
+import { NoticeInput, sameNotice, Segment, segmentText, segmentWhere, visibleTo } from "./notice";
 
 const input = { id: crypto.randomUUID(), title: "Update", body: "Practice resumes at 3 PM.", targetId: "student-a" };
 
-test("a private notice is readable only by its recipient; a broadcast is readable by either student", () => {
-  expect(canRead("student-a", input.targetId)).toBe(true);
-  expect(canRead("student-b", input.targetId)).toBe(false);
-  expect(canRead("student-a", null)).toBe(true);
-  expect(canRead("student-b", null)).toBe(true);
+test("a student sees broadcasts, their own notices and filtered notices they were sent", () => {
+  expect(visibleTo("student-a")).toEqual({
+    OR: [{ targetId: null, segment: null }, { targetId: "student-a" }, { recipients: { some: { userId: "student-a" } } }],
+  });
 });
 
 test("notice input rejects empty, oversized or unspecified audiences", () => {
@@ -17,10 +16,41 @@ test("notice input rejects empty, oversized or unspecified audiences", () => {
   }
 });
 
+test("a filtered notice needs at least one known filter and can't also name a student", () => {
+  expect(NoticeInput.parse({ ...input, targetId: null, segment: { plan: "premium" } }).segment).toEqual({ plan: "premium" });
+  expect(NoticeInput.parse({ ...input }).segment).toBeNull();
+  expect(NoticeInput.safeParse({ ...input, segment: { plan: "premium" } }).success).toBe(false); // targetId + segment
+  for (const bad of [{}, { plan: "gold" }, { course: "Astronomy" }, { practice: "sometimes" }, { plan: "free", extra: 1 }, { email: "unverified" }]) {
+    expect(Segment.safeParse(bad).success).toBe(false);
+  }
+});
+
+test("filters combine with AND and always skip students being deleted", () => {
+  const now = new Date("2026-10-17T00:00:00Z");
+  const week = new Date("2026-10-10T00:00:00Z");
+  expect(segmentWhere({ plan: "premium", joined: "week", practice: "recent" }, now)).toEqual({
+    AND: [{ deletedAt: null }, { premium: true }, { createdAt: { gte: week } }, { sessions: { some: { createdAt: { gte: week } } } }],
+  });
+  expect(segmentWhere({ joined: "month" }, now).AND).toEqual([{ deletedAt: null }, { createdAt: { gte: new Date("2026-09-17T00:00:00Z") } }]);
+  expect(segmentWhere({ practice: "idle" }, now).AND).toEqual([
+    { deletedAt: null },
+    { sessions: { some: {} } },
+    { sessions: { none: { createdAt: { gte: week } } } },
+  ]);
+  expect(segmentWhere({ course: "BSIT", practice: "never" }, now).AND).toEqual([{ deletedAt: null }, { course: "BSIT" }, { sessions: { none: {} } }]);
+  const other = (segmentWhere({ course: "Other" }, now).AND as { course?: { notIn: string[] } }[])[1]!;
+  expect(other.course!.notIn).not.toContain("Other");
+  expect(other.course!.notIn).toContain("BSIT");
+});
+
 test("a retry must match the original admin, audience and content", () => {
-  const saved = { ...input, createdBy: "admin-a" };
-  expect(sameNotice(saved, input, "admin-a")).toBe(true);
-  expect(sameNotice(saved, input, "admin-b")).toBe(false);
-  expect(sameNotice(saved, { ...input, targetId: null }, "admin-a")).toBe(false);
-  expect(sameNotice(saved, { ...input, body: "Changed" }, "admin-a")).toBe(false);
+  const saved = { ...input, createdBy: "admin-a", segment: null };
+  const parsed = NoticeInput.parse(input);
+  expect(sameNotice(saved, parsed, "admin-a")).toBe(true);
+  expect(sameNotice(saved, parsed, "admin-b")).toBe(false);
+  expect(sameNotice(saved, { ...parsed, targetId: null }, "admin-a")).toBe(false);
+  expect(sameNotice(saved, { ...parsed, body: "Changed" }, "admin-a")).toBe(false);
+  const filtered = { ...saved, targetId: null, segment: segmentText({ joined: "week", plan: "free" }) };
+  expect(sameNotice(filtered, { ...parsed, targetId: null, segment: { plan: "free", joined: "week" } }, "admin-a")).toBe(true);
+  expect(sameNotice(filtered, { ...parsed, targetId: null, segment: { plan: "free" } }, "admin-a")).toBe(false);
 });

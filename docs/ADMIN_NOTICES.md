@@ -10,6 +10,22 @@ Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merg
 4. Choose everyone or search for a student by name/email. Enter a title (120 characters maximum) and plain-text message (2,000 characters maximum). Review the recipient and preview, then send.
 5. In the app, use the inbox button on Home or **Profile → Inbox**. Opening a notice marks it read. Dismissing its banner hides that banner for the current sign-in/launch; it stays unread in the inbox.
 
+## Templates and filtered groups
+
+- **Templates** (`client/web/admin/lib/notice-templates.ts`):
+  - The six templates are Account warning, Welcome new students, Scheduled maintenance, First practice nudge, Practice reminder and What's new.
+  - Choosing one fills the title, the message and its usual audience; if text is already typed, the admin confirms the replacement.
+  - `[Square brackets]` mark details to fill in, and Send stays disabled until they're replaced.
+  - Templates are admin-side constants: no table, and no per-student placeholders.
+- **Filtered group:** pick any of four filters, and a student must match all the ones set.
+  - **Plan:** Premium or Free.
+  - **Joined:** this week or this month.
+  - **Course:** from the onboarding list. "Other" includes courses that are no longer on the list and excludes students who haven't answered the survey.
+  - **Practice:** never practiced, practiced this week, or no practice in 7 days (which only counts students who have practiced before).
+- **Live count:** the composer shows how many students match as you change the filters (`POST /admin/notices/audience`) and won't send to zero.
+- **Recipients are fixed at send time:** the server resolves the matching students into `notice_recipients` when the notice is sent. A student who matches later doesn't receive it, and history shows the filters and **Sent to N**.
+- **No email-verification filter:** unverified students can't reach any signed-in route, so they could never read the notice.
+
 ## Delivery and storage
 
 - Only verified, signed-in students use the student API. The existing Firebase admin claim protects composing and sent history. No tokens are put into URLs.
@@ -27,7 +43,8 @@ Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merg
 | Method | Path | Access | Purpose |
 |---|---|---|---|
 | GET | `/admin/notices?page=1` | Admin | Sent history and read counts |
-| POST | `/admin/notices` | Admin | `{ id: UUID, title, body, targetId: UID or null }` |
+| POST | `/admin/notices` | Admin | `{ id: UUID, title, body, targetId: UID or null, segment?: { plan?, joined?, course?, practice? } or null }` (not both a target and a segment) |
+| POST | `/admin/notices/audience` | Admin | `{ segment }` → `{ count }`, the students those filters reach now |
 | GET | `/notices?before=UUID` | Verified student | Own inbox page, unread count, next cursor |
 | POST | `/notices/:id/read` | Verified recipient | Idempotent read receipt; another student's private ID returns 404 |
 | GET | `/notices/stream` | Verified student | SSE inbox invalidations |
@@ -55,6 +72,7 @@ Use disposable student accounts; avoid broadcasting test text to real students. 
 - [ ] Switch accounts while an inbox request is in flight; no previous account's message appears. Load more than 30 notices, read an older one and receive a new notice without losing the older rows.
 - [ ] Retry an uncertain send and confirm one stored notice and one audit row. Confirm a student token cannot POST `/admin/notices`.
 - [ ] Check two server processes against the test database and the actual proxy for cross-instance updates and unbuffered SSE.
+- [ ] Apply `20261017180000_notice_segments`, send to a filtered group (e.g. Plan: Free + Practice: Never) and check that only matching test students get it, that the composer count matches **Sent to N**, and that a student who matches afterwards doesn't see it.
 - [ ] Check inbox scrolling, expanded long messages, large font sizes, banner close target and safe-area placement on the phone.
 
 These are feature acceptance checks, not a claim of completed device or database integration testing.

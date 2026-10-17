@@ -72,6 +72,7 @@ model User {
   memberships GroupMember[]
   notices     Notice[]
   noticeReads NoticeRead[]
+  noticeInbox NoticeRecipient[]
 
   @@map("users")
 }
@@ -384,15 +385,30 @@ model Notice {
   title        String   @db.VarChar(120)
   body         String   @db.VarChar(2000)
   targetId     String?  @map("target_id") @db.VarChar(128)
+  segment      String?  @db.VarChar(400) // a filtered notice's filters (JSON, notices/domain/notice.ts); its audience is in notice_recipients
   createdBy    String   @map("created_by") @db.VarChar(128)
   createdAt    DateTime @default(now()) @map("created_at")
 
-  target User?        @relation(fields: [targetId], references: [id], onDelete: Cascade)
-  reads  NoticeRead[]
+  target     User?             @relation(fields: [targetId], references: [id], onDelete: Cascade)
+  reads      NoticeRead[]
+  recipients NoticeRecipient[]
 
   @@index([createdAt])
   @@index([targetId, createdAt])
   @@map("notices")
+}
+
+// Who a filtered notice went to, fixed when it was sent.
+model NoticeRecipient {
+  noticeId String @map("notice_id") @db.VarChar(36)
+  userId   String @map("user_id") @db.VarChar(128)
+
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, userId])
+  @@index([userId])
+  @@map("notice_recipients")
 }
 
 model NoticeRead {
