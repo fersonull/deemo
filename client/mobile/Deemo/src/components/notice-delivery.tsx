@@ -66,12 +66,12 @@ export function NoticeDelivery({ enabled }: { enabled: boolean }) {
 
   const unread = state.notices.filter((n) => !n.readAt && !state.dismissed.includes(n.id));
   const current = unread[0];
-  if (!enabled || !active || held || state.owner !== uid || path === "/notices" || !current) return null;
+  if (!enabled || !active || held || state.owner !== uid || path.startsWith("/notice") || !current) return null;
   return (
     <FloatingNotice
       title={current.title}
       unread={unread.length}
-      onOpen={() => router.push({ pathname: "/notices", params: { id: current.id } })}
+      onOpen={() => router.push({ pathname: "/notice", params: { id: current.id } })}
       onDismiss={() => notices.dismiss(current.id)}
     />
   );

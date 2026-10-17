@@ -1,6 +1,6 @@
 import { getAuth } from "@react-native-firebase/auth";
-import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { router } from "expo-router";
+import { useEffect } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
@@ -15,21 +15,10 @@ import { noticeWhen } from "@/utils/notice-when";
 
 export function Notices() {
   const state = useNotices();
-  const { id } = useLocalSearchParams<{ id?: string }>();
-  const [expanded, setExpanded] = useState<string | undefined>(id);
-  const [readError, setReadError] = useState("");
   useEffect(() => { void notices.refresh(); }, []);
-  useEffect(() => {
-    if (id) void notices.read(id).catch(() => setReadError("Couldn't mark this notice as read. Tap it to try again."));
-  }, [id]);
-  const read = async (noticeId: string) => {
-    setReadError("");
-    try { await notices.read(noticeId); }
-    catch { setReadError("Couldn't mark this notice as read. Tap it to try again."); }
-  };
   if (state.owner !== getAuth().currentUser?.uid) return null;
-
   const first = state.loading && !state.notices.length;
+  const last = state.notices.length - 1;
 
   return (
     <Screen title="Your inbox" subtitle="Updates and messages from DEEMO." onBack={() => router.back()}>
@@ -41,7 +30,6 @@ export function Notices() {
           </Text>
         </View>
       )}
-      {readError ? <Text accessibilityRole="alert" style={styles.error}>{readError}</Text> : null}
       {state.error ? <View style={styles.errorBox}><Text style={styles.error}>{state.error}</Text><Button label="Try again" variant="secondary" onPress={() => void notices.refresh()} /></View> : null}
       {first ? (
         <Fetching title="Opening your inbox" subtitle="Getting your messages from DEEMO." />
@@ -62,33 +50,30 @@ export function Notices() {
               </Text>
             </View>
           }
-          ListFooterComponent={state.nextCursor ? <Button label={state.loading ? "Loading…" : "Load older notices"} variant="secondary" disabled={state.loading} onPress={() => void notices.more()} /> : null}
-          renderItem={({ item: n }) => {
-            const open = expanded === n.id;
+          ListFooterComponent={state.nextCursor ? <View style={styles.footer}><Button label={state.loading ? "Loading…" : "Load older notices"} variant="secondary" disabled={state.loading} onPress={() => void notices.more()} /></View> : null}
+          renderItem={({ item: n, index }) => {
             const unread = !n.readAt;
+            // One sand group, like Profile's settings: rounded at the ends, hairlines between rows.
             return (
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={`${unread ? "Unread" : "Read"} notice, ${noticeWhen(n.createdAt)}: ${n.title}`}
-                accessibilityState={{ expanded: open }}
+                accessibilityHint="Opens the full message"
                 scaleTo={0.98}
-                onPress={() => { setExpanded(open ? undefined : n.id); if (unread) void read(n.id); }}
-                style={[styles.notice, unread && styles.unread]}
+                onPress={() => router.push({ pathname: "/notice", params: { id: n.id } })}
+                style={[styles.row, index === 0 && styles.rowFirst, index === last && styles.rowLast, index > 0 && styles.divider]}
               >
                 <View style={[styles.badge, unread && styles.badgeUnread]}>
-                  <Icon name="campaign" size={20} filled={unread} color={unread ? colors.paper : colors.duskIcon} />
+                  <Icon name="campaign" size={18} filled={unread} color={unread ? colors.paper : colors.duskIcon} />
                 </View>
                 <View style={styles.copy}>
-                  <View style={styles.header}>
-                    <Text style={styles.from}>DEEMO</Text>
-                    <Text style={styles.date}>· {noticeWhen(n.createdAt)}</Text>
-                    {unread ? <View style={styles.dot} /> : null}
+                  <View style={styles.line}>
+                    <Text style={[styles.title, unread && styles.titleUnread]} numberOfLines={1}>{n.title}</Text>
+                    <Text style={[styles.date, unread && styles.dateUnread]}>{noticeWhen(n.createdAt)}</Text>
                   </View>
-                  <Text style={[styles.title, !unread && styles.titleRead]} numberOfLines={open ? undefined : 1}>{n.title}</Text>
-                  <Text style={styles.body} numberOfLines={open ? undefined : 2}>{n.body}</Text>
-                  <View style={styles.more}>
-                    <Text style={styles.moreText}>{open ? "Show less" : "Read more"}</Text>
-                    <Icon name={open ? "expand_less" : "expand_more"} size={18} color={colors.duskLink} />
+                  <View style={styles.line}>
+                    <Text style={styles.preview} numberOfLines={1}>{n.body}</Text>
+                    {unread ? <View style={styles.dot} /> : null}
                   </View>
                 </View>
               </PressableScale>
@@ -101,26 +86,27 @@ export function Notices() {
 }
 
 const styles = StyleSheet.create({
-  status: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", marginTop: 14, marginBottom: 16, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.duskTint },
+  status: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", marginTop: 14, marginBottom: 14, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.duskTint },
   statusDone: { backgroundColor: colors.sageTint },
   statusText: { ...type.bodyStrong, fontSize: 13, color: colors.duskInk },
   statusTextDone: { color: colors.sageInk },
-  list: { gap: 10, paddingBottom: 24 },
+  list: { paddingBottom: 24 },
   listEmpty: { flexGrow: 1 },
-  notice: { flexDirection: "row", gap: 14, padding: 16, borderRadius: radius.xl, backgroundColor: colors.sand },
-  unread: { backgroundColor: colors.duskTint },
-  badge: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 11, paddingHorizontal: 14, backgroundColor: colors.sand },
+  rowFirst: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
+  rowLast: { borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl },
+  divider: { borderTopWidth: 1, borderTopColor: colors.border },
+  badge: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
   badgeUnread: { backgroundColor: colors.dusk },
-  copy: { flex: 1, minWidth: 0, gap: 4 },
-  header: { flexDirection: "row", alignItems: "center", gap: 6 },
-  from: { ...type.label, color: colors.duskInk },
-  date: { ...type.meta, color: colors.inkMuted, flex: 1 },
+  copy: { flex: 1, minWidth: 0, gap: 2 },
+  line: { flexDirection: "row", alignItems: "center", gap: 8 },
+  title: { ...type.bodyStrong, flex: 1, color: colors.inkSoft },
+  titleUnread: { fontWeight: "700", color: colors.ink },
+  date: { ...type.meta, color: colors.muted },
+  dateUnread: { color: colors.duskInk, fontWeight: "500" },
+  preview: { ...type.meta, fontSize: 13, flex: 1, color: colors.inkMuted },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dusk },
-  title: { ...type.heading, lineHeight: 22 },
-  titleRead: { color: colors.inkSoft },
-  body: { ...type.body, color: colors.inkSoft },
-  more: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 2 },
-  moreText: { ...type.bodyStrong, fontSize: 13, color: colors.duskLink },
+  footer: { marginTop: 14 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 48, paddingHorizontal: 24 },
   emptyTitle: { ...type.heading, fontSize: 20, marginTop: 18 },
   emptyBody: { ...type.body, color: colors.inkMuted, textAlign: "center", marginTop: 6 },

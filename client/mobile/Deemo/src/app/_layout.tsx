@@ -81,6 +81,7 @@ export default function RootLayout() {
           <Stack.Screen name="rubric" />
           <Stack.Screen name="premium" />
           <Stack.Screen name="notices" />
+          <Stack.Screen name="notice" />
           <Stack.Screen name="results" />
           <Stack.Screen name="mic-check" />
           <Stack.Screen name="session" options={{ gestureEnabled: false }} />
