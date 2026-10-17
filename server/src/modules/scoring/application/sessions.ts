@@ -45,7 +45,7 @@ export async function createSession(uid: string, body: FinishedSession): Promise
     groupCode: project?.group?.code,
     focusArea: project?.group?.focusArea,
     weakFrom: body.weakFrom,
-    manuscriptContext: project?.analysis ? manuscriptFacts(project.analysis) : SAMPLE_MANUSCRIPT,
+    manuscriptContext: project?.analysis ? manuscriptFacts(project.analysis, body.mode) : SAMPLE_MANUSCRIPT, // the stage's material only
     title: project?.analysis?.title || project?.name || "Sample paper (ReqTrack)",
     mode: body.mode,
     domain: body.domain,

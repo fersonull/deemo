@@ -68,6 +68,15 @@ export function Setup() {
           );
         })}
       </View>
+      {/* The panel only sees the stage's chapters (server panel.ts manuscriptFacts); Final needs results to ask about. */}
+      {setup.mode === "FINAL" && manuscript?.analysis && !manuscript.analysis.results.trim() ? (
+        <View style={styles.stageNote}>
+          <Icon name="info" size={18} color={colors.amberInk} />
+          <Text style={styles.stageNoteText}>
+            This manuscript has no results chapter yet, so a Final Defense has little to ask about. Pre-Oral fits it better.
+          </Text>
+        </View>
+      ) : null}
 
       <Text style={[type.label, styles.section]}>PRACTICING WITH</Text>
       <PressableScale
@@ -229,6 +238,8 @@ const styles = StyleSheet.create({
   change: { height: 26, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, justifyContent: "center" },
   changeText: { ...type.meta, fontWeight: "600", color: colors.ink },
   modes: { gap: 8, marginTop: 18 },
+  stageNote: { flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 10, padding: 12, borderRadius: radius.lg, backgroundColor: colors.amberTint },
+  stageNoteText: { ...type.body, flex: 1, fontSize: 13, lineHeight: 18, color: colors.amberInk },
   mode: {
     flexDirection: "row",
     alignItems: "center",

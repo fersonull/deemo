@@ -84,3 +84,26 @@ test("the panel sees the manuscript's field first", () => {
   const a = { title: "T", problem: "P", objectives: "O", method: "M", scope: "S", features: "", limits: "L", results: "", facts: [], unsure: [], field: "Maritime" as const };
   expect(manuscriptFacts(a).startsWith("Field: Maritime\nTitle: T")).toBe(true);
 });
+
+test("the panel only sees the defense stage's chapters", () => {
+  const a = {
+    title: "ReqTrack", problem: "P", objectives: "O", method: "Agile, 30 respondents", scope: "S", features: "QR", limits: "L",
+    results: "Weighted mean 3.42", unsure: [],
+    facts: ["Registrar handles 2,000 students (Ch. 1)", "Thirty (30) respondents (Ch. 3)", "Mean 3.42 (Chapter 4)", "Built with Expo"],
+  };
+  const title = manuscriptFacts(a, "TITLE");
+  expect(title).not.toContain("Agile");
+  expect(title).not.toContain("Thirty (30)");
+  expect(title).not.toContain("3.42");
+  expect(title).toContain("2,000 students");
+  expect(title).toContain("Built with Expo"); // no chapter: kept
+
+  const preOral = manuscriptFacts(a, "PRE_ORAL");
+  expect(preOral).toContain("Agile");
+  expect(preOral).toContain("Thirty (30)");
+  expect(preOral).not.toContain("3.42");
+
+  const final = manuscriptFacts(a, "FINAL");
+  expect(final).toContain("Results: Weighted mean 3.42");
+  expect(final).toContain("Mean 3.42 (Chapter 4)");
+});
