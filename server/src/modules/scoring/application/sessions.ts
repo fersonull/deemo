@@ -1,6 +1,8 @@
 import { Busy, generateObject } from "../../../shared/ai/gemini";
 import { prisma } from "../../../shared/prisma";
 import { courseOf } from "../../identity/domain/course";
+import { planOf } from "../../identity/domain/plan";
+import { buildAgenda } from "../../practice/domain/agenda";
 import { AppError, BUSY } from "../../../shared/errors";
 import { accessibleProject } from "../../groups/application/access";
 import { SAMPLE_MANUSCRIPT, manuscriptFacts, type PanelSetup } from "../../practice/domain/panel";
@@ -37,6 +39,7 @@ export type FinishedSession = PanelSetup & {
 export async function createSession(uid: string, body: FinishedSession): Promise<Session> {
   const project = body.projectId ? await accessibleProject(uid, body.projectId) : null;
   if (body.projectId && (!project?.analysis || !project.confirmedAt)) throw new AppError(400, "invalid session");
+  const account = await prisma.user.findUnique({ where: { id: uid }, select: { premium: true, course: true } });
   const session = await sessionRepo.create(uid, {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -49,7 +52,14 @@ export async function createSession(uid: string, body: FinishedSession): Promise
     title: project?.analysis?.title || project?.name || "Sample paper (ReqTrack)",
     mode: body.mode,
     domain: body.domain,
-    minutes: body.minutes,
+    minutes: planOf(account?.premium ?? false).capMinutes,
+    // Rebuilt from the same inputs the live token used (practice/application/live-token.ts), never taken from the app.
+    agenda: buildAgenda(project?.analysis ?? null, {
+      mode: body.mode,
+      course: project?.analysis?.field ?? courseOf(account?.course),
+      domain: body.domain,
+      panelists: body.panelists,
+    }).map(({ id, label }) => ({ id, label })),
     panelists: body.panelists,
     followUps: body.followUps,
     difficulty: body.difficulty,

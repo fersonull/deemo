@@ -5,6 +5,8 @@ import { courseOf } from "../../identity/domain/course";
 import { accessibleProject } from "../../groups/application/access";
 import { getSession } from "../../scoring/application/sessions";
 import { weakTopics } from "../../scoring/domain/session";
+import { planOf } from "../../identity/domain/plan";
+import { buildAgenda } from "../domain/agenda";
 import { NEW_SESSION_MS, decideFinish, decideSeat, decideStart } from "../domain/live-start";
 import { LIVE_MODEL, PANEL_VOICES, lineup, type PanelSetup } from "../domain/panel";
 import { mintLiveToken } from "../infrastructure/gemini-live";
@@ -32,6 +34,10 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     if (!last?.report || last.report.scored === false) throw new AppError(404, "That report can't start a weak-topics round.");
     panel.weakTopics = weakTopics(last.report);
   }
+  // What the panel must cover before it may end; scoring rebuilds the same list (scoring/application/sessions.ts).
+  const items = buildAgenda(project?.analysis ?? null, { mode: setup.mode, course: panel.course, domain: setup.domain, panelists: setup.panelists });
+  const agenda = items.map(({ id, label, seat: s }) => ({ id, label, seat: s })); // the briefs stay in the prompt
+  const capMinutes = planOf(account.premium).capMinutes;
 
   // A later panelist (sequential panel): a token for their seat under the same start, no new daily slot. Every
   // request mints a fresh single-use token (retries and reconnects included); the round's expiry bounds them.
@@ -43,8 +49,8 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
       panelists: setup.panelists,
       now: Date.now(),
     });
-    const token = await mintLiveToken(panel, project?.analysis, expiresAt, Date.now() + NEW_SESSION_MS, seat);
-    return { token, model: LIVE_MODEL, voice };
+    const token = await mintLiveToken(panel, project?.analysis, items, expiresAt, Date.now() + NEW_SESSION_MS, seat);
+    return { token, model: LIVE_MODEL, voice, agenda, capMinutes };
   }
 
   // Reserve the start (and today's slot) before minting.
@@ -65,17 +71,17 @@ export async function issueLiveToken(account: Account, req: TokenRequest) {
     if (d.kind === "new") await tx.user.update({ where: { id: account.id }, data: { sessionDay: d.day, sessionCount: d.count } });
     return d;
   });
-  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice };
+  if (decision.kind === "cached") return { token: decision.start.token!, model: LIVE_MODEL, voice, agenda, capMinutes };
 
   let token: string | undefined;
   const newSessionUntil = Date.now() + NEW_SESSION_MS;
   try {
-    token = await mintLiveToken(panel, project?.analysis, decision.start.expiresAt, newSessionUntil);
+    token = await mintLiveToken(panel, project?.analysis, items, decision.start.expiresAt, newSessionUntil);
   } finally {
     // Save the token for retries and resumption, or refund the slot if minting failed.
     await finish(account.id, startId, decision.start.lease, token, newSessionUntil);
   }
-  return { token, model: LIVE_MODEL, voice };
+  return { token, model: LIVE_MODEL, voice, agenda, capMinutes };
 }
 
 async function finish(uid: string, startId: string, lease: string, token: string | undefined, newSessionUntil: number) {

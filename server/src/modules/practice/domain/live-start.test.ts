@@ -81,17 +81,13 @@ test("daily starts: caps, retries, refunds, leases and Manila midnight", () => {
   expect(() => h.start("free", "a", true)).toThrow(expect.objectContaining({ status: 410 }));
 });
 
-test("Premium: unlimited sessions a day, up to 25 minutes", () => {
+test("Premium: unlimited sessions a day; the round's token lives for the plan's safety cap plus 30 minutes", () => {
   const h = harness();
   h.accounts.set("premium", { premium: true, sessionDay: null, sessionCount: 0 });
   for (let i = 0; i < 40; i++) h.start("premium", `p${i}`); // no daily cap
   expect(h.account("premium").sessionCount).toBe(40);
-  expect(() => h.start("long", "x", false, { ...h.setup, minutes: 15 })).toThrow(expect.objectContaining({ status: 403 }));
-  h.accounts.set("long", { premium: true, sessionDay: null, sessionCount: 0 });
-  expect(() => h.start("long", "x", false, { ...h.setup, minutes: 30 })).toThrow(expect.objectContaining({ status: 400 }));
-  expect(h.account("long").sessionCount).toBe(0);
-  const long = h.start("long", "x", false, { ...h.setup, minutes: 25 });
-  expect(long.expiresAt).toBe(h.clock.get() + 55 * 60_000);
+  expect(h.start("premium", "cap").expiresAt).toBe(h.clock.get() + 90 * 60_000); // 60-min cap
+  expect(h.start("free", "cap").expiresAt).toBe(h.clock.get() + 60 * 60_000); // 30-min cap
 });
 
 test("later panelists' seats: only under a connected start for the same setup, before it expires, no new slot", () => {

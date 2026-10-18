@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 
 import type { Report, Session } from "@/hooks/use-sessions";
 
-import { formula, reportHtml } from "./report-html";
+import { answeredStat, formula, notReached, reportHtml } from "./report-html";
 
 const report: Report = {
   score: 54,
@@ -65,4 +65,15 @@ test("an unscored session shows a dash and no formula", () => {
 
 test("the formula spells out every number", () => {
   expect(formula(report)).toBe("Rubric 66 × coverage 3/4 − consistency 6 (1 high) = 54");
+});
+
+test("agenda sessions show topics answered out of the agenda, and the topics never reached", () => {
+  const agenda = [{ id: "problem", label: "Problem" }, { id: "scope", label: "Scope and limitations" }];
+  const turns = [{ ...session.turns[0]!, followUp: 0, topic: "problem" }];
+  const s = { ...session, agenda, turns };
+  expect(answeredStat(s, { ...report, answered: 1, planned: 2 })).toEqual({ value: "1/2", label: "topics answered" });
+  expect(notReached(s)).toEqual(["Scope and limitations"]);
+  expect(reportHtml(s, report, { student: "Ana", date: "Oct 10" })).toContain("Not reached: Scope and limitations");
+  expect(answeredStat(session, report)).toEqual({ value: String(report.answered), label: "answered" }); // older sessions
+  expect(notReached(session)).toEqual([]);
 });

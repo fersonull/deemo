@@ -12,7 +12,7 @@ mock.module("@/utils/api", () => ({ api, ApiError }));
 mock.module("@/utils/recorder", () => ({ getRecorder: () => recorder }));
 mock.module("./voice-level", () => ({ panelVoice: { value: 0 } }));
 const { GeminiEngine } = await import("./gemini-engine");
-const setup = { mode: "TITLE" as const, domain: "Data & AI", panelists: 1, minutes: 10, followUps: 2, difficulty: "STANDARD" as const };
+const setup = { mode: "TITLE" as const, domain: "Data & AI", panelists: 1, followUps: 2, difficulty: "STANDARD" as const };
 type Internals = {
   emit: (e: LiveEvent) => void;
   ready: boolean;
@@ -117,8 +117,8 @@ test("one question per panel turn: a repeat before it's heard is fine; after it,
   }
 });
 
-test("in turns: each panelist asks their share, then the next takes over in their own session with a handover note", async () => {
-  const engine = new GeminiEngine({ ...setup, panelists: 3, minutes: 15 }); // share: 2 main questions each
+test("in turns: each panelist covers its own agenda topics, then the next takes over in their own session with a handover note", async () => {
+  const engine = new GeminiEngine({ ...setup, panelists: 3 });
   const internals = engine as unknown as Internals & {
     endStudentTurn: () => void;
     settle: () => void;
@@ -134,19 +134,29 @@ test("in turns: each panelist asks their share, then the next takes over in thei
   internals.note = (from, to) => `note ${from}->${to}`;
   internals.ready = true;
   internals.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+  (internals as unknown as { agenda: object[] }).agenda = [
+    { id: "a", label: "A", seat: 0 },
+    { id: "b", label: "B", seat: 0 },
+    { id: "d", label: "D", seat: 1 },
+    { id: "e", label: "E", seat: 2 },
+  ];
   const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
   const ask = (topicId: string, isFollowUp = false) =>
     internals.onToolCall({ id: topicId, name: "ask_question", args: { topicId, questionText: "Why?", questionType: "CONCEPTUAL", isFollowUp, panelist: "Methodology" } })
       .response.allowed;
+  const pass = () => (internals.onToolCall({ id: "p", name: "pass_to_next" }).response as { ok: boolean }).ok;
   try {
     expect(ask("a")).toBe(true);
     expect((events.at(-1) as { question: { panelist: number } }).question.panelist).toBe(0); // the asker is the seat
     internals.endStudentTurn();
-    expect(ask("a", true)).toBe(true); // follow-ups don't use the share
+    expect(pass()).toBe(false); // "b" is still on this panelist's agenda
+    expect(ask("d")).toBe(false); // another panelist's topic
+    expect(ask("a")).toBe(false); // already asked: only a follow-up may return to it
+    expect(ask("a", true)).toBe(true); // follow-ups are free (within the follow-up limit)
     internals.endStudentTurn();
-    expect(ask("b")).toBe(true); // second main question: share reached (the next token is fetched early)
+    expect(ask("b")).toBe(true); // the last topic (the next token is fetched early)
     internals.endStudentTurn();
-    expect(ask("c")).toBe(false); // a third main question: hand over instead
+    expect(ask("c")).toBe(false); // nothing left: hand over instead
     expect(internals.passing).toBe(true);
     internals.turnDone = true;
     internals.queued = 0;
@@ -159,9 +169,9 @@ test("in turns: each panelist asks their share, then the next takes over in thei
     (internals as unknown as { onMessage: (m: object) => void }).onMessage({ setupComplete: {} });
     expect(sent.at(-1).clientContent.turns[0].parts[0].text).toBe("note 0->1");
     expect(ask("d")).toBe(true);
-    expect((internals.onToolCall({ id: "p", name: "pass_to_next" }).response as { ok: boolean }).ok).toBe(false);
+    expect(pass()).toBe(false); // the answer is still pending
     internals.endStudentTurn();
-    expect((internals.onToolCall({ id: "p", name: "pass_to_next" }).response as { ok: boolean }).ok).toBe(true);
+    expect(pass()).toBe(true);
     expect(internals.passing).toBe(true);
   } finally {
     engine.stop();
@@ -171,7 +181,7 @@ test("in turns: each panelist asks their share, then the next takes over in thei
 
 test("handover never strands the floor: a late pass_to_next, a spoken handover, or a stalled turn all move on", () => {
   const make = () => {
-    const engine = new GeminiEngine({ ...setup, panelists: 2, minutes: 15 });
+    const engine = new GeminiEngine({ ...setup, panelists: 2 });
     const i = engine as unknown as Internals & {
       endStudentTurn: () => void;
       settle: () => void;
@@ -290,6 +300,55 @@ test("a reaction heard before ask_question isn't asked for again (it was said tw
     const r = ask("checker");
     expect(r.allowed).toBe(true);
     expect(r.instruction).toContain("say only the question");
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});
+
+test("one panelist: no question limit, it may only close once every agenda topic is asked and answered", () => {
+  const engine = new GeminiEngine(setup);
+  const i = engine as unknown as Internals & {
+    agenda: object[];
+    endStudentTurn: () => void;
+    settle: () => void;
+    heard: boolean;
+    turnDone: boolean;
+    queued: number;
+  };
+  const events: LiveEvent[] = [];
+  const sent: any[] = [];
+  i.emit = (e) => events.push(e);
+  i.ready = true;
+  i.ws = { send: (d) => sent.push(JSON.parse(d)), close: () => {} };
+  i.agenda = [
+    { id: "problem", label: "Problem", seat: 0 },
+    { id: "scope", label: "Scope", seat: 0 },
+  ];
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
+  const ask = (topicId: string, isFollowUp = false) =>
+    i.onToolCall({ id: topicId, name: "ask_question", args: { topicId, questionText: "Why?", questionType: "CONCEPTUAL", isFollowUp, panelist: "Chair" } })
+      .response as { allowed?: boolean; instruction?: string };
+  const end = () => i.onToolCall({ id: "e", name: "end_session" }).response as { ok?: boolean; instruction?: string };
+  try {
+    expect(end().instruction).toContain("problem, scope"); // nothing asked yet
+    expect(ask("made-up").allowed).toBe(false); // not on the agenda
+    // Labelled a follow-up, but its topic never got a main question: it counts as that main question.
+    expect(ask("problem", true).allowed).toBe(true);
+    expect((events.at(-1) as { question: { isFollowUp: boolean } }).question.isFollowUp).toBe(false);
+    i.endStudentTurn();
+    expect(end().instruction).toContain("scope");
+    expect(ask("scope").allowed).toBe(true);
+    i.endStudentTurn();
+    expect(ask("novelty").instruction).toContain("end_session"); // everything covered: close instead
+    // It spoke a closing remark without the tool: told once to close.
+    i.heard = true;
+    i.turnDone = true;
+    i.queued = 0;
+    i.settle();
+    expect(sent.at(-1).clientContent.turns[0].parts[0].text).toContain("Call end_session");
+    expect(end().ok).not.toBe(false); // now it may end
+    expect(events.at(-1)).toEqual({ type: "end" });
   } finally {
     engine.stop();
     timers.mockRestore();

@@ -2,7 +2,7 @@
 import { expect, test } from "bun:test";
 
 import { SetupInput, buildPanelPrompt } from "../../practice/domain/panel";
-import { coverage, substantive, unscored, weakTopics, type Unscored } from "./session";
+import { coverage, notReached, substantive, unscored, weakTopics, type Unscored } from "./session";
 
 const parseSetup = (x: unknown) => {
   const r = SetupInput.safeParse(x);
@@ -42,7 +42,7 @@ test("weak topics: a strong report still names its lowest criterion", () => {
 });
 
 test("the panel prompt carries the weak areas as data, only on a weak-topics round", () => {
-  const setup = parseSetup({ mode: "PRE_ORAL", domain: "Data & AI", panelists: 1, minutes: 10, weakFrom: "abc-123" })!;
+  const setup = parseSetup({ mode: "PRE_ORAL", domain: "Data & AI", panelists: 1, weakFrom: "abc-123" })!;
   expect(setup.weakFrom).toBe("abc-123");
   expect(parseSetup({ ...setup, weakFrom: "../x" })).toBeNull();
   expect(buildPanelPrompt(setup)).not.toContain("targeted practice round");
@@ -51,12 +51,12 @@ test("the panel prompt carries the weak areas as data, only on a weak-topics rou
 });
 
 test("the setup schema fills the defaults and rejects what the panel can't run", () => {
-  const setup = parseSetup({ mode: "TITLE", domain: "Data & AI", panelists: 1, minutes: 10 })!;
+  const setup = parseSetup({ mode: "TITLE", domain: "Data & AI", panelists: 1 })!;
   expect(setup.followUps).toBe(2);
   expect(setup.difficulty).toBe("STANDARD");
   expect(parseSetup({ ...setup, mode: "ORAL" })).toBeNull();
   expect(parseSetup({ ...setup, panelists: 4 })).toBeNull();
-  expect(parseSetup({ ...setup, minutes: 2.5 })).toBeNull();
+  expect(parseSetup({ ...setup, panelists: 1.5 })).toBeNull();
 });
 
 const session = (over: Partial<Unscored> = {}): Unscored => ({
@@ -64,13 +64,30 @@ const session = (over: Partial<Unscored> = {}): Unscored => ({
   followUps: 2, difficulty: "STANDARD", durationMs: 0, endedBy: "student", weights: [25, 20, 20, 20, 15],
   turns: [], lines: [], flags: [], ...over,
 });
-const turn = (number: number, answer: string, followUp = 0) =>
-  ({ number, followUp, type: "TECHNICAL", panelist: 0, question: "Q?", answer, latencyMs: 1000, answerMs: 5000 });
+const turn = (number: number, answer: string, followUp = 0, topic?: string) =>
+  ({ number, followUp, type: "TECHNICAL", panelist: 0, question: "Q?", answer, latencyMs: 1000, answerMs: 5000, ...(topic && { topic }) });
 
-test("coverage: planned questions follow the length unless the panel closed early", () => {
+test("coverage: the agenda's topics answered, out of all of them", () => {
+  const agenda = [{ id: "problem", label: "Problem" }, { id: "scope", label: "Scope" }, { id: "novelty", label: "Novelty" }];
+  const s = session({
+    agenda,
+    turns: [
+      turn(1, "uh", 0, "problem"),
+      turn(1, "The registrar queue takes two hours.", 1, "problem"), // a follow-up's real answer counts for the topic
+      turn(2, "uh", 0, "scope"),
+      turn(3, "An answer about something else.", 0, "made-up"), // not on the agenda
+    ],
+  });
+  expect(coverage(s)).toEqual({ answered: 1, planned: 3 });
+  expect(coverage({ ...s, endedBy: "panel" })).toEqual({ answered: 1, planned: 3 }); // no relaxing: the agenda is the plan
+  expect(notReached(s)).toEqual(["Novelty"]);
+});
+
+test("coverage on sessions from before the agenda: the old count by picked length", () => {
   const s = session({ turns: [turn(1, "We used thirty respondents."), turn(2, "uh")] });
   expect(coverage(s)).toEqual({ answered: 1, planned: 4 });
   expect(coverage({ ...s, endedBy: "panel" })).toEqual({ answered: 1, planned: 2 });
+  expect(notReached(s)).toEqual([]);
 });
 
 test("nothing answered: not scored, every criterion unmeasured", () => {

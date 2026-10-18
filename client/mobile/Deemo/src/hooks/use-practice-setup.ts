@@ -7,7 +7,6 @@ const store = createStore({
   mode: "PRE_ORAL" as Mode,
   domain: DOMAINS[0] as Domain,
   panelists: 1,
-  minutes: 10,
   followUps: 2, // per topic (plan F8 default)
   difficulty: "STANDARD" as Difficulty,
   projectId: null as string | null, // the manuscript the panel reads; null uses the built-in sample

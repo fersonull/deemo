@@ -17,6 +17,7 @@ const Turn = z.object({
   type: text(20),
   panelist: int,
   question: text(600),
+  topic: z.unknown().optional().transform((x) => (typeof x === "string" && x ? x.slice(0, 60) : undefined)),
   answer: text(4000),
   latencyMs: z.unknown().optional().transform((x) => (typeof x === "number" && Number.isFinite(x) ? Math.max(0, Math.min(INT_MAX, Math.round(x))) : null)),
   answerMs: int,

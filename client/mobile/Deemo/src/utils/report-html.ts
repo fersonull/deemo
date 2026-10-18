@@ -16,6 +16,16 @@ export function formula(r: Report) {
   return `Rubric ${r.rubricScore} × coverage ${coverage} − consistency ${r.penalty}${counts.length ? ` (${counts.join(", ")})` : ""} = ${r.score}`;
 }
 
+// Agenda topics that never got a question: the time cap or the student ended first (the server's notReached, same rule).
+export const notReached = (s: Pick<Session, "agenda" | "turns">) =>
+  (s.agenda ?? []).filter((a) => !s.turns.some((t) => t.topic === a.id && t.followUp === 0)).map((a) => a.label);
+
+// The answered stat: topics out of the agenda on newer sessions, a plain count on older ones.
+export const answeredStat = (s: Pick<Session, "agenda">, r: Report) =>
+  s.agenda?.length
+    ? { value: `${Math.min(r.answered, r.planned)}/${r.planned}`, label: "topics answered" }
+    : { value: String(r.answered), label: "answered" };
+
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -125,8 +135,9 @@ p { margin: 2px 0 0; }
 <p>${esc(r.headline)}</p>
 ${scored ? `<div class="formula">${esc(formula(r))}</div>` : ""}
 <div class="stats"><div class="stat"><b>${formatTime(s.durationMs)}</b><span class="meta">length</span></div>
-<div class="stat"><b>${r.answered}</b><span class="meta">answered</span></div>
+<div class="stat"><b>${answeredStat(s, r).value}</b><span class="meta">${answeredStat(s, r).label}</span></div>
 <div class="stat"><b>${r.contradictions.length}</b><span class="meta">${r.contradictions.length === 1 ? "contradiction" : "contradictions"}</span></div></div>
+${notReached(s).length ? `<p class="meta">Not reached: ${esc(notReached(s).join(", "))}</p>` : ""}
 ${fixes}${contradictions}${criteria}${delivery}${questions}
 </body></html>`;
 }

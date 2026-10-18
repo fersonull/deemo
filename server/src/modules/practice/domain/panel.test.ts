@@ -1,15 +1,30 @@
 import { expect, test } from "bun:test";
 
-import { buildPanelPrompt, lineup, manuscriptFacts, PANEL_TOOLS, seatShare } from "./panel";
+import { buildAgenda } from "./agenda";
+import { buildPanelPrompt, liveSetup, lineup, manuscriptFacts, panelTools } from "./panel";
 
-const setup = { mode: "PRE_ORAL" as const, domain: "Web/Mobile App", minutes: 15, followUps: 2, difficulty: "STANDARD" as const };
+const setup = { mode: "PRE_ORAL" as const, domain: "Web/Mobile App", followUps: 2, difficulty: "STANDARD" as const };
 
 test("one panelist: the whole panel prompt, presentation first, ends with end_session", () => {
   const p = buildPanelPrompt({ ...setup, panelists: 1 });
   expect(p).toContain("The student speaks first");
   expect(p).toContain("call end_session");
   expect(p).not.toContain("pass_to_next");
-  expect(p).toContain("main questions in total");
+  expect(p).toContain("no question limit");
+  expect(p).not.toMatch(/about \d+ main questions/);
+});
+
+test("the agenda: each seat's prompt lists only its own items, and its tool limits topicId to them", () => {
+  const agenda = buildAgenda(null, { mode: "PRE_ORAL", panelists: 3 });
+  const chair = buildPanelPrompt({ ...setup, panelists: 3 }, undefined, 0, agenda);
+  expect(chair).toContain("- problem: ");
+  expect(chair).not.toContain("- sampling: "); // Methodology's
+  const solo = buildPanelPrompt({ ...setup, panelists: 1 }, undefined, 0, buildAgenda(null, { mode: "PRE_ORAL", panelists: 1 }));
+  expect(solo).toContain("- sampling: ");
+  const tools = liveSetup({ ...setup, panelists: 3 }, undefined, 2, agenda).tools[0]!.functionDeclarations;
+  const topic = (tools[0]!.parameters as { properties: { topicId: { enum?: string[] } } }).properties.topicId;
+  expect(topic.enum).toEqual(agenda.filter((i) => i.seat === 2).map((i) => i.id));
+  expect((panelTools()[0]!.parameters.properties.topicId as { enum?: string[] }).enum).toBeUndefined();
 });
 
 test("three panelists question in turn: each seat speaks only as itself, hands over, and the last one closes", () => {
@@ -26,13 +41,7 @@ test("three panelists question in turn: each seat speaks only as itself, hands o
   expect(last).toContain("You are Prof. Cruz");
   expect(last).toContain("closing sentence for the whole panel");
   expect(last).not.toContain("call pass_to_next");
-  expect(PANEL_TOOLS.map((t) => t.name)).toContain("pass_to_next");
-});
-
-test("each panelist's share of main questions", () => {
-  expect(seatShare(15, 3)).toBe(2); // 6 planned / 3
-  expect(seatShare(25, 2)).toBe(5); // 10 planned / 2
-  expect(seatShare(10, 3)).toBe(2); // never fewer than 2
+  expect(panelTools().map((t) => t.name)).toContain("pass_to_next");
 });
 
 test("the panel is profiled by the student's course and, for computing courses, the IT field (plan F4)", () => {

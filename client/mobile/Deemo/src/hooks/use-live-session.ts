@@ -2,7 +2,9 @@ import { useNetInfo } from "@react-native-community/netinfo";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { AppState } from "react-native";
 
+import { CAP_MINUTES } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
+import { useSession } from "@/hooks/use-session";
 import { GeminiEngine } from "@/live/gemini-engine";
 import { MockEngine } from "@/live/mock-engine";
 import { handoverNote } from "@/live/handover";
@@ -14,13 +16,12 @@ const TICK_MS = 250;
 // EXPO_PUBLIC_LIVE_ENGINE=mock plays the scripted defense instead of Gemini (UI work, no server needed).
 function createEngine(seats: number[]): LiveEngine {
   if (process.env.EXPO_PUBLIC_LIVE_ENGINE === "mock") return new MockEngine(practiceSetup.get().panelists);
-  const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weakFrom } = practiceSetup.get();
+  const { mode, domain, panelists, followUps, difficulty, projectId, weakFrom } = practiceSetup.get();
   return new GeminiEngine(
     {
       mode,
       domain,
       panelists,
-      minutes,
       followUps,
       difficulty,
       projectId: projectId ?? undefined, // no project: the sample paper
@@ -34,10 +35,12 @@ function createEngine(seats: number[]): LiveEngine {
 // the brief asks for (app backgrounded, connection lost).
 // `seats`: the persona in each seat (constants.ts lineup), for names in the handover.
 export function useLiveSession(seats: number[]) {
+  const { premium } = useSession();
   const [state, dispatch] = useReducer(liveReducer, undefined, () => ({
     ...initialLiveState,
     followUpLimit: practiceSetup.get().followUps,
-    durationLimitMs: practiceSetup.get().minutes * 60_000,
+    // No set length: the panel ends when its agenda is done. This only stops a session that runs away.
+    durationLimitMs: CAP_MINUTES[premium ? "premium" : "free"] * 60_000,
   }));
   const stateRef = useRef(state);
   const engineRef = useRef<LiveEngine | null>(null);

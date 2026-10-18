@@ -59,7 +59,7 @@ export function decideStart(i: {
     kind: "new",
     day,
     count: used + 1,
-    start: { day, setup: i.fingerprint, lease: i.lease, pendingUntil: now + LEASE_MS, expiresAt: now + (i.setup.minutes + 30) * 60_000 },
+    start: { day, setup: i.fingerprint, lease: i.lease, pendingUntil: now + LEASE_MS, expiresAt: now + (planOf(i.account.premium).capMinutes + 30) * 60_000 },
   };
 }
 

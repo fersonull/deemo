@@ -40,6 +40,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) becomes the whole rubric, replacing the five defaults: its own criteria, weights from its points, level anchors from its descriptors. Criteria needing the paper or a live demo are listed but not scored. Saved on the project (shared with the group); "Back to the default rubric" undoes it.
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
+- [x] **Agenda sessions** (F5a, F13, branch `feat/agenda-sessions`): no question limit and no length picker. The panel covers a manuscript-based agenda for the stage and may only end when every topic is asked and answered. Difficulty changes depth, not count. Safety cap: Free 30 min, Premium 60. Coverage = agenda topics answered; the report shows "Not reached".
 - [x] **Deemo as an owl** (replaces the pebble): every mood, Premium suit and medal, new app icon (needs a native rebuild).
 - [x] **Deemo, the guide** (design D1–D5, glasses instead of the sprout; SVG + Reanimated, needs a native rebuild): component, moods and motion; Welcome, Home and History empty states, Projects notes, reading waits.
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
@@ -101,7 +102,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 | S-05 Home | Greeting, last readiness score, Start practice, recent sessions |
 | S-06 Upload, S-07 Analysis summary (F1, F2) | PDF/DOCX up to 20 MB, file type checked by content, non-manuscripts rejected; editable summary and key facts; raw file never stored |
 | S-08 Rubric (F3, default only) | Five default criteria, adjustable weights |
-| S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, length, Coach/Panel feedback, manuscript, scoring |
+| S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, follow-ups, difficulty, Coach/Panel feedback, manuscript, scoring (no length: agenda sessions) |
 | S-10 Live session (F6–F13, F13a) | Gemini Live voice panel through an ephemeral token; adaptive questions from the manuscript; follow-up limit enforced in code; question-type chips; live transcript; contradiction flags; answer timing; pause/resume; reconnect; up to 3 personas, one voice; typed-answer fallback; noise gate and platform noise suppression |
 | S-11 Paused | Pause overlay, timers frozen |
 | Model fallback | Analysis and scoring try gemini-3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite; each report and analysis records which model answered |

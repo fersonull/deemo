@@ -14,6 +14,7 @@ export type SessionTurn = {
   type: string;
   panelist: number;
   question: string;
+  topic?: string; // the agenda item it was about
   answer: string;
   latencyMs: number | null;
   answerMs: number;
@@ -50,7 +51,8 @@ export type Session = {
   projectId?: string;
   domain: string;
   panelists: number;
-  minutes: number;
+  minutes: number; // the safety cap it ran under
+  agenda?: { id: string; label: string }[]; // the topics the panel had to cover (missing on older sessions)
   followUps: number;
   durationMs: number;
   turns: SessionTurn[];
@@ -81,7 +83,7 @@ const post = (body: object) => ({ method: "POST", headers: { "content-type": "ap
 // names whatever the course is later.
 function fromLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: number[]) {
   const persona = (seat: number) => seats[seat] ?? seat;
-  const { mode, domain, panelists, minutes, followUps, difficulty, projectId, weights, weakFrom } = practiceSetup.get();
+  const { mode, domain, panelists, followUps, difficulty, projectId, weights, weakFrom } = practiceSetup.get();
   const lines = (s.partial?.text.trim() ? [...s.lines, s.partial] : s.lines).map((l) =>
     l.who === "you" ? l : { ...l, who: persona(l.who) },
   );
@@ -89,20 +91,20 @@ function fromLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: nu
     mode,
     domain,
     panelists,
-    minutes,
     followUps,
     difficulty,
     projectId: projectId ?? undefined,
     weakFrom: weakFrom ?? undefined,
     weights,
     durationMs: s.sessionMs,
-    endedBy, // the panel closing early doesn't lower coverage; the student leaving does
+    endedBy,
     turns: s.turns.map((t) => ({
       number: t.question.number,
       followUp: t.question.followUp,
       type: t.question.type,
       panelist: persona(t.question.panelist),
       question: t.question.text,
+      topic: t.question.topicId,
       answer: t.answer,
       latencyMs: t.latencyMs,
       answerMs: t.answerMs,

@@ -23,7 +23,7 @@ import { colors, easeOut, fonts, radius, type } from "@/theme";
 import { bandOf } from "@/utils/bands";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
-import { formula, reportHtml } from "@/utils/report-html";
+import { answeredStat, formula, notReached, reportHtml } from "@/utils/report-html";
 import { shareFile } from "@/utils/share-file";
 
 import { SCORING_MS, SCORING_STEPS } from "../scoring";
@@ -106,12 +106,11 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   // The app sends only this session's id; the server builds the focus from the stored report.
   const practiceWeak = () => {
     if (!s) return;
-    if (!premium && (s.mode === "FINAL" || s.panelists > 1 || s.minutes > 10)) return setUpsell(true);
+    if (!premium && (s.mode === "FINAL" || s.panelists > 1)) return setUpsell(true);
     practiceSetup.set({
       mode: s.mode,
       domain: s.domain as Domain,
       panelists: s.panelists,
-      minutes: s.minutes,
       followUps: s.followUps,
       difficulty: s.difficulty ?? "STANDARD",
       // The original manuscript may be gone (deleted, re-uploaded, left the group): use the current one instead.
@@ -222,12 +221,15 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
           <Animated.View entering={riseIn(60, reduced)}>
             <View style={styles.stats}>
               <Stat value={formatTime(s.durationMs)} label="length" />
-              <Stat value={String(r.answered)} label="answered" />
+              <Stat {...answeredStat(s, r)} />
               <Stat
                 value={String(r.contradictions.length)}
                 label={r.contradictions.length === 1 ? "contradiction" : "contradictions"}
               />
             </View>
+            {notReached(s).length ? (
+              <Text style={styles.notReached}>Not reached: {notReached(s).join(", ")}</Text>
+            ) : null}
 
             {r.fixes.length ? (
               <>
@@ -387,6 +389,7 @@ const styles = StyleSheet.create({
   bandPill: { alignSelf: "flex-start", borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginTop: 6 },
   bandRange: { ...type.meta, fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5 },
   headline: { marginTop: 12 },
+  notReached: { ...type.meta, color: colors.inkMuted, marginTop: 10 },
   formula: { fontFamily: fonts.mono, fontWeight: "400", fontSize: 11.5, lineHeight: 17, color: colors.muted, marginTop: 8 },
   stats: { flexDirection: "row", gap: 8, marginTop: 16 },
   stat: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },

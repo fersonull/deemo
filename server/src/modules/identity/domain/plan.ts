@@ -2,8 +2,10 @@
 // and practice ask here instead of checking `premium` themselves.
 
 export const PLAN = {
-  free: { manuscripts: 1, dailySessions: 5, maxMinutes: 10, maxPanelists: 1, finalDefense: false },
-  premium: { manuscripts: Infinity, dailySessions: Infinity, maxMinutes: 25, maxPanelists: 3, finalDefense: true }, // unlimited practice
+  // capMinutes: a safety cap only. A session ends when the panel's agenda is done (practice/domain/agenda.ts); the cap
+  // stops one that runs away (a stalled student, a model that won't close) and bounds the Gemini cost.
+  free: { manuscripts: 1, dailySessions: 5, capMinutes: 30, maxPanelists: 1, finalDefense: false },
+  premium: { manuscripts: Infinity, dailySessions: Infinity, capMinutes: 60, maxPanelists: 3, finalDefense: true }, // unlimited practice
 } as const;
 
 export const planOf = (premium: boolean) => (premium ? PLAN.premium : PLAN.free);
@@ -11,10 +13,9 @@ export const planOf = (premium: boolean) => (premium ? PLAN.premium : PLAN.free)
 export const MANUSCRIPT_LIMIT_MESSAGE = "The free plan holds one manuscript, including joined projects. Delete or leave it first.";
 
 // Whether a practice setup fits the plan; the reason the student sees when it doesn't.
-export function setupProblem(premium: boolean, setup: { mode: string; panelists: number; minutes: number }) {
+export function setupProblem(premium: boolean, setup: { mode: string; panelists: number }) {
   const plan = planOf(premium);
-  if (setup.minutes > PLAN.premium.maxMinutes) return { status: 400, message: "Practice rounds can last up to 25 minutes." };
-  if ((setup.mode === "FINAL" && !plan.finalDefense) || setup.panelists > plan.maxPanelists || setup.minutes > plan.maxMinutes)
+  if ((setup.mode === "FINAL" && !plan.finalDefense) || setup.panelists > plan.maxPanelists)
     return { status: 403, message: "That setup needs Premium." };
   return null;
 }

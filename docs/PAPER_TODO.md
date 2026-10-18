@@ -46,14 +46,14 @@ Evidence: [plan limits](../server/src/modules/identity/domain/plan.ts).
 
   RS = 100 × Σ[(Weight_i / Σ measured weights) × Level Points_i]
 
-  CF = clamp(Answered Main Questions / Planned Main Questions, 0, 1)
+  CF = clamp(Answered Agenda Topics / Agenda Topics, 0, 1)
 
   CP = min(15, 5 × HIGH + 2 × MEDIUM + 0.5 × LOW)
 
   Readiness Score = round(clamp(RS × CF − CP, 0, 100))
   ```
 
-  > RS is the weighted rubric score, CF is the coverage factor, and CP is the consistency penalty. Only verified contradictions contribute to the penalty. A main question counts as answered when its main response or a related follow-up contains at least three words containing letters or digits. Coverage has no minimum floor. If the panel closes the session itself, the denominator is the number of main questions actually asked, with a minimum of one. Otherwise, it is the greater of the planned and actual main-question counts. The planned count is the selected session length in minutes divided by 2.5, rounded to the nearest integer, with a minimum of two. Sessions without a substantive answer are marked Not scored and excluded from readiness trends. In the default rubric, delivery is excluded when no spoken answers can be measured.
+  > RS is the weighted rubric score, CF is the coverage factor, and CP is the consistency penalty. Only verified contradictions contribute to the penalty. **Changed 2026-10-18 (agenda sessions, branch `feat/agenda-sessions`): there is no question count and no chosen session length.** The panel works through a fixed agenda built from the manuscript for the defense stage (e.g. Pre-Oral: problem and objectives, scope and limitations, system/study design, tools and implementation, research design, sampling, instruments, data analysis; a topic with nothing in the manuscript to stand on is left out). The app lets it end only when every agenda topic has been asked and answered, so the follow-up limit (0–3 per topic) is what bounds a session; a safety cap (Free 30 minutes, Premium 60) stops a runaway one. An agenda topic counts as answered when its main question or a related follow-up gets at least three words containing letters or digits. Coverage has no minimum floor; a gap only happens when the time cap or the student ends the session first, and the report lists those topics as "Not reached". Sessions without a substantive answer are marked Not scored and excluded from readiness trends. In the default rubric, delivery is excluded when no spoken answers can be measured. Update F5a ("question count / target duration") and the session-flow description in Chapter 3 to match.
 
   Use the unrounded RS in the final calculation; round the final readiness score. For the default weights and levels `[4, 3, 4, 3, 3]`, full coverage and one HIGH plus one MEDIUM contradiction give RS = 61.25, CP = 7, and readiness = **54**.
 

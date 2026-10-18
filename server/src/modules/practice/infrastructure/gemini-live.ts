@@ -1,9 +1,17 @@
 import { AppError } from "../../../shared/errors";
 import type { Analysis } from "../../manuscripts/domain/manuscript";
+import type { AgendaItem } from "../domain/agenda";
 import { LOCKED_FIELDS, liveSetup, type PanelSetup } from "../domain/panel";
 
 // Mints a single-use Gemini Live token with the panel setup locked in (addendum B1); the app connects with it directly.
-export async function mintLiveToken(setup: PanelSetup, analysis: Analysis | undefined, expiresAt: number, newSessionUntil: number, seat = 0) {
+export async function mintLiveToken(
+  setup: PanelSetup,
+  analysis: Analysis | undefined,
+  agenda: AgendaItem[],
+  expiresAt: number,
+  newSessionUntil: number,
+  seat = 0,
+) {
   const r = await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens", {
     method: "POST",
     signal: AbortSignal.timeout(20_000),
@@ -12,7 +20,7 @@ export async function mintLiveToken(setup: PanelSetup, analysis: Analysis | unde
       uses: 1,
       newSessionExpireTime: new Date(newSessionUntil).toISOString(),
       expireTime: new Date(expiresAt).toISOString(), // reconnects never extend this round
-      bidiGenerateContentSetup: liveSetup(setup, analysis, seat),
+      bidiGenerateContentSetup: liveSetup(setup, analysis, seat, agenda),
       fieldMask: LOCKED_FIELDS,
     }),
   });
