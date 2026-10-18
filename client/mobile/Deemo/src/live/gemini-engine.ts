@@ -67,6 +67,7 @@ export class GeminiEngine implements LiveEngine {
   private covered = new Set<string>(); // ... and the student's answer turn after it ended
   private pendingTopic: string | null = null; // the main question waiting for its answer
   private endNudged = false; // told the panel once that everything is covered
+  private currentTopic: string | null = null; // the topic of the question on screen
   private passing = false; // this panelist is done: hand over once their turn settles
   private switching = false; // connecting the next panelist's session
   // The next panelist's token, fetched early (a promise, so a handover awaits it instead of fetching twice).
@@ -491,8 +492,18 @@ export class GeminiEngine implements LiveEngine {
         // In turns, the asker is whoever's session this is.
         panelist: this.sequential ? this.seat : Math.max(0, role) % this.setup.panelists,
       };
-      const refusal = this.agendaRefusal(q);
-      if (refusal) return { id, name, response: refusal };
+      // A challenge right after a flagged contradiction ("Earlier you said X, but your manuscript says Y…") questions the
+      // answer just given: always allowed, on the current question, whatever its topic id or follow-up count. Refusing
+      // it left the old question on the card while the panel had already spoken the challenge.
+      if (this.flagged && this.currentTopic && (q.type === "CLARIFICATORY" || q.isFollowUp)) {
+        q.topicId = this.currentTopic;
+        q.isFollowUp = true;
+        q.type = "CLARIFICATORY";
+        q.challenge = true;
+      } else {
+        const refusal = this.agendaRefusal(q);
+        if (refusal) return { id, name, response: refusal };
+      }
       if (this.canAsk(q)) {
         // Spoken first, tool call after: put it on screen under the right panelist, but don't let it be said again.
         if (alreadySaid(this.spoken, q.text)) {
@@ -618,6 +629,7 @@ export class GeminiEngine implements LiveEngine {
 
   // An approved main question: its topic waits for the answer; this seat's last one fetches the next panelist early.
   private markAsked(q: AskQuestion) {
+    this.currentTopic = q.topicId;
     if (q.isFollowUp || !this.agenda.some((i) => i.id === q.topicId)) return;
     this.askedTopics.add(q.topicId);
     this.pendingTopic = q.topicId;

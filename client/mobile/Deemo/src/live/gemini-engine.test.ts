@@ -354,3 +354,30 @@ test("one panelist: no question limit, it may only close once every agenda topic
     timers.mockRestore();
   }
 });
+
+test("after a flagged contradiction, the challenge is always allowed, on the current question", () => {
+  const engine = new GeminiEngine({ ...setup, followUps: 0 }); // no follow-ups at all
+  const i = engine as unknown as Internals & { agenda: object[]; endStudentTurn: () => void };
+  const events: LiveEvent[] = [];
+  i.emit = (e) => events.push(e);
+  i.ready = true;
+  i.ws = { send: () => {}, close: () => {} };
+  i.agenda = [{ id: "novelty", label: "Novelty", seat: 0 }, { id: "scope", label: "Scope", seat: 0 }];
+  (i as unknown as { canAsk: (q: { isFollowUp: boolean; challenge?: boolean }) => boolean }).canAsk = (q) => !q.isFollowUp || q.challenge === true;
+  const timers = spyOn(globalThis, "setTimeout").mockImplementation((() => 1) as unknown as typeof setTimeout);
+  const call = (args: object) => i.onToolCall({ id: "x", name: "ask_question", args: { questionText: "Q?", panelist: "Chair", ...args } }).response;
+  try {
+    expect(call({ topicId: "novelty", questionType: "CONCEPTUAL", isFollowUp: false }).allowed).toBe(true);
+    i.endStudentTurn();
+    // Without a flag, a follow-up is refused (limit 0) and an already-asked topic too.
+    expect(call({ topicId: "novelty", questionType: "CLARIFICATORY", isFollowUp: true }).allowed).toBe(false);
+    i.onToolCall({ id: "f", name: "flag_inconsistency", args: { spokenClaim: "any course", manuscriptEvidence: "BSIT only", severity: "HIGH" } });
+    // The challenge, even labelled with another topic: allowed, on the current question.
+    expect(call({ topicId: "scope", questionType: "CLARIFICATORY", isFollowUp: false }).allowed).toBe(true);
+    const asked = events.filter((e) => e.type === "ask").at(-1) as { question: { topicId: string; isFollowUp: boolean; challenge?: boolean } };
+    expect(asked.question).toMatchObject({ topicId: "novelty", isFollowUp: true, challenge: true });
+  } finally {
+    engine.stop();
+    timers.mockRestore();
+  }
+});

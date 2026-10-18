@@ -192,3 +192,17 @@ test("a new sentence in its own chunk gets a space", () => {
   s = liveReducer(s, { type: "panelText", text: " Next," });
   expect(s.partial?.text).toBe("are you planning to measure? Okay. Moving on. Next,");
 });
+
+test("a contradiction challenge replaces the card even at the follow-up limit, and doesn't use a follow-up", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }]);
+  for (let i = 0; i < FOLLOW_UP_LIMIT; i++) s = liveReducer(s, { type: "ask", question: follow });
+  const challenge: AskQuestion = { ...follow, text: "Earlier you said 40, but your paper says 30. Which is correct?", challenge: true };
+  expect(canAsk(s, follow)).toBe(false);
+  expect(canAsk(s, challenge)).toBe(true);
+  // Spoken first (no tool call yet), then the tool call arrives: the card shows the challenge.
+  s = run([{ type: "youDone" }, { type: "panelText", text: "Earlier you said 40…" }, { type: "ask", question: challenge }], s);
+  expect(s.question?.text).toBe(challenge.text);
+  expect(s.question?.number).toBe(1);
+  expect(s.question?.challenge).toBe(true);
+  expect(s.followUps.t1).toBe(FOLLOW_UP_LIMIT); // unchanged
+});
