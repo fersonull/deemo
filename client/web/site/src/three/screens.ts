@@ -247,6 +247,64 @@ const DRAW = {
     text(ctx, "Your panel has read your paper.", W / 2, 494, F.body(400, 14), C.inkMuted, { align: "center" });
   },
 
+  // Matches src/app/consent.tsx; the checked boxes illustrate the accepted state.
+  consent(ctx) {
+    bg(ctx);
+    statusBar(ctx);
+    backRow(ctx);
+    text(ctx, "Before you", 20, 116, F.display(800, 30), C.ink, { ls: -1 });
+    text(ctx, "practice.", 20, 147, F.display(800, 30), C.ink, { ls: -1 });
+    para(ctx, "What happens to your work, in plain words.", 20, 176, 300, 20, F.body(400, 14), C.inkMuted);
+    const items = [
+      ["description", "Your manuscript and voice are processed by Google's AI to run the panel."],
+      ["mic_off", "No audio is recorded. Only the text transcript is kept."],
+      ["lock", "Your sessions are private. Share them with your group only if you choose."],
+      ["delete", "You can delete everything any time from Profile."],
+    ];
+    items.forEach(([name, body], i) => {
+      const y = 210 + i * 82;
+      rr(ctx, 20, y, 320, 74, 18, C.sand);
+      icon(ctx, name, 34, y + 27, 21, C.duskIcon);
+      para(ctx, body, 66, y + 26, 256, 18, F.body(400, 13.5), C.ink);
+    });
+    ["I am 18 years old or older.", "I understand and agree to how my data is used."].forEach((body, i) => {
+      const y = 562 + i * 50;
+      rr(ctx, 20, y, 24, 24, 8, C.ink);
+      icon(ctx, "check", 32, y + 12, 18, C.paper, "center");
+      para(ctx, body, 56, y + 16, 282, 19, F.body(400, 13.5), C.ink);
+    });
+    rr(ctx, 20, 680, 320, 58, 29, C.ink);
+    text(ctx, "Continue", 180, 714, F.body(600, 16), C.paper, { align: "center" });
+  },
+
+  // Profile's data controls, using the shipped labels rather than a fictional privacy page.
+  privacy(ctx) {
+    bg(ctx);
+    statusBar(ctx);
+    text(ctx, "Profile", 20, 86, F.display(800, 34), C.ink, { ls: -1.2 });
+    blob(ctx, 20, 116, 58, 54, C.duskTint);
+    icon(ctx, "person", 49, 143, 30, C.duskIcon, "center");
+    text(ctx, "Your account", 94, 141, F.display(700, 21), C.ink);
+    text(ctx, "Account settings", 94, 163, F.body(400, 13), C.inkMuted);
+    label(ctx, "PRACTICE", 20, 218);
+    rr(ctx, 20, 234, 320, 108, 18, C.sand);
+    text(ctx, "Your course", 36, 266, F.body(600, 14), C.ink);
+    text(ctx, "BSIT", 324, 266, F.body(400, 13), C.inkMuted, { align: "right" });
+    text(ctx, "Allow typed answers", 36, 316, F.body(600, 14), C.ink);
+    rr(ctx, 278, 298, 46, 26, 13, C.dusk);
+    rr(ctx, 300, 301, 20, 20, 10, C.paper);
+    label(ctx, "YOUR DATA", 20, 388);
+    rr(ctx, 20, 404, 320, 148, 18, C.sand);
+    text(ctx, "Download my data", 36, 438, F.body(600, 15), C.ink);
+    para(ctx, "Your manuscripts' summaries, transcripts and reports, as one file.", 36, 462, 282, 19, F.body(400, 13), C.inkMuted);
+    ctx.fillStyle = C.paper;
+    ctx.fillRect(36, 506, 288, 1);
+    text(ctx, "Delete my data", 36, 536, F.body(600, 15), C.ink);
+    rr(ctx, 20, 584, 320, 54, 27, C.sand);
+    text(ctx, "Sign out", 180, 617, F.body(600, 15), C.ink, { align: "center" });
+    tabBar(ctx, 3);
+  },
+
   projects(ctx) {
     bg(ctx);
     statusBar(ctx);

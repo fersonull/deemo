@@ -29,9 +29,13 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Deck: compact slides + Chapter II data**: no timer/mode HUD or panelist labels, slide-3-style compact content, target market/technologies/comparison from the paper.
 - [x] **Deck: group-voice headings + Deemo narrator** (the owl, one mood and line per slide).
 - [x] **Deck: portrait layouts for phones** (720-wide stage, one-column slides).
-- [x] **Deck: mouse wheel moves through the slide 10 steps.**
+- [x] **Deck: practice-only disclaimer (slide 10)**: app icon centered above the DEEMO title, clear professional-replacement disclaimer and a session-screen 3D device below; thank-you moves to slide 11.
+- [x] **Deck: technology icons and interactive System Functions**: six icons on Target Technologies; each system function selects its matching screen on the 3D phone, starting with Consent. Click/keyboard/wheel, active description, portrait layout; new Consent/Profile renderers mirrored in the marketing site.
+- [x] **Deck: paper-based content and six-section flow**: System Overview → General Objective → Target Market → main Target Technologies (including preserved walkthrough/audio slides) → RRL summary → System Functions. 11 slides including title/disclaimer/thank-you, based on the supplied PPT Google Doc (2026-10-18).
+- [x] **Deck: Target Technologies section**: preserve the original slides 10 (session walkthrough) and 11 (audio architecture), grouped after the technology overview as slides 6–7; both preserved in the revised 11-slide deck.
+- [x] **Deck: mouse wheel moves through the session walkthrough steps (now slide 6).**
 - [x] **Deck: right click = next, left click = previous.**
-- [x] **Deck: bigger slide 10 phone (the step walkthrough is the highlight).**
+- [x] **Deck: bigger session walkthrough phone (now slide 6; the walkthrough is the highlight).**
 - [x] **Deck: thank-you close, no status slide, sharper phone screen, phone-view fixes (slides 2, 10, 11).**
 - [x] **Group projects** (addendum Q10): leader uploads once and gets a 6-character join code; members share the analysis and rubric; sessions stay private; optional "Share with group" feeds the Home **Group readiness** card; optional per-member focus area. A joined project counts as the free tier's one manuscript.
 - [x] **PDF export** (F16, addendum Q2), Premium: results blocks 1–7 printed on the phone (`expo-print`) and sent through the share sheet. Results actions follow the prototype (Practice again, Share with group, Export PDF).

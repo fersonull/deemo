@@ -17,7 +17,11 @@
 
 <!-- 1920×1080 stage, scaled to fit. Each content slide is a panel question with a compact answer.
      A .phone-slot marks where the one 3D phone (js/phone.js) lands on that slide and which screen it shows.
-     Slides without a slot send the phone out of frame. Content comes from the paper (Ch. I–III). -->
+     Slides without a slot send the phone out of frame.
+     Content source (read 2026-10-18): https://docs.google.com/document/d/1f_hSJ11QZQPryuWSP21yOnAuGnujbiFDPafh7voxa4c/edit?tab=t.0
+     Flow: System Overview → General Objective → Target Market → Target Technologies → RRL → System Functions.
+     RRL author/year labels and findings are summarized from that document, not independently re-evaluated studies.
+     The original session walkthrough and audio architecture remain within Target Technologies. -->
 <main class="viewport">
 <div class="stage" id="stage">
 
@@ -26,47 +30,39 @@
     <div class="title-copy">
       <img class="title-mark r" src="assets/deemo-mark.svg" alt="" />
       <h1 class="display r">DEEMO</h1>
-      <p class="lede r">A voice-interactive mock panel simulator for capstone defense preparation.</p>
+      <p class="lede r">Voice-interactive mock panel practice for capstone defense preparation.</p>
     </div>
     <div class="phone-slot slot--title" data-screen="splash" data-pose="hero"></div>
   </section>
 
-  <!-- 2 · problem -->
-  <section class="slide" data-deemo="nervous" data-say="Defenses are scary. Practice makes them less so.">
-    <h2 class="q r">Why did we build this?</h2>
-    <div class="split">
-      <div>
-        <p class="answer r">Students can build it. Defending it out loud is another story.</p>
-        <ul class="points points--2">
-          <li class="r"><span class="icon">record_voice_over</span><strong>Saying it out loud</strong>Explaining and justifying the work under questioning.</li>
-          <li class="r"><span class="icon">psychology_alt</span><strong>Defense anxiety</strong>Fear of evaluation blocks quick thinking.</li>
-          <li class="r"><span class="icon">groups</span><strong>Practice isn't a panel</strong>Self-review and peers miss the pressure.</li>
-          <li class="r"><span class="icon">smart_toy</span><strong>Generic AI tools</strong>Built for job interviews, not capstone defenses.</li>
-        </ul>
-      </div>
-      <div class="phone-slot slot--split" data-screen="splash" data-pose="left"></div>
-    </div>
-  </section>
-
-  <!-- 3 · solution -->
-  <section class="slide" data-deemo="cheering" data-say="I read your paper first, then I ask out loud.">
-    <h2 class="q r">What did we build?</h2>
+  <!-- 2 · system overview -->
+  <section class="slide" data-section="system-overview" data-deemo="cheering" data-say="I read your paper first, then I ask out loud.">
+    <h2 class="q r">System Overview</h2>
     <div class="solution">
       <ul class="callouts">
-        <li class="r"><span class="icon">menu_book</span><strong>Reads your paper</strong>Questions come from your uploaded manuscript.</li>
-        <li class="r"><span class="icon">record_voice_over</span><strong>Asks out loud</strong>A voice-based panel on your phone.</li>
+        <li class="r"><span class="icon">menu_book</span><strong>Reads your paper</strong>AI analyzes the manuscript to guide the mock defense.</li>
+        <li class="r"><span class="icon">record_voice_over</span><strong>Asks out loud</strong>Adaptive voice questions for 4th-year BSIT students.</li>
       </ul>
       <div class="phone-slot slot--solution" data-screen="session" data-pose="front" data-spin="1"></div>
       <ul class="callouts">
         <li class="r is-amber"><span class="icon">difference</span><strong>Catches contradictions</strong>Flags when what you say disagrees with the paper.</li>
-        <li class="r"><span class="icon">checklist</span><strong>Scores to your rubric</strong>Title, Pre-Oral, and Final defense modes.</li>
+        <li class="r"><span class="icon">checklist</span><strong>Scores to your rubric</strong>Personalized feedback and readiness scores in three defense modes.</li>
       </ul>
     </div>
   </section>
 
+  <!-- 3 · general objective -->
+  <section class="slide" data-section="general-objective" data-deemo="reading" data-say="One goal: realistic practice before the real panel.">
+    <h2 class="q r">General Objective</h2>
+    <div class="split">
+      <p class="answer r">To develop an AI-powered mock panel simulator that provides realistic, voice-interactive capstone defense preparation for 4th-year BSIT students.</p>
+      <div class="phone-slot slot--split" data-screen="setup" data-pose="left"></div>
+    </div>
+  </section>
+
   <!-- 4 · target market (Ch. II) -->
-  <section class="slide" data-deemo="idle" data-say="First stop: BSIT students at PMFTCI.">
-    <h2 class="q r">Who did we build it for?</h2>
+  <section class="slide" data-section="target-market" data-deemo="idle" data-say="First stop: BSIT students at PMFTCI.">
+    <h2 class="q r">Target Market</h2>
     <div class="market">
       <div class="bullseye">
         <div class="ring ring--outer r"><span>PMFTCI · first rollout</span></div>
@@ -75,95 +71,27 @@
       </div>
       <ul class="points">
         <li class="r"><span class="icon">location_on</span><strong>Geographic</strong>4th-year BSIT students at PMFTCI, Pinamalayan.</li>
-        <li class="r"><span class="icon">self_improvement</span><strong>Psychographic</strong>Students who want to improve before the real panel.</li>
+        <li class="r"><span class="icon">self_improvement</span><strong>Psychographic</strong>Students motivated to improve communication, critical thinking and confidence.</li>
         <li class="r"><span class="icon">event_repeat</span><strong>Behavioral</strong>Preparing for Title, Pre-Oral, or Final defense.</li>
       </ul>
     </div>
   </section>
 
-  <!-- 5 · target technologies (Ch. II) -->
-  <section class="slide" data-deemo="reading" data-say="Gemini does the heavy lifting; I do the asking.">
-    <h2 class="q r">What technology did we use?</h2>
-    <div class="solution">
-      <ul class="callouts">
-        <li class="r"><span class="icon">neurology</span><strong>Natural Language Processing</strong>Reads the manuscript and spots contradictions.</li>
-        <li class="r"><span class="icon">auto_awesome</span><strong>Google Gemini API</strong>Live runs the panel; Flash analyzes and scores.</li>
-      </ul>
-      <div class="phone-slot slot--solution" data-screen="analysis" data-pose="front"></div>
-      <ul class="callouts">
-        <li class="r"><span class="icon">graphic_eq</span><strong>Speech recognition</strong>Live transcripts of every spoken answer.</li>
-        <li class="r"><span class="icon">smartphone</span><strong>React Native Expo</strong>One TypeScript codebase for the Android app.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- 6 · comparison (Ch. II, Table 1) -->
-  <section class="slide" data-deemo="encouraging" data-say="Others can chat about a paper. I run the defense.">
-    <h2 class="q r">How is it different from existing tools?</h2>
-    <table class="matrix r">
-      <thead>
-        <tr><th scope="col">Feature</th><th scope="col">Gemini AI</th><th scope="col">ChatGPT</th><th scope="col">NotebookLM</th><th scope="col">Claude AI</th><th scope="col" class="is-us">DEEMO</th></tr>
-      </thead>
-      <tbody>
-        <tr><th scope="row">Research paper analysis</th><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="y">Yes</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Voice interaction</th><td class="y">Yes</td><td class="y">Yes</td><td class="n">No</td><td class="l">Limited</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Adaptive follow-up questions</th><td class="y">Yes</td><td class="y">Yes</td><td class="l">Limited</td><td class="y">Yes</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Mock defense simulation</th><td class="n">No</td><td class="l">Limited</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Speech performance evaluation</th><td class="n">No</td><td class="l">Limited</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Defense evaluation rubric</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us l">Optional</td></tr>
-        <tr><th scope="row">Verbal consistency checking</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
-        <tr><th scope="row">Defense performance analytics</th><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="n">No</td><td class="is-us y">Yes</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <!-- 7 · objectives (Ch. I) -->
-  <section class="slide" data-deemo="reading" data-say="Six objectives, one mock panel.">
-    <h2 class="q r">What did we set out to do?</h2>
-    <div class="split">
-      <ol class="points points--2 points--num">
-        <li class="r"><strong>Identify the challenges</strong>Communication, confidence, critical thinking.</li>
-        <li class="r"><strong>Evaluate current prep</strong>Self-review, peer practice, adviser consultations.</li>
-        <li class="r is-key"><strong>Build the AI mock panel</strong>Reads manuscripts, asks adaptive questions.</li>
-        <li class="r"><strong>Assess usability</strong>How students rate the app.</li>
-        <li class="r"><strong>Test the evaluation</strong>Communication, reasoning, consistency.</li>
-        <li class="r"><strong>Measure readiness</strong>Confidence and defense readiness gains.</li>
-      </ol>
-      <div class="phone-slot slot--split" data-screen="setup" data-pose="left"></div>
-    </div>
-  </section>
-
-  <!-- 8 · key terms -->
-  <section class="slide" data-deemo="reading" data-say="A quick glossary before the hard questions.">
-    <h2 class="q r">The terms we use.</h2>
-    <dl class="terms">
-      <div class="r"><dt>Readiness Score</dt><dd>0–100 from the rubric, adjusted for consistency and coverage.</dd></div>
-      <div class="r"><dt>Bounded Follow-Up</dt><dd>At most two follow-ups per topic, then the panel moves on.</dd></div>
-      <div class="r is-amber"><dt>Verbal Consistency Checker</dt><dd>Flags when an answer contradicts the manuscript.</dd></div>
-      <div class="r"><dt>Adaptive Domain Profiling</dt><dd>Questions fit the student's field.</dd></div>
-      <div class="r"><dt>Ephemeral Token</dt><dd>A short-lived key locked to the panel. No AI key on the phone.</dd></div>
-      <div class="r"><dt>Stage Modes</dt><dd>Title, Pre-Oral, Final: each with its own question focus.</dd></div>
+  <!-- 5 · target technologies · main technologies only -->
+  <section class="slide" data-section="target-technologies" data-deemo="reading" data-say="The main technologies behind the app, the panel and your data.">
+    <h2 class="q r">Target Technologies</h2>
+    <dl class="terms technology-list">
+      <div class="r"><dt><span class="icon" aria-hidden="true">auto_awesome</span>Google Gemini API</dt><dd>Live powers the voice panel; Flash analyzes manuscripts and evaluates sessions.</dd></div>
+      <div class="r"><dt><span class="icon" aria-hidden="true">graphic_eq</span>NLP &amp; speech recognition</dt><dd>Understand the manuscript and answers, generate adaptive questions and produce transcripts.</dd></div>
+      <div class="r"><dt><span class="icon" aria-hidden="true">smartphone</span>React Native + Expo</dt><dd>The Android mobile app, written in TypeScript.</dd></div>
+      <div class="r"><dt><span class="icon" aria-hidden="true">dns</span>Bun + Express</dt><dd>The TypeScript backend and API for analysis, session access and scoring.</dd></div>
+      <div class="r"><dt><span class="icon" aria-hidden="true">verified_user</span>Firebase Authentication</dt><dd>Email and Google sign-in, with secure account authentication.</dd></div>
+      <div class="r"><dt><span class="icon" aria-hidden="true">database</span>PostgreSQL + Prisma</dt><dd>Store and manage users, projects, transcripts and evaluation reports.</dd></div>
     </dl>
   </section>
 
-  <!-- 9 · system functions -->
-  <section class="slide" data-deemo="cheering" data-say="Contradictions get a gentle amber flag, never red.">
-    <h2 class="q r">What can DEEMO do?</h2>
-    <div class="solution">
-      <ul class="callouts">
-        <li class="r"><span class="icon">mic</span><strong>Live mock defense</strong>Voice panel, adaptive questions, live transcript.</li>
-        <li class="r"><span class="icon">description</span><strong>Manuscript &amp; rubric</strong>PDF or DOCX analysis; your rubric or the default.</li>
-      </ul>
-      <div class="phone-slot slot--solution" data-screen="flag" data-pose="front"></div>
-      <ul class="callouts">
-        <li class="r"><span class="icon">insights</span><strong>Results &amp; progress</strong>Readiness report, history, PDF export.</li>
-        <li class="r"><span class="icon">account_circle</span><strong>Account</strong>Email or Google sign-in, Free and Premium.</li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- 10 · how it works: the active step drives the phone screen -->
-  <section class="slide" data-deemo="encouraging" data-say="Five steps from upload to score.">
+  <!-- 6 · target technologies · session walkthrough: the active step drives the phone screen -->
+  <section class="slide" data-section="target-technologies" data-deemo="encouraging" data-say="Five steps from upload to score.">
     <h2 class="q r">How does a session work?</h2>
     <div class="flow">
       <ol class="steps" id="flowSteps">
@@ -177,8 +105,8 @@
     </div>
   </section>
 
-  <!-- 11 · architecture -->
-  <section class="slide" data-deemo="idle" data-say="Your voice goes straight to Gemini, not our server.">
+  <!-- 7 · target technologies · audio architecture -->
+  <section class="slide" data-section="target-technologies" data-deemo="idle" data-say="Your voice goes straight to Gemini, not our server.">
     <h2 class="q r">Where does the audio go?</h2>
     <div class="arch">
       <div class="phone-slot slot--arch" data-screen="session" data-pose="right"></div>
@@ -199,32 +127,43 @@
     </div>
   </section>
 
-  <!-- 12 · stack + scope -->
-  <section class="slide" data-deemo="reading" data-say="And here&#39;s where I stop.">
-    <h2 class="q r">What did we build it on, and where does it stop?</h2>
-    <div class="stackscope">
-      <dl class="stack">
-        <div class="r"><dt>Mobile</dt><dd>React Native Expo, TypeScript</dd></div>
-        <div class="r"><dt>Server</dt><dd>Bun + Express</dd></div>
-        <div class="r"><dt>Database</dt><dd>PostgreSQL + Prisma</dd></div>
-        <div class="r"><dt>Sign-in</dt><dd>Firebase Authentication</dd></div>
-        <div class="r"><dt>AI</dt><dd>Gemini Live + Gemini Flash</dd></div>
-        <div class="r"><dt>Quality model</dt><dd>ISO/IEC 25010</dd></div>
-      </dl>
-      <div class="scope">
-        <div class="r">
-          <p class="scope__head">It is</p>
-          <ul><li>Android, English</li><li>Online only</li><li>Freemium, simulated</li><li>A practice tool</li></ul>
-        </div>
-        <div class="r">
-          <p class="scope__head">It isn't</p>
-          <ul class="is-not"><li>A grammar or citation checker</li><li>A plagiarism detector</li><li>Fact-checking or emotion recognition</li><li>An adviser dashboard</li></ul>
-        </div>
-      </div>
+  <!-- 8 · RRL · general synthesis of the supplied presentation document -->
+  <section class="slide" data-section="rrl" data-deemo="reading" data-say="Related work supports AI-assisted practice; DEEMO focuses it on the defense.">
+    <h2 class="q r">Review of Related Literature</h2>
+    <dl class="terms terms--two">
+      <div class="r"><dt>AI in Philippine education</dt><dd>AI can support learning and research, with AI literacy, ethics and responsible use.<br />Giray et al. (2024); Vergara (2024)</dd></div>
+      <div class="r"><dt>Adaptive learning &amp; assessment</dt><dd>NLP and language models support question generation, tutoring and personalized feedback.<br />Lan et al.; Xu et al.; Wang et al. (2024)</dd></div>
+      <div class="r"><dt>Usefulness &amp; responsible adoption</dt><dd>Local studies report perceived benefits alongside concerns about integrity and dependence.<br />Villarino (2025); Goli-Cruz (2024)</dd></div>
+      <div class="r"><dt>AI for oral practice</dt><dd>Mock interviews and adaptive spoken assessments support the rationale for voice-based practice.<br />Chun et al.; Baek; Saeki et al. (2024)</dd></div>
+    </dl>
+    <p class="answer answer--sm literature-gap r">DEEMO applies these ideas to manuscript-based capstone defense practice.</p>
+  </section>
+
+  <!-- 9 · system functions · grouped from all 14 functions in the supplied document -->
+  <section class="slide" data-section="system-functions" data-deemo="cheering" data-say="From your first sign-in to the next practice session.">
+    <h2 class="q r">System Functions</h2>
+    <div class="flow function-flow">
+      <ol class="steps function-steps" id="functionSteps" aria-label="Choose a system function">
+        <li class="r"><button type="button" data-screen="consent" aria-pressed="true"><span class="icon" aria-hidden="true">verified_user</span><span>Account &amp; consent<small>Email or Google sign-in; onboarding, consent and Free or simulated Premium access.</small></span></button></li>
+        <li class="r"><button type="button" data-screen="projects" aria-pressed="false"><span class="icon" aria-hidden="true">folder_shared</span><span>Manuscripts &amp; groups<small>Upload manuscripts and rubrics, extract research details, and share materials while practicing individually.</small></span></button></li>
+        <li class="r"><button type="button" data-screen="setup" aria-pressed="false"><span class="icon" aria-hidden="true">tune</span><span>Practice setup<small>Choose Title, Pre-Oral or Final defense; configure the session and check the microphone.</small></span></button></li>
+        <li class="r"><button type="button" data-screen="flag" aria-pressed="false"><span class="icon" aria-hidden="true">record_voice_over</span><span>Live AI panel<small>Voice questions, follow-ups, consistency checks, live transcripts and response timing.</small></span></button></li>
+        <li class="r"><button type="button" data-screen="results" aria-pressed="false"><span class="icon" aria-hidden="true">insights</span><span>Feedback &amp; progress<small>Readiness scores, evaluation reports and feedback; dashboard, session history and profile.</small></span></button></li>
+        <li class="r"><button type="button" data-screen="privacy" aria-pressed="false"><span class="icon" aria-hidden="true">shield</span><span>Privacy &amp; data control<small>Protect stored information; download your data or delete your account from Profile.</small></span></button></li>
+      </ol>
+      <div class="phone-slot slot--functions" data-screen="consent" data-pose="left"></div>
     </div>
   </section>
 
-  <!-- 13 · thank you -->
+  <!-- 10 · practice-only disclaimer -->
+  <section class="slide slide--disclaimer" data-section="disclaimer" data-deemo="encouraging" data-say="Practice with me. Keep learning from your advisers and panelists.">
+    <img class="disclaimer-mark r" src="assets/deemo-mark.svg" alt="DEEMO app icon" />
+    <h2 class="disclaimer-title r">DEEMO</h2>
+    <p class="disclaimer-copy r"><strong>For practice only.</strong> DEEMO is not intended to replace advisers, panelists or other qualified professionals, or their judgment.</p>
+    <div class="phone-slot slot--disclaimer" data-screen="session" data-pose="front"></div>
+  </section>
+
+  <!-- 11 · thank you -->
   <section class="slide slide--closing" data-deemo="cheering" data-say="Thank you for listening!">
     <div class="closing-copy">
       <h2 class="display r">Thank<br />you.</h2>
@@ -246,7 +185,7 @@
 
 <nav class="hud" aria-label="Slide navigation">
   <button class="hud__btn" id="prevBtn" type="button" aria-label="Previous slide"><span class="icon">arrow_back</span></button>
-  <span class="hud__count" id="count" aria-live="polite">01 / 13</span>
+  <span class="hud__count" id="count" aria-live="polite">01 / 11</span>
   <button class="hud__btn" id="nextBtn" type="button" aria-label="Next slide"><span class="icon">arrow_forward</span></button>
 </nav>
 <div class="progress" aria-hidden="true"><span id="progress"></span></div>

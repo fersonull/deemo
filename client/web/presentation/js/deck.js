@@ -6,8 +6,10 @@ const stage = document.getElementById("stage");
 const slides = [...document.querySelectorAll(".slide")];
 const count = document.getElementById("count");
 const progress = document.getElementById("progress");
-const flowButtons = [...document.querySelectorAll("#flowSteps button")];
-const flowSlide = slides.findIndex((s) => s.contains(flowButtons[0]));
+const walkthroughs = ["flowSteps", "functionSteps"].map((id) => {
+  const buttons = [...document.querySelectorAll(`#${id} button`)];
+  return { id, buttons, slide: slides.findIndex((s) => s.contains(buttons[0])), step: 0 };
+});
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -39,37 +41,46 @@ function updateChrome() {
   count.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
   gsap.to(progress, { scaleX: index / (slides.length - 1), duration: 0.6, ease: "power3.out" });
   history.replaceState(null, "", `#${index + 1}`);
-  syncFlow();
+  syncWalkthrough();
 }
 
-// ── slide 10: the active step drives the phone screen, cycling on its own until clicked ──
-let step = 0;
+// Both walkthroughs drive the shared phone; only the session steps cycle automatically.
 let flowTimer = null;
-function setStep(n) {
-  step = n;
-  flowButtons.forEach((b, i) => b.parentElement.classList.toggle("is-on", i === n));
-  if (index === flowSlide) phone?.setScreen(flowButtons[n].dataset.screen);
+const activeWalkthrough = () => walkthroughs.find((w) => w.slide === index);
+function setStep(w, n) {
+  w.step = n;
+  w.buttons.forEach((b, i) => {
+    b.parentElement.classList.toggle("is-on", i === n);
+    b.setAttribute("aria-pressed", String(i === n));
+  });
+  const screen = w.buttons[n].dataset.screen;
+  slotOf(w.slide).dataset.screen = screen;
+  if (index === w.slide) phone?.setScreen(screen);
 }
-function syncFlow() {
+function syncWalkthrough() {
   clearInterval(flowTimer);
-  if (index !== flowSlide) return;
-  setStep(0);
-  flowTimer = setInterval(() => setStep((step + 1) % flowButtons.length), 3200);
+  const w = activeWalkthrough();
+  if (!w) return;
+  setStep(w, 0);
+  if (w.id === "flowSteps" && !reduced.matches) {
+    flowTimer = setInterval(() => setStep(w, (w.step + 1) % w.buttons.length), 3200);
+  }
 }
-flowButtons.forEach((b, i) =>
-  b.addEventListener("click", () => {
+walkthroughs.forEach((w) => {
+  w.buttons.forEach((b, i) => b.addEventListener("click", () => {
     clearInterval(flowTimer);
-    setStep(i);
-  }),
-);
-setStep(0);
+    setStep(w, i);
+  }));
+  setStep(w, 0);
+});
 // Mouse wheel walks the steps (down = next); one step per gesture, so trackpads don't skip ahead.
 let wheelAt = 0;
 addEventListener("wheel", (e) => {
-  if (index !== flowSlide || !e.deltaY || e.timeStamp - wheelAt < 400) return;
+  const w = activeWalkthrough();
+  if (!w || !e.deltaY || e.timeStamp - wheelAt < 400) return;
   wheelAt = e.timeStamp;
   clearInterval(flowTimer);
-  setStep(Math.min(Math.max(step + Math.sign(e.deltaY), 0), flowButtons.length - 1));
+  setStep(w, Math.min(Math.max(w.step + Math.sign(e.deltaY), 0), w.buttons.length - 1));
 }, { passive: true });
 
 const reveal = (s) => s.querySelectorAll(".r");
@@ -156,7 +167,8 @@ gsap.fromTo(reveal(slides[index]), { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0
 try {
   phone = await createPhone(document.getElementById("phone"));
   phone.goTo(slotOf(index)); // flies in from out of frame
-  if (index === flowSlide) setStep(step);
+  const w = activeWalkthrough();
+  if (w) setStep(w, w.step);
 } catch (err) {
   console.warn("3D phone unavailable:", err);
 }
