@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **History filter loading feedback (2026-10-19, uncommitted on `preview`):** reuse skeletons while stage/sort/date results catch up; stage summary/chart and counts use placeholders, stale empty messages wait, and filters remain usable. JS only; phone-check rapid changes, initial load and empty stages.
+
 - [x] **Setup focus-area keyboard avoidance (2026-10-19):** reused the Sign-in keyboard-avoidance wrapper around the scrolling Setup form. JS only; included in the user-requested `preview` merge. Phone verification remains pending.
 
 - [x] **Instant settings and filter feedback (2026-10-19, merged into `preview` at the user's request):** optimistic Profile course/typing and group score-sharing updates, rollback/errors, pending-save guards and stale-read/reset protection; no blocking project GET after sharing saves. History controls stay urgent while chart/list filtering catches up. Seven regression tests and isolated hook checks added/run; mobile types/lint pass. JS only.

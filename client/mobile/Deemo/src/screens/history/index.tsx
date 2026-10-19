@@ -55,6 +55,8 @@ export function History() {
   const filteredMode = useDeferredValue(mode);
   const filteredSort = useDeferredValue(sort);
   const filteredRange = useDeferredValue(range);
+  const stagePending = !loaded || mode !== filteredMode;
+  const resultsPending = stagePending || sort !== filteredSort || range !== filteredRange;
   const list = useMemo(() => filteredMode ? all.filter((s) => s.mode === filteredMode) : all, [all, filteredMode]);
   const shown = useMemo(() => arrangeSessions(list, filteredSort, filteredRange), [list, filteredSort, filteredRange]);
   const changed = sort !== "newest" || range !== "all";
@@ -76,7 +78,7 @@ export function History() {
     }, []),
   );
 
-  // Keep selection feedback urgent; reuse the chart and rows until the deferred filters catch up.
+  // Keep selection feedback urgent; show placeholders until deferred results match it.
   const note = useMemo(() => loaded && !error ? (
     <Animated.View key={summary.text} entering={FadeIn.duration(220)} style={styles.summary}>
       <DeemoNote mood={summary.mood} size="m">{summary.text}</DeemoNote>
@@ -121,8 +123,18 @@ export function History() {
   return (
     <Screen scroll tabBar title="History" onRefresh={refreshEverything}>
       {/* Deemo sums up the trend (it changes with the stage filter; the words fade in when they change) */}
-      {note}
-      {chart}
+      {stagePending ? (
+        <Skeleton label="Updating your history">
+          <View style={styles.summary}>
+            <Skeleton.Bone height={80} radius={radius.xl} />
+          </View>
+          <View style={styles.list}>
+            <Skeleton.Bone height={250} radius={radius.xl} />
+          </View>
+        </Skeleton>
+      ) : (
+        <>{note}{chart}</>
+      )}
       {all.length ? (
         <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>
           {FILTERS.map((f) => {
@@ -141,11 +153,19 @@ export function History() {
           })}
         </View>
       ) : null}
-      {list.length ? (
+      {all.length ? (
         <View style={styles.listHead}>
-          <Text style={[type.label, styles.flex]}>
-            {shown.length === list.length ? `${list.length} SESSIONS` : `${shown.length} OF ${list.length} SESSIONS`}
-          </Text>
+          {resultsPending ? (
+            <View style={styles.flex}>
+              <Skeleton label="Updating session count">
+                <Skeleton.Bone width={90} height={12} />
+              </Skeleton>
+            </View>
+          ) : (
+            <Text style={[type.label, styles.flex]}>
+              {shown.length === list.length ? `${list.length} SESSIONS` : `${shown.length} OF ${list.length} SESSIONS`}
+            </Text>
+          )}
           <PressableScale
             scaleTo={0.96}
             accessibilityRole="button"
@@ -160,7 +180,7 @@ export function History() {
           </PressableScale>
         </View>
       ) : null}
-      {list.length && !shown.length ? (
+      {!resultsPending && list.length && !shown.length ? (
         <Text style={styles.none}>
           {"No sessions in this range. "}
           <Text style={styles.link} accessibilityRole="button" onPress={() => setRange("all")}>
@@ -168,10 +188,9 @@ export function History() {
           </Text>
         </Text>
       ) : null}
-      <View style={styles.list} accessibilityState={{ busy: mode !== filteredMode || sort !== filteredSort || range !== filteredRange }}>
-        {rows}
-        {!loaded ? (
-          <Skeleton label="Loading your sessions">
+      <View style={styles.list} accessibilityState={{ busy: resultsPending }}>
+        {resultsPending ? (
+          <Skeleton label={loaded ? "Updating your sessions" : "Loading your sessions"}>
             <View style={styles.list}>
               {[0, 1, 2, 3].map((i) => (
                 <View key={i} style={styles.row}>
@@ -184,7 +203,7 @@ export function History() {
               ))}
             </View>
           </Skeleton>
-        ) : null}
+        ) : rows}
       </View>
 
       <Sheet visible={arranging} onClose={() => setArranging(false)}>

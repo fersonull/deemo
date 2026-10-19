@@ -2,9 +2,11 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-19 (instant interactions and Setup keyboard avoidance)_
+_Last updated: 2026-10-19 (History filter loading skeletons)_
 
 ## Current state
+
+- **History filter skeletons (uncommitted on `preview`):** initial loading and deferred stage/sort/date updates show the existing session-row skeleton instead of stale results. Stage changes also replace the summary/chart with placeholders; counts use a placeholder and range-empty text waits until the selected filters are applied. Filter and sort controls stay usable, including stages with zero sessions. Mobile TypeScript, Expo lint and diff checks pass. No new requests, delays, dependencies or native changes. Phone-check rapid filter changes and empty results; device verification remains pending.
 
 - **Setup keyboard avoidance (included in the `preview` merge):** the practice Setup scroll screen now uses the same `KeyboardAvoidingView` wrapper as Sign-in so the group focus-area form can scroll above the keyboard. Mobile TypeScript, lint and `git diff --check` pass. JS only; no rebuild. Phone-check field visibility, Save reachability and keyboard dismiss/reopen alongside the instant-interaction checks below.
 
@@ -41,6 +43,8 @@ _Last updated: 2026-10-19 (instant interactions and Setup keyboard avoidance)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Verify History skeleton feedback:** reload Metro on `preview`, switch stages quickly and try sort/date changes with a long history. Confirm placeholders appear while results catch up, only matching counts/empty messages appear, and controls remain usable when a stage has no sessions. Check first load and reduced-motion skeletons too. This follow-up is uncommitted; the earlier interaction/keyboard fixes are committed as `fbb8b39`.
 
 **Phone-check the fixes on `preview`:** reload Metro, focus Setup's Your focus area field and confirm the input and Save action remain reachable with the keyboard open, then dismiss/reopen it. Change Profile course (picker closes immediately), toggle typed answers and score sharing from both Analysis and Results, and try History stage/sort/date chips with a long list. With a slow connection, confirm the switch does not snap back; failed saves must restore the previous value and show an error, then retry successfully. Check pull-to-refresh during a save and sign-out while saving. The first onboarding course intentionally waits for server confirmation so it cannot bypass the survey gate. Automated checks: 105 mobile tests, TypeScript and lint pass; isolated account/group-hook checks used fake delayed/failed replies. No connected phone or booted emulator was available, so visual timing/device verification remains pending. Merged to `preview` at the user's request; `dev` was not changed.
 
@@ -122,6 +126,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-19 | Show skeletons while History's deferred filters update, including stage summary/chart and session count; suppress stale rows/empty messages while keeping filters usable. | `screens/history/index.tsx`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-19 | Committed the instant-interaction and Setup keyboard fixes and merged them into `preview` at the user's request. Automated checks pass; phone verification remains pending. No remote push or OTA publication. | `codex/instant-preferences` → `preview`; this commit, including handoff/tasks |
 | 2026-10-19 | Added keyboard avoidance around the scrolling practice Setup form so the group focus-area input can scroll above the keyboard. Uses the existing Sign-in pattern; JS only, phone verification pending. | `screens/setup/index.tsx`, handoff/tasks; uncommitted on `codex/instant-preferences` |
 | 2026-10-19 | Instant course/typed-answer/score-sharing updates with rollback, visible failure feedback, duplicate-save protection and stale-read/account-reset guards. Removed the blocking post-save project GET; History filter controls render ahead of memoized chart/list updates. Added seven optimistic-write regression cases; isolated hook checks cover stale GET/refresh, rollback, privacy state, sign-out and onboarding. | `codex/instant-preferences`; app `utils/optimistic-value*`, `hooks/use-{session,projects}.ts`, `screens/{profile,analysis/group-card,results,history}`; uncommitted |
