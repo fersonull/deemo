@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
@@ -49,23 +49,26 @@ export function History() {
     setLastStage(stage);
     if (stage) setMode(stage);
   }
-  const list = mode ? all.filter((s) => s.mode === mode) : all;
   const [sort, setSort] = useState<SessionSort>("newest");
   const [range, setRange] = useState<SessionRange>("all");
   const [arranging, setArranging] = useState(false);
-  const shown = arrangeSessions(list, sort, range);
+  const filteredMode = useDeferredValue(mode);
+  const filteredSort = useDeferredValue(sort);
+  const filteredRange = useDeferredValue(range);
+  const list = useMemo(() => filteredMode ? all.filter((s) => s.mode === filteredMode) : all, [all, filteredMode]);
+  const shown = useMemo(() => arrangeSessions(list, filteredSort, filteredRange), [list, filteredSort, filteredRange]);
   const changed = sort !== "newest" || range !== "all";
   const arrangeLabel = [range !== "all" && RANGES.find((r) => r.value === range)!.label, SORTS.find((o) => o.value === sort)!.label]
     .filter(Boolean)
     .join(" · ");
   const { premium } = useSession();
-  const summary = historySummary(list, mode ? MODE_LABELS[mode] : null);
+  const summary = useMemo(() => historySummary(list, filteredMode ? MODE_LABELS[filteredMode] : null), [list, filteredMode]);
 
   // From an empty stage filter: open Setup on that stage. Final stays behind Setup's Premium lock on Free.
-  const practiceStage = (m: Mode) => {
+  const practiceStage = useCallback((m: Mode) => {
     if (m !== "FINAL" || premium) practiceSetup.set({ mode: m, weakFrom: null });
     router.push("/practice");
-  };
+  }, [premium]);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,29 +76,53 @@ export function History() {
     }, []),
   );
 
+  // Keep selection feedback urgent; reuse the chart and rows until the deferred filters catch up.
+  const note = useMemo(() => loaded && !error ? (
+    <Animated.View key={summary.text} entering={FadeIn.duration(220)} style={styles.summary}>
+      <DeemoNote mood={summary.mood} size="m">{summary.text}</DeemoNote>
+    </Animated.View>
+  ) : null, [loaded, error, summary]);
+  const chart = useMemo(() => loaded && !error ? (
+    <TrendChart key={filteredMode ?? "all"} sessions={list} stage={filteredMode ? MODE_LABELS[filteredMode] : null}>
+      {all.length === 0 ? (
+        <StartButton label="Start practice" onPress={() => router.push("/practice")} />
+      ) : filteredMode && list.length === 0 ? (
+        <StartButton label={`Practice ${MODE_LABELS[filteredMode]}`} onPress={() => practiceStage(filteredMode)} />
+      ) : null}
+    </TrendChart>
+  ) : null, [loaded, error, list, filteredMode, all.length, practiceStage]);
+  const rows = useMemo(() => shown.map((s, i) => (
+    <PressableScale
+      scaleTo={0.98}
+      entering={riseIn(Math.min(i, 5) * 40, reduced)}
+      key={s.id}
+      accessibilityRole="button"
+      accessibilityHint="Opens the report"
+      onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
+      style={styles.row}
+    >
+      <View style={styles.flex}>
+        <Text style={styles.mode}>{MODE_LABELS[s.mode]}</Text>
+        <Text style={styles.meta} numberOfLines={1}>
+          {day(s.createdAt)} · {formatTime(s.durationMs)} · {s.title}
+        </Text>
+      </View>
+      {s.score !== undefined ? (
+        <Score value={s.score} style={styles.score} caption banded align="right" />
+      ) : (
+        <Text style={[styles.score, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+      )}
+    </PressableScale>
+  )), [shown, reduced]);
+
   // Offline: Deemo takes the whole screen; nothing else here would work.
   if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
     <Screen scroll tabBar title="History" onRefresh={refreshEverything}>
       {/* Deemo sums up the trend (it changes with the stage filter; the words fade in when they change) */}
-      {loaded && !error ? (
-        <Animated.View key={summary.text} entering={FadeIn.duration(220)} style={styles.summary}>
-          <DeemoNote mood={summary.mood} size="m">
-            {summary.text}
-          </DeemoNote>
-        </Animated.View>
-      ) : null}
-      {loaded && !error ? (
-        <TrendChart key={mode ?? "all"} sessions={list} stage={mode ? MODE_LABELS[mode] : null}>
-          {/* The empty card's action: start practicing, or practice the filtered stage. */}
-          {all.length === 0 ? (
-            <StartButton label="Start practice" onPress={() => router.push("/practice")} />
-          ) : mode && list.length === 0 ? (
-            <StartButton label={`Practice ${MODE_LABELS[mode]}`} onPress={() => practiceStage(mode)} />
-          ) : null}
-        </TrendChart>
-      ) : null}
+      {note}
+      {chart}
       {all.length ? (
         <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.filters}>
           {FILTERS.map((f) => {
@@ -141,30 +168,8 @@ export function History() {
           </Text>
         </Text>
       ) : null}
-      <View style={styles.list}>
-        {shown.map((s, i) => (
-          <PressableScale
-            scaleTo={0.98}
-            entering={riseIn(Math.min(i, 5) * 40, reduced)}
-            key={s.id}
-            accessibilityRole="button"
-            accessibilityHint="Opens the report"
-            onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
-            style={[styles.row]}
-          >
-            <View style={styles.flex}>
-              <Text style={styles.mode}>{MODE_LABELS[s.mode]}</Text>
-              <Text style={styles.meta} numberOfLines={1}>
-                {day(s.createdAt)} · {formatTime(s.durationMs)} · {s.title}
-              </Text>
-            </View>
-            {s.score !== undefined ? (
-              <Score value={s.score} style={styles.score} caption banded align="right" />
-            ) : (
-              <Text style={[styles.score, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
-            )}
-          </PressableScale>
-        ))}
+      <View style={styles.list} accessibilityState={{ busy: mode !== filteredMode || sort !== filteredSort || range !== filteredRange }}>
+        {rows}
         {!loaded ? (
           <Skeleton label="Loading your sessions">
             <View style={styles.list}>

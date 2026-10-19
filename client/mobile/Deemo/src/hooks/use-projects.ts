@@ -4,6 +4,7 @@ import { DEFAULT_WEIGHTS, type Course, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { api } from "@/utils/api";
 import { freshFor } from "@/utils/fresh";
+import { optimisticValue } from "@/utils/optimistic-value";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/modules/manuscripts/domain/manuscript.ts. The server keeps projects; the app only caches the list.
@@ -56,8 +57,11 @@ export type GroupReadiness = {
   title: string;
   members: { name: string; avatar: string; premium: boolean; isYou: boolean; sharing: boolean; score?: number; mode?: string; createdAt?: string }[];
 };
-const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false });
+const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false, savingMembers: [] as string[] });
 let generation = 0;
+let revision = 0;
+type Membership = NonNullable<Project["group"]>;
+const memberWrites = new Map<string, ReturnType<typeof optimisticValue<Membership>>>();
 // Opening a screen reuses a list loaded in the last minute, unless a manuscript is still being analyzed.
 const fresh = freshFor(60_000);
 const json = (method: string, body: object) => ({
@@ -95,31 +99,39 @@ export const projects = {
   // Signed out: drop the last student's list and active manuscript.
   reset() {
     generation++;
+    revision++;
+    for (const write of memberWrites.values()) write.reset();
+    memberWrites.clear();
     fresh.invalidate();
-    store.set({ projects: [], groups: [], loaded: false, error: false });
+    store.set({ projects: [], groups: [], loaded: false, error: false, savingMembers: [] });
     practiceSetup.set({ projectId: null, weights: DEFAULT_WEIGHTS });
   },
 
   // `force`: pull to refresh, or an action that changed the list on the server.
   refresh(force = false) {
+    if (store.get().savingMembers.length) return Promise.resolve();
     const pending = store.get().projects.some((p) => p.status === "analyzing");
     return fresh.run(async () => {
       const started = generation;
+      const readRevision = revision;
       try {
         const [list, groups] = await Promise.all([api<Project[]>("/projects"), api<GroupReadiness[]>("/groups")]);
-        if (started !== generation) return false;
+        if (started !== generation || readRevision !== revision) return false;
         store.set({ projects: list, groups, loaded: true, error: false });
         pickActive(list);
         return true;
       } catch {
-        if (started === generation) store.set({ groups: [], loaded: true, error: true });
+        if (started === generation && readRevision === revision) store.set({ loaded: true, error: true });
         return false;
       }
     }, force || pending);
   },
 
   async get(id: string) {
-    return upsert(await api<Project>(`/projects/${id}`));
+    const started = generation;
+    const readRevision = revision;
+    const p = await api<Project>(`/projects/${id}`);
+    return started === generation && readRevision === revision && !store.get().savingMembers.includes(id) ? upsert(p) : p;
   },
 
   // Expo's fetch only takes Blob-like parts (RN's { uri, name, type } object throws "Unsupported FormDataPart"),
@@ -158,9 +170,51 @@ export const projects = {
     return p;
   },
   async updateMember(p: Project, patch: { shareScore?: boolean; focusArea?: string }) {
-    if (!p.group) return;
-    await api(`/groups/${p.group.code}/me`, json("PATCH", patch));
-    await this.get(p.id);
+    const current = store.get().projects.find((x) => x.id === p.id);
+    if (!current?.group) return;
+    const pending = memberWrites.get(p.id);
+    if (pending?.saving) return pending.set(current.group);
+    const code = current.group.code;
+    const started = generation;
+    const previousMember = store.get().groups.find((g) => g.code === code)?.members.find((m) => m.isYou);
+    const change = optimisticValue(
+      () => current.group!,
+      (group, saving) => {
+        revision++;
+        fresh.invalidate();
+        const state = store.get();
+        store.set({
+          projects: state.projects.map((x) => x.id === p.id && x.group?.code === code ? { ...x, group } : x),
+          savingMembers: [...state.savingMembers.filter((id) => id !== p.id), ...(saving ? [p.id] : [])],
+          groups: state.groups.map((g) => g.code !== code ? g : {
+            ...g,
+            members: g.members.map((m) => !m.isYou ? m : {
+              ...m, sharing: group.shareScore,
+              score: group.shareScore ? previousMember?.score : undefined,
+              mode: group.shareScore ? previousMember?.mode : undefined,
+              createdAt: group.shareScore ? previousMember?.createdAt : undefined,
+            }),
+          }),
+        });
+      },
+      async (group) => {
+        await api(`/groups/${code}/me`, json("PATCH", patch));
+        return group;
+      },
+    );
+    memberWrites.set(p.id, change);
+    try {
+      await change.set({ ...current.group, ...patch, ...(patch.focusArea !== undefined && { focusArea: patch.focusArea.trim() }) });
+      // The save is confirmed. A failed roster refresh must not roll it back or replace the screen with Offline.
+      if (started === generation) {
+        const readRevision = revision;
+        void api<GroupReadiness[]>("/groups").then((groups) => {
+          if (started === generation && readRevision === revision) store.set({ groups });
+        }).catch(() => {});
+      }
+    } finally {
+      if (memberWrites.get(p.id) === change) memberWrites.delete(p.id);
+    }
   },
   async leaveGroup(p: Project) {
     if (!p.group) return;

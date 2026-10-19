@@ -15,7 +15,7 @@ const SHOWN = 4; // faces before "+n": the stack shares a row with the code chip
 // faces (from the same /groups data as Home's Group readiness), the share-my-score switch and a small leave link.
 // On sand, like Group readiness, so the dusk faces carry the color.
 export function GroupCard({ project, onLeft }: { project: Project; onLeft: () => void }) {
-  const { groups } = useProjects();
+  const { groups, savingMembers } = useProjects();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
@@ -92,7 +92,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
             <Switch
               accessibilityLabel="Share my latest score with group"
               value={group.shareScore}
-              disabled={busy}
+              disabled={busy || savingMembers.includes(project.id)}
               onValueChange={(shareScore) => void run(() => projects.updateMember(project, { shareScore }))}
               trackColor={{ false: colors.border, true: colors.dusk }}
               thumbColor={colors.paper}

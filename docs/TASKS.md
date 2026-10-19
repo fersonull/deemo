@@ -97,6 +97,11 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Setup focus-area keyboard avoidance (2026-10-19):** reused the Sign-in keyboard-avoidance wrapper around the scrolling Setup form. JS only; included in the user-requested `preview` merge. Phone verification remains pending.
+
+- [x] **Instant settings and filter feedback (2026-10-19, merged into `preview` at the user's request):** optimistic Profile course/typing and group score-sharing updates, rollback/errors, pending-save guards and stale-read/reset protection; no blocking project GET after sharing saves. History controls stay urgent while chart/list filtering catches up. Seven regression tests and isolated hook checks added/run; mobile types/lint pass. JS only.
+- [ ] **Verify instant interactions and keyboard avoidance on a phone (`preview`):** focus-area visibility and Save reachability with keyboard open/dismissed/reopened; slow/failing saves and retry for course/typing/sharing (Analysis + Results), stale refresh and sign-out while saving, first-course onboarding gate, and History stage/sort/date controls with a long list. No connected device was available during implementation.
+
 - [x] **Resolve preview → dev merge conflict (2026-10-19):** combined all three HANDOFF conflicts, preserving the 11-slide presentation and paper/agenda-session history; corrected current branch/next steps and staged the resolution. Merge commit remains pending.
 
 - [x] Register agent-device MCP in Codex using the existing global installation; verify initialization and tool discovery (59 tools).

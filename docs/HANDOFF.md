@@ -2,11 +2,15 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-19 (preview → dev merge conflict resolved)_
+_Last updated: 2026-10-19 (instant interactions and Setup keyboard avoidance)_
 
 ## Current state
 
-- **Branch:** `dev`, resolving the user-started merge of `preview` (`fb36f49`) into `5319a74`. The pending merge combines the revised 11-slide deck with agenda sessions, contradiction challenges and paper/diagram updates. All incoming changes remain staged; this conflict-resolution task changes only the handoff and task log. **Push remains unconfirmed:** the last recorded device check (Oct 17) found 0 `push_tokens` rows; inspect token-registration errors in `hooks/use-push-notices.ts` before repeating the phone checklist.
+- **Setup keyboard avoidance (included in the `preview` merge):** the practice Setup scroll screen now uses the same `KeyboardAvoidingView` wrapper as Sign-in so the group focus-area form can scroll above the keyboard. Mobile TypeScript, lint and `git diff --check` pass. JS only; no rebuild. Phone-check field visibility, Save reachability and keyboard dismiss/reopen alongside the instant-interaction checks below.
+
+- **Branch:** `preview`. The user requested committing and merging `codex/instant-preferences` into `preview`; this commit contains the instant-interaction and Setup keyboard fixes plus handoff/tasks. `dev` stays at merge `0182b04`. No remote push or OTA publication requested. **Push notifications remain unconfirmed:** the last recorded device check (Oct 17) found 0 `push_tokens` rows; inspect token-registration errors in `hooks/use-push-notices.ts` before repeating the phone checklist.
+
+- **Instant interactions:** Profile course changes close the picker and update immediately; typed-answer and score-sharing switches update before HTTP finishes. Duplicate saves are blocked while pending. Failed saves restore the prior value and show an accessible error. Stale account/project reads cannot overwrite edits; sign-out/reset invalidates pending writes. Group readiness updates sharing immediately and reloads only its roster in the background after success (no blocking project GET); a roster failure keeps the confirmed setting. History chips remain urgent while memoized chart/rows use deferred filters. JS only; no rebuild needed.
 
 - **Merge validation:** 72 server tests and 98 mobile tests pass; server/mobile TypeScript checks and mobile lint pass. No native build, migration or device test was performed during this documentation conflict resolution.
 
@@ -37,6 +41,8 @@ _Last updated: 2026-10-19 (preview → dev merge conflict resolved)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Phone-check the fixes on `preview`:** reload Metro, focus Setup's Your focus area field and confirm the input and Save action remain reachable with the keyboard open, then dismiss/reopen it. Change Profile course (picker closes immediately), toggle typed answers and score sharing from both Analysis and Results, and try History stage/sort/date chips with a long list. With a slow connection, confirm the switch does not snap back; failed saves must restore the previous value and show an error, then retry successfully. Check pull-to-refresh during a save and sign-out while saving. The first onboarding course intentionally waits for server confirmation so it cannot bypass the survey gate. Automated checks: 105 mobile tests, TypeScript and lint pass; isolated account/group-hook checks used fake delayed/failed replies. No connected phone or booted emulator was available, so visual timing/device verification remains pending. Merged to `preview` at the user's request; `dev` was not changed.
 
 **Presentation:** content is aligned to the six-section outline in the supplied PPT Doc. Review the 11-slide wording with the group, then deploy when ready. The original interactive walkthrough/audio slides remain 6–7 within Target Technologies. Slide 9 lets the presenter click a function (or use the wheel) to select its representative phone screen; Account & consent starts on Consent. Slide 10 centers the app icon, DEEMO title and practice-only disclaimer above a session-screen phone; thank-you is slide 11. Existing notice/device acceptance work below remains pending.
 
@@ -116,6 +122,9 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-19 | Committed the instant-interaction and Setup keyboard fixes and merged them into `preview` at the user's request. Automated checks pass; phone verification remains pending. No remote push or OTA publication. | `codex/instant-preferences` → `preview`; this commit, including handoff/tasks |
+| 2026-10-19 | Added keyboard avoidance around the scrolling practice Setup form so the group focus-area input can scroll above the keyboard. Uses the existing Sign-in pattern; JS only, phone verification pending. | `screens/setup/index.tsx`, handoff/tasks; uncommitted on `codex/instant-preferences` |
+| 2026-10-19 | Instant course/typed-answer/score-sharing updates with rollback, visible failure feedback, duplicate-save protection and stale-read/account-reset guards. Removed the blocking post-save project GET; History filter controls render ahead of memoized chart/list updates. Added seven optimistic-write regression cases; isolated hook checks cover stale GET/refresh, rollback, privacy state, sign-out and onboarding. | `codex/instant-preferences`; app `utils/optimistic-value*`, `hooks/use-{session,projects}.ts`, `screens/{profile,analysis/group-card,results,history}`; uncommitted |
 | 2026-10-19 | Resolved all three HANDOFF conflict blocks in the user-started `preview` → `dev` merge, preserving presentation and paper/session history. Updated current branch/next-step notes and the task log. Resolution staged; merge commit left pending. | `docs/HANDOFF.md`, `docs/TASKS.md` |
 | 2026-10-18 | Applied verified paper corrections to the requested backup: 22 dictionary tables, four fields, agenda/caps/scoring, notices/privacy wording, references and revised DFD/ERD/flowcharts. Removed a floating old flowchart and unwanted list numbering found during PDF QA. Original paper/audit and app unchanged. | Backup Google Doc `10uUR649kQmj7GXBZc89C3IjWj5ypvtMFwyqOD5X7Woo`; `docs/diagrams/`, handoff/tasks; uncommitted |
 | 2026-10-18 | **Correction guide delivered as a new Google Doc** (user clarified the format): converted the full guide to native headings, prose, links and 9 editable tables in My Drive/ChatGPT; readback confirms 49 correction IDs and complete ending. Original paper untouched. | https://docs.google.com/document/d/15EqKU-73gaJv5UJPhVK7Dlzwul_0xc7-4uITHIow4Yg/edit; handoff/tasks updated on `preview`, uncommitted |

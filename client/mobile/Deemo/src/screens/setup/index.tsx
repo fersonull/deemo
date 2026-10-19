@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -44,171 +44,173 @@ export function Setup() {
   );
 
   return (
-    <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
-      <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.modes}>
-        {MODES.map((m) => {
-          const locked = m.value === "FINAL" && !premium;
-          const selected = setup.mode === m.value;
-          const fg = selected ? colors.paper : colors.ink;
-          return (
-            <PressableScale
-              scaleTo={0.98}
-              key={m.value}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-              accessibilityHint={locked ? "Premium" : undefined}
-              onPress={() => (locked ? upsell() : practiceSetup.set({ mode: m.value }))}
-              style={[styles.mode, selected && styles.inkCard]}
-            >
-              <View style={styles.flex}>
-                <Text style={[type.heading, { color: fg }]}>{MODE_LABELS[m.value]}</Text>
-                <Text style={[styles.desc, { color: fg }]}>{m.desc}</Text>
-              </View>
-              <Icon name={locked ? "lock" : selected ? "radio_button_checked" : "radio_button_unchecked"} color={fg} />
-            </PressableScale>
-          );
-        })}
-      </View>
-      {/* The panel only sees the stage's chapters (server panel.ts manuscriptFacts); Final needs results to ask about. */}
-      {setup.mode === "FINAL" && manuscript?.analysis && !manuscript.analysis.results.trim() ? (
-        <View style={styles.stageNote}>
-          <Icon name="info" size={18} color={colors.amberInk} />
-          <Text style={styles.stageNoteText}>
-            This manuscript has no results chapter yet, so a Final Defense has little to ask about. Pre-Oral fits it better.
-          </Text>
+    <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+      <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
+        <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.modes}>
+          {MODES.map((m) => {
+            const locked = m.value === "FINAL" && !premium;
+            const selected = setup.mode === m.value;
+            const fg = selected ? colors.paper : colors.ink;
+            return (
+              <PressableScale
+                scaleTo={0.98}
+                key={m.value}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                accessibilityHint={locked ? "Premium" : undefined}
+                onPress={() => (locked ? upsell() : practiceSetup.set({ mode: m.value }))}
+                style={[styles.mode, selected && styles.inkCard]}
+              >
+                <View style={styles.flex}>
+                  <Text style={[type.heading, { color: fg }]}>{MODE_LABELS[m.value]}</Text>
+                  <Text style={[styles.desc, { color: fg }]}>{m.desc}</Text>
+                </View>
+                <Icon name={locked ? "lock" : selected ? "radio_button_checked" : "radio_button_unchecked"} color={fg} />
+              </PressableScale>
+            );
+          })}
         </View>
-      ) : null}
-
-      <Text style={[type.label, styles.section]}>PRACTICING WITH</Text>
-      <PressableScale
-        scaleTo={0.98}
-        accessibilityRole="button"
-        accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
-        onPress={() => router.push("/projects")}
-        style={styles.manuscript}
-      >
-        <Icon name="description" size={20} color={colors.duskIcon} />
-        <View style={styles.flex}>
-          <Text style={type.label}>MANUSCRIPT</Text>
-          {manuscript || list.loaded ? (
-            <Text style={styles.manuscriptName} numberOfLines={1}>
-              {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
+        {/* The panel only sees the stage's chapters (server panel.ts manuscriptFacts); Final needs results to ask about. */}
+        {setup.mode === "FINAL" && manuscript?.analysis && !manuscript.analysis.results.trim() ? (
+          <View style={styles.stageNote}>
+            <Icon name="info" size={18} color={colors.amberInk} />
+            <Text style={styles.stageNoteText}>
+              This manuscript has no results chapter yet, so a Final Defense has little to ask about. Pre-Oral fits it better.
             </Text>
-          ) : (
-            <Skeleton label="Loading your manuscript">
-              <Skeleton.Bone width="70%" height={14} style={styles.nameBone} />
-            </Skeleton>
-          )}
-        </View>
-        <View style={styles.change}>
-          <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
-        </View>
-      </PressableScale>
-      <PressableScale
-        scaleTo={0.98}
-        accessibilityRole="button"
-        accessibilityHint="Change the rubric weights"
-        onPress={() => router.push("/rubric")}
-        style={[styles.manuscript, styles.rubricRow]}
-      >
-        <Icon name="balance" size={20} color={colors.duskIcon} />
-        <View style={styles.flex}>
-          <Text style={type.label}>SCORING</Text>
-          <Text style={styles.manuscriptName} numberOfLines={1}>
-            {manuscript?.group
-              ? manuscript.rubric
-                ? "Your group's panel rubric"
-                : "Shared group rubric"
-              : manuscript?.rubric
-                ? "Your panel's rubric"
-                : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
-                ? "Default rubric"
-                : "Your rubric weights"}
-          </Text>
-        </View>
-        <View style={styles.change}>
-          <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
-        </View>
-      </PressableScale>
-      {/* The IT field is for computing courses only; every other course is profiled by the course (plan F4). */}
-      {isComputing(field) ? (
+          </View>
+        ) : null}
+
+        <Text style={[type.label, styles.section]}>PRACTICING WITH</Text>
         <PressableScale
           scaleTo={0.98}
           accessibilityRole="button"
-          accessibilityHint="Change IT field"
-          onPress={() => setSheet("domain")}
+          accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
+          onPress={() => router.push("/projects")}
+          style={styles.manuscript}
+        >
+          <Icon name="description" size={20} color={colors.duskIcon} />
+          <View style={styles.flex}>
+            <Text style={type.label}>MANUSCRIPT</Text>
+            {manuscript || list.loaded ? (
+              <Text style={styles.manuscriptName} numberOfLines={1}>
+                {manuscript ? manuscript.analysis?.title || manuscript.name : "Sample paper (ReqTrack)"}
+              </Text>
+            ) : (
+              <Skeleton label="Loading your manuscript">
+                <Skeleton.Bone width="70%" height={14} style={styles.nameBone} />
+              </Skeleton>
+            )}
+          </View>
+          <View style={styles.change}>
+            <Text style={styles.changeText}>{manuscript ? "Change" : "Upload"}</Text>
+          </View>
+        </PressableScale>
+        <PressableScale
+          scaleTo={0.98}
+          accessibilityRole="button"
+          accessibilityHint="Change the rubric weights"
+          onPress={() => router.push("/rubric")}
           style={[styles.manuscript, styles.rubricRow]}
         >
-          <Icon name="category" size={20} color={colors.duskIcon} />
+          <Icon name="balance" size={20} color={colors.duskIcon} />
           <View style={styles.flex}>
-            <Text style={type.label}>IT FIELD</Text>
+            <Text style={type.label}>SCORING</Text>
             <Text style={styles.manuscriptName} numberOfLines={1}>
-              {setup.domain}
+              {manuscript?.group
+                ? manuscript.rubric
+                  ? "Your group's panel rubric"
+                  : "Shared group rubric"
+                : manuscript?.rubric
+                  ? "Your panel's rubric"
+                  : setup.weights.every((w, i) => w === DEFAULT_WEIGHTS[i])
+                  ? "Default rubric"
+                  : "Your rubric weights"}
             </Text>
           </View>
           <View style={styles.change}>
-            <Text style={styles.changeText}>Change</Text>
+            <Text style={styles.changeText}>{manuscript?.group && !manuscript.group.isOwner ? "View" : "Change"}</Text>
           </View>
         </PressableScale>
-      ) : null}
+        {/* The IT field is for computing courses only; every other course is profiled by the course (plan F4). */}
+        {isComputing(field) ? (
+          <PressableScale
+            scaleTo={0.98}
+            accessibilityRole="button"
+            accessibilityHint="Change IT field"
+            onPress={() => setSheet("domain")}
+            style={[styles.manuscript, styles.rubricRow]}
+          >
+            <Icon name="category" size={20} color={colors.duskIcon} />
+            <View style={styles.flex}>
+              <Text style={type.label}>IT FIELD</Text>
+              <Text style={styles.manuscriptName} numberOfLines={1}>
+                {setup.domain}
+              </Text>
+            </View>
+            <View style={styles.change}>
+              <Text style={styles.changeText}>Change</Text>
+            </View>
+          </PressableScale>
+        ) : null}
 
-      <Text style={[type.label, styles.section]}>PANELISTS</Text>
-      <Segmented
-        label="Panelists"
-        value={setup.panelists}
-        onChange={(panelists) => practiceSetup.set({ panelists })}
-        onLocked={upsell}
-        options={[1, 2, 3].map((n) => ({ value: n, label: String(n), locked: n > 1 && !premium }))}
-      />
-      <PanelPreview course={field} panelists={setup.panelists} />
+        <Text style={[type.label, styles.section]}>PANELISTS</Text>
+        <Segmented
+          label="Panelists"
+          value={setup.panelists}
+          onChange={(panelists) => practiceSetup.set({ panelists })}
+          onLocked={upsell}
+          options={[1, 2, 3].map((n) => ({ value: n, label: String(n), locked: n > 1 && !premium }))}
+        />
+        <PanelPreview course={field} panelists={setup.panelists} />
 
-      <Text style={[type.label, styles.section]}>FOLLOW-UPS PER TOPIC</Text>
-      <Segmented
-        label="Follow-ups per topic"
-        value={setup.followUps}
-        onChange={(followUps) => practiceSetup.set({ followUps })}
-        onLocked={upsell}
-        options={[0, 1, 2, 3].map((n) => ({ value: n, label: n === 0 ? "None" : String(n) }))}
-      />
+        <Text style={[type.label, styles.section]}>FOLLOW-UPS PER TOPIC</Text>
+        <Segmented
+          label="Follow-ups per topic"
+          value={setup.followUps}
+          onChange={(followUps) => practiceSetup.set({ followUps })}
+          onLocked={upsell}
+          options={[0, 1, 2, 3].map((n) => ({ value: n, label: n === 0 ? "None" : String(n) }))}
+        />
 
-      <Text style={[type.label, styles.section]}>DIFFICULTY</Text>
-      <Segmented
-        label="Difficulty"
-        value={setup.difficulty}
-        onChange={(difficulty) => practiceSetup.set({ difficulty })}
-        onLocked={upsell}
-        options={(["EASY", "STANDARD", "HARD"] as const).map((d) => ({ value: d, label: DIFFICULTY_LABELS[d] }))}
-      />
+        <Text style={[type.label, styles.section]}>DIFFICULTY</Text>
+        <Segmented
+          label="Difficulty"
+          value={setup.difficulty}
+          onChange={(difficulty) => practiceSetup.set({ difficulty })}
+          onLocked={upsell}
+          options={(["EASY", "STANDARD", "HARD"] as const).map((d) => ({ value: d, label: DIFFICULTY_LABELS[d] }))}
+        />
 
-      {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
-      <View style={styles.cta}>
-        <Button
-          label="Continue to mic check"
-          onPress={() => {
-            if (!isComputing(field)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
-            router.push("/mic-check");
+        {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
+        <View style={styles.cta}>
+          <Button
+            label="Continue to mic check"
+            onPress={() => {
+              if (!isComputing(field)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
+              router.push("/mic-check");
+            }}
+          />
+        </View>
+
+        <DomainSheet
+          visible={sheet === "domain"}
+          value={setup.domain}
+          onClose={() => setSheet(null)}
+          onPick={(domain) => {
+            practiceSetup.set({ domain });
+            setSheet(null);
           }}
         />
-      </View>
-
-      <DomainSheet
-        visible={sheet === "domain"}
-        value={setup.domain}
-        onClose={() => setSheet(null)}
-        onPick={(domain) => {
-          practiceSetup.set({ domain });
-          setSheet(null);
-        }}
-      />
-      <UpsellSheet
-        visible={sheet === "upsell"}
-        onClose={() => setSheet(null)}
-        onUpgrade={() => {
-          session.upgrade();
-          setSheet(null);
-        }}
-      />
-    </Screen>
+        <UpsellSheet
+          visible={sheet === "upsell"}
+          onClose={() => setSheet(null)}
+          onUpgrade={() => {
+            session.upgrade();
+            setSheet(null);
+          }}
+        />
+      </Screen>
+    </KeyboardAvoidingView>
   );
 }
 

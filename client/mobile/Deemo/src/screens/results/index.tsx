@@ -49,7 +49,8 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
   const [sharing, setSharing] = useState(false);
-  const mine = useProjects().projects;
+  const [shareError, setShareError] = useState("");
+  const { projects: mine, savingMembers } = useProjects();
   const group = mine.find((p) => s?.groupCode && p.group?.code === s.groupCode);
   const [error, setError] = useState("");
   const [upsell, setUpsell] = useState(false);
@@ -123,8 +124,14 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   const toggleShare = async (shareScore: boolean) => {
     if (!group) return;
     setSharing(true);
-    await projects.updateMember(group, { shareScore }).catch(() => {});
-    setSharing(false);
+    setShareError("");
+    try {
+      await projects.updateMember(group, { shareScore });
+    } catch {
+      setShareError("Couldn't save score sharing. Check your connection and try again.");
+    } finally {
+      setSharing(false);
+    }
   };
 
   return (
@@ -333,12 +340,13 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
           <Switch
             accessibilityLabel="Show my latest score on the Group readiness card"
             value={!!group?.group?.shareScore}
-            disabled={sharing}
+            disabled={sharing || !group || savingMembers.includes(group.id)}
             onValueChange={toggleShare}
             trackColor={{ false: colors.border, true: colors.dusk }}
             thumbColor={colors.paper}
           />
         </View>
+        {shareError ? <Text accessibilityLiveRegion="polite" style={styles.sheetNote}>{shareError}</Text> : null}
         <View style={styles.cta}>
           <Button label="Done" onPress={() => setSheet(null)} />
         </View>

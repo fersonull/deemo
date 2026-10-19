@@ -23,6 +23,7 @@ import type { Course } from "@/constants";
 import { forgetPushToken } from "@/hooks/use-push-notices";
 import { api } from "@/utils/api";
 import { cleanName } from "@/utils/auth-form";
+import { optimisticValue } from "@/utils/optimistic-value";
 import { createStore } from "@/utils/store";
 
 // The signed-in student (Firebase Auth) and their account record on the server (consent, simulated tier).
@@ -36,6 +37,8 @@ const store = createStore({
   name: null as string | null, // Firebase display name: from Google, or typed at sign-up or in Profile
   allowTyping: true, // the typed-answer fallback in sessions (Profile setting)
   course: null as Course | null, // onboarding survey (Profile setting); null until answered
+  savingCourse: false,
+  savingTyping: false,
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
   accountLoaded: false, // the server's account record has arrived (false offline): only then can missing consent be told apart
   premium: false, // simulated freemium (addendum Q1)
@@ -59,14 +62,36 @@ const fromMe = (me: Me) => ({
 const patchMe = (body: object) =>
   api<Me>("/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
+const courseSetting = optimisticValue(
+  () => store.get().course,
+  // Onboarding already previews its draft; only leave that route after the first course is confirmed.
+  (course, savingCourse) => store.set({ course: savingCourse && store.get().course === null ? null : course, savingCourse }),
+  async (course) => (await patchMe({ course })).course,
+);
+const typingSetting = optimisticValue(
+  () => store.get().allowTyping,
+  (allowTyping, savingTyping) => store.set({ allowTyping, savingTyping }),
+  async (allowTyping) => (await patchMe({ allowTyping })).allowTyping,
+);
+let accountOwner: string | null = null;
+let accountGeneration = 0;
+const accountVersion = () => `${accountGeneration}:${courseSetting.version}:${typingSetting.version}`;
+
+// A pull-to-refresh that started before a setting was saved must not undo its new selection.
+async function readAccount(load: () => Promise<Me>) {
+  const owner = getAuth().currentUser?.uid;
+  const version = accountVersion();
+  const me = await load();
+  if (owner === getAuth().currentUser?.uid && version === accountVersion() && !courseSetting.saving && !typingSetting.saving) {
+    store.set(fromMe(me));
+  }
+}
+
 // The account record lives on the server, which only serves verified emails (server/src/shared/auth/authenticate.ts).
 async function loadAccount() {
   try {
     // Consent was given before there was an account to record it on.
-    const me = store.get().consentAt
-      ? await patchMe({ consentVersion: CONSENT_VERSION })
-      : await api<Me>("/me");
-    store.set(fromMe(me));
+    await readAccount(() => store.get().consentAt ? patchMe({ consentVersion: CONSENT_VERSION }) : api<Me>("/me"));
   } catch {
     // Offline or server down: the account record loads on the next sign-in.
   }
@@ -74,13 +99,20 @@ async function loadAccount() {
 
 // Sign-in survives restarts: the first callback says whether someone is still signed in.
 onAuthStateChanged(getAuth(), async (user) => {
+  const changed = accountOwner !== (user?.uid ?? null);
+  if (changed) {
+    accountOwner = user?.uid ?? null;
+    accountGeneration++;
+    courseSetting.reset();
+    typingSetting.reset();
+  }
   store.set({
     ready: true,
     signedIn: !!user,
     verified: !!user?.emailVerified,
     email: user?.email ?? null,
     name: user?.displayName ?? null,
-    ...(!user && { premium: false, allowTyping: true, course: null, verifySentAt: 0, avatar: null, accountLoaded: false }),
+    ...((changed || !user) && { premium: false, allowTyping: true, course: null, savingCourse: false, savingTyping: false, verifySentAt: 0, avatar: null, accountLoaded: false }),
   });
   if (user?.emailVerified) await loadAccount();
 });
@@ -107,30 +139,21 @@ export function authMessage(e: unknown): string {
 
 export const session = {
   // Re-read the account record (Premium, typed answers, consent) from the server, so changes made elsewhere, such as
-  // an edit in the Firestore console, show up on pull to refresh. Signed out or offline: keep what we have.
+  // an admin edit, show up on pull to refresh. Signed out or offline: keep what we have.
   async refresh() {
     if (!store.get().signedIn) return;
     try {
-      store.set(fromMe(await api<Me>("/me")));
+      await readAccount(() => api<Me>("/me"));
     } catch {
       // The lists report being offline; the account keeps its last known state.
     }
   },
 
   // Saved on the account, so it follows the student; the switch flips right away and rolls back on failure.
-  async setAllowTyping(allowTyping: boolean) {
-    store.set({ allowTyping });
-    try {
-      store.set({ allowTyping: (await patchMe({ allowTyping })).allowTyping });
-    } catch {
-      store.set({ allowTyping: !allowTyping });
-    }
-  },
+  setAllowTyping: (allowTyping: boolean) => typingSetting.set(allowTyping),
 
   // The onboarding survey and Profile: saved on the account; the server profiles the panel by it (plan F4).
-  async setCourse(course: Course) {
-    store.set({ course: (await patchMe({ course })).course });
-  },
+  setCourse: (course: Course) => courseSetting.set(course),
 
   // The face the student picked in Profile; saved on the account so teammates see it too.
   async setAvatar(avatar: string) {

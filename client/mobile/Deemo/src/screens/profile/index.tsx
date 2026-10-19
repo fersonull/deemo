@@ -29,9 +29,10 @@ const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, sessions up to 30 
 export function Profile() {
   const { unread, notices } = useNotices();
   const latest = notices.find((n) => !n.readAt) ?? notices[0];
-  const { name, email, avatar, premium, allowTyping, course } = useSession();
+  const { name, email, avatar, premium, allowTyping, course, savingCourse, savingTyping } = useSession();
   const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | null>(null);
   const [courseError, setCourseError] = useState("");
+  const [typingError, setTypingError] = useState("");
   const [draft, setDraft] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
@@ -167,6 +168,8 @@ export function Profile() {
         <PressableScale
           accessibilityRole="button"
           accessibilityHint="Change your course"
+          accessibilityState={{ busy: savingCourse }}
+          disabled={savingCourse}
           onPress={() => {
             setCourseError("");
             setSheet("course");
@@ -179,6 +182,7 @@ export function Profile() {
           </View>
           <Icon name="chevron_right" size={20} color={colors.muted} />
         </PressableScale>
+        {courseError ? <Text accessibilityLiveRegion="polite" style={styles.settingError}>{courseError}</Text> : null}
         <View style={[styles.row, styles.divider]}>
           <View style={styles.flex}>
             <Text style={styles.rowLabel}>Allow typed answers</Text>
@@ -187,11 +191,17 @@ export function Profile() {
           <Switch
             accessibilityLabel="Allow typed answers"
             value={allowTyping}
-            onValueChange={(v) => void session.setAllowTyping(v)}
+            disabled={savingTyping}
+            accessibilityState={{ busy: savingTyping }}
+            onValueChange={(v) => {
+              setTypingError("");
+              void session.setAllowTyping(v).catch(() => setTypingError("Couldn't save typed answers. Try again."));
+            }}
             trackColor={{ false: colors.faint, true: colors.dusk }}
             thumbColor={colors.paper}
           />
         </View>
+        {typingError ? <Text accessibilityLiveRegion="polite" style={styles.settingError}>{typingError}</Text> : null}
       </View>
 
       <Text style={[type.label, styles.section]}>YOUR DATA</Text>
@@ -247,9 +257,9 @@ export function Profile() {
             value={course}
             onPick={(c) => {
               setCourseError("");
-              session
+              setSheet(null);
+              void session
                 .setCourse(c)
-                .then(() => setSheet(null))
                 .catch(() => setCourseError("Couldn't save your course. Check your connection and try again."));
             }}
           />
@@ -362,6 +372,7 @@ const styles = StyleSheet.create({
   group: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 16 },
   row: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
+  settingError: { ...type.meta, color: colors.warnInk, paddingBottom: 12 },
   signOut: { marginTop: 26 },
   rowLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
   danger: { color: colors.clay },
