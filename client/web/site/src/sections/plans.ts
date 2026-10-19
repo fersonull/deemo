@@ -1,7 +1,7 @@
 // Free vs Premium — the real numbers from server/src/modules/identity/domain/plan.ts. No pricing shown: Premium is
 // a simulated upgrade in the app (no real payments), so the site never implies a checkout.
-const FREE = ["One manuscript", "Five practice sessions a day", "One panelist", "10-minute sessions", "Title and Pre-Oral defense"];
-const PREMIUM = ["Unlimited manuscripts", "Unlimited practice sessions", "Up to three panelists", "25-minute sessions", "Every defense stage, including Final", "The full readiness report"];
+const FREE = ["One manuscript", "Five practice sessions a day", "One panelist", "Sessions up to 30 minutes", "Title and Pre-Oral defense"];
+const PREMIUM = ["Unlimited manuscripts", "Unlimited practice sessions", "Up to three panelists", "Sessions up to 60 minutes", "Every defense stage, including Final", "The full readiness report"];
 
 export function initPlans() {
   const el = document.getElementById("plans-grid")!;

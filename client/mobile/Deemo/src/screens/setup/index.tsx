@@ -20,12 +20,13 @@ import { FocusArea } from "./focus-area";
 import { PanelPreview } from "./panel-preview";
 
 const MODES: { value: Mode; desc: string }[] = [
-  { value: "TITLE", desc: "Problem, objectives, feasibility · 8–10 min" },
-  { value: "PRE_ORAL", desc: "Methodology, design, progress · 12–15 min" },
-  { value: "FINAL", desc: "Results, testing, conclusions · 15–20 min" },
+  { value: "TITLE", desc: "Problem, objectives, feasibility" },
+  { value: "PRE_ORAL", desc: "Methodology, design, progress" },
+  { value: "FINAL", desc: "Results, testing, conclusions" },
 ];
 
-// Free tier (addendum Q1): Title + Pre-Oral, 1 panelist, 10 min. Locked choices open the upsell.
+// Free tier (addendum Q1): Title + Pre-Oral, 1 panelist. Locked choices open the upsell. There's no length to pick: the
+// panel covers its agenda and ends (the plan's safety cap stops a runaway session).
 export function Setup() {
   const setup = usePracticeSetup();
   const { premium, course } = useSession();
@@ -160,15 +161,6 @@ export function Setup() {
         options={[1, 2, 3].map((n) => ({ value: n, label: String(n), locked: n > 1 && !premium }))}
       />
       <PanelPreview course={field} panelists={setup.panelists} />
-
-      <Text style={[type.label, styles.section]}>LENGTH</Text>
-      <Segmented
-        label="Length"
-        value={setup.minutes}
-        onChange={(minutes) => practiceSetup.set({ minutes })}
-        onLocked={upsell}
-        options={[10, 15, 25].map((n) => ({ value: n, label: `${n} min`, locked: n > 10 && !premium }))}
-      />
 
       <Text style={[type.label, styles.section]}>FOLLOW-UPS PER TOPIC</Text>
       <Segmented

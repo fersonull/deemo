@@ -3,7 +3,7 @@
 import { writeFileSync } from "node:fs";
 import { drawLabels, edgePoints, htmlFor, labelOf, layout, placeLabelsOnLines, roundedPath, svgDoc, textBlock } from "./lib.mjs";
 
-const ROW = 22, HEAD = 44, W = 290;
+const ROW = 22, HEAD = 44, W = 330;
 
 const id = ["id", "SERIAL", "PK"];
 // [id, table, note, rows: [column, type, key?]]
@@ -11,7 +11,7 @@ const entities = [
   ["user", "users", "one row per Firebase account", [
     ["id", "VARCHAR(128)", "PK"], ["email", "VARCHAR(320)"], ["name", "VARCHAR(60)"], ["email_verified", "BOOLEAN"],
     ["provider", "VARCHAR(30)"], ["avatar", "VARCHAR(32)"], ["premium", "BOOLEAN"], ["allow_typing", "BOOLEAN"],
-    ["consent_version", "VARCHAR(20)"], ["consent_at", "TIMESTAMP"], ["session_day", "VARCHAR(10)"], ["session_count", "INTEGER"],
+    ["course", "VARCHAR(40)"], ["consent_version", "VARCHAR(20)"], ["consent_at", "TIMESTAMP"], ["session_day", "VARCHAR(10)"], ["session_count", "INTEGER"],
     ["deleted_at", "TIMESTAMP"], ["created_at", "TIMESTAMP"], ["updated_at", "TIMESTAMP"],
   ]],
   ["livestart", "live_starts", "daily practice starts", [
@@ -34,7 +34,7 @@ const entities = [
   ["analysis", "analyses", "", [
     ["project_id", "VARCHAR(36)", "PK, FK"], ["title", "VARCHAR(2000)"], ["problem", "VARCHAR(2000)"],
     ["objectives", "VARCHAR(2000)"], ["method", "VARCHAR(2000)"], ["scope", "VARCHAR(2000)"], ["features", "VARCHAR(2000)"],
-    ["limits", "VARCHAR(2000)"], ["results", "VARCHAR(2000)"], ["facts", "TEXT[]"], ["unsure", "TEXT[]"], ["model", "VARCHAR(40)"],
+    ["limits", "VARCHAR(2000)"], ["results", "VARCHAR(2000)"], ["facts", "TEXT[]"], ["unsure", "TEXT[]"], ["field", "VARCHAR(40)"], ["model", "VARCHAR(40)"],
   ]],
   ["rubric", "rubrics", "", [["project_id", "VARCHAR(36)", "PK, FK"], ["source", "VARCHAR(200)"]]],
   ["criterion", "rubric_criteria", "", [
@@ -46,13 +46,13 @@ const entities = [
     ["id", "VARCHAR(36)", "PK"], ["user_id", "VARCHAR(128)", "FK"], ["status", "ENUM"], ["error", "TEXT"],
     ["project_id", "VARCHAR(100)"], ["group_code", "VARCHAR(6)"], ["focus_area", "VARCHAR(160)"], ["weak_from", "VARCHAR(100)"],
     ["manuscript_context", "TEXT"], ["title", "VARCHAR(2000)"], ["mode", "ENUM"], ["domain", "VARCHAR(30)"],
-    ["minutes", "INTEGER"], ["panelists", "INTEGER"], ["follow_ups", "INTEGER"], ["difficulty", "ENUM"],
+    ["minutes", "INTEGER"], ["agenda", "JSONB"], ["panelists", "INTEGER"], ["follow_ups", "INTEGER"], ["difficulty", "ENUM"],
     ["duration_ms", "INTEGER"], ["ended_by", "ENUM"], ["weights", "DOUBLE PRECISION[]"], ["rubric", "JSONB"],
     ["lines", "JSONB"], ["created_at", "TIMESTAMP"], ["updated_at", "TIMESTAMP"],
   ]],
   ["turn", "session_turns", "", [
     id, ["session_id", "VARCHAR(36)", "FK"], ["position", "INTEGER"], ["number", "INTEGER"], ["follow_up", "INTEGER"],
-    ["type", "VARCHAR(20)"], ["panelist", "INTEGER"], ["question", "VARCHAR(600)"], ["answer", "VARCHAR(4000)"],
+    ["type", "VARCHAR(20)"], ["panelist", "INTEGER"], ["question", "VARCHAR(600)"], ["topic", "VARCHAR(60)"], ["answer", "VARCHAR(4000)"],
     ["latency_ms", "INTEGER"], ["answer_ms", "INTEGER"],
   ]],
   ["flag", "session_flags", "contradictions flagged live", [
@@ -80,6 +80,24 @@ const entities = [
   ["rate", "rate_limit_counters", "request limits (no relations)", [
     ["key", "VARCHAR(200)", "PK"], ["window_start", "TIMESTAMP", "PK"], ["count", "INTEGER"],
   ]],
+  ["admin", "admin_actions", "copied IDs; no account FK", [
+    id, ["admin_id", "VARCHAR(128)"], ["admin_email", "VARCHAR(320)"], ["action", "VARCHAR(40)"],
+    ["target_id", "VARCHAR(128)"], ["target_email", "VARCHAR(320)"], ["created_at", "TIMESTAMP"],
+  ]],
+  ["notice", "notices", "creator copied; no creator FK", [
+    ["id", "VARCHAR(36)", "PK"], ["title", "VARCHAR(120)"], ["body", "VARCHAR(2000)"],
+    ["target_id", "VARCHAR(128)", "FK"], ["segment", "VARCHAR(400)"], ["created_by", "VARCHAR(128)"], ["created_at", "TIMESTAMP"],
+  ]],
+  ["nread", "notice_reads", "per-user read receipt", [
+    ["user_id", "VARCHAR(128)", "PK, FK"], ["notice_id", "VARCHAR(36)", "PK, FK"], ["read_at", "TIMESTAMP"],
+  ]],
+  ["nrec", "notice_recipients", "filtered audience at send time", [
+    ["notice_id", "VARCHAR(36)", "PK, FK"], ["user_id", "VARCHAR(128)", "PK, FK"],
+  ]],
+  ["push", "push_tokens", "device notification tokens", [
+    ["token", "VARCHAR(512)", "PK"], ["user_id", "VARCHAR(128)", "FK"], ["updated_at", "TIMESTAMP"],
+  ]],
+
 ];
 
 // [from, to, verb, from-end, to-end, logical]. Ends: one (||), zeroOne (o|), many0 (o<), many1 (|<).
@@ -103,6 +121,13 @@ const rels = [
   ["report", "rcontra", "lists", "one", "many0"],
   ["report", "rturn", "explains", "one", "many0"],
   ["report", "rfix", "suggests", "one", "many0"],
+  ["user", "notice", "private recipient", "zeroOne", "many0"],
+  ["user", "nread", "reads", "one", "many0"],
+  ["notice", "nread", "read receipts", "one", "many0"],
+  ["user", "nrec", "selected", "one", "many0"],
+  ["notice", "nrec", "audience", "one", "many0"],
+  ["user", "push", "registers", "one", "many0"],
+
 ];
 
 const byId = Object.fromEntries(entities.map((e) => [e[0], e]));

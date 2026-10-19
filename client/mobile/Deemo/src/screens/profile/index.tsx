@@ -20,7 +20,7 @@ import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
 
-const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, 10-minute sessions, five sessions a day, one manuscript.";
+const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, sessions up to 30 minutes, five sessions a day, one manuscript.";
 
 // Profile (prototype profile screen), top to bottom by importance: who you are (tap the face to pick a look, the name to
 // change it), your plan (Premium: a compact card that opens the benefits screen), then grouped settings (course, typed

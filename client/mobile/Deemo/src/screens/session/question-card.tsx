@@ -49,7 +49,7 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
 
   return (
     <Animated.View
-      key={showQuestion ? `${question.number}.${question.followUp}` : phase}
+      key={showQuestion ? `${question.number}.${question.followUp}${question.challenge ? "c" : ""}` : phase}
       entering={riseIn(0, reduced)} // each new question rises in, 250 ms ease-out
       style={styles.card}
     >
@@ -61,7 +61,7 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
                 <Icon name={TYPES[question.type].icon} size={14} />
                 <Text style={styles.chipText}>{TYPES[question.type].label}</Text>
               </View>
-              {question.isFollowUp && (
+              {question.isFollowUp && !question.challenge && (
                 <View style={[styles.chip, styles.followUp]}>
                   <Icon name="subdirectory_arrow_right" size={14} color={colors.duskInk} />
                   <Text style={[styles.chipText, { color: colors.duskInk }]}>

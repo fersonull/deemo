@@ -44,6 +44,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [x] **Rubric upload** (F3, S-08): a panel's own rubric (PDF/DOCX/photo) becomes the whole rubric, replacing the five defaults: its own criteria, weights from its points, level anchors from its descriptors. Criteria needing the paper or a live demo are listed but not scored. Saved on the project (shared with the group); "Back to the default rubric" undoes it.
 - [x] **Download my data** (§17 user rights): Profile row, `GET /me/export` as one JSON file through the share sheet.
 - [x] **Follow-up limit and difficulty in setup** (F5a, S-09): None–3 follow-ups per topic, Easy/Standard/Hard.
+- [x] **Agenda sessions** (F5a, F13, branch `feat/agenda-sessions`): no question limit and no length picker. The panel covers a manuscript-based agenda for the stage and may only end when every topic is asked and answered. Difficulty changes depth, not count. Safety cap: Free 30 min, Premium 60. Coverage = agenda topics answered; the report shows "Not reached".
 - [x] **Deemo as an owl** (replaces the pebble): every mood, Premium suit and medal, new app icon (needs a native rebuild).
 - [x] **Deemo, the guide** (design D1–D5, glasses instead of the sprout; SVG + Reanimated, needs a native rebuild): component, moods and motion; Welcome, Home and History empty states, Projects notes, reading waits.
   - [x] Remaining placements: mic check tip (without earphones), Results note by band, Sleepy on the Home and History offline notes.
@@ -79,10 +80,14 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Documentation (manuscript, not code)
 
-- [x] **Fresh paper/app comparison and local checklist:** re-read live Chapters 1–3 on Oct 17 and created `docs/PAPER_TODO.md` with only remaining edits, exact wording, code evidence, dictionary rows and formula. Paper and online audit unchanged; this completes the review, not the listed fixes.
-- [ ] **Apply the remaining paper corrections:** use `docs/PAPER_TODO.md` as the current checklist (plan-limit contradiction, profiling remnants, missing schema fields/admin table, deletion/export claims, scoring, ISO edition, delimitations, stage filtering, paid-tier verification, comparison table and references). Re-read before ticking; the group is editing the live paper.
+- [x] **Apply paper fixes to the requested backup (2026-10-18):** updated https://docs.google.com/document/d/10uUR649kQmj7GXBZc89C3IjWj5ypvtMFwyqOD5X7Woo/edit with the verified Chapter 1–3 replacements, 22 native dictionary tables, four missing fields, revised DFD/ERD/flowcharts and reconciled bibliography. Corrected the Baek research claim and removed a floating diagram/list-numbering layout defect. Diagram sources/canonical PNGs refreshed locally; no app changes, migrations, billing/device verification or branch merge. The original-paper checklist below remains scoped to its own document.
+
+- [x] **Google Doc correction guide:** created https://docs.google.com/document/d/15EqKU-73gaJv5UJPhVK7Dlzwul_0xc7-4uITHIow4Yg/edit with all 49 fixes, exact locations, replacement text and 9 native tables; verified text/table readback (2026-10-18). Original paper/app unchanged.
+- [x] **Detailed correction guide:** created `docs/APP_PAPER_FIX_GUIDE.md` with 49 numbered fixes, exact chapter/heading/search locations, paste-ready text, complete missing dictionaries and app/diagram/presentation work locations (2026-10-18). This records the required corrections; it does not apply them.
+- [x] **Fresh paper/app comparison and local checklist:** rechecked live Chapters 1–3 on Oct 18 against `preview` (`d5d08c7`) and the revised deck on `dev` (`5319a74`). Updated `docs/PAPER_TODO.md` for agenda sessions/caps, scoring, 22 tables (5 missing dictionaries and 4 fields), notices/push, retained audit data, contradiction challenges and presentation drift. Paper/app/online audit unchanged; the listed corrections remain open.
+- [ ] **Apply the remaining paper corrections:** use `docs/PAPER_TODO.md` as the current checklist and `docs/APP_PAPER_FIX_GUIDE.md` for exact locations and replacements (agenda flow/caps, daily limits, profiling remnants, 5 missing tables/4 fields, notices, deletion/export claims, scoring, challenge exception, ISO edition, delimitations, stage filtering, billing, comparison table and references). Re-read before ticking; the group is editing the live paper.
 - [ ] **General-purpose scope + course profile (F4):** Ch. 1 cross-course scope and profiling definition are fixed; finish the scope paragraph, Ch. 3 profiling/onboarding/Profile descriptions, dictionary (`users.course`, `analyses.field`) and diagrams. Exact remaining wording: `docs/PAPER_TODO.md` §§1, 4, 13. Ch. 5 is not present in the reviewed document; future text is in `docs/COURSE_PROFILE_PLAN.md` §7.
-- [ ] **Refresh diagram sources and embedded figures:** add course/field/admin schema changes, remove Coach/Panel from the flowchart, and represent course onboarding/sequential panel handover/stage filtering. Regenerate first; re-inserting the current PNG alone is insufficient (`docs/PAPER_TODO.md` §13).
+- [ ] **Refresh diagram sources and embedded figures:** add course/field/agenda and all 22 schema tables, remove Coach/Panel and chosen duration from the flowchart, and represent course onboarding, sequential handover, agenda completion, safety caps, notices and stage filtering. Regenerate first; re-inserting the current PNG alone is insufficient (`docs/PAPER_TODO.md` §13).
 - [ ] **Chapter 3, readiness formula.** The app now uses: level points = (level − 1) / 4; coverage = answered ÷ planned with no floor, counting only real answers (the panel closing early doesn't count against the student); unmeasurable delivery drops out of the weights; sessions with no answer aren't scored. The addendum's worked example becomes 54 (was 62).
 - [x] **Chapter 3, feature list:** Group Projects and optional score sharing are already described (verified Oct 17).
 - [x] **Chapter 3, rubric description:** default five criteria, replacement by an uploaded rubric and exclusion of written-paper/demo criteria are described (verified Oct 17). The numerical formula remains open above.
@@ -91,6 +96,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 - [ ] **Breach-response procedure:** notify affected users and the NPC within 72 hours (§17, Q9).
 
 ## Housekeeping
+
+- [x] **Resolve preview → dev merge conflict (2026-10-19):** combined all three HANDOFF conflicts, preserving the 11-slide presentation and paper/agenda-session history; corrected current branch/next steps and staged the resolution. Merge commit remains pending.
 
 - [x] Register agent-device MCP in Codex using the existing global installation; verify initialization and tool discovery (59 tools).
 - [x] Stray branches cleaned up (user).
@@ -105,7 +112,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 | S-05 Home | Greeting, last readiness score, Start practice, recent sessions |
 | S-06 Upload, S-07 Analysis summary (F1, F2) | PDF/DOCX up to 20 MB, file type checked by content, non-manuscripts rejected; editable summary and key facts; raw file never stored |
 | S-08 Rubric (F3, default only) | Five default criteria, adjustable weights |
-| S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, length, Coach/Panel feedback, manuscript, scoring |
+| S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, follow-ups, difficulty, Coach/Panel feedback, manuscript, scoring (no length: agenda sessions) |
 | S-10 Live session (F6–F13, F13a) | Gemini Live voice panel through an ephemeral token; adaptive questions from the manuscript; follow-up limit enforced in code; question-type chips; live transcript; contradiction flags; answer timing; pause/resume; reconnect; up to 3 personas, one voice; typed-answer fallback; noise gate and platform noise suppression |
 | S-11 Paused | Pause overlay, timers frozen |
 | Model fallback | Analysis and scoring try gemini-3.8 Flash → 3.6 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite; each report and analysis records which model answered |

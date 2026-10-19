@@ -13,7 +13,7 @@ const BENEFITS = [
   { icon: "all_inclusive", title: "Unlimited practice", detail: "Practice as often as you like. Free: five sessions a day." },
   { icon: "school", title: "Every defense stage", detail: "Final Defense mode on top of Title and Pre-Oral." },
   { icon: "groups", title: "Up to three panelists", detail: "Each questions in turn, in their own voice. Free: one." },
-  { icon: "timer", title: "25-minute sessions", detail: "Room for a full defense. Free: 10 minutes." },
+  { icon: "timer", title: "Sessions up to 60 minutes", detail: "Room for a full defense with every panelist. Free: up to 30 minutes." },
   { icon: "description", title: "More than one manuscript", detail: "Keep every project you're working on. Free: one." },
   { icon: "analytics", title: "The full report", detail: "Rubric breakdown, delivery stats, stronger sample answers and a PDF for your adviser." },
   { icon: "workspace_premium", title: "A suited-up Deemo", detail: "With a shining gold pin." },

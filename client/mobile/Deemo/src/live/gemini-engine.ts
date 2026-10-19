@@ -35,7 +35,6 @@ export type SessionSetup = {
   mode: Mode;
   domain: string;
   panelists: number;
-  minutes: number;
   followUps: number;
   difficulty: Difficulty;
   projectId?: string;
@@ -43,7 +42,9 @@ export type SessionSetup = {
 };
 
 type FunctionCall = { id: string; name: string; args?: Record<string, unknown> };
-type Token = { token: string; model: string; voice?: string };
+// The topics the panel must cover before it may end (server: practice/domain/agenda.ts), with who asks each.
+export type AgendaItem = { id: string; label: string; seat: number };
+type Token = { token: string; model: string; voice?: string; agenda?: AgendaItem[] };
 type ServerMessage = {
   setupComplete?: object;
   serverContent?: {
@@ -61,7 +62,12 @@ export class GeminiEngine implements LiveEngine {
   private canAsk: (q: AskQuestion) => boolean = () => true;
   private note: (from: number, to: number) => string = () => "";
   private seat = 0; // the panelist whose session is live
-  private seatMains = 0; // main questions this panelist has asked
+  private agenda: AgendaItem[] = []; // from the token; empty with an older server (no agenda rules then)
+  private askedTopics = new Set<string>(); // agenda topics that got their main question
+  private covered = new Set<string>(); // ... and the student's answer turn after it ended
+  private pendingTopic: string | null = null; // the main question waiting for its answer
+  private endNudged = false; // told the panel once that everything is covered
+  private currentTopic: string | null = null; // the topic of the question on screen
   private passing = false; // this panelist is done: hand over once their turn settles
   private switching = false; // connecting the next panelist's session
   // The next panelist's token, fetched early (a promise, so a handover awaits it instead of fetching twice).
@@ -220,8 +226,8 @@ export class GeminiEngine implements LiveEngine {
       // The next panelist's token, fetched while the last one was still questioning (a quicker handover).
       if (pre && pre.seat === this.seat && !this.handle && Date.now() - pre.at < 50_000) {
         this.prefetched = null;
-        ({ token, model, voice } = await pre.token.catch(() => this.fetchToken(this.seat)));
-      } else ({ token, model, voice } = await this.fetchToken(this.seat));
+        ({ token, model, voice } = await pre.token.catch(() => this.fetchToken(this.seat)).then((t) => this.takeAgenda(t)));
+      } else ({ token, model, voice } = this.takeAgenda(await this.fetchToken(this.seat)));
     } catch (err) {
       if (this.stopped) return;
       if (err instanceof ApiError && err.status >= 400 && err.status < 500 && err.status !== 408) {
@@ -273,8 +279,22 @@ export class GeminiEngine implements LiveEngine {
     };
   }
 
+  private takeAgenda(t: Token) {
+    if (t.agenda?.length && !this.agenda.length) this.agenda = t.agenda;
+    return t;
+  }
+
+  // This seat's agenda topics still to cover, or the whole panel's (`all`).
+  private remaining(all = false) {
+    return this.agenda.filter((i) => (all || i.seat === this.seat) && !this.covered.has(i.id));
+  }
+
+  private static list(items: AgendaItem[]) {
+    return items.map((i) => i.id).join(", ");
+  }
+
   private fetchToken(seat: number) {
-    return api<{ token: string; model: string; voice?: string }>("/live/token", {
+    return api<Token>("/live/token", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ...this.setup, startId: this.startId, resume: !!this.handle && seat === this.seat, seat }),
@@ -287,11 +307,6 @@ export class GeminiEngine implements LiveEngine {
 
   private get lastSeat() {
     return this.seat >= this.setup.panelists - 1;
-  }
-
-  // Each panelist's share of main questions (server/src/modules/practice/domain/panel.ts seatShare).
-  private get share() {
-    return Math.max(2, Math.round(Math.max(2, Math.round(this.setup.minutes / 2.5)) / this.setup.panelists));
   }
 
   // Fetch the next panelist's token early; a failure just means the handover fetches it itself.
@@ -355,8 +370,8 @@ export class GeminiEngine implements LiveEngine {
     this.handle = null;
     this.activity = false;
     this.seat = from + 1;
-    this.seatMains = 0;
     this.passing = false;
+    this.endNudged = false;
     this.asked = false;
     this.spokeQuestion = false;
     this.quiet = false;
@@ -477,12 +492,17 @@ export class GeminiEngine implements LiveEngine {
         // In turns, the asker is whoever's session this is.
         panelist: this.sequential ? this.seat : Math.max(0, role) % this.setup.panelists,
       };
-      // Their share is done and they want another main question: hand over instead (the rest of the turn is muted).
-      if (this.sequential && !this.lastSeat && !q.isFollowUp && this.seatMains >= this.share) {
-        this.passing = true;
-        this.quiet = true;
-        this.prepareNext();
-        return { id, name, response: { allowed: false, instruction: "Your part is done. Say nothing more." } };
+      // A challenge right after a flagged contradiction ("Earlier you said X, but your manuscript says Y…") questions the
+      // answer just given: always allowed, on the current question, whatever its topic id or follow-up count. Refusing
+      // it left the old question on the card while the panel had already spoken the challenge.
+      if (this.flagged && this.currentTopic && (q.type === "CLARIFICATORY" || q.isFollowUp)) {
+        q.topicId = this.currentTopic;
+        q.isFollowUp = true;
+        q.type = "CLARIFICATORY";
+        q.challenge = true;
+      } else {
+        const refusal = this.agendaRefusal(q);
+        if (refusal) return { id, name, response: refusal };
       }
       if (this.canAsk(q)) {
         // Spoken first, tool call after: put it on screen under the right panelist, but don't let it be said again.
@@ -490,13 +510,13 @@ export class GeminiEngine implements LiveEngine {
           this.asked = true;
           this.spokeQuestion = true;
           this.quiet = true;
-          this.countMain(q);
+          this.markAsked(q);
           this.emit({ type: "ask", question: q });
           return { id, name, response: { allowed: true, instruction: "Recorded. Say nothing more this turn." } };
         }
         this.asked = true;
         this.spokeQuestion = false;
-        this.countMain(q);
+        this.markAsked(q);
         this.emit({ type: "ask", question: q });
         // A bare ok sometimes ended the turn silently, so the approval says what to do. If the reaction was already
         // heard before this call, asking for "your reaction, then the question" made it say the reaction twice.
@@ -517,6 +537,9 @@ export class GeminiEngine implements LiveEngine {
       // Only between panelists, and never while their question still waits for its answer.
       if (!this.sequential) return { id, name, response: { ok: true } };
       if (this.asked) return { id, name, response: { ok: false, instruction: "Not yet. Wait for the student's answer." } };
+      const left = this.remaining();
+      if (left.length)
+        return { id, name, response: { ok: false, instruction: `Not yet. Your agenda still has: ${GeminiEngine.list(left)}. Ask the next one through ask_question.` } };
       if (!this.lastSeat) {
         this.passing = true;
         this.prepareNext();
@@ -532,6 +555,10 @@ export class GeminiEngine implements LiveEngine {
         this.quiet = true;
         return { id, name, response: { ok: false, instruction: "Not yet. Say nothing more this turn." } };
       }
+      // No question limit: the session ends only once the whole agenda is covered (the time cap ends it otherwise).
+      const left = this.remaining(true);
+      if (left.length)
+        return { id, name, response: { ok: false, instruction: `Not yet. Still to ask: ${GeminiEngine.list(left)}. Ask the next one through ask_question.` } };
       if (this.ending === "no") {
         this.ending = "asked";
         this.emit({ type: "end" });
@@ -555,7 +582,7 @@ export class GeminiEngine implements LiveEngine {
   // A turn with no question that names the next panelist ("…I'll pass the questioning to Engr. Santos") is a handover
   // even if the model never called pass_to_next.
   private saidHandover() {
-    if (!this.sequential || this.lastSeat || this.asked) return false;
+    if (!this.sequential || this.lastSeat || this.asked || this.remaining().length) return false;
     const next = PANEL[this.seats[this.seat + 1] ?? this.seat + 1]?.name;
     return !!next && this.spoken.toLowerCase().includes(next.toLowerCase());
   }
@@ -576,11 +603,37 @@ export class GeminiEngine implements LiveEngine {
     this.stall = null;
   }
 
-  // A main question counts toward this panelist's share; reaching it fetches the next panelist's token early.
-  private countMain(q: AskQuestion) {
-    if (q.isFollowUp) return;
-    this.seatMains++;
-    if (this.sequential && this.seatMains >= this.share) this.prefetch();
+  // The agenda's rules for a question (null = it may be asked): a main question must be one of this seat's topics not
+  // yet asked; with none left, the panelist closes (or hands over) instead. A "follow-up" on a topic that never got its
+  // main question is that main question. Mutates q.isFollowUp for that case.
+  private agendaRefusal(q: AskQuestion): Record<string, unknown> | null {
+    if (!this.agenda.length) return null;
+    const item = this.agenda.find((i) => i.id === q.topicId && i.seat === this.seat);
+    if (q.isFollowUp && item && !this.askedTopics.has(item.id)) q.isFollowUp = false;
+    if (q.isFollowUp) return null;
+    const left = this.remaining().filter((i) => !this.askedTopics.has(i.id));
+    if (!left.length) {
+      if (this.sequential && !this.lastSeat) {
+        this.passing = true;
+        this.quiet = true;
+        this.prepareNext();
+        return { allowed: false, instruction: "Your agenda is done. Say nothing more." };
+      }
+      return { allowed: false, instruction: "Every agenda topic is covered. Call end_session and say one short closing sentence." };
+    }
+    if (!item) return { allowed: false, instruction: `That isn't on your agenda. Ask about: ${GeminiEngine.list(left)}.` };
+    if (this.askedTopics.has(item.id))
+      return { allowed: false, instruction: `Already asked. Ask a follow-up on it, or move on to: ${GeminiEngine.list(left)}.` };
+    return null;
+  }
+
+  // An approved main question: its topic waits for the answer; this seat's last one fetches the next panelist early.
+  private markAsked(q: AskQuestion) {
+    this.currentTopic = q.topicId;
+    if (q.isFollowUp || !this.agenda.some((i) => i.id === q.topicId)) return;
+    this.askedTopics.add(q.topicId);
+    this.pendingTopic = q.topicId;
+    if (this.sequential && !this.remaining().some((i) => !this.askedTopics.has(i.id))) this.prefetch();
   }
 
   private play(b64: string) {
@@ -608,6 +661,16 @@ export class GeminiEngine implements LiveEngine {
       this.timer = setTimeout(() => this.finish(), CLOSE_GRACE_MS); // the goodbye usually follows as its own turn
     } else if (this.passing || this.saidHandover()) {
       this.handOver();
+    } else if (this.agenda.length && !this.asked && !this.endNudged && !this.remaining().length) {
+      // Everything is covered but the panel spoke without closing (a closing remark, no tool): ask it once to close.
+      this.endNudged = true;
+      this.turnDone = false;
+      this.sendTurn(
+        this.sequential && !this.lastSeat
+          ? "(All your agenda topics are covered. Call pass_to_next now and hand over in one short line.)"
+          : "(All agenda topics are covered. Call end_session now and say one short closing sentence.)",
+      );
+      this.awaitPanel();
     } else if (this.heard) {
       this.giveFloor();
     } else if (this.flagged && !this.asked && !this.nudged) {
@@ -654,6 +717,8 @@ export class GeminiEngine implements LiveEngine {
   }
 
   private endStudentTurn() {
+    if (this.pendingTopic) this.covered.add(this.pendingTopic); // answered (or not): the topic was asked and heard out
+    this.pendingTopic = null;
     this.mark = Date.now();
     this.flagged = false;
     this.studentFloor = false;

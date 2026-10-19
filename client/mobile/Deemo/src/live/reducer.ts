@@ -27,7 +27,7 @@ export const initialLiveState: LiveState = {
 export function canAsk(state: LiveState, q: AskQuestion): boolean {
   return (
     !state.error && state.phase !== "ending" && state.phase !== "ended" &&
-    (!q.isFollowUp || (state.followUps[q.topicId] ?? 0) < state.followUpLimit)
+    (!q.isFollowUp || q.challenge === true || (state.followUps[q.topicId] ?? 0) < state.followUpLimit)
   );
 }
 
@@ -63,13 +63,15 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       if (!canAsk(s, e.question)) return s;
       const q = e.question;
       const fresh = s.takeover ? { takeover: false } : {};
-      const followUp = q.isFollowUp ? (s.followUps[q.topicId] ?? 0) + 1 : 0;
+      // A challenge stays on the current question and doesn't use up its follow-ups.
+      const counts = q.isFollowUp && !q.challenge;
+      const followUp = counts ? (s.followUps[q.topicId] ?? 0) + 1 : q.challenge ? (s.followUps[q.topicId] ?? 0) : 0;
       const number = q.isFollowUp && s.question ? s.question.number : (s.question?.number ?? 0) + 1;
       return {
         ...s,
         phase: "speaking",
         question: { ...q, followUp, number },
-        followUps: q.isFollowUp ? { ...s.followUps, [q.topicId]: followUp } : s.followUps,
+        followUps: counts ? { ...s.followUps, [q.topicId]: followUp } : s.followUps,
         lines: finish(s),
         partial: null,
         ...fresh,

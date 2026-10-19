@@ -110,7 +110,7 @@ export function SessionDetailView({ id }: { id: string }) {
                     ["Rubric score", `${s.report.rubricScore}`],
                     ["Consistency penalty", `−${s.report.penalty}`],
                     [
-                      "Main questions answered",
+                      "Coverage (answered / planned)",
                       `${s.report.answered} of ${s.report.planned}`,
                     ],
                     ["Judged by", s.report.model ?? "—"],
@@ -184,7 +184,7 @@ export function SessionDetailView({ id }: { id: string }) {
           <Section title="Setup">
             <Facts
               rows={[
-                ["Planned length", `${s.minutes} min`],
+                ["Time cap", `${s.minutes} min`],
                 ["Actual length", formatDuration(s.durationMs)],
                 ["Panelists", `${s.panelists}`],
                 ["Follow-ups", `${s.followUps}`],

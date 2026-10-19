@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { PressableScale } from "@/components/pressable-scale";
 import { colors, fonts, radius } from "@/theme";
 
-const PERKS = ["Unlimited practice sessions", "Every defense stage", "Up to three panelists", "25-minute sessions", "The full report", "A suited-up Deemo"];
+const PERKS = ["Unlimited practice sessions", "Every defense stage", "Up to three panelists", "Sessions up to 60 minutes", "The full report", "A suited-up Deemo"];
 
 // The Premium plan, made like a member's card: ink stock, a gold hairline edge, light catching the top right corner,
 // and Deemo's own medal (the badge the owl wears, with its occasional glint). Gold stays the Premium-only color it is

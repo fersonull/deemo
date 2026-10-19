@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { RubricCriterion } from "../../manuscripts/domain/rubric";
 import type { Course } from "../../identity/domain/course";
-import { fieldFocus, plannedMainQuestions, type Difficulty, type Mode } from "../../practice/domain/panel";
+import { fieldFocus, type Difficulty, type Mode } from "../../practice/domain/panel";
 import { CRITERIA, band, delivery, readiness, type Severity } from "./scoring";
 
 // A finished practice session and its report (plan F14, addendum Q3/Q4). Transcripts only; audio is never stored.
@@ -13,6 +13,7 @@ export type SessionTurn = {
   type: string;
   panelist: number;
   question: string;
+  topic?: string; // the agenda item (ask_question topicId); missing on older sessions
   answer: string;
   latencyMs: number | null; // question end → speech start
   answerMs: number;
@@ -56,12 +57,13 @@ export type Session = {
   title: string; // the manuscript's title, or the sample paper
   mode: Mode;
   domain: string;
-  minutes: number;
+  minutes: number; // the safety cap it ran under
+  agenda?: { id: string; label: string }[]; // what the panel had to cover; missing on older sessions
   panelists: number;
   followUps: number;
   difficulty: Difficulty;
   durationMs: number;
-  endedBy: EndedBy; // only the panel closing early relaxes coverage
+  endedBy: EndedBy;
   weights: number[];
   rubric?: RubricCriterion[]; // the panel's own rubric at the time, replacing the default criteria
   turns: SessionTurn[];
@@ -213,14 +215,26 @@ Return:
 - headline: one honest, encouraging sentence for the top of the report, e.g. "Nice recovery on question 2. Next time, state your sample size first."`;
 }
 
-// How many main questions were answered and planned. A main question counts when its answer or a follow-up's has real
-// content (3+ words). The panel closing on its own after fewer questions than planned isn't the student's doing.
+// How many of the agenda's topics were answered, out of all of them. A topic counts when an answer to its question or
+// a follow-up has real content (3+ words). The panel can only close once every topic is asked, so a gap means the time
+// cap or the student ended it first. Sessions from before the agenda keep the old count (one main question per 2.5
+// minutes of the length they picked, relaxed when the panel closed early).
 export function coverage(s: Unscored) {
+  if (s.agenda?.length) {
+    const ids = new Set(s.agenda.map((a) => a.id));
+    const answered = new Set(s.turns.filter((t) => t.topic && ids.has(t.topic) && substantive(t.answer)).map((t) => t.topic)).size;
+    return { answered, planned: ids.size };
+  }
   const asked = new Set(s.turns.filter((t) => t.followUp === 0).map((t) => t.number));
   const answered = new Set(s.turns.filter((t) => substantive(t.answer)).map((t) => t.number)).size;
-  const planned = s.endedBy === "panel" ? Math.max(asked.size, 1) : Math.max(plannedMainQuestions(s.minutes), asked.size);
+  const legacyPlanned = Math.max(2, Math.round(s.minutes / 2.5));
+  const planned = s.endedBy === "panel" ? Math.max(asked.size, 1) : Math.max(legacyPlanned, asked.size);
   return { answered, planned };
 }
+
+// The agenda topics that never got a question (the report's "Not reached").
+export const notReached = (s: Pick<Session, "agenda" | "turns">) =>
+  (s.agenda ?? []).filter((a) => !s.turns.some((t) => t.topic === a.id && t.followUp === 0)).map((a) => a.label);
 
 // Rubric levels and wording from Flash; delivery, verified contradictions and the score from code.
 export function buildReport(s: Unscored, j: Judgment, model: string): Report {

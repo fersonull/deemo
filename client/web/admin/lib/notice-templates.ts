@@ -40,7 +40,7 @@ export const NOTICE_TEMPLATES: NoticeTemplate[] = [
     audience: "segment",
     segment: { practice: "never" },
     title: "Your first practice session is waiting",
-    body: "You haven't practiced with the panel yet. Start with a short Title Defense: it takes about ten minutes, and you'll get a readiness score and the questions to work on next.",
+    body: "You haven't practiced with the panel yet. Start with a Title Defense: the panel works through your topics, and you'll get a readiness score and the questions to work on next.",
   },
   {
     id: "come-back",

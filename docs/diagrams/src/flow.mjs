@@ -9,18 +9,20 @@ const SIZE = { term: [150, 46], proc: [260, 58], io: [290, 62], dec: [250, 104],
 const SKEW = 22; // input/output parallelogram slant
 const GAP = 38; // vertical gap between spine rows
 const COL = { 0: 260, 1: 650 }; // column centers
-const LANE = { left: 70, near: 830, far: 870 }; // vertical lanes for loops
+const LANE = { stop: 40, left: 70, near: 830, far: 870 }; // vertical lanes for loops
 
 // Place nodes: spine rows top to bottom; a side node takes the row of the spine node it sits beside.
 function place(spine, side) {
   const pos = {};
   let y = 24;
-  for (const [id, k] of spine) {
-    const [w, h] = SIZE[k];
-    const rowH = Math.max(h, ...side.filter((s) => s[3] === id).map((s) => SIZE[s[1]][1]));
+  for (const [id, k, label] of spine) {
+    const [w, baseH] = SIZE[k];
+    const h = Math.max(baseH, wrap(label, wrapFor[k]).length * 17.55 + 20);
+    const rowH = Math.max(h, ...side.filter((s) => s[3] === id).map((s) => Math.max(SIZE[s[1]][1], wrap(s[2], wrapFor[s[1]]).length * 17.55 + 20)));
     pos[id] = { k, x: COL[0] - w / 2, y: y + (rowH - h) / 2, w, h };
     for (const [sid, sk, , beside] of side.filter((s) => s[3] === id)) {
-      const [sw, sh] = SIZE[sk];
+      const [sw, baseSh] = SIZE[sk];
+      const sh = Math.max(baseSh, wrap(side.find((s) => s[0] === sid)[2], wrapFor[sk]).length * 17.55 + 20);
       pos[sid] = { k: sk, x: COL[1] - sw / 2, y: y + (rowH - sh) / 2, w: sw, h: sh };
     }
     y += rowH + GAP;
@@ -134,14 +136,15 @@ render(
     ["fbauth", "proc", "Firebase Authentication verifies the credentials"],
     ["valid", "dec", "Credentials valid?"],
     ["verified", "dec", "Email verified? (Google accounts always are)"],
+    ["course", "dec", "Course selected?"],
     ["home", "proc", "Home dashboard"],
     ["confirmed", "dec", "Confirmed manuscript?"],
-    ["upload", "io", "Upload manuscript (PDF or DOCX, up to 20 MB) and pick the domain"],
+    ["upload", "io", "Upload manuscript (PDF or DOCX, up to 20 MB) "],
     ["filecheck", "dec", "PDF or DOCX, 20 MB or less, within the plan limit?"],
     ["read", "proc", "Gemini reads the file (PDF as-is, DOCX via mammoth)"],
     ["isms", "dec", "Research manuscript?"],
-    ["extract", "proc", "Extract summary and key facts; save the analysis"],
-    ["review", "io", "Student reviews the summary and corrects any field"],
+    ["extract", "proc", "Extract summary, academic field and computing IT field; save analysis"],
+    ["review", "io", "Student reviews summary and detected field; corrects classifications"],
     ["looks", "dec", "Looks right?"],
     ["confirm", "proc", "Confirm the summary"],
     ["rubricq", "dec", "Upload the panel's rubric?"],
@@ -150,9 +153,9 @@ render(
     ["toB", "conn", "A"],
   ],
   [
+    ["survey", "io", "Select course (editable later in Profile)", "course"],
     ["err", "proc", "Show the sign-in error", "valid"],
-    ["link", "proc", "Firebase emails a verification link", "verified"],
-    ["tap", "io", "Student taps the link in the email, or resends it", "home"],
+    ["link", "proc", "Open Firebase email link (or resend), then check again", "verified"],
     ["fileerr", "proc", "Show the file or plan error", "filecheck"],
     ["rejected", "proc", "Show why the file was rejected", "isms"],
     ["default", "proc", "Use the default rubric (weights adjustable)", "rubricq"],
@@ -166,9 +169,10 @@ render(
     { from: "err", out: "top", to: "signin", in: "right" },
     { ...down("valid", "verified", "Yes"), labelLeft: true }, // the tap loop joins from the right
     { from: "verified", out: "right", to: "link", in: "left", label: "No" },
-    down("link", "tap"),
-    { from: "tap", out: "right", join: "verified", lane: "near" },
-    down("verified", "home", "Yes"), down("home", "confirmed"),
+    { from: "link", out: "right", join: "verified", lane: "near" },
+    down("verified", "course", "Yes"), down("course", "home", "Yes"),
+    { from: "course", out: "right", to: "survey", in: "left", label: "No" },
+    { from: "survey", out: "bottom", to: "home", in: "right" }, down("home", "confirmed"),
     down("confirmed", "upload", "No"),
     { from: "confirmed", out: "right", join: "rubricq", lane: "far", label: "Yes" },
     down("upload", "filecheck"),
@@ -192,33 +196,36 @@ render(
   "flow-b",
   [
     ["fromA", "conn", "A"],
-    ["setup", "io", "Practice setup: stage, panelists, length, follow-ups, difficulty, Coach or Panel mode"],
+    ["setup", "io", "Setup: stage, panelists, ordinary follow-ups and difficulty"],
     ["premium", "dec", "Needs Premium on a Free account?"],
     ["mic", "proc", "Mic check: voice level, earphones, connection"],
-    ["limit", "dec", "Daily limit reached? (2 Free, 10 Premium)"],
-    ["token", "proc", "Server issues a single-use token locked to the panel setup and the confirmed manuscript"],
+    ["limit", "dec", "Daily cap reached? (Free 5 starts, Premium unlimited)"],
+    ["token", "proc", "Server builds the stage/manuscript agenda; issues a locked Live token"],
     ["connect", "proc", "App opens a live voice connection to Gemini Live"],
     ["present", "io", "Student presents the study; taps Done presenting"],
-    ["pick", "proc", "Panel picks the next question (ask_question tool)"],
-    ["fu", "dec", "Follow-up over the limit?"],
+    ["pick", "proc", "Current panelist picks an assigned agenda topic (ask_question)"],
+    ["fu", "dec", "Ordinary follow-up over the allowance?"],
     ["ask", "io", "Panelist reacts and asks aloud; screen shows who asks and the type"],
     ["answer", "io", "Student answers by voice (or types); taps Done answering"],
     ["contra", "dec", "Contradicts the manuscript?"],
-    ["over", "dec", "Session over? (panel done, time up, or student ends)"],
+    ["stop", "dec", "Student ends or safety cap reached?"],
+    ["seatdone", "dec", "Current seat topics covered?"],
+    ["over", "dec", "Full agenda covered?"],
     ["save", "proc", "App sends transcript, timings and flags; server saves the session"],
     ["real", "dec", "Any real answer?"],
-    ["rate", "proc", "Gemini rates each criterion and re-checks contradictions; code measures delivery"],
+    ["rate", "proc", "Gemini judges applicable criteria and contradictions; code measures default delivery"],
     ["ok", "dec", "Scoring succeeded?"],
-    ["compute", "proc", "Server computes the readiness score and verdict; saves the report"],
+    ["compute", "proc", "Code applies agenda coverage and penalty; saves readiness and verdict"],
     ["show", "io", "Show the readiness report"],
     ["end", "term", "End"],
   ],
   [
     ["upsell", "proc", "Show the Premium upsell", "premium"],
     ["limitmsg", "proc", "Show the limit message", "limit"],
-    ["note", "note", "At any time: Pause and Resume. A network drop reconnects automatically.", "connect"],
+    ["note", "note", "Pause/resume; attempt reconnect on network drop. Safety caps: Free 30 min, Premium 60 min.", "connect"],
     ["refused", "proc", "Refused: panel picks a new topic", "fu"],
-    ["flag", "proc", "Flag it; a HIGH one is challenged as the next question", "contra"],
+    ["flag", "proc", "Record flag; HIGH asks a clarification on the current card; student answers (no ordinary allowance)", "contra"],
+    ["handover", "proc", "Pass to next panelist with context and its own voice/token", "over"],
     ["notscored", "proc", "Report marked Not scored", "real"],
     ["retry", "proc", "Session stays saved; student taps Try again", "ok"],
   ],
@@ -236,9 +243,14 @@ render(
     { from: "refused", out: "top", to: "pick", in: "right" },
     down("fu", "ask", "No"), down("ask", "answer"), down("answer", "contra"),
     { from: "contra", out: "right", to: "flag", in: "left", label: "Yes" },
-    { from: "flag", out: "bottom", to: "over", in: "right" },
-    down("contra", "over", "No"),
-    { from: "over", out: "left", to: "pick", in: "left", lane: "left", label: "No" },
+    { from: "flag", out: "bottom", to: "stop", in: "right" },
+    down("contra", "stop", "No"),
+    { from: "stop", out: "left", to: "save", in: "left", lane: "stop", label: "Yes" },
+    down("stop", "seatdone", "No"),
+    { from: "seatdone", out: "left", to: "pick", in: "left", lane: "left", label: "No" },
+    down("seatdone", "over", "Yes"),
+    { from: "over", out: "right", to: "handover", in: "left", label: "No" },
+    { from: "handover", out: "right", to: "pick", in: "right", lane: "near" },
     down("over", "save", "Yes"), down("save", "real"),
     { from: "real", out: "right", to: "notscored", in: "left", label: "No" },
     { from: "notscored", out: "right", to: "show", in: "right", lane: "near" },

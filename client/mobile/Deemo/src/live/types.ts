@@ -14,6 +14,7 @@ export type Question = {
   panelist: number; // index into the panel
   followUp: number; // 0 for a main question, 1..limit for follow-ups
   number: number; // main question number, 1-based
+  challenge?: boolean; // a contradiction challenge on the current question: always allowed, outside the follow-up limit
 };
 
 export type Line = {

@@ -167,7 +167,8 @@ model Session {
   title             String        @db.VarChar(2000)
   mode              DefenseMode
   domain            String        @db.VarChar(30)
-  minutes           Int
+  minutes           Int // the session's safety cap (plan capMinutes); was the picked length before agenda sessions
+  agenda            Json? // [{ id, label }]: the topics the panel had to cover (practice/domain/agenda.ts); null on older sessions
   panelists         Int
   followUps         Int           @map("follow_ups")
   difficulty        Difficulty
@@ -198,6 +199,7 @@ model SessionTurn {
   type      String @db.VarChar(20)
   panelist  Int
   question  String @db.VarChar(600)
+  topic     String? @db.VarChar(60) // the agenda item it was about (ask_question topicId)
   answer    String @db.VarChar(4000)
   latencyMs Int?   @map("latency_ms")
   answerMs  Int    @map("answer_ms")
