@@ -6,18 +6,22 @@ const P = { w: 210, h: 118, head: 34 }; // process
 const E = { w: 176, h: 66 }; // external entity
 const S = { w: 270, h: 54, id: 46 }; // data store
 
-const procColors = ["#BFDBFE", "#C7D2FE", "#DBEAFE", "#A5B4FC", "#C4B5FD", "#DDD6FE"];
+const procColors = ["#BFDBFE", "#C7D2FE", "#DBEAFE", "#A5B4FC", "#C4B5FD", "#DDD6FE", "#C7D2FE", "#DBEAFE"];
 
 const processes = [
   ["p1", "1.0", "Manage Account and Consent"],
   ["p2", "2.0", "Analyze Manuscript"],
   ["p3", "3.0", "Set Up Rubric"],
-  ["p4", "4.0", "Run Mock Defense"],
+  ["p4", "4.0", "Prepare Agenda and Token"],
   ["p5", "5.0", "Score Session"],
-  ["p6", "6.0", "Show Reports and Groups"],
+  ["p6", "6.0", "Show Reports, Groups and Inbox"],
+  ["p7", "7.0", "Administer Accounts and Notices"],
+  ["p8", "8.0", "Run Defense on Phone"],
 ];
 const entities = [
   ["student", "Student"],
+  ["admin", "Administrator"],
+  ["fcm", "Firebase Cloud Messaging"],
   ["auth", "Firebase Authentication"],
   ["dicebear", "DiceBear Avatar API"],
   ["flash", "Google Gemini API (Flash)"],
@@ -30,33 +34,45 @@ const stores = [
   ["d5", "D3", "Live Starts"],
   ["d3", "D4", "Session Data"],
   ["d4", "D5", "Group Data"],
+  ["d6", "D6", "Admin Audit Data"],
+  ["d7", "D7", "Notice and Receipt Data"],
 ];
 
 // [from, to, label, both directions]
 const flows = [
-  ["student", "p1", "sign-in details, name, consent / account status", true],
+  ["student", "p1", "sign-in, name, course, consent / account status", true],
   ["p1", "auth", "credentials, name / verified identity", true],
   ["p1", "dicebear", "avatar seed / face image", true],
-  ["p1", "d1", "consent, plan, avatar"],
-  ["student", "p2", "manuscript, domain, corrections / summary", true],
+  ["p1", "d1", "consent, course, plan, avatar, device token"],
+  ["student", "p2", "manuscript, corrections / summary and field", true],
   ["p2", "flash", "manuscript / summary, facts", true],
-  ["p2", "d2", "confirmed analysis"],
+  ["p2", "d2", "confirmed analysis and academic field"],
   ["student", "p3", "rubric file or weights"],
   ["p3", "flash", "rubric file / criteria", true],
   ["p3", "d2", "saved rubric"],
-  ["student", "p4", "setup, spoken answers / questions, flags", true],
-  ["d1", "p4", "plan"],
+  ["student", "p4", "stage, panelists, follow-ups, difficulty"],
+  ["d1", "p4", "course and plan"],
   ["d2", "p4", "analysis, rubric"],
   ["p4", "d5", "start / daily count", true],
-  ["p4", "live", "token, audio / questions, transcript, flags", true],
-  ["p4", "d3", "transcript, timings, flags"],
+  ["p4", "p8", "agenda, locked token, safety cap"],
+  ["student", "p8", "presentation, answers / questions, transcript", true],
+  ["p8", "live", "direct WSS audio / speech, transcript, tools", true],
+  ["p8", "p5", "transcript, timings, flags and agenda"],
   ["d3", "p5", "session to score"],
   ["p5", "flash", "answers / levels, feedback", true],
-  ["p5", "d3", "report"],
+  ["p5", "d3", "saved session and report"],
   ["d3", "p6", "reports, history"],
   ["d1", "p6", "names, avatars, plans"],
   ["p6", "d4", "members, focus / shared scores", true],
-  ["student", "p6", "group code, share choice / reports, PDF, export", true],
+  ["student", "p6", "group code, read choice / reports, PDF, export, inbox", true],
+  ["admin", "p7", "authorized actions and notice audience / status", true],
+  ["p7", "auth", "admin token / identity and claim", true],
+  ["p7", "d1", "account actions / audience and tokens", true],
+  ["p7", "d6", "audit record"],
+  ["p7", "d7", "notice and resolved recipients"],
+  ["p7", "fcm", "notification request / delivery result", true],
+  ["fcm", "p6", "notification tap and notice identifier"],
+  ["p6", "d7", "read receipt / visible notices", true],
 ];
 
 const kind = {};
@@ -66,7 +82,7 @@ const children = [
   ...stores.map(([id]) => ((kind[id] = "store"), { id, width: S.w, height: S.h })),
 ];
 // Columns, left to right: the Student, the processes, the data stores, the external services.
-const column = (id) => (id === "student" ? 0 : kind[id] === "process" ? 1 : kind[id] === "store" ? 2 : 3);
+const column = (id) => (["student", "admin"].includes(id) ? 0 : kind[id] === "process" ? 1 : kind[id] === "store" ? 2 : 3);
 for (const c of children) c.layoutOptions = { "elk.partitioning.partition": String(column(c.id)) };
 
 // For layout every edge runs left to right; `back` remembers which end the arrow belongs on.
