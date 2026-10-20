@@ -20,7 +20,8 @@ import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
 import { PressableScale } from "@/components/pressable-scale";
 
-const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, sessions up to 30 minutes, five sessions a day, one manuscript.";
+const FREE_PLAN =
+  "Title and Pre-Oral defenses, one panelist, sessions up to 30 minutes, five sessions a day, one manuscript.";
 
 // Profile (prototype profile screen), top to bottom by importance: who you are (tap the face to pick a look, the name to
 // change it), your plan (Premium: a compact card that opens the benefits screen), then grouped settings (course, typed
@@ -29,8 +30,19 @@ const FREE_PLAN = "Title and Pre-Oral defenses, one panelist, sessions up to 30 
 export function Profile() {
   const { unread, notices } = useNotices();
   const latest = notices.find((n) => !n.readAt) ?? notices[0];
-  const { name, email, avatar, premium, allowTyping, course, savingCourse, savingTyping } = useSession();
-  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | "signOut" | null>(null);
+  const {
+    name,
+    email,
+    avatar,
+    premium,
+    allowTyping,
+    course,
+    savingCourse,
+    savingTyping,
+  } = useSession();
+  const [sheet, setSheet] = useState<
+    "upsell" | "delete" | "name" | "avatar" | "course" | "signOut" | null
+  >(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
   const [courseError, setCourseError] = useState("");
@@ -49,7 +61,11 @@ export function Profile() {
     try {
       await session.deleteEverything(); // signs out; the root layout returns to the welcome screen
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't delete your data. Try again.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't delete your data. Try again.",
+      );
       setDeleting(false);
     }
   };
@@ -67,7 +83,9 @@ export function Profile() {
       await session.setName(draft);
       setSheet(null);
     } catch {
-      setNameError("Couldn't save your name. Check your connection and try again.");
+      setNameError(
+        "Couldn't save your name. Check your connection and try again.",
+      );
     } finally {
       setSavingName(false);
     }
@@ -79,7 +97,9 @@ export function Profile() {
     setDownloadError("");
     try {
       const data = await api<object>("/me/export");
-      await shareFile("DEEMO my data.json", "application/json", { text: JSON.stringify(data, null, 2) });
+      await shareFile("DEEMO my data.json", "application/json", {
+        text: JSON.stringify(data, null, 2),
+      });
     } catch {
       setDownloadError("Couldn't get your data. Try again.");
     } finally {
@@ -96,7 +116,13 @@ export function Profile() {
           accessibilityHint="Pick your look"
           onPress={() => setSheet("avatar")}
         >
-          <Avatar seed={avatar} name={name} email={email} size={64} premium={premium} />
+          <Avatar
+            seed={avatar}
+            name={name}
+            email={email}
+            size={64}
+            premium={premium}
+          />
           <View style={styles.avatarBadge}>
             <Icon name="edit" size={12} color={colors.paper} />
           </View>
@@ -131,7 +157,11 @@ export function Profile() {
         <View style={styles.plan}>
           <View style={styles.planHead}>
             <Text style={[styles.planName, styles.flex]}>Free plan</Text>
-            <PressableScale accessibilityRole="button" onPress={() => setSheet("upsell")} style={styles.upgrade}>
+            <PressableScale
+              accessibilityRole="button"
+              onPress={() => setSheet("upsell")}
+              style={styles.upgrade}
+            >
               <Text style={styles.upgradeText}>Upgrade</Text>
             </PressableScale>
           </View>
@@ -141,17 +171,30 @@ export function Profile() {
 
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={unread ? `Inbox, ${unread} unread. Latest: ${latest?.title}` : "Inbox, no unread notices"}
+        accessibilityLabel={
+          unread
+            ? `Inbox, ${unread} unread. Latest: ${latest?.title}`
+            : "Inbox, no unread notices"
+        }
         onPress={() => router.push("/notices")}
         style={[styles.inbox, unread > 0 && styles.inboxUnread]}
       >
         <View style={[styles.inboxIcon, unread > 0 && styles.inboxIconUnread]}>
-          <Icon name="inbox" size={22} filled={unread > 0} color={unread ? colors.paper : colors.duskIcon} />
+          <Icon
+            name="inbox"
+            size={22}
+            filled={unread > 0}
+            color={unread ? colors.paper : colors.duskIcon}
+          />
         </View>
         <View style={styles.flex}>
           <Text style={styles.rowLabel}>Inbox</Text>
           <Text style={styles.meta} numberOfLines={1}>
-            {unread && latest ? latest.title : latest ? "You're all caught up" : "Messages from DEEMO"}
+            {unread && latest
+              ? latest.title
+              : latest
+                ? "You're all caught up"
+                : "Messages from DEEMO"}
           </Text>
         </View>
         {unread > 0 ? (
@@ -181,11 +224,19 @@ export function Profile() {
           </View>
           <Icon name="chevron_right" size={20} color={colors.muted} />
         </PressableScale>
-        {courseError ? <Text accessibilityLiveRegion="polite" style={styles.settingError}>{courseError}</Text> : null}
+        {courseError ? (
+          <Text accessibilityLiveRegion="polite" style={styles.settingError}>
+            {courseError}
+          </Text>
+        ) : null}
         <View style={[styles.row, styles.divider]}>
           <View style={styles.flex}>
             <Text style={styles.rowLabel}>Allow typed answers</Text>
-            <Text style={styles.meta}>{"Shows the keyboard button in sessions, for when you can't speak."}</Text>
+            <Text style={styles.meta}>
+              {
+                "Shows the keyboard button in sessions, for when you can't speak."
+              }
+            </Text>
           </View>
           <Switch
             accessibilityLabel="Allow typed answers"
@@ -194,13 +245,21 @@ export function Profile() {
             accessibilityState={{ busy: savingTyping }}
             onValueChange={(v) => {
               setTypingError("");
-              void session.setAllowTyping(v).catch(() => setTypingError("Couldn't save typed answers. Try again."));
+              void session
+                .setAllowTyping(v)
+                .catch(() =>
+                  setTypingError("Couldn't save typed answers. Try again."),
+                );
             }}
             trackColor={{ false: colors.faint, true: colors.dusk }}
             thumbColor={colors.paper}
           />
         </View>
-        {typingError ? <Text accessibilityLiveRegion="polite" style={styles.settingError}>{typingError}</Text> : null}
+        {typingError ? (
+          <Text accessibilityLiveRegion="polite" style={styles.settingError}>
+            {typingError}
+          </Text>
+        ) : null}
       </View>
 
       <Text style={[type.label, styles.section]}>YOUR DATA</Text>
@@ -213,25 +272,48 @@ export function Profile() {
           style={styles.row}
         >
           <View style={styles.flex}>
-            <Text style={styles.rowLabel}>{downloading ? "Getting your data…" : "Download my data"}</Text>
+            <Text style={styles.rowLabel}>
+              {downloading ? "Getting your data…" : "Download my data"}
+            </Text>
             <Text style={styles.meta} accessibilityLiveRegion="polite">
-              {downloadError || "Your manuscripts' summaries, transcripts and reports, as one file."}
+              {downloadError ||
+                "Your manuscripts' summaries, transcripts and reports, as one file."}
             </Text>
           </View>
         </PressableScale>
-        <PressableScale accessibilityRole="button" onPress={() => setSheet("delete")} style={[styles.row, styles.divider]}>
+        <PressableScale
+          accessibilityRole="button"
+          onPress={() => setSheet("delete")}
+          style={[styles.row, styles.divider]}
+        >
           <Text style={[styles.rowLabel, styles.danger]}>Delete my data</Text>
         </PressableScale>
       </View>
 
       <View style={styles.signOut}>
-        <Button variant="secondary" label="Sign out" onPress={() => { setSignOutError(""); setSheet("signOut"); }} />
+        <Button
+          variant="secondary"
+          label="Sign out"
+          onPress={() => {
+            setSignOutError("");
+            setSheet("signOut");
+          }}
+        />
       </View>
 
-      <Sheet visible={sheet === "signOut"} onClose={() => !signingOut && setSheet(null)}>
+      <Sheet
+        visible={sheet === "signOut"}
+        onClose={() => !signingOut && setSheet(null)}
+      >
         <Text style={styles.sheetTitle}>Sign out?</Text>
-        <Text style={styles.sheetBody}>Your sessions and reports will be here when you sign back in.</Text>
-        {signOutError ? <Text style={styles.error} accessibilityLiveRegion="polite">{signOutError}</Text> : null}
+        <Text style={styles.sheetBody}>
+          Your sessions and reports will be here when you sign back in.
+        </Text>
+        {signOutError ? (
+          <Text style={styles.error} accessibilityLiveRegion="polite">
+            {signOutError}
+          </Text>
+        ) : null}
         <View style={styles.saveName}>
           <Button
             label={signingOut ? "Signing out…" : "Sign out"}
@@ -251,9 +333,16 @@ export function Profile() {
             }}
           />
         </View>
-        <View style={styles.cancel}>
-          <Button variant="secondary" label="Stay signed in" disabled={signingOut} onPress={() => setSheet(null)} />
-        </View>
+
+        <PressableScale
+          accessibilityRole="button"
+          onPress={() => setSheet(null)}
+          style={styles.keepGoing}
+        >
+          <Text style={[type.button, styles.keepGoingText]}>
+            Stay signed in
+          </Text>
+        </PressableScale>
       </Sheet>
 
       <UpsellSheet
@@ -277,7 +366,9 @@ export function Profile() {
       <Sheet visible={sheet === "course"} onClose={() => setSheet(null)}>
         <Text style={styles.sheetTitle}>Your course</Text>
         <Text style={styles.sheetBody}>
-          {"Used when you practice without a manuscript. With one, the panel follows the manuscript's field."}
+          {
+            "Used when you practice without a manuscript. With one, the panel follows the manuscript's field."
+          }
         </Text>
         <View style={styles.coursePicker}>
           <CoursePicker
@@ -287,7 +378,11 @@ export function Profile() {
               setSheet(null);
               void session
                 .setCourse(c)
-                .catch(() => setCourseError("Couldn't save your course. Check your connection and try again."));
+                .catch(() =>
+                  setCourseError(
+                    "Couldn't save your course. Check your connection and try again.",
+                  ),
+                );
             }}
           />
         </View>
@@ -298,9 +393,14 @@ export function Profile() {
         ) : null}
       </Sheet>
 
-      <Sheet visible={sheet === "name"} onClose={() => !savingName && setSheet(null)}>
+      <Sheet
+        visible={sheet === "name"}
+        onClose={() => !savingName && setSheet(null)}
+      >
         <Text style={styles.sheetTitle}>Your name</Text>
-        <Text style={styles.sheetBody}>Deemo greets you by it, and your group sees it next to your score.</Text>
+        <Text style={styles.sheetBody}>
+          Deemo greets you by it, and your group sees it next to your score.
+        </Text>
         <View style={styles.field}>
           <TextInput
             value={draft}
@@ -327,12 +427,17 @@ export function Profile() {
             label={savingName ? "Saving…" : "Save"}
             onPress={saveName}
             busy={savingName}
-            disabled={savingName || !cleanName(draft) || cleanName(draft) === name}
+            disabled={
+              savingName || !cleanName(draft) || cleanName(draft) === name
+            }
           />
         </View>
       </Sheet>
 
-      <Sheet visible={sheet === "delete"} onClose={() => !deleting && setSheet(null)}>
+      <Sheet
+        visible={sheet === "delete"}
+        onClose={() => !deleting && setSheet(null)}
+      >
         <Text style={styles.sheetTitle}>Delete all your data?</Text>
         <Text style={styles.sheetBody}>
           {
@@ -348,10 +453,17 @@ export function Profile() {
           onPress={deleteAll}
           style={[styles.deleteButton, deleting && styles.dim]}
         >
-          <Text style={styles.deleteText}>{deleting ? "Deleting…" : "Delete everything"}</Text>
+          <Text style={styles.deleteText}>
+            {deleting ? "Deleting…" : "Delete everything"}
+          </Text>
         </PressableScale>
         <View style={styles.cancel}>
-          <Button variant="secondary" label="Keep my data" onPress={() => setSheet(null)} disabled={deleting} />
+          <Button
+            variant="secondary"
+            label="Keep my data"
+            onPress={() => setSheet(null)}
+            disabled={deleting}
+          />
         </View>
       </Sheet>
     </Screen>
@@ -360,8 +472,21 @@ export function Profile() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  account: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 18, paddingRight: 4 },
-  nameRow: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56 },
+  account: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 18,
+    paddingRight: 4,
+  },
+  nameRow: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 56,
+  },
   avatarBadge: {
     position: "absolute",
     right: -2,
@@ -376,35 +501,124 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   addName: { color: colors.duskLink, fontWeight: "600" },
-  field: { marginTop: 16, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
-  input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
-  nameError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
+  field: {
+    marginTop: 16,
+    backgroundColor: colors.sand,
+    borderRadius: radius.lg,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  input: {
+    ...type.bodyStrong,
+    fontSize: 15,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+  },
+  nameError: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.warnInk,
+    marginTop: 10,
+    paddingHorizontal: 4,
+  },
   saveName: { marginTop: 16 },
   coursePicker: { marginTop: 16 },
   name: { ...type.heading, fontSize: 20, letterSpacing: -0.3 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   planCard: { marginTop: 20 },
-  inbox: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, marginTop: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: radius.xl, backgroundColor: colors.sand },
+  inbox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 64,
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: radius.xl,
+    backgroundColor: colors.sand,
+  },
   inboxUnread: { backgroundColor: colors.duskTint },
-  inboxIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.paper },
+  inboxIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.paper,
+  },
   inboxIconUnread: { backgroundColor: colors.dusk },
-  count: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 7, alignItems: "center", justifyContent: "center", backgroundColor: colors.dusk },
-  countText: { fontFamily: fonts.body, fontWeight: "700", fontSize: 12, color: colors.paper },
-  plan: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 20 },
+  count: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    paddingHorizontal: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.dusk,
+  },
+  countText: {
+    fontFamily: fonts.body,
+    fontWeight: "700",
+    fontSize: 12,
+    color: colors.paper,
+  },
+  plan: {
+    backgroundColor: colors.sand,
+    borderRadius: radius.xl,
+    padding: 16,
+    marginTop: 20,
+  },
   planHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   planName: { ...type.heading },
-  upgrade: { height: 34, borderRadius: 17, paddingHorizontal: 14, backgroundColor: colors.ink, justifyContent: "center" },
-  upgradeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.paper },
-  planDesc: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 6 },
+  upgrade: {
+    height: 34,
+    borderRadius: 17,
+    paddingHorizontal: 14,
+    backgroundColor: colors.ink,
+    justifyContent: "center",
+  },
+  upgradeText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 13,
+    color: colors.paper,
+  },
+  planDesc: {
+    ...type.body,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: colors.inkMuted,
+    marginTop: 6,
+  },
   section: { marginTop: 26, marginBottom: 8, paddingHorizontal: 4 },
-  group: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 16 },
-  row: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
+  group: {
+    backgroundColor: colors.sand,
+    borderRadius: radius.xl,
+    paddingHorizontal: 16,
+  },
+  row: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 10,
+  },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
   settingError: { ...type.meta, color: colors.warnInk, paddingBottom: 12 },
   signOut: { marginTop: 26 },
-  rowLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
+  rowLabel: {
+    fontFamily: fonts.body,
+    fontWeight: "500",
+    fontSize: 14.5,
+    color: colors.ink,
+  },
   danger: { color: colors.clay },
-  sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
+  sheetTitle: {
+    ...type.title,
+    fontSize: 26,
+    lineHeight: 28,
+    letterSpacing: -0.8,
+  },
   sheetBody: { ...type.body, color: colors.inkMuted, marginTop: 8 },
   error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 10 },
   deleteButton: {
@@ -418,4 +632,12 @@ const styles = StyleSheet.create({
   deleteText: { ...type.button, color: colors.paper },
   dim: { opacity: 0.6 },
   cancel: { marginTop: 8 },
+
+  keepGoing: {
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  keepGoingText: { fontSize: 14, color: colors.ink },
 });
