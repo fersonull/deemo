@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Shared depth and label rendering follow-up (2026-10-21, `codex/button-depth`):** after the user confirmed blank enabled labels on Consent/Sign-in, removed the nested face wrapper, kept native content directly on `PressableScale` and keyed label color/action changes. Extended the treatment to visible pressable cards, rows, selectors, icons, links and tabs; preserved back arrows, invisible hit zones and shaped controls. 106 tests, types/lint and design scan pass. User explicitly chose code checks only; phone acceptance remains open.
+
 - [x] **Layered button label layout follow-up (2026-10-20):** after the user reported a blank Consent Continue button, replaced absolute face layout with a flex face and margins. Added disabled → enabled layout/label coverage. Native transition verification remains pending on `codex/button-depth`.
 
 - [x] **Button concept revision (2026-10-20):** `docs/design/button-depth-concept-v2.png` uses a flat face over one smooth offset lower layer, per the user's correction. All six states shown; subsequently approved for implementation with unchanged back arrows and text-only loading.

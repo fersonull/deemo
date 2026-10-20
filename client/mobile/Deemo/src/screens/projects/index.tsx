@@ -54,7 +54,6 @@ export function Projects() {
     <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
       {/* Actions first, so a long list never pushes them out of reach. */}
       <PressableScale
-        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
         onPress={() => setSheet(locked ? "upsell" : "upload")}
@@ -64,7 +63,7 @@ export function Projects() {
         <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
       </PressableScale>
       {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
-      <PressableScale scaleTo={0.98} accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
+      <PressableScale accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
         <Icon name="group_add" size={22} color={colors.duskIcon} />
         <View style={styles.flex}>
           <Text style={styles.cardTitle}>Join with a code</Text>
@@ -79,7 +78,6 @@ export function Projects() {
           const { icon, meta } = describe(p);
           return (
             <PressableScale
-              scaleTo={0.98}
               entering={riseIn(Math.min(i, 5) * 40, reduced)}
               key={p.id}
               accessibilityRole="button"

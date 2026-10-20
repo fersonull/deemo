@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router } from "expo-router";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
@@ -34,7 +35,7 @@ export function GroupReadiness() {
           <View style={styles.head}>
             <Icon name="group" size={20} color={colors.duskIcon} />
             <Text style={[type.heading, styles.flex]}>Group readiness</Text>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Group and sharing settings"
               hitSlop={8}
@@ -43,7 +44,7 @@ export function GroupReadiness() {
             >
               <Text style={styles.link}>Settings</Text>
               <Icon name="chevron_right" size={16} color={colors.duskLink} />
-            </Pressable>
+            </PressableScale>
           </View>
           <Text style={styles.title} numberOfLines={1}>
             {g.title}

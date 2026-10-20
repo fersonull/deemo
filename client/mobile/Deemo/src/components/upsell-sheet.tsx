@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/pressable-scale";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Deemo } from "@/components/deemo";
 import { Button } from "@/components/button";
@@ -51,9 +52,9 @@ export function UpsellSheet({ visible, onClose, onUpgrade }: { visible: boolean;
           leading={<Icon name="workspace_premium" size={22} color={colors.gold} filled />}
         />
       </View>
-      <Pressable accessibilityRole="button" onPress={onClose} style={styles.notNow}>
+      <PressableScale accessibilityRole="button" onPress={onClose} style={styles.notNow}>
         <Text style={[type.body, styles.notNowText]}>Not now</Text>
-      </Pressable>
+      </PressableScale>
     </Sheet>
   );
 }

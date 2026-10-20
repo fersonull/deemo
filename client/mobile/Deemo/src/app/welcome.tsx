@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -54,9 +55,9 @@ export default function Welcome() {
     <Screen>
       <View style={styles.top}>
         {!last && (
-          <Pressable accessibilityRole="button" hitSlop={12} onPress={() => router.push("/consent")}>
+          <PressableScale accessibilityRole="button" hitSlop={12} onPress={() => router.push("/consent")}>
             <Text style={styles.skip}>Skip</Text>
-          </Pressable>
+          </PressableScale>
         )}
       </View>
 

@@ -1,8 +1,8 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
-import { Pressable, Share, StyleSheet, Switch, Text, View } from "react-native";
+import { Share, StyleSheet, Switch, Text, View } from "react-native";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/button";
-import { PressableScale } from "@/components/pressable-scale";
 import { Sheet } from "@/components/sheet";
 import { Icon } from "@/components/icon";
 import { projects, useProjects, type Project } from "@/hooks/use-projects";
@@ -48,7 +48,6 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               </Text>
             </View>
             <PressableScale
-              scaleTo={0.92}
               accessibilityRole="button"
               accessibilityLabel="Share the join code"
               onPress={() =>
@@ -98,7 +97,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               thumbColor={colors.paper}
             />
           </View>
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             disabled={busy}
             hitSlop={8}
@@ -106,7 +105,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
             style={styles.leave}
           >
             <Text style={styles.link}>{group.isOwner ? "Stop sharing this project" : "Leave group"}</Text>
-          </Pressable>
+          </PressableScale>
           <Sheet visible={confirm} onClose={() => !busy && setConfirm(false)}>
             <Text style={type.title}>{group.isOwner ? "Stop sharing?" : "Leave this group?"}</Text>
             <Text style={styles.note}>

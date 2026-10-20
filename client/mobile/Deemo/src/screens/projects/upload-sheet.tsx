@@ -58,8 +58,6 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
       <Text style={styles.title}>Add your manuscript</Text>
 
       <PressableScale
-
-        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityLabel={file ? `Chosen file ${file.name}. Choose another` : "Choose a PDF or DOCX"}
         disabled={busy}

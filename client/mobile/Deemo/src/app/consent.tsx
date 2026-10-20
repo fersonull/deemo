@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
@@ -70,7 +71,7 @@ export default function Consent() {
 
 function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       onPress={onToggle}
@@ -85,7 +86,7 @@ function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () =>
         )}
       </View>
       <Text style={styles.checkLabel}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 

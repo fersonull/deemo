@@ -59,7 +59,6 @@ export function Notices() {
                 accessibilityRole="button"
                 accessibilityLabel={`${unread ? "Unread" : "Read"} notice, ${noticeWhen(n.createdAt)}: ${n.title}`}
                 accessibilityHint="Opens the full message"
-                scaleTo={0.98}
                 onPress={() => router.push({ pathname: "/notice", params: { id: n.id } })}
                 style={[styles.row, index === 0 && styles.rowFirst, index === last && styles.rowLast, index > 0 && styles.divider]}
               >

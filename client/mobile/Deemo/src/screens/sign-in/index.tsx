@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
-import { KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
@@ -78,7 +79,7 @@ export function SignIn() {
           : ["Welcome back. Sign in and pick up where you left off.", greeted ? "idle" : "waving"];
 
   const eye = (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={showPassword ? "Hide passwords" : "Show passwords"}
       hitSlop={10}
@@ -86,7 +87,7 @@ export function SignIn() {
       style={styles.eye}
     >
       <Icon name={showPassword ? "visibility_off" : "visibility"} size={20} color={colors.inkMuted} />
-    </Pressable>
+    </PressableScale>
   );
 
   return (
@@ -179,9 +180,9 @@ export function SignIn() {
             ) : null}
           </Animated.View>
         ) : (
-          <Pressable accessibilityRole="button" disabled={busy || !email.trim()} onPress={reset} style={styles.link}>
+          <PressableScale accessibilityRole="button" disabled={busy || !email.trim()} onPress={reset} style={styles.link}>
             <Text style={[styles.linkText, !email.trim() && styles.dim]}>Forgot password?</Text>
-          </Pressable>
+          </PressableScale>
         )}
 
         <View style={styles.cta}>
@@ -192,9 +193,9 @@ export function SignIn() {
             disabled={!ready}
           />
         </View>
-        <Pressable accessibilityRole="button" onPress={switchMode} style={styles.switch}>
+        <PressableScale accessibilityRole="button" onPress={switchMode} style={styles.switch}>
           <Text style={styles.switchText}>{creating ? "Have an account? Sign in" : "New here? Create an account"}</Text>
-        </Pressable>
+        </PressableScale>
       </Screen>
     </KeyboardAvoidingView>
   );

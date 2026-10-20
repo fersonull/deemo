@@ -63,7 +63,6 @@ export function PremiumCard({ onPress }: { onPress?: () => void }) {
 
   return compact ? (
     <PressableScale
-      scaleTo={0.98}
       accessibilityRole="button"
       accessibilityLabel="Premium plan, demo"
       accessibilityHint="Shows your Premium benefits"

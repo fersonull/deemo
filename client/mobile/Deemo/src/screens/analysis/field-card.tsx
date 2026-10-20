@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { CoursePicker } from "@/components/course-picker";
@@ -51,9 +52,9 @@ export function FieldCard({ project, readOnly, course }: { project: Project; rea
           </View>
         ) : null}
         {!readOnly ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Change field" onPress={edit} hitSlop={8} style={styles.edit}>
+          <PressableScale accessibilityRole="button" accessibilityLabel="Change field" onPress={edit} hitSlop={8} style={styles.edit}>
             <Text style={styles.editText}>Change</Text>
-          </Pressable>
+          </PressableScale>
         ) : null}
       </View>
       <Text style={styles.value}>{label}</Text>
@@ -79,7 +80,7 @@ export function FieldCard({ project, readOnly, course }: { project: Project; rea
               {IT_FIELDS.map((d) => {
                 const selected = d === draft.domain;
                 return (
-                  <Pressable
+                  <PressableScale
                     key={d}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: selected }}
@@ -87,7 +88,7 @@ export function FieldCard({ project, readOnly, course }: { project: Project; rea
                     style={[styles.chip, selected && styles.chipSelected]}
                   >
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{d}</Text>
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </View>

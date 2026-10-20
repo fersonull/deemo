@@ -26,7 +26,6 @@ export function DomainSheet({
           const selected = d === value;
           return (
             <PressableScale
-              scaleTo={0.98}
               key={d}
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}

@@ -49,7 +49,6 @@ export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void })
   return (
     <View>
       <PressableScale
-        scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Choose a PDF, Word file or photo of your panel's rubric"
         accessibilityState={{ disabled: busy, busy }}

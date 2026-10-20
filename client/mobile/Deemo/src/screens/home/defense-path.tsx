@@ -30,7 +30,6 @@ export function DefensePath({ sessions }: { sessions: SessionSummary[] }) {
         return (
           <PressableScale
             key={s.mode}
-            scaleTo={0.98}
             accessibilityRole="button"
             accessibilityLabel={`${MODE_LABELS[s.mode]}, step ${i + 1} of 3. ${meta(s)}.${s.current ? " Your next stage." : ""}`}
             accessibilityHint="Opens your history for this stage"

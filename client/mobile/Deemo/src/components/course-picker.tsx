@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/pressable-scale";
+import { StyleSheet, Text, View } from "react-native";
 
 import { COURSES, type Course } from "@/constants";
 import { colors, fonts } from "@/theme";
@@ -10,7 +11,7 @@ export function CoursePicker({ value, onPick }: { value: Course | null; onPick: 
       {COURSES.map((c) => {
         const selected = c === value;
         return (
-          <Pressable
+          <PressableScale
             key={c}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
@@ -18,7 +19,7 @@ export function CoursePicker({ value, onPick }: { value: Course | null; onPick: 
             style={[styles.chip, selected && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{c}</Text>
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

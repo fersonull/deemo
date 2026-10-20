@@ -87,7 +87,6 @@ export function AvatarSheet({ visible, onClose, current, premium, name, email }:
           return (
             <PressableScale
               key={seed}
-              scaleTo={0.95}
               accessibilityRole="radio"
               accessibilityLabel={i === 0 && seed === current ? "Your current face" : `Face ${i + 1}`}
               accessibilityState={{ checked: selected }}
@@ -123,7 +122,6 @@ export function AvatarSheet({ visible, onClose, current, premium, name, email }:
           onPress={() => turnTo(page + 1, picked)}
         />
         <PressableScale
-          scaleTo={0.95}
           accessibilityRole="button"
           accessibilityHint="Picks a random face"
           disabled={saving}
@@ -152,7 +150,6 @@ type PageButtonProps = { icon: string; label: string; disabled: boolean; onPress
 function PageButton({ icon, label, disabled, onPress }: PageButtonProps) {
   return (
     <PressableScale
-      scaleTo={0.92}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}

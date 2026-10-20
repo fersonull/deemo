@@ -1,7 +1,8 @@
+import { PressableScale } from "@/components/pressable-scale";
 import * as Print from "expo-print";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import Animated, { LinearTransition, useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -13,7 +14,6 @@ import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
-import { PressableDepth } from "@/components/pressable-depth";
 import { DIFFICULTY_LABELS, MODE_LABELS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
@@ -137,9 +137,9 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close report" onPress={close} style={styles.close}>
+        <PressableScale accessibilityRole="button" accessibilityLabel="Close report" onPress={close} style={styles.close}>
           <Icon name="close" size={24} />
-        </Pressable>
+        </PressableScale>
         {s ? (
           <Text style={styles.headerText}>
             {MODE_LABELS[s.mode]}
@@ -290,44 +290,41 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 <>
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
-                    <PressableDepth
+                    <PressableScale
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
-                      style={[styles.actionSize, styles.flexAction]}
-                      faceStyle={[styles.action, styles.actionSand]}
+                      style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
                       depthColor={colors.sandDepth}
                     >
                       <Text style={styles.actionText}>Practice again</Text>
-                    </PressableDepth>
+                    </PressableScale>
                     {group ? (
-                      <PressableDepth
+                      <PressableScale
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
-                        style={[styles.actionSize, styles.flexAction]}
-                        faceStyle={[styles.action, styles.actionSand]}
+                        style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
                         depthColor={colors.sandDepth}
                       >
                         <Icon name="group" size={17} />
                         <Text style={styles.actionText}>Share with group</Text>
-                      </PressableDepth>
+                      </PressableScale>
                     ) : null}
                   </View>
                 </>
               )}
-              <PressableDepth
+              <PressableScale
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}
                 busy={exporting}
                 disabled={exporting}
                 onPress={exportPdf}
-                style={styles.actionSize}
-                faceStyle={[styles.action, styles.actionOutline]}
+                style={[styles.actionSize, styles.action, styles.actionOutline]}
                 depthColor={colors.sandDepth}
               >
                 {!exporting ? <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} /> : null}
                 <Text accessibilityLiveRegion="polite" style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
-              </PressableDepth>
+              </PressableScale>
               {exportError ? (
                 <Text style={styles.sub} accessibilityLiveRegion="polite">
                   {exportError}

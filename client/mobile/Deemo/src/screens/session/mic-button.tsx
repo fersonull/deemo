@@ -21,7 +21,7 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
 
   return (
     <PressableScale
-      scaleTo={0.95}
+      layered={false}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !active }}
@@ -33,7 +33,7 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
         <Animated.View style={[StyleSheet.absoluteFill, ring]}>
           <Blob width={96} height={84} color={colors.duskTint} />
         </Animated.View>
-        <Blob width={96} height={84}>
+        <Blob width={96} height={84} style={active ? styles.raised : undefined}>
           {active ? (
             <View style={styles.wave}>
               {WAVE.map((k, i) => (
@@ -50,6 +50,7 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
+  raised: { boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 0, color: colors.duskInk }] },
   wrap: { width: 96, height: 84 },
   dim: { opacity: 0.4 },
   wave: { flexDirection: "row", alignItems: "center", gap: 4 },

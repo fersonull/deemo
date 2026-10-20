@@ -89,7 +89,6 @@ export function Profile() {
     <Screen scroll tabBar title="Profile" onRefresh={refreshEverything}>
       <View style={styles.account}>
         <PressableScale
-          scaleTo={0.95}
           accessibilityRole="button"
           accessibilityLabel="Your avatar"
           accessibilityHint="Pick your look"
@@ -101,7 +100,6 @@ export function Profile() {
           </View>
         </PressableScale>
         <PressableScale
-          scaleTo={0.98}
           accessibilityRole="button"
           accessibilityHint={name ? "Change your name" : "Add your name"}
           onPress={editName}
@@ -142,7 +140,6 @@ export function Profile() {
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={unread ? `Inbox, ${unread} unread. Latest: ${latest?.title}` : "Inbox, no unread notices"}
-        scaleTo={0.98}
         onPress={() => router.push("/notices")}
         style={[styles.inbox, unread > 0 && styles.inboxUnread]}
       >
@@ -315,7 +312,7 @@ export function Profile() {
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PressableScale
           accessibilityRole="button"
-          accessibilityState={{ disabled: deleting }}
+          accessibilityState={{ disabled: deleting, busy: deleting }}
           disabled={deleting}
           onPress={deleteAll}
           style={[styles.deleteButton, deleting && styles.dim]}

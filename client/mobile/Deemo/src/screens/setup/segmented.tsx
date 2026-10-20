@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
@@ -43,7 +44,7 @@ export function Segmented<T>({ label, options, value, onChange, onLocked }: Prop
       {options.map((o) => {
         const selected = o.value === value;
         return (
-          <Pressable
+          <PressableScale
             key={o.label}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
@@ -53,7 +54,7 @@ export function Segmented<T>({ label, options, value, onChange, onLocked }: Prop
           >
             <Text style={[styles.text, selected && styles.textSelected]}>{o.label}</Text>
             {o.locked && <Icon name="lock" size={15} style={styles.lock} />}
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

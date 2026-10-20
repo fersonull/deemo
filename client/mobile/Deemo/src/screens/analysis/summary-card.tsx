@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { colors, fonts, radius, type } from "@/theme";
 
@@ -45,7 +46,7 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
           </View>
         ) : null}
         {!editing && !readOnly ? (
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel={`Edit ${title.toLowerCase()}`}
             onPress={() => setDraft(body)}
@@ -53,7 +54,7 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
             style={styles.edit}
           >
             <Text style={styles.editText}>Edit</Text>
-          </Pressable>
+          </PressableScale>
         ) : null}
       </View>
 
@@ -71,12 +72,12 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
           {list ? <Text style={styles.hint}>One per line.</Text> : null}
           {failed ? <Text style={styles.error}>{"Couldn't save. Try again."}</Text> : null}
           <View style={styles.actions}>
-            <Pressable accessibilityRole="button" disabled={saving} onPress={() => setDraft(null)} style={styles.cancel}>
+            <PressableScale accessibilityRole="button" disabled={saving} onPress={() => setDraft(null)} style={styles.cancel}>
               <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" disabled={saving} onPress={save} style={[styles.save, saving && styles.dim]}>
+            </PressableScale>
+            <PressableScale accessibilityRole="button" busy={saving} disabled={saving} onPress={save} style={styles.save}>
               <Text style={styles.saveText}>{saving ? "Saving…" : "Save"}</Text>
-            </Pressable>
+            </PressableScale>
           </View>
         </>
       ) : list ? (
@@ -130,5 +131,4 @@ const styles = StyleSheet.create({
   cancelText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.ink },
   save: { height: 38, paddingHorizontal: 18, borderRadius: 19, backgroundColor: colors.ink, justifyContent: "center" },
   saveText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.paper },
-  dim: { opacity: 0.6 },
 });

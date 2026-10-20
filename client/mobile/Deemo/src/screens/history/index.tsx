@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
@@ -10,7 +11,6 @@ import { Sheet } from "@/components/sheet";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
-import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
 import { Offline } from "@/components/offline";
 import { MODE_LABELS, type Mode } from "@/constants";
@@ -95,7 +95,6 @@ export function History() {
   ) : null, [loaded, error, list, filteredMode, all.length, practiceStage]);
   const rows = useMemo(() => shown.map((s, i) => (
     <PressableScale
-      scaleTo={0.98}
       entering={riseIn(Math.min(i, 5) * 40, reduced)}
       key={s.id}
       accessibilityRole="button"
@@ -140,7 +139,7 @@ export function History() {
           {FILTERS.map((f) => {
             const selected = f.mode === mode;
             return (
-              <Pressable
+              <PressableScale
                 key={f.label}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
@@ -148,7 +147,7 @@ export function History() {
                 style={[styles.chip, selected && styles.chipSelected]}
               >
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{f.label}</Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -167,7 +166,6 @@ export function History() {
             </Text>
           )}
           <PressableScale
-            scaleTo={0.96}
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setArranging(true)}
@@ -239,7 +237,7 @@ function Options<T extends string>({ options, value, onPick, label }: { options:
       {options.map((o) => {
         const selected = o.value === value;
         return (
-          <Pressable
+          <PressableScale
             key={o.value}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}
@@ -247,7 +245,7 @@ function Options<T extends string>({ options, value, onPick, label }: { options:
             style={[styles.chip, styles.optionChip, selected && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{o.label}</Text>
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

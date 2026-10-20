@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { StyleSheet, Text } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-import { PressableDepth } from "@/components/pressable-depth";
+import { PressableScale } from "@/components/pressable-scale";
 import { colors, radius, type } from "@/theme";
 
 type Props = {
@@ -21,12 +21,13 @@ export function Button({ label, onPress, variant = "primary", disabled, busy, le
   const fg = inactive ? colors.inkMuted : variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.paper;
   const depth = variant === "secondary" ? colors.sandDepth : variant === "premium" ? colors.goldInk : colors.inkDepth;
   return (
-    <PressableDepth
+    <PressableScale
+      accessibilityRole="button"
       busy={busy}
       disabled={disabled}
       onPress={onPress}
       depthColor={depth}
-      faceStyle={[styles.base, { backgroundColor: bg }, variant === "premium" && !inactive && styles.premium]}
+      style={[styles.base, { backgroundColor: inactive ? colors.sand : bg }, variant === "premium" && !inactive && styles.premium]}
     >
       {variant === "premium" && !inactive ? (
         // Light catching the top right, as on the Premium card.
@@ -42,13 +43,14 @@ export function Button({ label, onPress, variant = "primary", disabled, busy, le
         </Svg>
       ) : null}
       {!busy ? leading : null}
-      <Text accessibilityLiveRegion="polite" style={[type.button, { color: fg }]}>{label}</Text>
-    </PressableDepth>
+      <Text key={`${fg}:${label}`} accessibilityLiveRegion="polite" style={[type.button, { color: fg }]}>{label}</Text>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
+    height: 58,
     borderRadius: radius.pill,
     flexDirection: "row",
     alignItems: "center",

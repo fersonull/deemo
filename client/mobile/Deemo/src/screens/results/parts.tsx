@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useEffect, useState, type ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -140,7 +141,7 @@ export function ResponseTimes({ turns, delivery }: { turns: SessionTurn[]; deliv
 
 export function Locked({ title, body, onPress }: { title: string; body: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityHint="Premium" onPress={onPress} style={[styles.card, styles.locked]}>
+    <PressableScale accessibilityRole="button" accessibilityHint="Premium" onPress={onPress} style={[styles.card, styles.locked]}>
       <View style={styles.lockTile}>
         <Icon name="lock" size={20} color={colors.duskIcon} />
       </View>
@@ -148,7 +149,7 @@ export function Locked({ title, body, onPress }: { title: string; body: string; 
         <Text style={styles.strong}>{title}</Text>
         <Text style={styles.meta}>{body}</Text>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -158,13 +159,13 @@ export function Question({ turn, feedback, premium, onLocked }: QuestionProps) {
   const [open, setOpen] = useState(false);
   return (
     <Animated.View layout={glide} style={styles.card}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
+      <PressableScale accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
         <Text style={styles.qLabel}>{turnLabel(turn)}</Text>
         <Text style={[styles.body, styles.flex]} numberOfLines={open ? undefined : 2}>
           {turn.question}
         </Text>
         <Chevron open={open} />
-      </Pressable>
+      </PressableScale>
       {open ? (
         <Animated.View entering={reveal} exiting={hide} style={styles.qBody}>
           <Text style={styles.chip}>{turn.type.charAt(0) + turn.type.slice(1).toLowerCase()}</Text>
@@ -182,10 +183,10 @@ export function Question({ turn, feedback, premium, onLocked }: QuestionProps) {
               <Text style={styles.body}>{feedback.betterAnswer}</Text>
             </View>
           ) : (
-            <Pressable accessibilityRole="button" accessibilityHint="Premium" onPress={onLocked} style={styles.betterLocked}>
+            <PressableScale accessibilityRole="button" accessibilityHint="Premium" onPress={onLocked} style={styles.betterLocked}>
               <Icon name="lock" size={16} color={colors.duskLink} />
               <Text style={styles.link}>See a stronger answer</Text>
-            </Pressable>
+            </PressableScale>
           )}
         </Animated.View>
       ) : null}
@@ -197,13 +198,13 @@ export function Transcript({ lines, count }: { lines: Session["lines"]; count: n
   const [open, setOpen] = useState(false);
   return (
     <Animated.View layout={glide} style={styles.card}>
-      <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
+      <PressableScale accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={styles.qHead}>
         <Icon name="subject" size={20} color={colors.inkMuted} />
         <Text style={[styles.strong, styles.flex]}>
           Full transcript · {count} {count === 1 ? "question" : "questions"}
         </Text>
         <Chevron open={open} />
-      </Pressable>
+      </PressableScale>
       {open ? (
         <Animated.View entering={reveal} exiting={hide} style={styles.qBody}>
           {lines.map((l, i) => (

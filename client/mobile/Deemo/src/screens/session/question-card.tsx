@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { PressableScale } from "@/components/pressable-scale";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
@@ -86,9 +87,9 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
         <Text style={[styles.text, { fontSize: size[0], lineHeight: size[1] }]}>{text}</Text>
       </ScrollView>
       {phase === "presentation" && (
-        <Pressable accessibilityRole="button" onPress={onDonePresenting} style={styles.done}>
+        <PressableScale accessibilityRole="button" onPress={onDonePresenting} style={styles.done}>
           <Text style={[type.button, styles.doneText]}>Done presenting</Text>
-        </Pressable>
+        </PressableScale>
       )}
     </Animated.View>
   );

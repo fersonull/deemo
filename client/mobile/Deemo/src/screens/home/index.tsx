@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -10,7 +11,6 @@ import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { tabBarSpace } from "@/components/tab-bar";
-import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
 import { Offline } from "@/components/offline";
 import { MODE_LABELS, type Mode } from "@/constants";
@@ -110,9 +110,9 @@ export function Home() {
             style={styles.start}
           />
           {!practiced ? (
-            <Pressable accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
+            <PressableScale accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
               <Text style={styles.sampleText}>Or practice with a sample paper</Text>
-            </Pressable>
+            </PressableScale>
           ) : null}
 
           <GroupReadiness />
@@ -169,7 +169,6 @@ export function Home() {
               {recent.map((s, i) => (
                 <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
                   <PressableScale
-                    scaleTo={0.98}
                     accessibilityRole="button"
                     accessibilityHint="Opens the report"
                     onPress={() => open(s.id)}

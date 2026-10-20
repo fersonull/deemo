@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Blob } from "@/components/blob";
@@ -194,9 +195,9 @@ export function Analysis({ id }: { id: string }) {
         <Button label={busy ? "Saving…" : project.confirmedAt ? "Practice with this" : "Looks right"} onPress={go} busy={busy} disabled={busy} />
       </View>
       {!readOnly ? (
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
+        <PressableScale accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
           <Text style={styles.textButtonLabel}>Delete project</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
 
       <Sheet visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
@@ -209,9 +210,9 @@ export function Analysis({ id }: { id: string }) {
         <View style={styles.cta}>
           <Button label={busy ? "Deleting…" : "Delete project"} onPress={remove} busy={busy} disabled={busy} />
         </View>
-        <Pressable accessibilityRole="button" onPress={() => setConfirmDelete(false)} style={styles.textButton}>
+        <PressableScale accessibilityRole="button" onPress={() => setConfirmDelete(false)} style={styles.textButton}>
           <Text style={styles.textButtonLabel}>Keep it</Text>
-        </Pressable>
+        </PressableScale>
       </Sheet>
     </Screen>
   );

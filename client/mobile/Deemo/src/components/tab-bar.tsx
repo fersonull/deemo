@@ -1,7 +1,8 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, type Tabs } from "expo-router";
 import type { ComponentProps } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle, Defs, RadialGradient, Stop } from "react-native-svg";
@@ -45,7 +46,7 @@ export function TabBar({ state, descriptors, navigation }: Props) {
     const color = focused ? colors.paper : "rgba(247,243,236,0.55)";
     const label = descriptors[route.key].options.title ?? route.name;
     return (
-      <Pressable
+      <PressableScale
         key={route.key}
         accessibilityRole="tab"
         accessibilityState={{ selected: focused }}
@@ -58,7 +59,7 @@ export function TabBar({ state, descriptors, navigation }: Props) {
       >
         <Icon name={ICONS[route.name]} size={23} color={color} filled={focused} />
         <Text style={[styles.label, { color }]}>{label}</Text>
-      </Pressable>
+      </PressableScale>
     );
   };
 
@@ -97,7 +98,8 @@ function PracticeButton() {
     transform: [{ scale: reduced ? 1 : 0.8 + 0.25 * glow.value }],
   }));
   return (
-    <Pressable
+    <PressableScale
+      layered={false}
       accessibilityRole="button"
       accessibilityLabel="Start practice"
       onPress={() => router.push("/practice")}
@@ -119,11 +121,11 @@ function PracticeButton() {
       </Animated.View>
       {/* paper halo = the prototype's 6px box-shadow ring */}
       <Blob width={78} height={70} color={colors.paper}>
-        <Blob width={66} height={58}>
+        <Blob width={66} height={58} style={styles.practiceFace}>
           <Icon name="mic" size={28} color={colors.paper} filled />
         </Blob>
       </Blob>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -141,7 +143,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 8,
   },
-  tab: { width: 56, height: 56, alignItems: "center", justifyContent: "center", gap: 2 },
+  tab: { width: 56, height: 56, borderRadius: 18, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center", gap: 2 },
+  practiceFace: { boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 0, color: colors.duskInk }] },
   label: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10 },
   // Raised well above the row, so Practice reads as the main action rather than a fifth tab.
   practice: { transform: [{ translateY: -26 }] },

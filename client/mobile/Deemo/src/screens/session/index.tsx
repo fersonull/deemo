@@ -1,7 +1,8 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { BackHandler, KeyboardAvoidingView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { BackHandler, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,7 +17,6 @@ import { useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { colors, easeOut, fonts, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
-import { PressableScale } from "@/components/pressable-scale";
 
 import { MicButton } from "./mic-button";
 import { Panelist, type PanelistStatus } from "./panelist";
@@ -246,9 +246,9 @@ export function Session() {
         <View style={styles.sheetCta}>
           <Button label="End and see report" onPress={() => leave()} />
         </View>
-        <Pressable accessibilityRole="button" onPress={keepGoing} style={styles.keepGoing}>
+        <PressableScale accessibilityRole="button" onPress={keepGoing} style={styles.keepGoing}>
           <Text style={[type.button, styles.keepGoingText]}>Keep going</Text>
-        </Pressable>
+        </PressableScale>
       </Sheet>
     </SafeAreaView>
   );

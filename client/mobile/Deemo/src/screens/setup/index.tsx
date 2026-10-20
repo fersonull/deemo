@@ -53,7 +53,6 @@ export function Setup() {
             const fg = selected ? colors.paper : colors.ink;
             return (
               <PressableScale
-                scaleTo={0.98}
                 key={m.value}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
@@ -82,7 +81,6 @@ export function Setup() {
 
         <Text style={[type.label, styles.section]}>PRACTICING WITH</Text>
         <PressableScale
-          scaleTo={0.98}
           accessibilityRole="button"
           accessibilityHint={manuscript ? "Choose another manuscript" : "Upload your manuscript"}
           onPress={() => router.push("/projects")}
@@ -106,7 +104,6 @@ export function Setup() {
           </View>
         </PressableScale>
         <PressableScale
-          scaleTo={0.98}
           accessibilityRole="button"
           accessibilityHint="Change the rubric weights"
           onPress={() => router.push("/rubric")}
@@ -134,7 +131,6 @@ export function Setup() {
         {/* The IT field is for computing courses only; every other course is profiled by the course (plan F4). */}
         {isComputing(field) ? (
           <PressableScale
-            scaleTo={0.98}
             accessibilityRole="button"
             accessibilityHint="Change IT field"
             onPress={() => setSheet("domain")}

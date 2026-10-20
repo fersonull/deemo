@@ -62,7 +62,6 @@ export function DeemoBrief({ brief }: { brief: Brief }) {
     );
   return (
     <PressableScale
-      scaleTo={0.98}
       accessibilityRole="button"
       accessibilityLabel={briefText(brief)}
       accessibilityHint="Opens the report"

@@ -1,6 +1,7 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
@@ -79,7 +80,7 @@ export function Rubric() {
             </View>
             {c.scored ? (
               <>
-                <Pressable
+                <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={`Lower ${c.name}`}
                   disabled={readOnly || busy || c.weight <= 0}
@@ -88,11 +89,11 @@ export function Rubric() {
                   style={[styles.step, c.weight <= 0 && styles.dim]}
                 >
                   <Text style={styles.stepText}>−</Text>
-                </Pressable>
+                </PressableScale>
                 <Text style={styles.weight} accessibilityLabel={`${c.name} ${c.weight} percent`}>
                   {c.weight}%
                 </Text>
-                <Pressable
+                <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={`Raise ${c.name}`}
                   disabled={readOnly || busy || c.weight >= max}
@@ -101,7 +102,7 @@ export function Rubric() {
                   style={[styles.step, c.weight >= max && styles.dim]}
                 >
                   <Text style={styles.stepText}>+</Text>
-                </Pressable>
+                </PressableScale>
               </>
             ) : (
               <Text style={styles.unscored} accessibilityLabel={`${c.name}: not scored in practice`}>
@@ -136,13 +137,13 @@ export function Rubric() {
         />
       </View>
       {readOnly || busy ? null : custom ? (
-        <Pressable accessibilityRole="button" onPress={() => setCustom(null)} style={styles.reset}>
+        <PressableScale accessibilityRole="button" onPress={() => setCustom(null)} style={styles.reset}>
           <Text style={styles.resetText}>Back to the default rubric</Text>
-        </Pressable>
+        </PressableScale>
       ) : !isDefault ? (
-        <Pressable accessibilityRole="button" onPress={() => setWeights(DEFAULT_WEIGHTS)} style={styles.reset}>
+        <PressableScale accessibilityRole="button" onPress={() => setWeights(DEFAULT_WEIGHTS)} style={styles.reset}>
           <Text style={styles.resetText}>Back to the default weights</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
     </Screen>
   );

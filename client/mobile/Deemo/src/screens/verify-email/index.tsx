@@ -1,5 +1,6 @@
+import { PressableScale } from "@/components/pressable-scale";
 import { useEffect, useState } from "react";
-import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { AppState, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
@@ -124,14 +125,14 @@ export function VerifyEmail() {
         />
       </View>
 
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         disabled={!!busy}
         onPress={() => void session.signOut()}
         style={styles.switch}
       >
         <Text style={styles.switchText}>Wrong email? Use a different one</Text>
-      </Pressable>
+      </PressableScale>
     </Screen>
   );
 }
