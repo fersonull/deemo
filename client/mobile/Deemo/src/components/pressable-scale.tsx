@@ -47,11 +47,9 @@ function Pressed({ style, depthColor, layered = false, busy, accessibilityState,
     if (blocked) pressed.set(0);
   }, [blocked, pressed]);
   const feedback = useAnimatedStyle(() => ({
-    transform: typeof transform === "string" ? transform : [...(transform ?? []), ...(layered
-      ? [{ translateX: blocked ? 0 : pressed.value }, { translateY: blocked ? 0 : pressed.value * 3 }]
-      : [{ scale: reduced || blocked ? 1 : 1 - pressed.value * 0.03 }])],
-    opacity: !layered && reduced && !blocked && (flat.opacity === undefined || typeof flat.opacity === "number")
-      ? (flat.opacity ?? 1) * (1 - pressed.value * 0.15) : flat.opacity ?? 1,
+    transform: !layered || typeof transform === "string" ? transform ?? [] : [...(transform ?? []),
+      { translateX: blocked ? 0 : pressed.value }, { translateY: blocked ? 0 : pressed.value * 3 }],
+    opacity: flat.opacity ?? 1,
   }));
   const surface: ViewStyle = layered ? {
     backgroundColor: flat.backgroundColor ?? colors.paper,
@@ -72,13 +70,17 @@ function Pressed({ style, depthColor, layered = false, busy, accessibilityState,
       disabled={blocked}
       focusable={!blocked}
       onPressIn={(e) => {
-        setDown(true);
-        pressed.set(withTiming(1, { duration: reduced ? 0 : 100, easing: easeOut }));
+        if (layered) {
+          setDown(true);
+          pressed.set(withTiming(1, { duration: reduced ? 0 : 100, easing: easeOut }));
+        }
         onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        setDown(false);
-        pressed.set(withTiming(0, { duration: reduced ? 0 : 160, easing: easeOut }));
+        if (layered) {
+          setDown(false);
+          pressed.set(withTiming(0, { duration: reduced ? 0 : 160, easing: easeOut }));
+        }
         onPressOut?.(e);
       }}
       onFocus={(e) => { setFocused(true); onFocus?.(e); }}

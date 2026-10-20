@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **No shared press animation on flat controls (2026-10-21, `codex/button-depth`):** removed scale-down/release and reduced-motion dimming from non-layered controls such as Profile Course. Original caller transforms/opacity and custom callbacks remain; layered 3D buttons keep their press animation. 106 tests, TypeScript, lint and diff checks pass; code-only verification, JS only.
+
 - [x] **Sign out and History depth opt-ins (2026-10-21, `codex/button-depth`):** enabled the layered style for Sign out, History stage chips, sort/filter trigger and sheet options, History session cards and the chart report arrow. Other flat exclusions remain unchanged. Styling only; phone check pending.
 
 - [x] **Main-action-only depth refinement (2026-10-21, `codex/button-depth`):** made shared touchables flat by default. Excluded the auth mode prompt, Defense Path, recent sessions, Group readiness Settings, bottom tabs/Practice, Home Deemo brief and Profile options/edits. Main Button/Start practice and explicit action CTAs opt into depth. Flat scale/reduced-motion feedback and keyboard focus are preserved; regression coverage added. Phone check remains pending; JS only.
