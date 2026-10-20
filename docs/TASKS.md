@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Root project README (2026-10-20):** added `README.md` and a branded owl SVG header at `docs/assets/readme-banner.svg`; documented features, plan limits, architecture, setup, development checks, contributing and license. Existing artwork reused; no app changes or publication.
+
 - [x] **GitHub release-notes draft (2026-10-20):** created `docs/RELEASE_NOTES.md`, then shortened it at the user's request to a summary of main features through `34ced95`, Premium demo, companion tools and essential limitations. Draft only; no APK build or GitHub publication.
 
 - [x] **History filter loading feedback (2026-10-19, uncommitted on `preview`):** reuse skeletons while stage/sort/date results catch up; stage summary/chart and counts use placeholders, stale empty messages wait, and filters remain usable. JS only; phone-check rapid changes, initial load and empty stages.

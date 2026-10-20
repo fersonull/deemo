@@ -2,9 +2,11 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-20 (GitHub release-notes draft)_
+_Last updated: 2026-10-20 (Root README and branded header)_
 
 ## Current state
+
+- **Root README (uncommitted on `dev`):** added `README.md` with the existing owl in `docs/assets/readme-banner.svg`, a product overview, features, plan comparison, architecture, repository map, server/mobile/admin setup, development checks, documentation links and license. The checkout is now `dev` at `993449d` (release notes already committed); older `preview` state below is historical. No app changes, dependency changes, builds or publication.
 
 - **GitHub release notes (uncommitted on `preview`):** `docs/RELEASE_NOTES.md` is a short, user-requested summary of the main implemented features through `34ced95`, Premium demo, companion tools and essential limitations. Mobile checks rerun Oct 20: 105 tests, TypeScript and Expo lint pass. No APK built, release published, remote state fetched, billing confirmed or device test performed. The History skeleton work below is committed as `34ced95`; its older uncommitted wording is historical.
 
@@ -45,6 +47,8 @@ _Last updated: 2026-10-20 (GitHub release-notes draft)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**README ready for review:** check the root README and banner on GitHub when pushed. Local link targets, SVG structure and diff formatting are checked; setup commands were checked against repository scripts/config, not rerun against fresh accounts or a clean environment. Continue the release readiness and phone checks below. README/banner/handoff/tasks remain uncommitted on `dev`.
 
 **Prepare the GitHub release:** review `docs/RELEASE_NOTES.md` against the intended signed APK and release revision; confirm paid Gemini billing, hosted API, target migrations and release Firebase/signing setup. Run the phone checks below, then update the notes' validation/limitations to match actual acceptance results before publishing. The current draft is documentation only and has not been published; no build or tag was created.
 
@@ -130,6 +134,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-20 | Added a professional root README with an owl banner composed from existing brand SVG artwork, project overview, features, architecture, setup, checks, docs and license. Documentation only. | `README.md`, `docs/assets/readme-banner.svg`, handoff/tasks; uncommitted on `dev` |
 | 2026-10-20 | Shortened the release notes at the user's request to a feature summary with essential limitations. Documentation only; diff check passes. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-20 | Drafted a complete GitHub release feature overview, plan comparison, companion-project coverage and known limitations. Rechecked mobile: 105 tests, TypeScript and lint pass. No build or publication. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-19 | Show skeletons while History's deferred filters update, including stage summary/chart and session count; suppress stale rows/empty messages while keeping filters usable. | `screens/history/index.tsx`, handoff/tasks; uncommitted on `preview` |

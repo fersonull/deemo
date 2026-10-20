@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="title description">
+  <title id="title">DEEMO — Research defense practice</title>
+  <desc id="description">DEEMO's indigo owl mascot beside the words Practice your defense. Find your confidence.</desc>
+  <rect width="1200" height="380" rx="24" fill="#F7F3EC"/>
+  <circle cx="990" cy="190" r="156" fill="#EDE5D8"/>
+  <g font-family="Segoe UI, Arial, sans-serif">
+    <text x="76" y="72" font-size="14" font-weight="600" letter-spacing="3" fill="#4851B0">YOUR RESEARCH. YOUR REHEARSAL.</text>
+    <text x="72" y="168" font-size="88" font-weight="700" letter-spacing="-3" fill="#2A2420">DEEMO</text>
+    <text x="78" y="222" font-size="29" fill="#3E3731">Practice your defense.</text>
+    <text x="78" y="261" font-size="29" fill="#3E3731">Find your confidence.</text>
+    <text x="78" y="324" font-size="15" font-weight="600" letter-spacing="1.4" fill="#4851B0">TITLE  /  PRE-ORAL  /  FINAL</text>
+  </g><svg x="850" y="48" width="290" height="282" viewBox="30 40 340 330">
+    <ellipse cx="200" cy="356" rx="92" ry="9" fill="#CFD6F3"/>
+    <g transform="translate(0 0)">
+    <ellipse cx="166.1" cy="345" rx="5.5" ry="8" transform="rotate(-19.8 166.1 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/><ellipse cx="176" cy="345" rx="5.5" ry="8" transform="rotate(0 176 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/><ellipse cx="185.9" cy="345" rx="5.5" ry="8" transform="rotate(19.8 185.9 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/><ellipse cx="214.1" cy="345" rx="5.5" ry="8" transform="rotate(-19.8 214.1 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/><ellipse cx="224" cy="345" rx="5.5" ry="8" transform="rotate(0 224 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/><ellipse cx="233.9" cy="345" rx="5.5" ry="8" transform="rotate(19.8 233.9 345)" fill="#EBB353" stroke="#6C4302" stroke-width="3"/>
+    <g transform="rotate(0 200 230)">
+      <path d="M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z" fill="#5A66C7"/>
+      <ellipse cx="200" cy="298" rx="68" ry="42" fill="#F7F3EC"/>
+      <path d="M172 288 Q180 296 188 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M192 288 Q200 296 208 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M212 288 Q220 296 228 288" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M182 306 Q190 314 198 306" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M202 306 Q210 314 218 306" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/><path d="M192 324 Q200 332 208 324" fill="none" stroke="#4D57B7" stroke-opacity="0.5" stroke-width="3.5" stroke-linecap="round"/>
+      
+      <path d="M200 112 C292 112 322 170 318 232 C314 300 268 344 200 344 C132 344 86 300 82 232 C78 170 108 112 200 112 Z" fill="none" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M200 170 C178 144 116 144 112 200 C108 250 160 268 200 248 C240 268 292 250 288 200 C284 144 222 144 200 170 Z" fill="#DCE3FF"/>
+      <ellipse cx="116" cy="246" rx="15" ry="8.5" fill="#F5DDD3" opacity="0.9"/>
+      <ellipse cx="284" cy="246" rx="15" ry="8.5" fill="#F5DDD3" opacity="0.9"/>
+      <circle cx="160" cy="204" r="32" fill="#F7F3EC" stroke="#343996" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="163" cy="206" r="17" fill="#343996"/>
+      <circle cx="169.46" cy="198.86" r="6.12" fill="#F7F3EC"/>
+      <circle cx="156.2" cy="212.12" r="2.55" fill="#F7F3EC"/>
+      <circle cx="240" cy="204" r="32" fill="#F7F3EC" stroke="#343996" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="237" cy="206" r="17" fill="#343996"/>
+      <circle cx="243.46" cy="198.86" r="6.12" fill="#F7F3EC"/>
+      <circle cx="230.2" cy="212.12" r="2.55" fill="#F7F3EC"/>
+      
+      <path d="M191 238 Q200 233 209 238 Q205 249 200 253 Q195 249 191 238 Z" fill="#EBB353" stroke="#6C4302" stroke-width="3" stroke-linejoin="round"/>
+      
+      <g transform="translate(0 0) rotate(0 102 246)"><path d="M96 236 C70 252 64 292 82 308 C100 300 112 278 112 254 Z" fill="#4D57B7" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M90 268 Q86 284 90 298" fill="none" stroke="#343996" stroke-opacity="0.4" stroke-width="3.5" stroke-linecap="round"/></g><g transform="translate(0 0) rotate(0 298 246)"><path d="M304 236 C330 252 336 292 318 308 C300 300 288 278 288 254 Z" fill="#4D57B7" stroke="#343996" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><path d="M310 268 Q314 284 310 298" fill="none" stroke="#343996" stroke-opacity="0.4" stroke-width="3.5" stroke-linecap="round"/></g>
+      <g transform="translate(0 0) rotate(-6 200 112)">
+    <path d="M148 114 Q200 102 252 114 L248 136 Q200 126 152 136 Z" fill="#2A2420" stroke="#2A2420" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M200 68 L286 96 L200 124 L114 96 Z" fill="#2A2420" stroke="#2A2420" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M200 76 L262 96 L200 116 L138 96 Z" fill="#3E3731"/>
+    <path d="M200 96 Q246 94 280 100 L280 134" fill="none" stroke="#EBB353" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="200" cy="96" r="6" fill="#EBB353" stroke="#6C4302" stroke-width="2.5"/>
+    <rect x="273" y="130" width="14" height="22" rx="5" fill="#EBB353" stroke="#6C4302" stroke-width="3"/>
+  </g>
+    </g>
+    </g>
+  </svg></svg>
