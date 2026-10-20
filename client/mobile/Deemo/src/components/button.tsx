@@ -11,10 +11,11 @@ type Props = {
   variant?: "primary" | "secondary" | "premium"; // premium: the gold-on-ink of the Premium card, for Try Premium only
   disabled?: boolean;
   busy?: boolean; // working on it: stays put, reads as busy
+  layered?: boolean;
   leading?: ReactNode;
 };
 
-export function Button({ label, onPress, variant = "primary", disabled, busy, leading }: Props) {
+export function Button({ label, onPress, variant = "primary", disabled, busy, layered = true, leading }: Props) {
   const sheen = `sheen${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const bg = variant === "secondary" ? colors.sand : colors.ink;
   const inactive = disabled && !busy;
@@ -22,6 +23,7 @@ export function Button({ label, onPress, variant = "primary", disabled, busy, le
   const depth = variant === "secondary" ? colors.sandDepth : variant === "premium" ? colors.goldInk : colors.inkDepth;
   return (
     <PressableScale
+      layered={layered}
       accessibilityRole="button"
       busy={busy}
       disabled={disabled}

@@ -291,6 +291,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
                     <PressableScale
+                      layered
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
                       style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
@@ -300,6 +301,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                     </PressableScale>
                     {group ? (
                       <PressableScale
+                        layered
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
                         style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
@@ -313,6 +315,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 </>
               )}
               <PressableScale
+                layered
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}

@@ -188,7 +188,7 @@ export function Session() {
               onSubmitEditing={send}
               accessibilityLabel="Typed answer"
             />
-            <PressableScale accessibilityRole="button" accessibilityLabel="Send answer" onPress={send} style={styles.sendBtn}>
+            <PressableScale layered accessibilityRole="button" accessibilityLabel="Send answer" onPress={send} style={styles.sendBtn}>
               <Icon name="arrow_upward" size={20} color={colors.paper} />
             </PressableScale>
           </View>

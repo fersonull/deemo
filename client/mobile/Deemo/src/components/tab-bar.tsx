@@ -121,7 +121,7 @@ function PracticeButton() {
       </Animated.View>
       {/* paper halo = the prototype's 6px box-shadow ring */}
       <Blob width={78} height={70} color={colors.paper}>
-        <Blob width={66} height={58} style={styles.practiceFace}>
+        <Blob width={66} height={58}>
           <Icon name="mic" size={28} color={colors.paper} filled />
         </Blob>
       </Blob>
@@ -143,8 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingHorizontal: 8,
   },
-  tab: { width: 56, height: 56, borderRadius: 18, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center", gap: 2 },
-  practiceFace: { boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 0, color: colors.duskInk }] },
+  tab: { width: 56, height: 56, alignItems: "center", justifyContent: "center", gap: 2 },
   label: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10 },
   // Raised well above the row, so Practice reads as the main action rather than a fifth tab.
   practice: { transform: [{ translateY: -26 }] },

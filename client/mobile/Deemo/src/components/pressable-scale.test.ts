@@ -43,7 +43,7 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     const label = element("Text", { children: "Continue" });
     const render = (props = {}) => {
       cursor = 0; effects = [];
-      const component = PressableScale({ children: label, ...props });
+      const component = PressableScale({ children: label, layered: true, ...props });
       const tree = component.type(component.props);
       effects.forEach(effect => effect());
       return tree;
@@ -86,10 +86,28 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     reduced = true; tree = render(); tree.props.onPressIn({}); tree.props.onPressOut({});
     assert.equal(timings.at(-1).duration, 0);
     assert.equal(timings.at(-2).duration, 0);
+    reduced = false;
+    tree = render({ layered: undefined, style: card });
+    assert.equal(surface(tree).boxShadow, undefined, "ordinary cards/rows/links are flat by default");
+    assert.equal(surface(tree).backgroundColor, undefined, "flat controls keep the caller's surface");
+    assert.equal(surface(tree).marginBottom, undefined, "flat controls do not add space for a lower layer");
+    assert.equal(surface(tree).elevation, undefined);
+    tree.props.onPressIn({});
+    assert.deepEqual(offset(tree)[0], { translateY: -26 }, "flat navigation keeps its existing transform");
+    assert.equal(offset(tree).at(-1).scale, 0.97, "flat touch feedback scales instead of settling into depth");
+    tree.props.onPressOut({});
+    reduced = true;
+    tree = render({ layered: false, style: { opacity: 0.5 } });
+    tree.props.onPressIn({});
+    assert.equal(offset(tree).at(-1).scale, 1);
+    assert.equal(tree.props.style[2].compute().opacity, 0.5 * 0.85);
+    tree.props.onPressOut({});
     for (const variant of ["primary", "secondary", "premium"]) {
       const disabled = Button({ label: "Continue", disabled: true, variant });
       const enabled = Button({ label: "Continue", variant });
       const busy = Button({ label: "Saving…", busy: true, disabled: true, variant, leading: "icon" });
+      assert.equal(enabled.props.layered, true, "main buttons explicitly opt into depth");
+      assert.equal(Button({ label: "Sign out", variant, layered: false }).props.layered, false);
       assert.equal(busy.props.children[1], null);
       assert.equal(busy.props.children[2].props.children, "Saving…");
       assert.notEqual(enabled.props.children[2].key, disabled.props.children[2].key, "color changes recreate native text");

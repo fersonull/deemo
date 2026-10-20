@@ -54,6 +54,7 @@ export function Projects() {
     <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
       {/* Actions first, so a long list never pushes them out of reach. */}
       <PressableScale
+        layered
         accessibilityRole="button"
         accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
         onPress={() => setSheet(locked ? "upsell" : "upload")}

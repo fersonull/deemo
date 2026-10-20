@@ -10,7 +10,7 @@ type Props = { label: string; icon?: string; onPress: () => void; style?: ViewSt
 // The prototype's "Start practice" pill: ink, with the panel's pebble holding the icon (Home, empty History).
 export function StartButton({ label, icon = "mic", onPress, style }: Props) {
   return (
-    <PressableScale accessibilityRole="button" onPress={onPress} style={[styles.start, style]} depthColor={colors.inkDepth}>
+    <PressableScale layered accessibilityRole="button" onPress={onPress} style={[styles.start, style]} depthColor={colors.inkDepth}>
       <Text style={[type.button, styles.label]}>{label}</Text>
       <Blob width={44} height={44}>
         <Icon name={icon} size={22} color={colors.paper} filled />

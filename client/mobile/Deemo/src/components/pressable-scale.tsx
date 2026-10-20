@@ -9,7 +9,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 type Props = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
   depthColor?: string;
-  layered?: boolean; // SVG silhouettes draw their own matching lower layer.
+  layered?: boolean; // Main actions opt in; navigation, cards and links stay flat.
   busy?: boolean;
   entering?: ComponentProps<typeof AnimatedPressable>["entering"]; // e.g. a list's stagger
   children?: ReactNode;
@@ -26,7 +26,7 @@ export function PressableScale({ entering, ...props }: Props) {
   );
 }
 
-function Pressed({ style, depthColor, layered = true, busy, accessibilityState, onPressIn, onPressOut,
+function Pressed({ style, depthColor, layered = false, busy, accessibilityState, onPressIn, onPressOut,
   onFocus, onBlur, onHoverIn, onHoverOut, disabled, children, ...rest }: Omit<Props, "entering">) {
   const reduced = useReducedMotion();
   const pressed = useSharedValue(0);
@@ -47,18 +47,21 @@ function Pressed({ style, depthColor, layered = true, busy, accessibilityState, 
     if (blocked) pressed.set(0);
   }, [blocked, pressed]);
   const feedback = useAnimatedStyle(() => ({
-    transform: typeof transform === "string" ? transform : [...(transform ?? []),
-      { translateX: blocked || !layered ? 0 : pressed.value }, { translateY: blocked ? 0 : pressed.value * 3 }],
+    transform: typeof transform === "string" ? transform : [...(transform ?? []), ...(layered
+      ? [{ translateX: blocked ? 0 : pressed.value }, { translateY: blocked ? 0 : pressed.value * 3 }]
+      : [{ scale: reduced || blocked ? 1 : 1 - pressed.value * 0.03 }])],
+    opacity: !layered && reduced && !blocked && (flat.opacity === undefined || typeof flat.opacity === "number")
+      ? (flat.opacity ?? 1) * (1 - pressed.value * 0.15) : flat.opacity ?? 1,
   }));
   const surface: ViewStyle = layered ? {
     backgroundColor: flat.backgroundColor ?? colors.paper,
     borderRadius: flat.borderRadius ?? radius.md,
     marginBottom: flat.marginBottom ?? 4,
     boxShadow: inactive ? [] : [{ offsetX: depressed ? 0 : 1, offsetY: depressed ? 1 : hovered && !blocked ? 5 : 4, blurRadius: 0, color: depth }],
-    outlineWidth: focused && !blocked ? 2 : 0,
-    outlineOffset: 3,
-    outlineColor: colors.dusk,
   } : {};
+  surface.outlineWidth = focused && !blocked ? 2 : 0;
+  surface.outlineOffset = 3;
+  surface.outlineColor = colors.dusk;
   // shortcut: Android 7–8 has no boxShadow; use platform elevation until the minimum is Android 9+.
   if (layered && Platform.OS === "android" && Number(Platform.Version) < 28) surface.elevation = inactive ? 0 : depressed ? 1 : 3;
   return (

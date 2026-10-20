@@ -223,7 +223,7 @@ export function Profile() {
       </View>
 
       <View style={styles.signOut}>
-        <Button variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
+        <Button layered={false} variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
       </View>
 
       <UpsellSheet
@@ -311,6 +311,7 @@ export function Profile() {
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PressableScale
+          layered
           accessibilityRole="button"
           accessibilityState={{ disabled: deleting, busy: deleting }}
           disabled={deleting}
