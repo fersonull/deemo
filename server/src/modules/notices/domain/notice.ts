@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { Prisma } from "../../../../generated/prisma/client";
 import { COURSES } from "../../identity/domain/course";
 
+export const DeleteNoticesInput = z.object({ ids: z.array(z.uuid()).min(1).max(100).transform((ids) => [...new Set(ids)]) }).strict();
+
 // Who a filtered notice goes to: every filter set must match (AND). Resolved into notice_recipients when it's sent,
 // so the audience is the students who matched then, not whoever matches later. No email-verification filter:
 // unverified students can't reach any signed-in route (identity/http/gates.ts), so they could never read it.

@@ -1,7 +1,14 @@
 import { expect, test } from "bun:test";
-import { NoticeInput, sameNotice, Segment, segmentText, segmentWhere, visibleTo } from "./notice";
+import { DeleteNoticesInput, NoticeInput, sameNotice, Segment, segmentText, segmentWhere, visibleTo } from "./notice";
 
 const input = { id: crypto.randomUUID(), title: "Update", body: "Practice resumes at 3 PM.", targetId: "student-a" };
+
+test("bulk deletion requires a bounded explicit selection of notice IDs", () => {
+  expect(DeleteNoticesInput.parse({ ids: [input.id, input.id] }).ids).toEqual([input.id]);
+  for (const bad of [{}, { ids: [] }, { ids: ["all"] }, { ids: Array(101).fill(input.id) }, { ids: [input.id], all: true }]) {
+    expect(DeleteNoticesInput.safeParse(bad).success).toBe(false);
+  }
+});
 
 test("a student sees broadcasts, their own notices and filtered notices they were sent", () => {
   expect(visibleTo("student-a")).toEqual({

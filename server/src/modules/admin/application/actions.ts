@@ -18,7 +18,8 @@ export type AdminActionKind =
   | "session_rescored"
   | "admin_granted"
   | "admin_revoked"
-  | "notice_sent";
+  | "notice_sent"
+  | "notice_deleted";
 
 export const AUDIT_PAGE_SIZE = 25;
 

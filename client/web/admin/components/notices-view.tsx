@@ -10,6 +10,15 @@ import { FilterSelect, LoadError } from "@/components/list-controls"
 import { Pager } from "@/components/pager"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -59,6 +68,55 @@ export function NoticesView() {
   const [page, setPage] = useState(1)
   const requestId = useRef<string | null>(null)
   const sent = useAdminData<SentNoticePage>(`/admin/notices?page=${page}`)
+  const [selected, setSelected] = useState<string[]>([])
+  const [removing, setRemoving] = useState<string[]>([])
+  const [deleting, setDeleting] = useState(false)
+  const deletePending = useRef(false)
+  const [deleteError, setDeleteError] = useState("")
+  const selectedIds =
+    sent.data?.notices
+      .filter((n) => selected.includes(n.id))
+      .map((n) => n.id) ?? []
+  const confirmDelete = (ids: string[]) => {
+    setDeleteError("")
+    setRemoving(ids)
+  }
+  const remove = async () => {
+    if (!removing.length || deletePending.current) return
+    deletePending.current = true
+    setDeleting(true)
+    setDeleteError("")
+    try {
+      const result = await adminApi<{ deleted: number }>("/admin/notices", {
+        method: "DELETE",
+        body: { ids: removing },
+      })
+      toast.success(
+        `${result.deleted} ${result.deleted === 1 ? "notice" : "notices"} deleted.`
+      )
+      setRemoving([])
+      setSelected([])
+      setPage(
+        Math.min(
+          page,
+          Math.max(
+            1,
+            Math.ceil(((sent.data?.total ?? 0) - result.deleted) / 25)
+          )
+        )
+      )
+      sent.reload()
+    } catch (e) {
+      setDeleteError(
+        e instanceof Error
+          ? e.message
+          : "Couldn't delete these notices. Try again."
+      )
+    } finally {
+      deletePending.current = false
+      setDeleting(false)
+    }
+  }
   useEffect(() => {
     const timer = setTimeout(() => setSearch(query.trim()), 200)
     return () => clearTimeout(timer)
@@ -156,6 +214,7 @@ export function NoticesView() {
       setTitle("")
       setBody("")
       setPage(1)
+      setSelected([])
       sent.reload()
     } catch (e) {
       const message =
@@ -174,9 +233,9 @@ export function NoticesView() {
           Notices
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Send an update to everyone, a filtered group, or one student. Open apps receive it live;
-          notices stay in the inbox. During practice, delivery waits until the
-          session ends.
+          Send an update to everyone, a filtered group, or one student. Open
+          apps receive it live; notices stay in the inbox. During practice,
+          delivery waits until the session ends.
         </p>
       </header>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -277,8 +336,7 @@ export function NoticesView() {
                 <p className="text-sm" aria-live="polite">
                   {!hasFilter(segment) ? (
                     <span className="text-muted-foreground">
-                      Pick at least one filter. Students must match all of
-                      them.
+                      Pick at least one filter. Students must match all of them.
                     </span>
                   ) : count === null ? (
                     <span className="text-muted-foreground">Counting…</span>
@@ -441,8 +499,7 @@ export function NoticesView() {
         </form>
         <aside className="flex flex-col gap-3">
           <h3 className="text-sm font-semibold">Preview</h3>
-          {/* Mirrors the app's floating notice (client/mobile/Deemo/src/components/floating-notice.tsx): Deemo at
-              the screen edge with the title in a bubble, in the app's own colours whatever the admin theme. */}
+          {/* Inbox preview uses the app's own colours whatever the admin theme. */}
           <div className="relative h-72 overflow-hidden rounded-[28px] border-[6px] border-[#2A2420] bg-[#F7F3EC]">
             <div className="mx-auto mt-3 h-4 w-20 rounded-full bg-[#2A2420]" />
             <div className="mx-4 mt-6 space-y-2" aria-hidden>
@@ -450,16 +507,22 @@ export function NoticesView() {
               <div className="h-16 rounded-2xl bg-[#EDE5D8]" />
               <div className="h-16 rounded-2xl bg-[#EDE5D8]" />
             </div>
-            <div className="absolute top-24 right-2.5 flex items-center gap-2">
-              <div className="relative max-w-[200px] rounded-full bg-[#2A2420] px-4 py-2.5 shadow-[0_6px_18px_rgba(42,36,32,0.22)]">
-                <p className="truncate text-sm font-medium text-[#F7F3EC]">{title.trim() || "Your notice title"}</p>
-                <span className="absolute top-1/2 -right-1 size-3 -translate-y-1/2 rotate-45 bg-[#2A2420]" />
+            <div className="absolute inset-x-3 top-24 rounded-2xl bg-[#EDE5D8] p-4">
+              <p className="mb-2 text-xs font-semibold text-[#2A2420]">
+                DEEMO · Inbox
+              </p>
+              <p className="line-clamp-2 text-sm font-semibold text-[#2A2420]">
+                {title.trim() || "Your notice title"}
+              </p>
+              <div className="mt-2 line-clamp-3 text-sm whitespace-pre-wrap text-[#2A2420]">
+                {body.trim() || "Your message will appear here."}
               </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/deemo-mark.svg" alt="" className="size-[60px] shrink-0 rounded-full border-[2.5px] border-[#F7F3EC] shadow-[0_6px_18px_rgba(42,36,32,0.25)]" />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">To: {target}. Students see only the title here; tapping Deemo opens the full message.</p>
+          <p className="text-xs text-muted-foreground">
+            To: {target}. Students open notices from their inbox or push
+            notifications.
+          </p>
           <p className="text-xs leading-relaxed text-muted-foreground">
             Closing the app stops live delivery. Students see missed notices
             when they return. Sending a notice also records an entry in the
@@ -470,7 +533,12 @@ export function NoticesView() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-heading text-lg font-semibold">Sent notices</h3>
-          <Button variant="outline" size="sm" onClick={sent.reload}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={deleting}
+            onClick={sent.reload}
+          >
             Refresh
           </Button>
         </div>
@@ -490,53 +558,164 @@ export function NoticesView() {
                 No notices sent yet.
               </p>
             ) : (
-              <ul className="divide-y border">
-                {sent.data.notices.map((n) => (
-                  <li key={n.id} className="flex flex-col gap-2 p-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm break-words">{n.title}</strong>
-                      <Badge variant="outline">
-                        {n.targetId
-                          ? "One student"
-                          : n.segment
-                            ? "Filtered"
-                            : "Everyone"}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDayTime(n.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-sm break-words whitespace-pre-wrap text-muted-foreground">
-                      {n.body}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {n.target ? (
-                        <Link
-                          className="underline underline-offset-4"
-                          href={`/users/${encodeURIComponent(n.target.id)}`}
+              <>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      disabled={deleting}
+                      checked={selectedIds.length === sent.data.notices.length}
+                      onChange={(e) =>
+                        setSelected(
+                          e.target.checked
+                            ? sent.data!.notices.map((n) => n.id)
+                            : []
+                        )
+                      }
+                    />
+                    Select this page
+                  </label>
+                  <span
+                    className="text-sm text-muted-foreground"
+                    aria-live="polite"
+                  >
+                    {selectedIds.length} selected
+                  </span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleting || !selectedIds.length}
+                    onClick={() => confirmDelete(selectedIds)}
+                  >
+                    Delete selected
+                  </Button>
+                  {selectedIds.length ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={deleting}
+                      onClick={() => setSelected([])}
+                    >
+                      Clear selection
+                    </Button>
+                  ) : null}
+                </div>
+                <ul className="divide-y border">
+                  {sent.data.notices.map((n) => (
+                    <li key={n.id} className="flex flex-col gap-2 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select notice: ${n.title}`}
+                          disabled={deleting}
+                          checked={selectedIds.includes(n.id)}
+                          onChange={(e) =>
+                            setSelected((ids) =>
+                              e.target.checked
+                                ? [...ids, n.id]
+                                : ids.filter((id) => id !== n.id)
+                            )
+                          }
+                        />
+                        <strong className="text-sm break-words">
+                          {n.title}
+                        </strong>
+                        <Badge variant="outline">
+                          {n.targetId
+                            ? "One student"
+                            : n.segment
+                              ? "Filtered"
+                              : "Everyone"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDayTime(n.createdAt)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleting}
+                          className="ml-auto text-destructive"
+                          onClick={() => confirmDelete([n.id])}
+                          aria-label={`Delete notice: ${n.title}`}
                         >
-                          {n.target.name ?? n.target.email ?? n.target.id}
-                        </Link>
-                      ) : n.segment ? (
-                        `${describeSegment(n.segment)} · Sent to ${n.recipientCount}`
-                      ) : (
-                        "All students"
-                      )}{" "}
-                      · Read by {n.readCount}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+                          Delete
+                        </Button>
+                      </div>
+                      <p className="text-sm break-words whitespace-pre-wrap text-muted-foreground">
+                        {n.body}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {n.target ? (
+                          <Link
+                            className="underline underline-offset-4"
+                            href={`/users/${encodeURIComponent(n.target.id)}`}
+                          >
+                            {n.target.name ?? n.target.email ?? n.target.id}
+                          </Link>
+                        ) : n.segment ? (
+                          `${describeSegment(n.segment)} · Sent to ${n.recipientCount}`
+                        ) : (
+                          "All students"
+                        )}{" "}
+                        · Read by {n.readCount}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
             <Pager
               page={sent.data.page}
               total={sent.data.total}
               pageSize={sent.data.pageSize}
-              onPage={setPage}
+              onPage={(next) => {
+                if (!deleting) {
+                  setSelected([])
+                  setPage(next)
+                }
+              }}
             />
           </>
         )}
       </section>
+      <AlertDialog
+        open={removing.length > 0}
+        onOpenChange={(open) => !open && !deleting && setRemoving([])}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete{" "}
+              {removing.length === 1
+                ? "this notice"
+                : `${removing.length} notices`}
+              ?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes{" "}
+              {removing.length === 1 ? "the notice" : "these notices"} from
+              student inboxes and deletes their read receipts. Audit entries
+              remain. Push notifications already delivered to phones cannot be
+              recalled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {deleteError}
+            </p>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={deleting}
+              onClick={() => void remove()}
+            >
+              {deleting ? "Deleting…" : "Delete permanently"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

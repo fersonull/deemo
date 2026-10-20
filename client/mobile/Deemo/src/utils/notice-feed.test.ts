@@ -42,3 +42,42 @@ test("failed reads keep the notice unread and errors can recover on refresh", as
   expect(feed.store.get().unread).toBe(1);
   expect(feed.store.get().notices[0]!.readAt).toBeNull();
 });
+
+test("refresh removes deleted notices from both the first page and loaded older pages", async () => {
+  let removed = false;
+  const ids = Array.from({ length: 35 }, (_, i) => String(i));
+  const feed = new NoticeFeed(async (before) => {
+    const live = removed ? ids.filter((id) => id !== "2" && id !== "32") : ids;
+    const start = before ? live.indexOf(before) + 1 : 0;
+    const rows = live.slice(start, start + 30);
+    return page(rows, start + 30 < live.length ? rows.at(-1)! : null);
+  }, async () => {});
+  await feed.refresh();
+  await feed.more();
+  expect(feed.store.get().notices).toHaveLength(35);
+  removed = true;
+  await feed.refresh();
+  expect(feed.store.get().notices.map((n) => n.id)).toEqual(ids.filter((id) => id !== "2" && id !== "32"));
+  expect(feed.store.get().nextCursor).toBeNull();
+});
+
+test("switching accounts during a multi-page refresh discards the old inbox", async () => {
+  let waiting = false;
+  let finish!: (value: NoticePage) => void;
+  const feed = new NoticeFeed(async (before) => {
+    if (!before) return page(Array.from({ length: 30 }, (_, i) => String(i)), "29");
+    if (waiting) return new Promise((resolve) => { finish = resolve; });
+    return page(["30"]);
+  }, async () => {});
+  feed.reset("a");
+  await feed.refresh();
+  await feed.more();
+  waiting = true;
+  const pending = feed.refresh();
+  await Promise.resolve();
+  feed.reset("b");
+  finish(page(["private-to-a"]));
+  await pending;
+  expect(feed.store.get().owner).toBe("b");
+  expect(feed.store.get().notices).toEqual([]);
+});

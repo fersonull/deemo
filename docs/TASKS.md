@@ -21,6 +21,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Planned features not built yet
 
+- [x] **Notice deletion and popup removal (2026-10-21, `codex/notice-management`):** removed the floating Deemo chat-head popup; kept inbox/counts/push. Admin supports single deletion, selected rows and select-this-page bulk deletion with confirmation and retry handling. Admin-only bounded UUID endpoint deletes notices/receipts/recipients transactionally and retains per-notice audit entries. Cross-server sync and loaded inbox refresh handle removals. 74 server / 108 mobile tests, all relevant types/lints and admin webpack build pass. No migration/native rebuild; live database/admin/phone acceptance pending (`docs/ADMIN_NOTICES.md`).
+
 - [x] **Flat press highlight removed and sign-out confirmation (2026-10-21, `codex/button-depth`):** removed the temporary bold highlight; flat text stays unchanged while pressed, with no scaling/dimming. Layered feedback remains. Profile Sign out opens a confirmation sheet with cancel, busy protection and retry feedback. 106 mobile tests, TypeScript and lint pass; JS only, phone verification pending.
 
 - [x] **Admin notices — implemented on `codex/admin-notices`, not merged:** broadcast or one student, composer preview/search, sent/read history and audit entry; persistent mobile inbox and banners; foreground SSE, held during practice. Unit/type/lint checks and admin webpack build pass. New additive migration not applied; acceptance checks below remain open. Setup: `docs/ADMIN_NOTICES.md`. **User explicitly requested no merge to dev yet.**

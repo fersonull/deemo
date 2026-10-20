@@ -12,7 +12,7 @@ import { PermissionsAndroid, Platform } from "react-native";
 import { api } from "@/utils/api";
 
 // Notices as phone notifications while the app is closed or in the background (server: notices/infrastructure/
-// push.ts). An open app gets no system notification; it shows the floating Deemo instead (notice-delivery.tsx).
+// push.ts). An open app gets no popup; notice-delivery.tsx keeps its inbox and unread count in sync.
 const json = (method: string, token: string) => ({
   method,
   headers: { "content-type": "application/json" },

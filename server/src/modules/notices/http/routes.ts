@@ -5,8 +5,8 @@ import { claimsOf } from "../../../shared/auth/authenticate";
 import { rateLimit } from "../../../shared/rate-limit";
 import { bodyOf, validate } from "../../../shared/validate";
 import { accountOf } from "../../identity/http/gates";
-import { audienceCount, dropPushToken, readNotice, savePushToken, sendNotice, sentNotices } from "../application/notices";
-import { AudienceInput, InboxQuery, NoticeId, NoticeInput } from "../domain/notice";
+import { audienceCount, deleteNotices, dropPushToken, readNotice, savePushToken, sendNotice, sentNotices } from "../application/notices";
+import { AudienceInput, DeleteNoticesInput, InboxQuery, NoticeId, NoticeInput } from "../domain/notice";
 import { PushTokenInput } from "../domain/push";
 import { inbox, noticeHub } from "../infrastructure/notice-repo";
 
@@ -48,6 +48,9 @@ export const adminNoticesRouter = Router();
 const Page = z.object({ page: z.coerce.number().int().min(1).max(10_000).default(1) });
 adminNoticesRouter.get("/admin/notices", validate({ query: Page }), async (_req, res) => {
   res.json(await sentNotices((res.locals.query as z.infer<typeof Page>).page));
+});
+adminNoticesRouter.delete("/admin/notices", validate({ body: DeleteNoticesInput }), async (req, res) => {
+  res.json(await deleteNotices(claimsOf(req), bodyOf(req, DeleteNoticesInput).ids));
 });
 adminNoticesRouter.post("/admin/notices", rateLimit("noticeSend", { who: (req) => claimsOf(req).uid }), validate({ body: NoticeInput }), async (req, res) => {
   res.status(201).json(await sendNotice(claimsOf(req), bodyOf(req, NoticeInput)));

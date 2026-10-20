@@ -1,42 +1,27 @@
 import { getAuth, getIdToken } from "@react-native-firebase/auth";
 import { fetch as streamFetch } from "expo/fetch";
-import { router, usePathname } from "expo-router";
+import { usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 
-import { FloatingNotice } from "@/components/floating-notice";
 import { API_URL } from "@/constants";
-import { notices, useNotices } from "@/hooks/use-notices";
+import { notices } from "@/hooks/use-notices";
 import { usePushNotices } from "@/hooks/use-push-notices";
 import { noticeFrames } from "@/utils/notice-stream";
 
 export function NoticeDelivery({ enabled }: { enabled: boolean }) {
   const path = usePathname();
   const [active, setActive] = useState(AppState.currentState === "active");
-  const state = useNotices();
   const held = path === "/session" || path === "/mic-check" || path === "/scoring";
   const uid = enabled ? getAuth().currentUser?.uid : undefined;
   usePushNotices(enabled && !!uid);
-  // Notices already waiting when the app opened (launch or back from the background) stay in the inbox; push
-  // notifications covered them. Only ones that arrive while the app is open float in as Deemo.
-  const [waiting, setWaiting] = useState<{ uid: string; ids: Set<string> } | null>(null);
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (s) => {
       setActive(s === "active");
-      if (s !== "active") setWaiting(null);
     });
     return () => sub.remove();
   }, []);
-
-  useEffect(() => {
-    if (!uid || !active) return;
-    let live = true;
-    void notices.refresh().then(() => {
-      if (live) setWaiting({ uid, ids: new Set(notices.store.get().notices.map((n) => n.id)) });
-    });
-    return () => { live = false; };
-  }, [uid, active]);
 
   useEffect(() => { notices.reset(uid ?? null); }, [uid]);
 
@@ -81,16 +66,5 @@ export function NoticeDelivery({ enabled }: { enabled: boolean }) {
     return () => { stopped = true; controller?.abort(); if (timer) clearTimeout(timer); };
   }, [uid, active, held]);
 
-  const opened = waiting && waiting.uid === uid ? waiting.ids : null;
-  const unread = state.notices.filter((n) => !n.readAt && !state.dismissed.includes(n.id) && opened && !opened.has(n.id));
-  const current = unread[0];
-  if (!enabled || !active || held || state.owner !== uid || path.startsWith("/notice") || !current) return null;
-  return (
-    <FloatingNotice
-      title={current.title}
-      unread={unread.length}
-      onOpen={() => router.push({ pathname: "/notice", params: { id: current.id } })}
-      onDismiss={() => notices.dismiss(current.id)}
-    />
-  );
+  return null;
 }

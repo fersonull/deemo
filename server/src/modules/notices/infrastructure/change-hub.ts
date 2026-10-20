@@ -3,7 +3,7 @@ type Change = { key: string; targetId: string | null };
 // One DB scan per server, not per connected phone. Payloads contain no notice text or recipient identifiers.
 export class NoticeHub {
   private clients = new Map<() => void, string>();
-  private seen = new Set<string>();
+  private seen = new Map<string, Change>();
   private timer: ReturnType<typeof setInterval> | null = null;
   private scanning = false;
 
@@ -36,7 +36,10 @@ export class NoticeHub {
     try {
       const changes = await this.scan();
       const changed = changes.filter((c) => !this.seen.has(c.key));
-      this.seen = new Set(changes.map((c) => c.key));
+      const current = new Map(changes.map((c) => [c.key, c]));
+      // Missing rows include deletions on other server instances (and harmless scan-window evictions).
+      changed.push(...[...this.seen.values()].filter((c) => !current.has(c.key)));
+      this.seen = current;
       if (changed.some((c) => c.targetId === null)) this.notify(null);
       else for (const uid of new Set(changed.map((c) => c.targetId))) this.notify(uid);
     } catch {

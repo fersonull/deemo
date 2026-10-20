@@ -1,6 +1,6 @@
 # Admin notices
 
-Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merge into dev until the user asks.**
+Notice management follow-up: `codex/notice-management`, based on `dev`. No new schema migration, native dependency or rebuild is needed for deletion or removal of the floating Deemo popup. **Do not merge into dev until the user asks.** Earlier branch/rebuild notes below describe the original feature work.
 
 ## Run it
 
@@ -8,7 +8,16 @@ Implemented on `codex/admin-notices`, based on `dev` at `0f8f7ce`. **Do not merg
 2. Restart the server and the admin dev server. Reload the mobile app through Metro. There are no new dependencies or native changes, so a native rebuild is not needed.
 3. In the admin, open **Notices** (sidebar or `G`, then `N`), or open a student's detail page and choose **Send notice**.
 4. Choose everyone or search for a student by name/email. Enter a title (120 characters maximum) and plain-text message (2,000 characters maximum). Review the recipient and preview, then send.
-5. In the app, use the inbox button on Home or **Profile → Inbox**. Opening a notice marks it read. Dismissing its banner hides that banner for the current sign-in/launch; it stays unread in the inbox.
+5. In the app, use the inbox button on Home or **Profile → Inbox**. Opening a notice marks it read. The chat-head Deemo popup has been removed, including on launch and while the app is open. Inbox unread counts and background push notifications remain.
+6. In **Sent notices**, use **Delete** for one notice, or check rows / **Select this page** and choose **Delete selected**. Selection is limited to the current page (25 notices); changing pages clears it. Confirm permanent deletion in the dialog, or cancel. Errors keep the dialog open for retry.
+
+## Deleting notices
+
+- `DELETE /admin/notices` accepts `{ ids: UUID[] }`, 1–100 explicit IDs; unknown fields and malformed IDs are rejected, duplicates are collapsed. Both single and bulk deletion use this admin-only endpoint. Missing/deleted IDs are harmless on retry.
+- Deletion and one `notice_deleted` audit entry per existing notice run in a serializable transaction. Existing foreign-key cascades remove read receipts and fixed recipients. Audit rows remain and identify the deleted notice ID.
+- Connected inboxes refresh after deletion; the shared scan also detects removals by another server instance. Refresh replaces all loaded pages from fresh server results, retaining pagination while dropping removed notices. During practice, catch-up still waits until leaving the session.
+- Deletion cannot recall push notifications already delivered or in flight. Opening a deleted notice shows the existing unavailable-message screen.
+- This follow-up was checked with mocked persistence and unit/type/lint checks; live database cascades, authenticated admin interactions and phone rendering still need acceptance testing. No real notices were deleted during development.
 
 ## Templates and filtered groups
 
@@ -38,7 +47,7 @@ Branch `feat/notice-push`, on top of `feat/notice-audiences`. **It needs a nativ
 - **What it looks like:** the notification shows the title and the first ~160 characters of the message. A push failure never fails the send, because the inbox has the notice anyway.
 - **Cleanup:** tokens FCM rejects for good (uninstalled app, rotated token) are deleted. Signing out deletes this phone's token first (`DELETE /notices/push-token`). A token that signs in to another account moves to it (upsert by token), and account deletion cascades.
 - **Tapping a notification:** it opens the notice screen (`/notice?id=`), from the background (`onNotificationOpenedApp`) or from a closed app (`getInitialNotification`, once per launch).
-- **App open:** there's no system notification while the app is open (the floating Deemo shows it), so a live session is never interrupted by one.
+- **App open:** there's no system notification or floating popup while the app is open. The inbox and unread counts update without interrupting practice.
 - **Icon and channel** (`client/mobile/Deemo/plugins/with-notice-notifications.js`, applied at prebuild):
   - **Status-bar icon:** a white owl silhouette, cut from the adaptive icon's monochrome layer, in five densities under `assets/notification/`.
   - **Accent colour:** dusk `#5A66C7`. `firebase.json` points RN Firebase's colour metadata at `@color/notification_icon_color`.
@@ -49,9 +58,9 @@ Branch `feat/notice-push`, on top of `feat/notice-audiences`. **It needs a nativ
 ## Delivery and storage
 
 - Only verified, signed-in students use the student API. The existing Firebase admin claim protects composing and sent history. No tokens are put into URLs.
-- Notices and individual read receipts live in PostgreSQL. Broadcast notices are visible to all signed-in students, including users who open the app later; targeted notices are visible only to their recipient. Missed notices remain in the inbox. There are no OS notifications or closed-app/background delivery.
+- Notices and individual read receipts live in PostgreSQL. Broadcast notices are visible to all signed-in students, including users who open the app later; targeted notices are visible only to their recipient. Missed notices remain in the inbox; background/closed-app delivery uses FCM as described above.
 - An authenticated `expo/fetch` SSE connection runs only while the app is active. It is closed during mic check, a live session (including paused/reconnecting), and scoring. Returning to a normal screen refreshes the inbox and reconnects. No banner appears during practice.
-- An in-process send triggers an immediate inbox invalidation. One shared scan per server every two seconds covers notices and read receipts written through another instance, rather than polling once per phone. The scan runs only while subscribers exist and reads the latest 200 notice and receipt rows. At a volume exceeding that between scans, use a durable change feed/outbox instead; a reconnect always refreshes the inbox independently of the scan.
+- An in-process send or deletion triggers an immediate inbox invalidation. One shared scan per server every two seconds covers notices and read receipts added or removed through another instance, rather than polling once per phone. The scan runs only while subscribers exist and reads the latest 200 notice and receipt rows. At a volume exceeding that between scans, use a durable change feed/outbox instead; a reconnect always refreshes the inbox independently of the scan.
 - SSE frames contain only `sync`, never the message, user identifiers or credentials. The REST inbox query enforces the audience. Connections end after a minute and reconnect with a current Firebase token, bounding access after account revocation; heartbeat comments run every 15 seconds. Reconnect errors back off to 30 seconds.
 - The mobile store ignores responses from an earlier account, shares in-flight requests, merges paginated results and retains older loaded items on refresh. The inbox loads 30 notices at a time; admin history loads 25.
 - The composer retains a request UUID when retrying an uncertain send. The server accepts the same admin/content/audience once, rejects reuse with changed content, and records `notice_sent` in the existing audit log in the same transaction. Sending is limited to 10 requests/minute per admin.
@@ -64,6 +73,7 @@ Branch `feat/notice-push`, on top of `feat/notice-audiences`. **It needs a nativ
 |---|---|---|---|
 | GET | `/admin/notices?page=1` | Admin | Sent history and read counts |
 | POST | `/admin/notices` | Admin | `{ id: UUID, title, body, targetId: UID or null, segment?: { plan?, joined?, course?, practice? } or null }` (not both a target and a segment) |
+| DELETE | `/admin/notices` | Admin | `{ ids: UUID[] }`, 1–100 explicit IDs; returns `{ deleted: number }` |
 | POST | `/admin/notices/audience` | Admin | `{ segment }` → `{ count }`, the students those filters reach now |
 | GET | `/notices?before=UUID` | Verified student | Own inbox page, unread count, next cursor |
 | POST | `/notices/:id/read` | Verified recipient | Idempotent read receipt; another student's private ID returns 404 |
@@ -85,16 +95,18 @@ The normal `/api` prefix is supported. Keep streaming unbuffered in any reverse 
 Use disposable student accounts; avoid broadcasting test text to real students. Run broadcasts in an isolated test database/environment.
 
 - [ ] Apply the migration to a test database and open the admin as an actual admin.
-- [ ] Send a private notice to student A; see its banner promptly and find it in A's inbox. Student B must see neither the notice nor its unread count; an attempted read with A's notice ID must return 404.
+- [ ] Send a private notice to student A; find it in A's inbox and unread count without a popup. Student B must see neither the notice nor its unread count; an attempted read with A's notice ID must return 404.
 - [ ] Send a broadcast; both test students see it. Reopen the app after a missed notice and verify it is fetched.
-- [ ] Read a notice, refresh/relaunch and verify its read state and admin read count. Confirm banner dismissal alone leaves it unread.
+- [ ] Read a notice, refresh/relaunch and verify its read state and admin read count. Launch/resume and receive a new notice while open: no floating Deemo popup.
 - [ ] Send during mic check, presentation, Q&A, pause/reconnect and scoring. Nothing interrupts the practice; the notice appears after returning to a normal screen.
-- [ ] Background/close the app: no OS notification; return and catch up. Drop/recover the network and check retry without restarting the app.
+- [ ] Background/close the app: receive the configured FCM notification; return and catch up. Drop/recover the network and check retry without restarting the app.
 - [ ] Switch accounts while an inbox request is in flight; no previous account's message appears. Load more than 30 notices, read an older one and receive a new notice without losing the older rows.
 - [ ] Retry an uncertain send and confirm one stored notice and one audit row. Confirm a student token cannot POST `/admin/notices`.
 - [ ] Check two server processes against the test database and the actual proxy for cross-instance updates and unbuffered SSE.
 - [ ] Apply `20261017180000_notice_segments`, send to a filtered group (e.g. Plan: Free + Practice: Never) and check that only matching test students get it, that the composer count matches **Sent to N**, and that a student who matches afterwards doesn't see it.
-- [ ] After the native rebuild, apply `20261017200000_push_tokens` and allow notifications. With the app closed, send a private notice and a broadcast: both arrive in the tray, and tapping opens that notice. Also check: with the app open, there's no system notification (only the floating Deemo); after signing out, no more notifications arrive; after uninstalling, the token row disappears on the next send.
-- [ ] Check inbox scrolling, expanded long messages, large font sizes, banner close target and safe-area placement on the phone.
+- [ ] After the original push native rebuild, apply `20261017200000_push_tokens` and allow notifications. With the app closed, send a private notice and a broadcast: both arrive in the tray, and tapping opens that notice. With the app open, there's no system notification or floating popup; after signing out, no more notifications arrive; after uninstalling, the token row disappears on the next send.
+- [ ] Check inbox scrolling, expanded long messages and large font sizes on the phone.
+- [ ] Delete one notice, a selected subset and a full admin page. Cancel once; simulate a failed request and retry. Confirm selections clear on page changes and deleting the last page returns to a valid page. Student tokens must not be allowed to delete notices.
+- [ ] With more than 30 inbox notices loaded, delete first-page and older entries; refresh removes them and unread counts update. Verify read/recipient cascades and persistent audit entries in a disposable database; repeat through two server instances. A previously delivered push for a deleted notice should open the unavailable-message screen.
 
 These are feature acceptance checks, not a claim of completed device or database integration testing.

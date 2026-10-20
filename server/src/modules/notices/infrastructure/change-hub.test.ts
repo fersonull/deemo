@@ -20,8 +20,14 @@ test("cross-instance scans notify only the recipient, broadcast once, and synchr
     rows.push({ key: "read:b", targetId: "b" });
     await hub.poll();
     expect([a, b]).toEqual([2, 2]);
+    rows = rows.filter((r) => r.key !== "private");
+    await hub.poll();
+    expect([a, b]).toEqual([3, 2]);
+    rows = rows.filter((r) => r.key !== "broadcast");
+    await hub.poll();
+    expect([a, b]).toEqual([4, 3]);
     offA();
     hub.notify(null);
-    expect([a, b]).toEqual([2, 3]);
+    expect([a, b]).toEqual([4, 4]);
   } finally { offA(); offB(); }
 });

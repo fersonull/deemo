@@ -95,6 +95,7 @@ export type AdminAction = {
     | "admin_granted"
     | "admin_revoked"
     | "notice_sent"
+    | "notice_deleted"
   targetId: string
   targetEmail: string | null
   createdAt: string

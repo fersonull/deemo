@@ -10,14 +10,14 @@ import { Screen } from "@/components/screen";
 import { notices, useNotices } from "@/hooks/use-notices";
 import { colors, type } from "@/theme";
 
-// One notice, in full. Opened from the inbox or straight from the floating Deemo; opening it marks it read.
+// One notice, in full. Opened from the inbox or a push notification; opening it marks it read.
 export function Notice() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const state = useNotices();
   const notice = state.notices.find((n) => n.id === id);
   const [readError, setReadError] = useState("");
 
-  // Arriving from the floating Deemo before the inbox has loaded: fetch once, then show it (or say it's gone).
+  // Arriving from a push before the inbox has loaded: fetch once, then show it (or say it's gone).
   const tried = useRef(false);
   useEffect(() => {
     if (notice || tried.current) return;

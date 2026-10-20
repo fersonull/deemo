@@ -34,6 +34,7 @@ const LABELS: Record<
   admin_granted: { label: "Admin access given" },
   admin_revoked: { label: "Admin access removed", destructive: true },
   notice_sent: { label: "Notice sent" },
+  notice_deleted: { label: "Notice deleted", destructive: true },
 }
 
 // Every change an admin made, newest first, 25 to a page (from the server).
@@ -110,6 +111,7 @@ export function AuditView() {
                           </Link>
                         ) : [
                             "account_deleted",
+                            "notice_deleted",
                             "admin_granted",
                             "admin_revoked",
                           ].includes(a.action) ? (

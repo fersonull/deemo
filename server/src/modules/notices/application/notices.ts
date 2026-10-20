@@ -47,6 +47,18 @@ export async function readNotice(uid: string, id: string) {
   noticeHub.notify(uid);
 }
 
+export async function deleteNotices(admin: AuthClaims, ids: string[]) {
+  const deleted = await withSerializable(async (tx) => {
+    const rows = await tx.notice.findMany({ where: { id: { in: ids } }, select: { id: true } });
+    const result = await tx.notice.deleteMany({ where: { id: { in: rows.map((n) => n.id) } } });
+    // Recipient and read rows cascade; audit entries survive deletion of the notice.
+    for (const row of rows) await record(admin, "notice_deleted", { id: row.id, email: null }, tx);
+    return result.count;
+  });
+  if (deleted) noticeHub.notify(null);
+  return { deleted };
+}
+
 export async function sentNotices(page: number) {
   const [total, notices] = await Promise.all([
     prisma.notice.count(),
