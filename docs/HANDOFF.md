@@ -2,9 +2,11 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-19 (History filter loading skeletons)_
+_Last updated: 2026-10-20 (GitHub release-notes draft)_
 
 ## Current state
+
+- **GitHub release notes (uncommitted on `preview`):** `docs/RELEASE_NOTES.md` is a short, user-requested summary of the main implemented features through `34ced95`, Premium demo, companion tools and essential limitations. Mobile checks rerun Oct 20: 105 tests, TypeScript and Expo lint pass. No APK built, release published, remote state fetched, billing confirmed or device test performed. The History skeleton work below is committed as `34ced95`; its older uncommitted wording is historical.
 
 - **History filter skeletons (uncommitted on `preview`):** initial loading and deferred stage/sort/date updates show the existing session-row skeleton instead of stale results. Stage changes also replace the summary/chart with placeholders; counts use a placeholder and range-empty text waits until the selected filters are applied. Filter and sort controls stay usable, including stages with zero sessions. Mobile TypeScript, Expo lint and diff checks pass. No new requests, delays, dependencies or native changes. Phone-check rapid filter changes and empty results; device verification remains pending.
 
@@ -43,6 +45,8 @@ _Last updated: 2026-10-19 (History filter loading skeletons)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Prepare the GitHub release:** review `docs/RELEASE_NOTES.md` against the intended signed APK and release revision; confirm paid Gemini billing, hosted API, target migrations and release Firebase/signing setup. Run the phone checks below, then update the notes' validation/limitations to match actual acceptance results before publishing. The current draft is documentation only and has not been published; no build or tag was created.
 
 **Verify History skeleton feedback:** reload Metro on `preview`, switch stages quickly and try sort/date changes with a long history. Confirm placeholders appear while results catch up, only matching counts/empty messages appear, and controls remain usable when a stage has no sessions. Check first load and reduced-motion skeletons too. This follow-up is uncommitted; the earlier interaction/keyboard fixes are committed as `fbb8b39`.
 
@@ -126,6 +130,8 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-20 | Shortened the release notes at the user's request to a feature summary with essential limitations. Documentation only; diff check passes. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |
+| 2026-10-20 | Drafted a complete GitHub release feature overview, plan comparison, companion-project coverage and known limitations. Rechecked mobile: 105 tests, TypeScript and lint pass. No build or publication. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-19 | Show skeletons while History's deferred filters update, including stage summary/chart and session count; suppress stale rows/empty messages while keeping filters usable. | `screens/history/index.tsx`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-19 | Committed the instant-interaction and Setup keyboard fixes and merged them into `preview` at the user's request. Automated checks pass; phone verification remains pending. No remote push or OTA publication. | `codex/instant-preferences` → `preview`; this commit, including handoff/tasks |
 | 2026-10-19 | Added keyboard avoidance around the scrolling practice Setup form so the group focus-area input can scroll above the keyboard. Uses the existing Sign-in pattern; JS only, phone verification pending. | `screens/setup/index.tsx`, handoff/tasks; uncommitted on `codex/instant-preferences` |

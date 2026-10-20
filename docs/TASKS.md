@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **GitHub release-notes draft (2026-10-20):** created `docs/RELEASE_NOTES.md`, then shortened it at the user's request to a summary of main features through `34ced95`, Premium demo, companion tools and essential limitations. Draft only; no APK build or GitHub publication.
+
 - [x] **History filter loading feedback (2026-10-19, uncommitted on `preview`):** reuse skeletons while stage/sort/date results catch up; stage summary/chart and counts use placeholders, stale empty messages wait, and filters remain usable. JS only; phone-check rapid changes, initial load and empty stages.
 
 - [x] **Setup focus-area keyboard avoidance (2026-10-19):** reused the Sign-in keyboard-avoidance wrapper around the scrolling Setup form. JS only; included in the user-requested `preview` merge. Phone verification remains pending.
