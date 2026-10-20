@@ -2,9 +2,13 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-21 (No press animation on flat controls)_
+_Last updated: 2026-10-21 (Flat feedback removed; sign-out confirmation retained)_
 
 ## Current state
+
+- **Uncommitted follow-up:** sign-out confirmation and the removal of bold flat feedback are staged on `codex/button-depth`; the signed commit failed because GPG pinentry timed out. Signing was not disabled. The unrelated Projects edit remains unstaged. Retry the signed commit once signing is available.
+
+- **Flat feedback removed; sign-out confirmation retained (`codex/button-depth`):** removed the temporary hold-to-bold effect at the user's request. Flat text retains its original weight throughout press/release. No scale/dim feedback; layered controls retain existing 3D feedback. Text colors, keys, heavier weights and icon components are preserved. Profile Sign out opens the existing Sheet with Sign out / Stay signed in; busy actions block dismissal/repeat taps, failures show retry text. 106 mobile tests, TypeScript and Expo lint pass. JS only; code checks only, no phone verification. An existing unrelated edit in `screens/projects/index.tsx` is left uncommitted and untouched.
 
 - **Flat controls no longer animate on press (`codex/button-depth`):** removed shared scale-down/release and reduced-motion dimming from non-layered `PressableScale` controls (e.g. Profile Course). Their original transforms and opacity remain unchanged while held; no timing animation is scheduled. Layered actions retain their 3D settling/release feedback. Existing custom press callbacks, selected states, keyboard focus, tap handlers and busy blocking remain. Extended the shared regression check to cover stationary flat controls and callback preservation; all 106 mobile tests, TypeScript, Expo lint and diff checks pass. JS only, no rebuild. Code-only verification remains the user's preference; phone rendering unverified.
 
@@ -65,6 +69,8 @@ _Last updated: 2026-10-21 (No press animation on flat controls)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Verify flat controls and sign-out sheet:** reload Metro; hold/release Course, auth prompts, Home flat cards and navigation labels. Text should retain its original weight with no shared highlight, scale or dimming. Layered actions should retain depth feedback. Profile Sign out must only open a sheet; Stay signed in/backdrop/Back cancel, confirmation signs out, failures allow retry. User requested code-only checks; phone appearance remains unverified. Keep the unrelated Projects edit out of this commit and do not merge/push.
 
 **Verify stationary flat controls:** reload Metro on `codex/button-depth`; hold/release Profile Course, auth mode prompt, Home brief/Defense Path/recent rows and Profile edits. They should neither shrink nor dim. Layered Sign out, History controls/cards/chart arrow and main action buttons should still settle on press and recover on release. Keep focus/taps/disabled behavior intact. No rebuild; no device check performed in this follow-up.
 
@@ -164,6 +170,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-21 | Removed the temporary hold-to-bold effect per the user's latest request; flat text remains unchanged on press. Added Profile sign-out confirmation with cancellation, busy protection and error recovery. 106 tests, types and lint pass. | `components/pressable-scale.tsx`, its regression test, `screens/profile/index.tsx`, handoff/tasks; this commit |
 | 2026-10-21 | Removed the shared press scale and reduced-motion dimming from flat controls while preserving 3D settling on layered actions, custom callbacks and original caller appearance. Regression checks updated; 106 tests, TypeScript, lint and diff checks pass. | `components/pressable-scale.tsx`, its test, handoff/tasks; this commit |
 | 2026-10-21 | Enabled layered styling for Sign out, History stage/sort/date controls and session cards, and the shared chart report arrow, per the user's refinement. Shared flat default and other exclusions preserved. | `screens/profile/index.tsx`, `screens/history/{index,trend-chart}.tsx`, fixture wording, handoff/tasks; this commit |
 | 2026-10-21 | Made shared pressables flat by default and kept depth opt-in for main actions. Restored the listed Home/Profile/auth/navigation areas, removed the bottom Practice lower layer, retained keyboard/reduced-motion feedback and extended regression checks for flat defaults and main-button opt-in. | `codex/button-depth`; shared pressable/Button/StartButton, tab bar, action CTA callers, state test, handoff/tasks; this commit |

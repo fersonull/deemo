@@ -7,12 +7,14 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     import assert from "node:assert/strict";
     import { mock } from "bun:test";
     const { colors } = await import("./src/colors.ts");
-    const element = (type, props, key) => ({ type, props, key });
+    const React = await import("react");
+    const element = (type, props, key) => React.createElement(type, { ...props, key });
     const flatten = value => Array.isArray(value) ? Object.assign({}, ...value.filter(Boolean).map(flatten)) : value ?? {};
     let states = [], cursor = 0, effects = [], reduced = false, timings = [];
     const pressed = { value: 0, set(value) { this.value = value; } };
     const platform = { OS: "android", Version: 35 };
     mock.module("react", () => ({
+      ...React,
       useId: () => "button",
       useState: initial => {
         const index = cursor++;
@@ -28,7 +30,7 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
       StyleSheet: { create: value => value, flatten, absoluteFill: {} },
     }));
     mock.module("react-native-reanimated", () => ({
-      default: { View: "AnimatedView", createAnimatedComponent: () => "AnimatedPressable" },
+      default: { View: "AnimatedView", Text: "AnimatedText", createAnimatedComponent: () => "AnimatedPressable" },
       useReducedMotion: () => reduced,
       useSharedValue: () => pressed,
       useAnimatedStyle: compute => ({ compute }),
@@ -107,6 +109,23 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     tree.props.onPressOut({});
     assert.equal(tree.props.style[2].compute().opacity, 0.5);
     assert.equal(timings.length, flatTimings);
+    const regular = element("Text", { style: { fontWeight: "500", color: colors.ink }, children: "Course" });
+    const heavy = element("AnimatedText", { style: { fontWeight: "800" }, children: "Score" });
+    const icon = element(() => null, { name: "edit" });
+    const content = element("View", { children: [regular, heavy, icon] });
+    tree = render({ layered: false, children: content });
+    tree.props.onPressIn({});
+    tree = render({ layered: false, children: content });
+    assert.equal(tree.props.children, content, "flat text is unchanged while pressed");
+    assert.equal(flatten(tree.props.children.props.children[0].props.style).fontWeight, "500");
+    tree.props.onPressOut({});
+    assert.equal(render({ layered: false, children: content }).props.children, content);
+    tree.props.onPressIn({});
+    assert.equal(render({ layered: false, children: content, busy: true }).props.children, content);
+    tree = render({ children: content });
+    tree.props.onPressIn({});
+    assert.equal(render({ children: content }).props.children, content, "layered content does not become bold");
+    tree.props.onPressOut({});
     for (const variant of ["primary", "secondary", "premium"]) {
       const disabled = Button({ label: "Continue", disabled: true, variant });
       const enabled = Button({ label: "Continue", variant });

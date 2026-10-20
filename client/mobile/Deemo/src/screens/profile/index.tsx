@@ -30,7 +30,9 @@ export function Profile() {
   const { unread, notices } = useNotices();
   const latest = notices.find((n) => !n.readAt) ?? notices[0];
   const { name, email, avatar, premium, allowTyping, course, savingCourse, savingTyping } = useSession();
-  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | null>(null);
+  const [sheet, setSheet] = useState<"upsell" | "delete" | "name" | "avatar" | "course" | "signOut" | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
   const [courseError, setCourseError] = useState("");
   const [typingError, setTypingError] = useState("");
   const [draft, setDraft] = useState("");
@@ -223,8 +225,36 @@ export function Profile() {
       </View>
 
       <View style={styles.signOut}>
-        <Button variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
+        <Button variant="secondary" label="Sign out" onPress={() => { setSignOutError(""); setSheet("signOut"); }} />
       </View>
+
+      <Sheet visible={sheet === "signOut"} onClose={() => !signingOut && setSheet(null)}>
+        <Text style={styles.sheetTitle}>Sign out?</Text>
+        <Text style={styles.sheetBody}>Your sessions and reports will be here when you sign back in.</Text>
+        {signOutError ? <Text style={styles.error} accessibilityLiveRegion="polite">{signOutError}</Text> : null}
+        <View style={styles.saveName}>
+          <Button
+            label={signingOut ? "Signing out…" : "Sign out"}
+            busy={signingOut}
+            disabled={signingOut}
+            onPress={async () => {
+              if (signingOut) return;
+              setSigningOut(true);
+              setSignOutError("");
+              try {
+                await session.signOut();
+              } catch {
+                setSignOutError("Couldn't sign out. Try again.");
+              } finally {
+                setSigningOut(false);
+              }
+            }}
+          />
+        </View>
+        <View style={styles.cancel}>
+          <Button variant="secondary" label="Stay signed in" disabled={signingOut} onPress={() => setSheet(null)} />
+        </View>
+      </Sheet>
 
       <UpsellSheet
         visible={sheet === "upsell"}

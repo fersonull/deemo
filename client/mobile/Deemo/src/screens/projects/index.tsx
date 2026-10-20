@@ -12,7 +12,13 @@ import { PressableScale } from "@/components/pressable-scale";
 import { Offline } from "@/components/offline";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { refreshEverything } from "@/hooks/refresh-everything";
-import { FREE_PROJECTS, countsTowardLimit, projects, useProjects, type Project } from "@/hooks/use-projects";
+import {
+  FREE_PROJECTS,
+  countsTowardLimit,
+  projects,
+  useProjects,
+  type Project,
+} from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
 import { riseIn } from "@/utils/motion";
@@ -20,13 +26,20 @@ import { riseIn } from "@/utils/motion";
 import { UploadSheet } from "./upload-sheet";
 import { JoinSheet } from "./join-sheet";
 
-const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 function describe(p: Project): { icon: string; meta: string } {
-  if (p.status === "analyzing") return { icon: "hourglass_top", meta: `Reading… · ${p.domain}` };
-  if (p.status === "failed") return { icon: "error", meta: p.error ?? "Couldn't read this file." };
-  if (!p.confirmedAt) return { icon: "rate_review", meta: `Check the summary · ${p.domain}` };
-  return { icon: "description", meta: `${p.domain} · analyzed ${day(p.createdAt)}` };
+  if (p.status === "analyzing")
+    return { icon: "hourglass_top", meta: `Reading… · ${p.domain}` };
+  if (p.status === "failed")
+    return { icon: "error", meta: p.error ?? "Couldn't read this file." };
+  if (!p.confirmedAt)
+    return { icon: "rate_review", meta: `Check the summary · ${p.domain}` };
+  return {
+    icon: "description",
+    meta: `${p.domain} · analyzed ${day(p.createdAt)}`,
+  };
 }
 
 // Owned and joined manuscripts share the same project list (addendum Q10).
@@ -37,7 +50,8 @@ export function Projects() {
   const { premium } = useSession();
   const [sheet, setSheet] = useState<"upload" | "upsell" | "join" | null>(null);
   // Free tier holds one manuscript; delete it to upload another (addendum Q1).
-  const locked = !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
+  const locked =
+    !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
 
   useFocusEffect(
     useCallback(() => {
@@ -45,26 +59,49 @@ export function Projects() {
     }, []),
   );
 
-  const open = (p: Project) => router.push({ pathname: "/analysis", params: { id: p.id } });
+  const open = (p: Project) =>
+    router.push({ pathname: "/analysis", params: { id: p.id } });
 
   // Offline: Deemo takes the whole screen; nothing else here would work.
   if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
-    <Screen scroll tabBar title="Projects" subtitle="One manuscript per project." onRefresh={refreshEverything}>
+    <Screen
+      scroll
+      tabBar
+      title="Projects"
+      subtitle="One manuscript per project."
+      onRefresh={refreshEverything}
+    >
       {/* Actions first, so a long list never pushes them out of reach. */}
       <PressableScale
-        layered
         accessibilityRole="button"
-        accessibilityHint={locked ? "Premium: the free plan holds one manuscript" : undefined}
+        accessibilityHint={
+          locked ? "Premium: the free plan holds one manuscript" : undefined
+        }
         onPress={() => setSheet(locked ? "upsell" : "upload")}
         style={[styles.add]}
       >
-        <Icon name={locked ? "lock" : "upload_file"} size={21} color={colors.duskLink} />
-        <Text style={styles.addText}>{locked ? "Upload another manuscript" : "Upload a manuscript"}</Text>
+        <Icon
+          name={locked ? "lock" : "upload_file"}
+          size={21}
+          color={colors.duskLink}
+        />
+        <Text style={styles.addText}>
+          {locked ? "Upload another manuscript" : "Upload a manuscript"}
+        </Text>
       </PressableScale>
-      {locked ? <Text style={styles.note}>The free plan holds one manuscript. Delete it or try Premium to add more.</Text> : null}
-      <PressableScale accessibilityRole="button" onPress={() => setSheet("join")} style={[styles.card, styles.join]}>
+      {locked ? (
+        <Text style={styles.note}>
+          The free plan holds one manuscript. Delete it or try Premium to add
+          more.
+        </Text>
+      ) : null}
+      <PressableScale
+        accessibilityRole="button"
+        onPress={() => setSheet("join")}
+        style={[styles.card, styles.join]}
+      >
         <Icon name="group_add" size={22} color={colors.duskIcon} />
         <View style={styles.flex}>
           <Text style={styles.cardTitle}>Join with a code</Text>
@@ -79,6 +116,7 @@ export function Projects() {
           const { icon, meta } = describe(p);
           return (
             <PressableScale
+              layered
               entering={riseIn(Math.min(i, 5) * 40, reduced)}
               key={p.id}
               accessibilityRole="button"
@@ -87,7 +125,11 @@ export function Projects() {
               style={[styles.card]}
             >
               <View style={[styles.tile, p.group && styles.shared]}>
-                <Icon name={p.group ? "group" : icon} size={21} color={p.status === "failed" ? colors.clay : colors.duskIcon} />
+                <Icon
+                  name={p.group ? "group" : icon}
+                  size={21}
+                  color={p.status === "failed" ? colors.clay : colors.duskIcon}
+                />
               </View>
               <View style={styles.flex}>
                 <Text style={styles.cardTitle} numberOfLines={2}>
@@ -95,12 +137,22 @@ export function Projects() {
                 </Text>
                 <View style={styles.metaRow}>
                   {active ? (
-                    <View style={styles.chip} accessibilityLabel="Used for practice">
-                      <Icon name="mic" size={13} color={colors.duskInk} filled />
+                    <View
+                      style={styles.chip}
+                      accessibilityLabel="Used for practice"
+                    >
+                      <Icon
+                        name="mic"
+                        size={13}
+                        color={colors.duskInk}
+                        filled
+                      />
                       <Text style={styles.chipText}>Practicing</Text>
                     </View>
                   ) : null}
-                  <Text style={[styles.meta, styles.flex]}>{p.group ? `Shared · ${p.domain}` : meta}</Text>
+                  <Text style={[styles.meta, styles.flex]}>
+                    {p.group ? `Shared · ${p.domain}` : meta}
+                  </Text>
                 </View>
               </View>
             </PressableScale>
@@ -159,7 +211,13 @@ export function Projects() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   shared: { borderWidth: 2, borderColor: colors.dusk },
-  join: { marginTop: 10, backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.sand, alignItems: "center" },
+  join: {
+    marginTop: 10,
+    backgroundColor: colors.paper,
+    borderWidth: 1.5,
+    borderColor: colors.sand,
+    alignItems: "center",
+  },
   list: { gap: 8, marginTop: 18 },
   bones: { gap: 8, paddingTop: 2 },
   card: {
@@ -178,7 +236,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cardTitle: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14.5, lineHeight: 19.5, color: colors.ink },
+  cardTitle: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 14.5,
+    lineHeight: 19.5,
+    color: colors.ink,
+  },
   metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
   meta: { ...type.meta, lineHeight: 17 },
   chip: {
@@ -190,8 +254,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     backgroundColor: colors.duskTint,
   },
-  chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.duskInk },
-  note: { ...type.body, fontSize: 13, color: colors.inkMuted, paddingHorizontal: 4, marginTop: 8 },
+  chipText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 11.5,
+    color: colors.duskInk,
+  },
+  note: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.inkMuted,
+    paddingHorizontal: 4,
+    marginTop: 8,
+  },
   add: {
     height: 58,
     marginTop: 18,
@@ -204,5 +279,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  addText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 15, color: colors.duskLink },
+  addText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 15,
+    color: colors.duskLink,
+  },
 });
