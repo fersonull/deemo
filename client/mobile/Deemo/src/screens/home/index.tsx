@@ -1,9 +1,12 @@
 import { PressableScale } from "@/components/pressable-scale";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
 import { Avatar } from "@/components/avatar";
 import { InboxButton } from "@/components/inbox-button";
@@ -29,11 +32,27 @@ import { DeemoBrief } from "./deemo-brief";
 import { DefensePath } from "./defense-path";
 import { GroupReadiness } from "./group-readiness";
 
-const STEPS = ["Add your manuscript", "Practice one round", "See your readiness report"];
+const STEPS = [
+  "Add your manuscript",
+  "Practice one round",
+  "See your readiness report",
+];
 // Each stage's mark on the recent rows: the idea (Title), the chapters and method (Pre-Oral), the finished study (Final).
-const MODE_ICON: Record<Mode, string> = { TITLE: "lightbulb", PRE_ORAL: "assignment", FINAL: "school" };
-const MODE_BG: Record<Mode, string> = { TITLE: colors.sand, PRE_ORAL: colors.duskTint, FINAL: colors.sageTint };
-const MODE_INK: Record<Mode, string> = { TITLE: colors.ink, PRE_ORAL: colors.duskInk, FINAL: colors.sageInk };
+const MODE_ICON: Record<Mode, string> = {
+  TITLE: "lightbulb",
+  PRE_ORAL: "assignment",
+  FINAL: "school",
+};
+const MODE_BG: Record<Mode, string> = {
+  TITLE: colors.sand,
+  PRE_ORAL: colors.duskTint,
+  FINAL: colors.sageTint,
+};
+const MODE_INK: Record<Mode, string> = {
+  TITLE: colors.ink,
+  PRE_ORAL: colors.duskInk,
+  FINAL: colors.sageInk,
+};
 
 function greeting(hour: number) {
   if (hour < 12) return "Morning";
@@ -41,8 +60,8 @@ function greeting(hour: number) {
   return "Evening";
 }
 
-
-const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 // Home (plan S-05, prototype home): greeting, Deemo telling you where you stand (the last score on its sign, what it
 // means and what to work on), Start practice, the readiness chart (two scored sessions or more) and recent sessions. Sections rise in a beat apart
@@ -55,10 +74,12 @@ export function Home() {
   const { projects: mine, loaded: projectsLoaded } = useProjects();
   const manuscript = mine.find((p) => p.id === projectId);
   // Until both lists arrive, assume a returning student: no "Add your manuscript" flash.
-  const practiced = !!manuscript || list.length > 0 || !loaded || !projectsLoaded;
+  const practiced =
+    !!manuscript || list.length > 0 || !loaded || !projectsLoaded;
   const first = name?.trim().split(/\s+/)[0];
   const recent = list.slice(0, 3);
-  const charted = loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
+  const charted =
+    loaded && !error && list.filter((s) => s.score !== undefined).length >= 2;
   const reduced = useReducedMotion();
 
   useFocusEffect(
@@ -69,7 +90,8 @@ export function Home() {
     }, []),
   );
 
-  const open = (id: string) => router.push({ pathname: "/results", params: { id } });
+  const open = (id: string) =>
+    router.push({ pathname: "/results", params: { id } });
   const refresh = usePullRefresh(refreshEverything);
 
   // Offline: Deemo takes the whole screen; nothing else here would work.
@@ -78,20 +100,35 @@ export function Home() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: tabBarSpace(bottom) }]}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: tabBarSpace(bottom) },
+        ]}
         refreshControl={refresh}
       >
         <View style={styles.head}>
           <Text accessibilityRole="header" style={[type.hero, styles.flex]}>
-            {first ? `${greeting(new Date().getHours())},\n${first}.` : `${greeting(new Date().getHours())}.`}
+            {first
+              ? `${greeting(new Date().getHours())},\n${first}.`
+              : `${greeting(new Date().getHours())}.`}
           </Text>
           <InboxButton />
-          <Avatar seed={avatar} name={name} email={email} size={42} premium={premium} />
+          <Pressable onPress={() => router.push("/profile")}>
+            <Avatar
+              seed={avatar}
+              name={name}
+              email={email}
+              size={42}
+              premium={premium}
+            />
+          </Pressable>
         </View>
         {/* Deemo, the informer: the last score on its sign, and what it means (or what to do first) */}
         {loaded && projectsLoaded ? (
           <Animated.View entering={riseIn(60, reduced)}>
-            <DeemoBrief brief={homeBrief(list, manuscript?.name ?? null, !!error)} />
+            <DeemoBrief
+              brief={homeBrief(list, manuscript?.name ?? null, !!error)}
+            />
           </Animated.View>
         ) : (
           <Skeleton label="Loading">
@@ -110,8 +147,14 @@ export function Home() {
             style={styles.start}
           />
           {!practiced ? (
-            <PressableScale accessibilityRole="button" onPress={() => router.push("/practice")} style={styles.sample}>
-              <Text style={styles.sampleText}>Or practice with a sample paper</Text>
+            <PressableScale
+              accessibilityRole="button"
+              onPress={() => router.push("/practice")}
+              style={styles.sample}
+            >
+              <Text style={styles.sampleText}>
+                Or practice with a sample paper
+              </Text>
             </PressableScale>
           ) : null}
 
@@ -151,14 +194,27 @@ export function Home() {
               {STEPS.map((step, i) => {
                 const done = i === 0 && !!manuscript;
                 return (
-                  <View key={step} style={styles.row} accessible accessibilityLabel={`${step}${done ? ", done" : ""}`}>
+                  <View
+                    key={step}
+                    style={styles.row}
+                    accessible
+                    accessibilityLabel={`${step}${done ? ", done" : ""}`}
+                  >
                     <Icon
                       name={done ? "check_circle" : "radio_button_unchecked"}
                       size={22}
                       color={done ? colors.sage : colors.muted}
                       filled={done}
                     />
-                    <Text style={[styles.rowTitle, styles.flex, done && styles.done]}>{step}</Text>
+                    <Text
+                      style={[
+                        styles.rowTitle,
+                        styles.flex,
+                        done && styles.done,
+                      ]}
+                    >
+                      {step}
+                    </Text>
                   </View>
                 );
               })}
@@ -167,15 +223,27 @@ export function Home() {
             <>
               <Text style={[type.label, styles.section]}>RECENT</Text>
               {recent.map((s, i) => (
-                <Animated.View key={s.id} entering={riseIn(160 + i * 40, reduced)}>
+                <Animated.View
+                  key={s.id}
+                  entering={riseIn(160 + i * 40, reduced)}
+                >
                   <PressableScale
                     accessibilityRole="button"
                     accessibilityHint="Opens the report"
                     onPress={() => open(s.id)}
                     style={[styles.row]}
                   >
-                    <View style={[styles.mode, { backgroundColor: MODE_BG[s.mode] }]}>
-                      <Icon name={MODE_ICON[s.mode]} size={20} color={MODE_INK[s.mode]} />
+                    <View
+                      style={[
+                        styles.mode,
+                        { backgroundColor: MODE_BG[s.mode] },
+                      ]}
+                    >
+                      <Icon
+                        name={MODE_ICON[s.mode]}
+                        size={20}
+                        color={MODE_INK[s.mode]}
+                      />
                     </View>
                     <View style={styles.flex}>
                       <Text style={styles.rowTitle}>{MODE_LABELS[s.mode]}</Text>
@@ -184,9 +252,17 @@ export function Home() {
                       </Text>
                     </View>
                     {s.score !== undefined ? (
-                      <Score value={s.score} style={styles.rowScore} caption banded align="right" />
+                      <Score
+                        value={s.score}
+                        style={styles.rowScore}
+                        caption
+                        banded
+                        align="right"
+                      />
                     ) : (
-                      <Text style={[styles.rowScore, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
+                      <Text style={[styles.rowScore, styles.pending]}>
+                        {s.status === "scoring" ? "…" : "–"}
+                      </Text>
                     )}
                   </PressableScale>
                 </Animated.View>
@@ -200,21 +276,53 @@ export function Home() {
 }
 
 const styles = StyleSheet.create({
-  briefBones: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
+  briefBones: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginTop: 18,
+  },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   bones: { gap: 8 },
   start: { marginTop: 10 },
-  sample: { height: 44, alignItems: "center", justifyContent: "center", marginTop: 4 },
-  sampleText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.duskLink },
+  sample: {
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  sampleText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 14,
+    color: colors.duskLink,
+  },
   section: { marginTop: 24, marginBottom: 4 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, height: 58 },
-  mode: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
-  rowTitle: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14.5, color: colors.ink },
+  mode: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rowTitle: {
+    fontFamily: fonts.body,
+    fontWeight: "500",
+    fontSize: 14.5,
+    color: colors.ink,
+  },
   meta: { ...type.meta, marginTop: 2 },
   done: { color: colors.muted, textDecorationLine: "line-through" },
-  rowScore: { fontFamily: fonts.display, fontWeight: "700", fontSize: 18, letterSpacing: -0.3, color: colors.ink },
+  rowScore: {
+    fontFamily: fonts.display,
+    fontWeight: "700",
+    fontSize: 18,
+    letterSpacing: -0.3,
+    color: colors.ink,
+  },
   pending: { color: colors.muted },
 });
