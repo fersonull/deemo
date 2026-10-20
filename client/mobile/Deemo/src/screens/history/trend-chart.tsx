@@ -94,6 +94,7 @@ export function TrendChart({ sessions, stage, compact, children }: Props) {
           </View>
         </Animated.View>
         <PressableScale
+          layered
           accessibilityRole="button"
           accessibilityLabel={`Open the ${MODE_LABELS[s.mode]} report from ${day(s.createdAt)}`}
           hitSlop={8}

@@ -223,7 +223,7 @@ export function Profile() {
       </View>
 
       <View style={styles.signOut}>
-        <Button layered={false} variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
+        <Button variant="secondary" label="Sign out" onPress={() => void session.signOut()} />
       </View>
 
       <UpsellSheet

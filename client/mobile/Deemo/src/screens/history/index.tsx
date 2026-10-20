@@ -95,6 +95,7 @@ export function History() {
   ) : null, [loaded, error, list, filteredMode, all.length, practiceStage]);
   const rows = useMemo(() => shown.map((s, i) => (
     <PressableScale
+      layered
       entering={riseIn(Math.min(i, 5) * 40, reduced)}
       key={s.id}
       accessibilityRole="button"
@@ -140,6 +141,7 @@ export function History() {
             const selected = f.mode === mode;
             return (
               <PressableScale
+                layered
                 key={f.label}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
@@ -166,6 +168,7 @@ export function History() {
             </Text>
           )}
           <PressableScale
+            layered
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setArranging(true)}
@@ -238,6 +241,7 @@ function Options<T extends string>({ options, value, onPick, label }: { options:
         const selected = o.value === value;
         return (
           <PressableScale
+            layered
             key={o.value}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}

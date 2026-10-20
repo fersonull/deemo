@@ -107,7 +107,7 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
       const enabled = Button({ label: "Continue", variant });
       const busy = Button({ label: "Saving…", busy: true, disabled: true, variant, leading: "icon" });
       assert.equal(enabled.props.layered, true, "main buttons explicitly opt into depth");
-      assert.equal(Button({ label: "Sign out", variant, layered: false }).props.layered, false);
+      assert.equal(Button({ label: "Flat action", variant, layered: false }).props.layered, false);
       assert.equal(busy.props.children[1], null);
       assert.equal(busy.props.children[2].props.children, "Saving…");
       assert.notEqual(enabled.props.children[2].key, disabled.props.children[2].key, "color changes recreate native text");

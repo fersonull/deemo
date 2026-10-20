@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Sign out and History depth opt-ins (2026-10-21, `codex/button-depth`):** enabled the layered style for Sign out, History stage chips, sort/filter trigger and sheet options, History session cards and the chart report arrow. Other flat exclusions remain unchanged. Styling only; phone check pending.
+
 - [x] **Main-action-only depth refinement (2026-10-21, `codex/button-depth`):** made shared touchables flat by default. Excluded the auth mode prompt, Defense Path, recent sessions, Group readiness Settings, bottom tabs/Practice, Home Deemo brief and Profile options/edits. Main Button/Start practice and explicit action CTAs opt into depth. Flat scale/reduced-motion feedback and keyboard focus are preserved; regression coverage added. Phone check remains pending; JS only.
 
 - [x] **Shared depth and label rendering follow-up (2026-10-21, `codex/button-depth`):** after the user confirmed blank enabled labels on Consent/Sign-in, removed the nested face wrapper, kept native content directly on `PressableScale` and keyed label color/action changes. Extended the treatment to visible pressable cards, rows, selectors, icons, links and tabs; preserved back arrows, invisible hit zones and shaped controls. 106 tests, types/lint and design scan pass. User explicitly chose code checks only; phone acceptance remains open.
