@@ -57,7 +57,7 @@ export function JoinSheet({
         </Text>
       ) : null}
       <View style={styles.cta}>
-        <Button label={busy ? "Joining…" : "Join group"} disabled={busy || code.length !== 6} onPress={join} />
+        <Button label={busy ? "Joining…" : "Join group"} busy={busy} disabled={busy || code.length !== 6} onPress={join} />
       </View>
     </Sheet>
   );

@@ -1,7 +1,7 @@
 import * as DocumentPicker from "expo-document-picker";
 import { File } from "expo-file-system";
 import { useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, { useReducedMotion } from "react-native-reanimated";
 
 import { Icon } from "@/components/icon";
@@ -52,16 +52,13 @@ export function UploadCard({ onRubric }: { onRubric: (rubric: Rubric) => void })
         scaleTo={0.98}
         accessibilityRole="button"
         accessibilityHint="Choose a PDF, Word file or photo of your panel's rubric"
+        accessibilityState={{ disabled: busy, busy }}
         disabled={busy}
         onPress={pick}
         style={[styles.card]}
       >
         <View style={styles.tile}>
-          {busy ? (
-            <ActivityIndicator color={colors.dusk} />
-          ) : (
-            <Icon name={result ? "task" : "upload_file"} size={22} color={colors.duskIcon} />
-          )}
+          <Icon name={result ? "task" : "upload_file"} size={22} color={colors.duskIcon} />
         </View>
         <View style={styles.flex}>
           <Text style={type.bodyStrong}>

@@ -50,7 +50,7 @@ export function Notices() {
               </Text>
             </View>
           }
-          ListFooterComponent={state.nextCursor ? <View style={styles.footer}><Button label={state.loading ? "Loading…" : "Load older notices"} variant="secondary" disabled={state.loading} onPress={() => void notices.more()} /></View> : null}
+          ListFooterComponent={state.nextCursor ? <View style={styles.footer}><Button label={state.loading ? "Loading…" : "Load older notices"} variant="secondary" busy={state.loading} disabled={state.loading} onPress={() => void notices.more()} /></View> : null}
           renderItem={({ item: n, index }) => {
             const unread = !n.readAt;
             // One sand group, like Profile's settings: rounded at the ends, hairlines between rows.

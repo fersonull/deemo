@@ -130,6 +130,7 @@ export function Rubric() {
         ) : null}
         <Button
           label={readOnly ? "Back to setup" : busy ? "Saving…" : "Use this rubric"}
+          busy={busy}
           onPress={readOnly ? () => router.back() : use}
           disabled={busy || (!readOnly && total !== 100)}
         />

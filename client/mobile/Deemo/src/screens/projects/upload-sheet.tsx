@@ -101,7 +101,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
       ) : null}
 
       <View style={styles.cta}>
-        <Button label={busy ? "Uploading…" : "Read my manuscript"} onPress={read} disabled={!file || tooBig || busy} />
+        <Button label={busy ? "Uploading…" : "Read my manuscript"} onPress={read} busy={busy} disabled={!file || tooBig || busy} />
       </View>
     </Sheet>
   );

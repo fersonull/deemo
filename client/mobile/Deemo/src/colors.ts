@@ -8,6 +8,8 @@ export const colors = {
   banner: "#F1E6D6", // info / reconnecting banners
   ink: "#2A2420", // primary text, primary buttons
   inkSoft: "#3E3731", // long-form body text
+  inkDepth: "#191613", // smooth lower layer of ink buttons
+  sandDepth: "#C8BDAE", // smooth lower layer of secondary buttons
   inkMuted: "#5E554D", // secondary text
   muted: "#8A7F74", // meta text, chevrons
   faint: "#B0A698", // partial transcript tail

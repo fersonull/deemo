@@ -97,6 +97,12 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Button concept revision (2026-10-20):** `docs/design/button-depth-concept-v2.png` uses a flat face over one smooth offset lower layer, per the user's correction. All six states shown; subsequently approved for implementation with unchanged back arrows and text-only loading.
+
+- [x] **Button depth concept image (2026-10-20):** generated `docs/design/button-depth-concept.png` covering default, hover, focus, pressed, loading and disabled for Primary/Secondary/Premium. Image only; user approval required before implementation. Premium remains simulated despite the board's monetization annotation.
+- [x] **Button depth implementation (`codex/button-depth`, 2026-10-20):** shared lower-layer surface for primary/secondary/Premium, Start practice and Results actions. Preserved back arrows, taps/disabled semantics, focus/hover and reduced motion; busy actions use ellipsis labels without spinners. Async callers distinguish busy from unavailable. 106 tests, mobile types/lint and detector checks pass; emulator primary/secondary/disabled rendering verified. No native rebuild.
+- [ ] **Phone acceptance for layered buttons:** check tap/hold/cancel, reduced motion, larger text, slow saves/uploads, Premium/report actions and unchanged navigation/live-mic feedback before merging the feature branch.
+
 - [x] **Root project README (2026-10-20):** added `README.md` and a branded owl SVG header at `docs/assets/readme-banner.svg`; documented features, plan limits, architecture, setup, development checks, contributing and license. Existing artwork reused; no app changes or publication.
 
 - [x] **GitHub release-notes draft (2026-10-20):** created `docs/RELEASE_NOTES.md`, then shortened it at the user's request to a summary of main features through `34ced95`, Premium demo, companion tools and essential limitations. Draft only; no APK build or GitHub publication.

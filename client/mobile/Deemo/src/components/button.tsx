@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { StyleSheet, Text } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 
-import { PressableScale } from "@/components/pressable-scale";
+import { PressableDepth } from "@/components/pressable-depth";
 import { colors, radius, type } from "@/theme";
 
 type Props = {
@@ -17,16 +17,18 @@ type Props = {
 export function Button({ label, onPress, variant = "primary", disabled, busy, leading }: Props) {
   const sheen = `sheen${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const bg = variant === "secondary" ? colors.sand : colors.ink;
-  const fg = variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.paper;
+  const inactive = disabled && !busy;
+  const fg = inactive ? colors.inkMuted : variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.paper;
+  const depth = variant === "secondary" ? colors.sandDepth : variant === "premium" ? colors.goldInk : colors.inkDepth;
   return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityState={{ disabled, busy }}
-      disabled={disabled || busy}
+    <PressableDepth
+      busy={busy}
+      disabled={disabled}
       onPress={onPress}
-      style={[styles.base, { backgroundColor: bg }, variant === "premium" && styles.premium, disabled && !busy && styles.disabled]}
+      depthColor={depth}
+      faceStyle={[styles.base, { backgroundColor: bg }, variant === "premium" && !inactive && styles.premium]}
     >
-      {variant === "premium" ? (
+      {variant === "premium" && !inactive ? (
         // Light catching the top right, as on the Premium card.
         <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
           <Defs>
@@ -39,15 +41,14 @@ export function Button({ label, onPress, variant = "primary", disabled, busy, le
           <Rect width="100%" height="100%" fill={`url(#${sheen})`} />
         </Svg>
       ) : null}
-      {leading}
-      <Text style={[type.button, { color: fg }]}>{label}</Text>
-    </PressableScale>
+      {!busy ? leading : null}
+      <Text accessibilityLiveRegion="polite" style={[type.button, { color: fg }]}>{label}</Text>
+    </PressableDepth>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    height: 58,
     borderRadius: radius.pill,
     flexDirection: "row",
     alignItems: "center",
@@ -55,5 +56,4 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   premium: { borderWidth: 1, borderColor: colors.goldInk, overflow: "hidden" },
-  disabled: { opacity: 0.35 },
 });

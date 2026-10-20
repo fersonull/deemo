@@ -35,7 +35,7 @@ export function FocusArea({ project }: { project: Project }) {
         placeholderTextColor={colors.faint}
         style={styles.input}
       />
-      {draft !== saved ? <Button label={busy ? "Saving…" : "Save focus area"} disabled={busy} onPress={save} /> : null}
+      {draft !== saved ? <Button label={busy ? "Saving…" : "Save focus area"} busy={busy} disabled={busy} onPress={save} /> : null}
       {error ? (
         <Text accessibilityLiveRegion="polite" style={styles.error}>
           {error}

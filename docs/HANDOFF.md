@@ -2,9 +2,15 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-20 (Root README and branded header)_
+_Last updated: 2026-10-20 (Layered action buttons on feature branch)_
 
 ## Current state
+
+- **Layered action buttons (implemented on `codex/button-depth`):** the user approved implementation with two corrections: preserve the existing back-arrow design and use action text with ellipses rather than a loading spinner. `PressableDepth` puts a smooth 4 px lower layer behind the face, which settles 3 px down/1 px right on press; existing 58/60/50 px outer touch targets stay fixed. Primary/Secondary/Premium, Start practice and Results actions use it. Focus/hover, muted flat disabled states, busy tap-locking and instant reduced-motion transitions are included. Navigation/back arrows, tabs, list rows and the live mic's specialized feedback stay unchanged. Async Button callers now mark busy explicitly; rubric upload has no spinner. Two depth colors were added to existing tokens. No dependencies, native configuration or rebuild.
+
+- **Button concept history:** `docs/design/button-depth-concept.png` and `button-depth-concept-v2.png` are retained as design references. The v2 smooth lower layer informed implementation; the user's later annotations preserve back arrows and remove loading spinners. The first board's "Monetization" annotation is inaccurate: Premium remains a demo.
+
+- **Button verification:** 106 mobile tests, TypeScript and Expo lint pass; Impeccable detector and diff checks are clean. The isolated native-module check covers press/release, busy interruption, disabled appearance, focus, reduced motion and all three variants' text-only loading labels. Pixel 7 Android 15 emulator shows the real primary/secondary and disabled rendering without runtime errors. Screenshots are in the chat's visualization directory, not committed. Release-device feel and authenticated report/Premium views still need a phone check.
 
 - **Root README (uncommitted on `dev`):** added `README.md` with the existing owl in `docs/assets/readme-banner.svg`, a product overview, features, plan comparison, architecture, repository map, server/mobile/admin setup, development checks, documentation links and license. The checkout is now `dev` at `993449d` (release notes already committed); older `preview` state below is historical. No app changes, dependency changes, builds or publication.
 
@@ -14,7 +20,7 @@ _Last updated: 2026-10-20 (Root README and branded header)_
 
 - **Setup keyboard avoidance (included in the `preview` merge):** the practice Setup scroll screen now uses the same `KeyboardAvoidingView` wrapper as Sign-in so the group focus-area form can scroll above the keyboard. Mobile TypeScript, lint and `git diff --check` pass. JS only; no rebuild. Phone-check field visibility, Save reachability and keyboard dismiss/reopen alongside the instant-interaction checks below.
 
-- **Branch:** `preview`. The user requested committing and merging `codex/instant-preferences` into `preview`; this commit contains the instant-interaction and Setup keyboard fixes plus handoff/tasks. `dev` stays at merge `0182b04`. No remote push or OTA publication requested. **Push notifications remain unconfirmed:** the last recorded device check (Oct 17) found 0 `push_tokens` rows; inspect token-registration errors in `hooks/use-push-notices.ts` before repeating the phone checklist.
+- **Branch:** `codex/button-depth`, created from `dev` at `7a2f653` for the user-requested button implementation. The feature commit includes code, the state regression check, concept images and handoff/tasks. Do not merge into `dev` until phone verification; no push or OTA publication requested. Earlier `preview`/README/release-note state below is historical. **Push notifications remain unconfirmed:** the last recorded device check (Oct 17) found 0 `push_tokens` rows; inspect token-registration errors in `hooks/use-push-notices.ts` before repeating the phone checklist.
 
 - **Instant interactions:** Profile course changes close the picker and update immediately; typed-answer and score-sharing switches update before HTTP finishes. Duplicate saves are blocked while pending. Failed saves restore the prior value and show an accessible error. Stale account/project reads cannot overwrite edits; sign-out/reset invalidates pending writes. Group readiness updates sharing immediately and reloads only its roster in the background after success (no blocking project GET); a roster failure keeps the confirmed setting. History chips remain urgent while memoized chart/rows use deferred filters. JS only; no rebuild needed.
 
@@ -47,6 +53,8 @@ _Last updated: 2026-10-20 (Root README and branded header)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Phone-check layered buttons on `codex/button-depth`:** reload Metro (JS only). Check a primary, secondary, Premium, Start practice and Results action at rest, during quick taps/hold-and-cancel and with reduced motion. Check keyboard/pointer focus if available. Slow an upload/save and confirm action text with ellipses, readable full contrast and no second tap; unavailable actions should be muted and flat. Check long labels/larger text, Results' two-column actions, unchanged back arrows and live-mic behavior. Automated checks and emulator default/disabled rendering pass; real-device timing and authenticated views remain pending. Merge only after verification.
 
 **README ready for review:** check the root README and banner on GitHub when pushed. Local link targets, SVG structure and diff formatting are checked; setup commands were checked against repository scripts/config, not rerun against fresh accounts or a clean environment. Continue the release readiness and phone checks below. README/banner/handoff/tasks remain uncommitted on `dev`.
 
@@ -134,6 +142,9 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-20 | Implemented the approved smooth lower-layer action buttons; preserved back arrows, replaced spinner feedback with action text, and fixed busy semantics in async callers. Added isolated state regression coverage. 106 mobile tests, types/lint, detector and diff checks pass; primary/secondary/disabled rendering checked on Pixel 7 emulator. | `codex/button-depth`; `components/{pressable-depth*,button,start-button}`, colors, async Button callers, Results, rubric upload; this commit |
+| 2026-10-20 | Redesigned the button concept at the user's request: one flat face over a smooth offset lower pill, with all states. First concept superseded; implementation still awaits approval. | `docs/design/button-depth-concept-v2.png`, handoff/tasks; uncommitted |
+| 2026-10-20 | Generated a subtle button-depth approval board covering all three button variants and six states. No implementation; awaits user approval. | `docs/design/button-depth-concept.png`, handoff/tasks; uncommitted |
 | 2026-10-20 | Added a professional root README with an owl banner composed from existing brand SVG artwork, project overview, features, architecture, setup, checks, docs and license. Documentation only. | `README.md`, `docs/assets/readme-banner.svg`, handoff/tasks; uncommitted on `dev` |
 | 2026-10-20 | Shortened the release notes at the user's request to a feature summary with essential limitations. Documentation only; diff check passes. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |
 | 2026-10-20 | Drafted a complete GitHub release feature overview, plan comparison, companion-project coverage and known limitations. Rechecked mobile: 105 tests, TypeScript and lint pass. No build or publication. | `docs/RELEASE_NOTES.md`, handoff/tasks; uncommitted on `preview` |

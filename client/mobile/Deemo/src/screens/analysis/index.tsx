@@ -191,7 +191,7 @@ export function Analysis({ id }: { id: string }) {
       <Text style={styles.factsNote}>Key facts are what the panel checks your answers against.</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.cta}>
-        <Button label={project.confirmedAt ? "Practice with this" : "Looks right"} onPress={go} disabled={busy} />
+        <Button label={busy ? "Saving…" : project.confirmedAt ? "Practice with this" : "Looks right"} onPress={go} busy={busy} disabled={busy} />
       </View>
       {!readOnly ? (
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => setConfirmDelete(true)} style={styles.textButton}>
@@ -207,7 +207,7 @@ export function Analysis({ id }: { id: string }) {
             : "The summary and your corrections are removed for good. You can upload the manuscript again anytime."}
         </Text>
         <View style={styles.cta}>
-          <Button label={busy ? "Deleting…" : "Delete project"} onPress={remove} disabled={busy} />
+          <Button label={busy ? "Deleting…" : "Delete project"} onPress={remove} busy={busy} disabled={busy} />
         </View>
         <Pressable accessibilityRole="button" onPress={() => setConfirmDelete(false)} style={styles.textButton}>
           <Text style={styles.textButtonLabel}>Keep it</Text>

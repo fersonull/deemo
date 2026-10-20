@@ -13,7 +13,7 @@ import { Fetching } from "@/components/fetching";
 import { Sheet } from "@/components/sheet";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { Working } from "@/components/working";
-import { PressableScale } from "@/components/pressable-scale";
+import { PressableDepth } from "@/components/pressable-depth";
 import { DIFFICULTY_LABELS, MODE_LABELS, type Domain } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
@@ -290,37 +290,44 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 <>
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
-                    <PressableScale
+                    <PressableDepth
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
-                      style={[styles.action, styles.actionSand, styles.flexAction]}
+                      style={[styles.actionSize, styles.flexAction]}
+                      faceStyle={[styles.action, styles.actionSand]}
+                      depthColor={colors.sandDepth}
                     >
                       <Text style={styles.actionText}>Practice again</Text>
-                    </PressableScale>
+                    </PressableDepth>
                     {group ? (
-                      <PressableScale
+                      <PressableDepth
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
-                        style={[styles.action, styles.actionSand, styles.flexAction]}
+                        style={[styles.actionSize, styles.flexAction]}
+                        faceStyle={[styles.action, styles.actionSand]}
+                        depthColor={colors.sandDepth}
                       >
                         <Icon name="group" size={17} />
                         <Text style={styles.actionText}>Share with group</Text>
-                      </PressableScale>
+                      </PressableDepth>
                     ) : null}
                   </View>
                 </>
               )}
-              <PressableScale
+              <PressableDepth
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}
+                busy={exporting}
                 disabled={exporting}
                 onPress={exportPdf}
-                style={[styles.action, styles.actionOutline]}
+                style={styles.actionSize}
+                faceStyle={[styles.action, styles.actionOutline]}
+                depthColor={colors.sandDepth}
               >
-                <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} />
-                <Text style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
-              </PressableScale>
+                {!exporting ? <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} /> : null}
+                <Text accessibilityLiveRegion="polite" style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>
+              </PressableDepth>
               {exportError ? (
                 <Text style={styles.sub} accessibilityLiveRegion="polite">
                   {exportError}
@@ -407,11 +414,12 @@ const styles = StyleSheet.create({
   transcript: { marginTop: 16 },
   cta: { marginTop: 20 },
   actions: { gap: 8, marginTop: 22 },
-  action: { height: 50, borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  actionSize: { height: 50 },
+  action: { borderRadius: radius.pill, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
   actionSand: { backgroundColor: colors.sand },
   actionRow: { flexDirection: "row", gap: 8 },
   flexAction: { flex: 1 },
-  actionOutline: { borderWidth: 1.5, borderColor: colors.sand },
+  actionOutline: { backgroundColor: colors.paper, borderWidth: 1.5, borderColor: colors.sand },
   actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
   sheetNote: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
   shareRow: {

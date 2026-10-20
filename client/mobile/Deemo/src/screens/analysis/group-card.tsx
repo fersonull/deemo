@@ -117,6 +117,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
             <View style={styles.action}>
               <Button
                 label={busy ? "Saving…" : group.isOwner ? "Stop sharing" : "Leave group"}
+                busy={busy}
                 disabled={busy}
                 onPress={() =>
                   void run(async () => {
@@ -136,6 +137,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
           <View style={styles.action}>
             <Button
               label={busy ? "Creating code…" : "Create a group code"}
+              busy={busy}
               disabled={busy}
               onPress={() => void run(() => projects.createGroup(project.id))}
             />
