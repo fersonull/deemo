@@ -69,7 +69,13 @@ test("layered buttons settle on press, block busy taps, flatten when disabled an
     assert.equal(pressed.value, 0, "becoming busy releases a held press");
     tree = render({ disabled: true });
     assert.equal(tree.props.style.at(-1).backgroundColor, colors.sand);
-    assert.equal(face(tree).props.style.at(-2).bottom, 0, "disabled face is flat");
+    assert.equal(face(tree).props.style.at(-2).marginBottom, 0, "disabled face is flat");
+    tree = render();
+    const enabledFace = Object.assign({}, ...face(tree).props.style.filter(Boolean));
+    assert.equal(enabledFace.flex, 1, "enabled content participates in the button's layout");
+    assert.notEqual(enabledFace.position, "absolute", "the label must not depend on an absolute inset layout");
+    assert.equal(enabledFace.marginBottom, 4, "re-enabling restores the lower layer");
+    assert.equal(face(tree).props.children, "Continue", "re-enabling retains the label");
     reduced = true;
     tree = render();
     tree.props.onPressIn({});

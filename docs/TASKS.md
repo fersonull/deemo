@@ -97,6 +97,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **Layered button label layout follow-up (2026-10-20):** after the user reported a blank Consent Continue button, replaced absolute face layout with a flex face and margins. Added disabled → enabled layout/label coverage. Native transition verification remains pending on `codex/button-depth`.
+
 - [x] **Button concept revision (2026-10-20):** `docs/design/button-depth-concept-v2.png` uses a flat face over one smooth offset lower layer, per the user's correction. All six states shown; subsequently approved for implementation with unchanged back arrows and text-only loading.
 
 - [x] **Button depth concept image (2026-10-20):** generated `docs/design/button-depth-concept.png` covering default, hover, focus, pressed, loading and disabled for Primary/Secondary/Premium. Image only; user approval required before implementation. Premium remains simulated despite the board's monetization annotation.

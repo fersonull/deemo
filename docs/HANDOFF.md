@@ -2,9 +2,11 @@
 
 Read this first when picking up the project. It says where things stand right now, what changed recently and what to do next. **Update it with every change** (CLAUDE.md workflow rule). The full backlog is `docs/TASKS.md`; conventions and architecture are in `CLAUDE.md`.
 
-_Last updated: 2026-10-20 (Layered action buttons on feature branch)_
+_Last updated: 2026-10-20 (Layered button label layout follow-up)_
 
 ## Current state
+
+- **Button label follow-up (`codex/button-depth`):** the user reported a blank enabled Continue button on Consent. Changed the shared face from absolute insets to normal flex layout with bottom/right margins, keeping its label/content in layout while retaining the same lower layer and press transform. Regression coverage now checks disabled → enabled face layout and label retention; all 106 mobile tests, TypeScript, lint and diff checks pass. No consent logic or navigation changes. Native visual recheck remains pending: the emulator cold boot reached an Android app-not-responding dialog; earlier screenshots below covered initial rendering only, not this transition.
 
 - **Layered action buttons (implemented on `codex/button-depth`):** the user approved implementation with two corrections: preserve the existing back-arrow design and use action text with ellipses rather than a loading spinner. `PressableDepth` puts a smooth 4 px lower layer behind the face, which settles 3 px down/1 px right on press; existing 58/60/50 px outer touch targets stay fixed. Primary/Secondary/Premium, Start practice and Results actions use it. Focus/hover, muted flat disabled states, busy tap-locking and instant reduced-motion transitions are included. Navigation/back arrows, tabs, list rows and the live mic's specialized feedback stay unchanged. Async Button callers now mark busy explicitly; rubric upload has no spinner. Two depth colors were added to existing tokens. No dependencies, native configuration or rebuild.
 
@@ -53,6 +55,8 @@ _Last updated: 2026-10-20 (Layered action buttons on feature branch)_
 - **Codex tooling:** agent-device MCP is registered in the user's Codex config. `AGENTS.md` (a copy of CLAUDE.md for Codex) and `.codex/config.toml` are committed; keep AGENTS.md in step when CLAUDE.md changes.
 
 ## Next task
+
+**Recheck the missing Continue label:** reload Metro on `codex/button-depth`, then verify Consent's disabled button becomes an enabled, labelled Continue button when both checks are selected. Do not submit consent on someone's behalf. Also check disabled → enabled states in Sign-in and Setup, plus busy labels and Start practice. The label follow-up uses normal flex layout for the face; no native rebuild.
 
 **Phone-check layered buttons on `codex/button-depth`:** reload Metro (JS only). Check a primary, secondary, Premium, Start practice and Results action at rest, during quick taps/hold-and-cancel and with reduced motion. Check keyboard/pointer focus if available. Slow an upload/save and confirm action text with ellipses, readable full contrast and no second tap; unavailable actions should be muted and flat. Check long labels/larger text, Results' two-column actions, unchanged back arrows and live-mic behavior. Automated checks and emulator default/disabled rendering pass; real-device timing and authenticated views remain pending. Merge only after verification.
 
@@ -142,6 +146,7 @@ In priority order (full backlog in `docs/TASKS.md`):
 
 | When | What | Where |
 |---|---|---|
+| 2026-10-20 | Followed up the user's blank Continue screenshot: moved shared face/content into normal flex layout, retained depth/press geometry and extended disabled → enabled regression coverage. | `components/pressable-depth.tsx`, its test, handoff/tasks; this follow-up commit |
 | 2026-10-20 | Implemented the approved smooth lower-layer action buttons; preserved back arrows, replaced spinner feedback with action text, and fixed busy semantics in async callers. Added isolated state regression coverage. 106 mobile tests, types/lint, detector and diff checks pass; primary/secondary/disabled rendering checked on Pixel 7 emulator. | `codex/button-depth`; `components/{pressable-depth*,button,start-button}`, colors, async Button callers, Results, rubric upload; this commit |
 | 2026-10-20 | Redesigned the button concept at the user's request: one flat face over a smooth offset lower pill, with all states. First concept superseded; implementation still awaits approval. | `docs/design/button-depth-concept-v2.png`, handoff/tasks; uncommitted |
 | 2026-10-20 | Generated a subtle button-depth approval board covering all three button variants and six states. No implementation; awaits user approval. | `docs/design/button-depth-concept.png`, handoff/tasks; uncommitted |

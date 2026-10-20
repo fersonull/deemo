@@ -62,8 +62,8 @@ export function PressableDepth({ children, style, faceStyle, depthColor, disable
 
 const styles = StyleSheet.create({
   base: { height: 58, borderRadius: radius.pill },
-  face: { position: "absolute", top: 0, left: 0, right: 1, bottom: 4, borderRadius: radius.pill, overflow: "hidden" },
+  face: { flex: 1, marginRight: 1, marginBottom: 4, borderRadius: radius.pill, overflow: "hidden" },
   hovered: { top: -1 },
-  inactive: { right: 0, bottom: 0, backgroundColor: colors.sand, borderWidth: 0 },
+  inactive: { marginRight: 0, marginBottom: 0, backgroundColor: colors.sand, borderWidth: 0 },
   focus: { position: "absolute", top: -4, bottom: -4, left: -4, right: -4, borderRadius: radius.pill + 4, borderWidth: 2, borderColor: colors.dusk },
 });
