@@ -75,7 +75,7 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
             <PressableScale accessibilityRole="button" disabled={saving} onPress={() => setDraft(null)} hitSlop={5} style={styles.cancel}>
               <Text style={styles.cancelText}>Cancel</Text>
             </PressableScale>
-            <PressableScale layered accessibilityRole="button" busy={saving} disabled={saving} onPress={save} hitSlop={5} style={styles.save}>
+            <PressableScale lit accessibilityRole="button" busy={saving} disabled={saving} onPress={save} hitSlop={5} style={styles.save}>
               <Text style={styles.saveText}>{saving ? "Saving…" : "Save"}</Text>
             </PressableScale>
           </View>

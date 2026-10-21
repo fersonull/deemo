@@ -4,6 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
+- [x] **Layered style removed (2026-10-22):** controls use the same inside-only light as cards (`lit`); no lower layers or outer shadows; pressing turns the light off.
 - [x] **Lit flat surfaces (2026-10-22):** a shared `lit` style (inset top highlight and glow, no outer shadow) on flat content cards across the app.
 - [x] **Layered buttons, direction B (2026-10-21):** lit and grounded controls (highlight, straight lower layer, soft shadow, light layer, depth by size, spring release); cards keep a plain layer.
 - [x] **Audit fixes (2026-10-21):** muted-text and placeholder contrast, shared keyboard handling, 48 dp tap areas, growable text containers, a recycled History list, predictive Back (rebuild), and the last colours tokenized.

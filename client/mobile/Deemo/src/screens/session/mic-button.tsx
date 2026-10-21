@@ -21,7 +21,6 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
 
   return (
     <PressableScale
-      layered={false}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: !active }}
@@ -50,7 +49,13 @@ export function MicButton({ active, muted, level, label, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  raised: { boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 0, color: colors.duskInk }] },
+  // Lit like the app's other main actions: a faint top highlight and glow inside the blob, no lower layer.
+  raised: {
+    boxShadow: [
+      { inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: "rgba(255,255,255,0.22)" },
+      { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: "rgba(255,255,255,0.1)" },
+    ],
+  },
   wrap: { width: 96, height: 84 },
   dim: { opacity: 0.4 },
   wave: { flexDirection: "row", alignItems: "center", gap: 4 },

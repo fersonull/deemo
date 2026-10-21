@@ -153,7 +153,7 @@ export function Projects() {
             {shown.length === list.length ? `${list.length} PROJECTS` : `${shown.length} OF ${list.length} PROJECTS`}
           </Text>
           <PressableScale
-            layered
+            lit
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setSheet("arrange")}
@@ -182,7 +182,7 @@ export function Projects() {
           const { icon, meta } = describe(p);
           return (
             <PressableScale
-              layered
+              lit
               entering={riseIn(Math.min(i, 5) * 40, reduced)}
               key={p.id}
               accessibilityRole="button"

@@ -446,7 +446,7 @@ export function Profile() {
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <PressableScale
-          layered
+          lit
           accessibilityRole="button"
           accessibilityState={{ disabled: deleting, busy: deleting }}
           disabled={deleting}

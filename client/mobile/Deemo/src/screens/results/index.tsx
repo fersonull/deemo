@@ -291,21 +291,19 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                   <Button label="Practice weak topics" onPress={practiceWeak} />
                   <View style={styles.actionRow}>
                     <PressableScale
-                      layered
+                      lit
                       accessibilityRole="button"
                       onPress={() => router.replace("/practice")}
                       style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
-                      depthColor={colors.sandDepth}
                     >
                       <Text style={styles.actionText}>Practice again</Text>
                     </PressableScale>
                     {group ? (
                       <PressableScale
-                        layered
+                        lit
                         accessibilityRole="button"
                         onPress={() => setSheet("share")}
                         style={[styles.actionSize, styles.flexAction, styles.action, styles.actionSand]}
-                        depthColor={colors.sandDepth}
                       >
                         <Icon name="group" size={17} />
                         <Text style={styles.actionText}>Share with group</Text>
@@ -315,7 +313,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 </>
               )}
               <PressableScale
-                layered
+                lit
                 accessibilityRole="button"
                 accessibilityHint={premium ? "Makes a PDF to send to your adviser" : "Premium"}
                 accessibilityState={{ busy: exporting }}
@@ -323,7 +321,6 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
                 disabled={exporting}
                 onPress={exportPdf}
                 style={[styles.actionSize, styles.action, styles.actionOutline]}
-                depthColor={colors.sandDepth}
               >
                 {!exporting ? <Icon name={premium ? "picture_as_pdf" : "lock"} size={17} /> : null}
                 <Text accessibilityLiveRegion="polite" style={styles.actionText}>{exporting ? "Making your PDF…" : "Export PDF"}</Text>

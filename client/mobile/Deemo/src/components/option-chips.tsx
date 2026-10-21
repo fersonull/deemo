@@ -21,7 +21,7 @@ export function OptionChips<T extends string>({
         const selected = o.value === value;
         return (
           <PressableScale
-            layered
+            lit
             key={o.value}
             accessibilityRole="radio"
             accessibilityState={{ checked: selected }}

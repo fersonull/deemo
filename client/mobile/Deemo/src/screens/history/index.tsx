@@ -97,7 +97,7 @@ export function History() {
   // One session row. Only the first screenful rises in; rows mounted later by scrolling just appear.
   const row = (s: (typeof shown)[number], i: number) => (
     <PressableScale
-      layered
+      lit
       entering={i < 6 ? riseIn(i * 40, reduced) : undefined}
       accessibilityRole="button"
       accessibilityHint="Opens the report"
@@ -148,7 +148,7 @@ export function History() {
             const selected = f.mode === mode;
             return (
               <PressableScale
-                layered
+                lit
                 key={f.label}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
@@ -176,7 +176,7 @@ export function History() {
             </Text>
           )}
           <PressableScale
-            layered
+            lit
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setArranging(true)}

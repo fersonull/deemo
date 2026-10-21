@@ -87,7 +87,7 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
         <Text style={[styles.text, { fontSize: size[0], lineHeight: size[1] }]}>{text}</Text>
       </ScrollView>
       {phase === "presentation" && (
-        <PressableScale layered accessibilityRole="button" onPress={onDonePresenting} style={styles.done}>
+        <PressableScale lit accessibilityRole="button" onPress={onDonePresenting} style={styles.done}>
           <Text style={[type.button, styles.doneText]}>Done presenting</Text>
         </PressableScale>
       )}

@@ -99,7 +99,6 @@ function PracticeButton() {
   }));
   return (
     <PressableScale
-      layered={false}
       accessibilityRole="button"
       accessibilityLabel="Start practice"
       onPress={() => router.push("/practice")}
