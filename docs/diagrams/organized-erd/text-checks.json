@@ -1,0 +1,14 @@
+[
+  {
+    "file": "DEEMO-ERD-organized.svg",
+    "width": 6600,
+    "height": 3200,
+    "labels": 425,
+    "tables": 22,
+    "relations": 24,
+    "minFont": 20,
+    "clipped": [],
+    "overlaps": [],
+    "outsideTables": []
+  }
+]

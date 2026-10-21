@@ -84,6 +84,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Documentation (manuscript, not code)
 
+- [x] **Continuous landscape ERD (2026-10-21):** `docs/diagrams/organized-erd/` preserves all 22 tables/fields and 24 direct relationships in one wide, left-to-right diagram, with no reference chips, duplicated tables or split sheets. Enlarged text: 30 px table names, 26 px relations, 24 px fields, 21 px types and 20 px notes. Geometry checks confirm no crossings/shared segments/table intrusion/detached endpoints; 20 related tables are connected and the two non-FK support tables remain unrelated. All 425 labels pass browser layout checks. SVG, fresh 2× PNG, preview, sources and check records included; original figures and online paper unchanged. Final document/print sizing remains unverified.
+
 - [x] **Apply paper fixes to the requested backup (2026-10-18):** updated https://docs.google.com/document/d/10uUR649kQmj7GXBZc89C3IjWj5ypvtMFwyqOD5X7Woo/edit with the verified Chapter 1–3 replacements, 22 native dictionary tables, four missing fields, revised DFD/ERD/flowcharts and reconciled bibliography. Corrected the Baek research claim and removed a floating diagram/list-numbering layout defect. Diagram sources/canonical PNGs refreshed locally; no app changes, migrations, billing/device verification or branch merge. The original-paper checklist below remains scoped to its own document.
 
 - [x] **Google Doc correction guide:** created https://docs.google.com/document/d/15EqKU-73gaJv5UJPhVK7Dlzwul_0xc7-4uITHIow4Yg/edit with all 49 fixes, exact locations, replacement text and 9 native tables; verified text/table readback (2026-10-18). Original paper/app unchanged.
