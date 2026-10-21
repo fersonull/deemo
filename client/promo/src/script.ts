@@ -1,15 +1,14 @@
-// The promo's words and sounds, in beat order. Edit a line, delete its public/audio/vo-<id>.mp3, then
-// `bun run audio` regenerates what's missing; each beat stretches to fit its measured line (src/audio.json).
+// The promo's words and sounds, in scene order. Edit a line, delete its public/audio/vo-<id>.mp3, then
+// `bun run audio` regenerates what's missing; each scene stretches to fit its measured line (src/audio.json).
 import audio from "./audio.json";
 
 export const LINES = {
-  hook: "Your defense is in three days.",
-  meet: "Meet DEEMO, your A.I. mock panel.",
-  upload: "Upload your manuscript. It reads every page.",
-  panel: "Then seats a panel built for your field.",
-  ask: "They ask out loud, and follow up.",
-  flag: "Contradict your paper? DEEMO catches it.",
-  report: "Then it scores how ready you are.",
+  intro: "Your defense is coming.",
+  problem: "You know your paper. But can you defend it out loud?",
+  analysis: "Upload your manuscript. DEEMO reads every page.",
+  setup: "Pick your stage, your panel, and how hard they push.",
+  panel: "Built for your course.",
+  live: "It asks, follows up, and catches contradictions.",
   cta: "DEEMO. Practice the defense, before the defense.",
 } as const;
 export type Line = keyof typeof LINES;
@@ -28,20 +27,24 @@ export const SFX = {
   riser: { prompt: "short bright uplifting riser swell", seconds: 2 },
   ding: { prompt: "success ding, bright bell, satisfying", seconds: 1.2 },
   sting: { prompt: "upbeat logo sting, warm synth and bell, confident ending", seconds: 2.5 },
+  glass: { prompt: "soft delicate glass tap, clean modern UI, short", seconds: 0.5 },
+  roll: { prompt: "quick mechanical slot machine tick roll, light, short", seconds: 0.8 },
+  swell: { prompt: "airy ethereal whoosh swell rising into open sky, soft", seconds: 2 },
 } as const;
 export type Sfx = keyof typeof SFX;
 
 export const MUSIC = {
-  prompt: "Upbeat, warm, playful electronic pop background for a student app promo. Light plucks, soft claps, bright marimba, steady 112 bpm, optimistic, no vocals.",
-  seconds: 30,
+  prompt: "Airy modern ambient pop for a sleek app launch film. Soft synth pads, gentle plucks, light clap, warm sub bass, 100 bpm, optimistic and polished, no vocals.",
+  seconds: 50,
 };
 
-export const FPS = 30;
-export const VO_LEAD = 4; // frames into a beat before its line starts
+export const FPS = 60;
+export const VO_LEAD = 8; // frames into a scene before its line starts
+export const OVERLAP = 30; // frames each scene overlaps the next (bridges live in the overlap)
 
-// A beat never runs shorter than this (seconds): room for its choreography even with a short line.
-const MIN: Record<Line, number> = { hook: 2.4, meet: 2.6, upload: 3.4, panel: 3.4, ask: 3, flag: 2.8, report: 2.8, cta: 3.8 };
-const FALLBACK: Record<Line, number> = { hook: 1.8, meet: 2, upload: 2.8, panel: 2.3, ask: 2, flag: 2.4, report: 1.8, cta: 2.9 };
+// A scene never runs shorter than this (seconds): room for its choreography even with a short line.
+const MIN: Record<Line, number> = { intro: 2.8, problem: 4, analysis: 4, setup: 3.4, panel: 3.2, live: 5.2, cta: 4 };
+const FALLBACK: Record<Line, number> = { intro: 1.4, problem: 3, analysis: 3.6, setup: 2.9, panel: 1.4, live: 3.2, cta: 3.2 };
 
 const voice = audio.voice as Partial<Record<Line, number>>;
 export const hasVoice = (line: Line) => voice[line] !== undefined;
@@ -49,13 +52,14 @@ export const hasSfx = (id: Sfx) => (audio.sfx as string[]).includes(id);
 export const hasMusic = audio.music;
 
 export const ORDER = Object.keys(LINES) as Line[];
-const len = (l: Line) => Math.ceil(Math.max(MIN[l] * FPS, (voice[l] ?? FALLBACK[l]) * FPS + VO_LEAD + 10));
-
-// Beat start frames: B.upload is when the upload beat begins, and so on.
-export const B = {} as Record<Line, number>;
+// Scene lengths in frames, including the overlap into the next.
+export const LEN = {} as Record<Line, number>;
+// Scene start frames: S.setup is when the setup scene begins, and so on.
+export const S = {} as Record<Line, number>;
 let at = 0;
 for (const l of ORDER) {
-  B[l] = at;
-  at += len(l);
+  LEN[l] = Math.ceil(Math.max(MIN[l] * FPS, (voice[l] ?? FALLBACK[l]) * FPS + VO_LEAD + 20)) + OVERLAP;
+  S[l] = at;
+  at += LEN[l] - OVERLAP;
 }
-export const TOTAL = at;
+export const TOTAL = at + OVERLAP;

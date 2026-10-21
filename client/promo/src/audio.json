@@ -1,13 +1,12 @@
 {
   "voice": {
-    "hook": 1.718,
-    "meet": 2.694,
-    "upload": 2.786,
-    "panel": 2.136,
-    "ask": 1.95,
-    "flag": 3.019,
-    "report": 1.672,
-    "cta": 3.622
+    "intro": 1.347,
+    "problem": 3.111,
+    "analysis": 3.576,
+    "setup": 2.926,
+    "panel": 1.115,
+    "live": 3.111,
+    "cta": 3.158
   },
   "sfx": [
     "hit",
@@ -22,7 +21,10 @@
     "nudge",
     "riser",
     "ding",
-    "sting"
+    "sting",
+    "glass",
+    "roll",
+    "swell"
   ],
   "music": true
 }
