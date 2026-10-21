@@ -69,6 +69,6 @@ const styles = StyleSheet.create({
   },
   bubbleDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink },
   name: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.ink, textAlign: "center" },
-  status: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.muted, marginTop: -5, height: 13 },
+  status: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.muted, marginTop: -5, minHeight: 13 },
   statusSpeaking: { color: colors.duskLink },
 });

@@ -9,7 +9,7 @@ import { colors, fonts } from "@/theme";
 export function InboxButton() {
   const { unread } = useNotices();
   return (
-    <PressableScale accessibilityRole="button" accessibilityLabel={`Inbox, ${unread} unread notices`} onPress={() => router.push("/notices")} style={styles.button}>
+    <PressableScale accessibilityRole="button" accessibilityLabel={`Inbox, ${unread} unread notices`} onPress={() => router.push("/notices")} hitSlop={2} style={styles.button}>
       <Icon name="inbox" size={24} />
       {unread > 0 ? <View style={styles.badge}><Text style={styles.count}>{unread > 99 ? "99+" : unread}</Text></View> : null}
     </PressableScale>

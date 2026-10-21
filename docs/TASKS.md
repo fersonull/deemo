@@ -4,6 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
+- [x] **Audit fixes (2026-10-21):** muted-text and placeholder contrast, shared keyboard handling, 48 dp tap areas, growable text containers, a recycled History list, predictive Back (rebuild), and the last colours tokenized.
 - [x] **Projects sort and filter (2026-10-21):** sort by date or title; show all, mine, joined or needs review. Same sheet pattern as History.
 - [x] **App cleanup, part 2 (2026-10-21):** a not-found route, debug logs only in dev builds, the practice setup saved across restarts (with a Free fallback), and the handoff condensed.
 - [x] **Sign-out cleanup (2026-10-21):** the welcome slides show once per phone, consent and the practice setup no longer carry over to the next account, unused template images were removed, and `app.json` is light-only with deduplicated permissions (the `app.json` part needs a rebuild).

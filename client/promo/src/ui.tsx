@@ -18,7 +18,7 @@ export const C = {
   inkDepth: "#191613",
   sandDepth: "#C8BDAE",
   inkMuted: "#5E554D",
-  muted: "#8A7F74",
+  muted: "#6B6157",
   faint: "#B0A698",
   border: "rgba(42,36,32,0.12)",
   dusk: "#5A66C7",

@@ -43,7 +43,7 @@ export function TabBar({ state, descriptors, navigation }: Props) {
 
   const tab = (route: (typeof state.routes)[number], index: number) => {
     const focused = state.index === index;
-    const color = focused ? colors.paper : "rgba(247,243,236,0.55)";
+    const color = focused ? colors.paper : colors.paperDim;
     const label = descriptors[route.key].options.title ?? route.name;
     return (
       <PressableScale

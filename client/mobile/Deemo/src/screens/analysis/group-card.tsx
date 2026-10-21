@@ -53,6 +53,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               onPress={() =>
                 void Share.share({ message: `Join our research group on DEEMO with the code ${group.code}.` }).catch(() => {})
               }
+              hitSlop={4}
               style={styles.iconButton}
             >
               <Icon name="share" size={18} color={colors.duskInk} />

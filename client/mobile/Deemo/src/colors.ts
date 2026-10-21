@@ -11,9 +11,15 @@ export const colors = {
   inkDepth: "#191613", // smooth lower layer of ink buttons
   sandDepth: "#C8BDAE", // smooth lower layer of secondary buttons
   inkMuted: "#5E554D", // secondary text
-  muted: "#8A7F74", // meta text, chevrons
+  muted: "#6B6157", // meta text, chevrons; ≥4.5:1 on paper, sand and the tints (was #8A7F74, 3.1–3.5:1)
   faint: "#B0A698", // partial transcript tail
   border: "rgba(42,36,32,0.12)",
+  borderStrong: "rgba(42,36,32,0.18)", // dashed "add" outlines
+  outline: "rgba(42,36,32,0.35)", // unchecked checkbox
+  scrim: "rgba(42,36,32,0.35)", // behind sheets
+  handle: "rgba(42,36,32,0.2)", // sheet grab handle
+  paperVeil: "rgba(247,243,236,0.94)", // paused overlay
+  paperDim: "rgba(247,243,236,0.55)", // inactive tab labels on ink
 
   // primary: "dusk" indigo
   dusk: "#5A66C7", // oklch(0.55 0.15 275)

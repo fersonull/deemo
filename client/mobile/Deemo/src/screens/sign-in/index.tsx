@@ -1,6 +1,6 @@
 import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
-import { KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, useReducedMotion } from "react-native-reanimated";
 
 import { Button } from "@/components/button";
@@ -91,7 +91,7 @@ export function SignIn() {
   );
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+    <>
       <Screen scroll title={creating ? "Make your\naccount." : "Keep your\nsessions safe."}>
         {/* Deemo's bubble: the words fade in when they change; screen readers hear each new message */}
         <View style={styles.deemo} accessibilityLiveRegion="polite">
@@ -197,7 +197,7 @@ export function SignIn() {
           <Text style={styles.switchText}>{creating ? "Have an account? Sign in" : "New here? Create an account"}</Text>
         </PressableScale>
       </Screen>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -217,7 +217,7 @@ function Field({
           accessibilityLabel={label}
           accessibilityHint={invalid ? "Needs a fix" : undefined}
           autoCapitalize="none"
-          placeholderTextColor={colors.faint}
+          placeholderTextColor={colors.muted}
           style={styles.input}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}

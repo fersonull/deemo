@@ -69,7 +69,7 @@ export function Sheet({ visible, onClose, children }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  backdrop: { backgroundColor: "rgba(42,36,32,0.35)" },
+  backdrop: { backgroundColor: colors.scrim },
   card: {
     backgroundColor: colors.paper,
     borderTopLeftRadius: 32,
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(42,36,32,0.2)",
+    backgroundColor: colors.handle,
     alignSelf: "center",
     marginBottom: 18,
   },

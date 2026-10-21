@@ -157,6 +157,7 @@ export function Projects() {
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setSheet("arrange")}
+            hitSlop={6}
             style={[styles.arrange, changed && styles.arrangeOn]}
           >
             <Icon name="sort" size={18} color={changed ? colors.paper : colors.ink} />
@@ -314,7 +315,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    height: 36,
+    minHeight: 36,
+    paddingVertical: 6,
     maxWidth: "70%",
     borderRadius: 18,
     paddingHorizontal: 12,
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "rgba(42,36,32,0.18)",
+    borderColor: colors.borderStrong,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

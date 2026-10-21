@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   card: { marginTop: 16, marginHorizontal: 14, backgroundColor: colors.sand, borderRadius: 26, paddingTop: 16, paddingHorizontal: 18, paddingBottom: 18 },
   meta: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, flex: 1 },
-  chip: { height: 26, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", gap: 5 },
+  chip: { minHeight: 26, paddingVertical: 3, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", gap: 5 },
   followUp: { backgroundColor: colors.duskTint },
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.ink },
   counter: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 11, color: colors.muted },

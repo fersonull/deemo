@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   title: { ...type.label, flex: 1 },
   badge: { backgroundColor: colors.amberTint, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 3 },
   badgeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11, color: colors.amberInk },
-  edit: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.paper, justifyContent: "center" },
+  edit: { minHeight: 30, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.paper, justifyContent: "center" },
   editText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.ink },
   value: { ...type.heading, marginTop: 4 },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },

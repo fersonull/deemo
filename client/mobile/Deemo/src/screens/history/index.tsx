@@ -94,11 +94,11 @@ export function History() {
       ) : null}
     </TrendChart>
   ) : null, [loaded, error, list, filteredMode, all.length, practiceStage]);
-  const rows = useMemo(() => shown.map((s, i) => (
+  // One session row. Only the first screenful rises in; rows mounted later by scrolling just appear.
+  const row = (s: (typeof shown)[number], i: number) => (
     <PressableScale
       layered
-      entering={riseIn(Math.min(i, 5) * 40, reduced)}
-      key={s.id}
+      entering={i < 6 ? riseIn(i * 40, reduced) : undefined}
       accessibilityRole="button"
       accessibilityHint="Opens the report"
       onPress={() => router.push({ pathname: "/results", params: { id: s.id } })}
@@ -116,13 +116,19 @@ export function History() {
         <Text style={[styles.score, styles.pending]}>{s.status === "scoring" ? "…" : "–"}</Text>
       )}
     </PressableScale>
-  )), [shown, reduced]);
+  );
 
   // Offline: Deemo takes the whole screen; nothing else here would work.
   if (loaded && error) return <Offline onRetry={refreshEverything} />;
 
   return (
-    <Screen scroll tabBar title="History" onRefresh={refreshEverything}>
+    <Screen
+      scroll
+      tabBar
+      title="History"
+      onRefresh={refreshEverything}
+      list={{ data: resultsPending ? [] : shown, render: row, keyOf: (s) => s.id }}
+    >
       {/* Deemo sums up the trend (it changes with the stage filter; the words fade in when they change) */}
       {stagePending ? (
         <Skeleton label="Updating your history">
@@ -147,6 +153,7 @@ export function History() {
                 accessibilityRole="radio"
                 accessibilityState={{ checked: selected }}
                 onPress={() => setMode(f.mode)}
+                hitSlop={7}
                 style={[styles.chip, selected && styles.chipSelected]}
               >
                 <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{f.label}</Text>
@@ -173,6 +180,7 @@ export function History() {
             accessibilityRole="button"
             accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
             onPress={() => setArranging(true)}
+            hitSlop={6}
             style={[styles.arrange, changed && styles.arrangeOn]}
           >
             <Icon name="sort" size={18} color={changed ? colors.paper : colors.ink} />
@@ -205,7 +213,7 @@ export function History() {
               ))}
             </View>
           </Skeleton>
-        ) : rows}
+        ) : null}
       </View>
 
       <Sheet visible={arranging} onClose={() => setArranging(false)}>
@@ -241,7 +249,7 @@ const styles = StyleSheet.create({
   list: { gap: 8, marginTop: 14 },
   bones: { gap: 8 },
   filters: { flexDirection: "row", gap: 6, marginTop: 16 },
-  chip: { height: 34, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
+  chip: { minHeight: 34, paddingVertical: 6, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
   chipSelected: { backgroundColor: colors.ink },
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   chipTextSelected: { color: colors.paper },
@@ -255,7 +263,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    height: 36,
+    minHeight: 36,
+    paddingVertical: 6,
     maxWidth: "70%",
     borderRadius: 18,
     paddingHorizontal: 12,

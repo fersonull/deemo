@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "rgba(42,36,32,0.18)",
+    borderColor: colors.borderStrong,
   },
   tile: {
     width: 44,

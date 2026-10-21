@@ -406,7 +406,7 @@ export function Profile() {
             value={draft}
             onChangeText={setDraft}
             placeholder="Juan Dela Cruz"
-            placeholderTextColor={colors.faint}
+            placeholderTextColor={colors.muted}
             autoCapitalize="words"
             autoComplete="name"
             autoFocus

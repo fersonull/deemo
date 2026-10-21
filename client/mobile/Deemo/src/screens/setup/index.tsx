@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
@@ -52,7 +52,7 @@ export function Setup() {
   }, [accountLoaded, premium]);
 
   return (
-    <KeyboardAvoidingView behavior="padding" style={styles.flex}>
+    <>
       <Screen scroll onBack={() => router.back()} title={"Which defense\ntoday?"}>
         <View accessibilityRole="radiogroup" accessibilityLabel="Defense stage" style={styles.modes}>
           {MODES.map((m) => {
@@ -214,7 +214,7 @@ export function Setup() {
           }}
         />
       </Screen>
-    </KeyboardAvoidingView>
+    </>
   );
 }
 
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   manuscriptName: { ...type.bodyStrong, marginTop: 2 },
   nameBone: { marginTop: 6, marginBottom: 2 },
   rubricRow: { marginTop: 8 },
-  change: { height: 26, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, justifyContent: "center" },
+  change: { minHeight: 26, paddingVertical: 3, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, justifyContent: "center" },
   changeText: { ...type.meta, fontWeight: "600", color: colors.ink },
   modes: { gap: 8, marginTop: 18 },
   stageNote: { flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 10, padding: 12, borderRadius: radius.lg, backgroundColor: colors.amberTint },

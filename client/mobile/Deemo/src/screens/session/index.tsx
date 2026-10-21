@@ -183,7 +183,7 @@ export function Session() {
               value={draft}
               onChangeText={setDraft}
               placeholder="Type your answer…"
-              placeholderTextColor={colors.faint}
+              placeholderTextColor={colors.muted}
               style={styles.input}
               onSubmitEditing={send}
               accessibilityLabel="Typed answer"
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.paper },
   flex: { flex: 1 },
   top: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8, paddingLeft: 18, paddingRight: 14 },
-  stage: { height: 36, borderRadius: 18, backgroundColor: colors.sand, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
+  stage: { minHeight: 36, borderRadius: 18, backgroundColor: colors.sand, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
   stageText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
   time: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 13, color: colors.inkMuted, fontVariant: ["tabular-nums"] },
   endBtn: { height: 48, paddingHorizontal: 18, borderRadius: 24, backgroundColor: colors.sand, justifyContent: "center" },
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   roundSpacer: { width: 56, height: 56 },
   round: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.sand, alignItems: "center", justifyContent: "center" },
   micCol: { alignItems: "center", gap: 6 },
-  micLabel: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 12, color: colors.inkMuted, height: 16 },
+  micLabel: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 12, color: colors.inkMuted, minHeight: 16 },
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
   sheetBody: { ...type.body, color: colors.inkMuted, marginTop: 8 },
   sheetCta: { marginTop: 20 },

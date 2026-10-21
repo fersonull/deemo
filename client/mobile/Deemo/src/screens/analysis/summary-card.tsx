@@ -72,10 +72,10 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
           {list ? <Text style={styles.hint}>One per line.</Text> : null}
           {failed ? <Text style={styles.error}>{"Couldn't save. Try again."}</Text> : null}
           <View style={styles.actions}>
-            <PressableScale accessibilityRole="button" disabled={saving} onPress={() => setDraft(null)} style={styles.cancel}>
+            <PressableScale accessibilityRole="button" disabled={saving} onPress={() => setDraft(null)} hitSlop={5} style={styles.cancel}>
               <Text style={styles.cancelText}>Cancel</Text>
             </PressableScale>
-            <PressableScale layered accessibilityRole="button" busy={saving} disabled={saving} onPress={save} style={styles.save}>
+            <PressableScale layered accessibilityRole="button" busy={saving} disabled={saving} onPress={save} hitSlop={5} style={styles.save}>
               <Text style={styles.saveText}>{saving ? "Saving…" : "Save"}</Text>
             </PressableScale>
           </View>
@@ -104,13 +104,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "transparent",
   },
-  unsure: { borderColor: "rgba(235,179,83,0.7)" },
+  unsure: { borderColor: colors.amber },
   editing: { borderColor: colors.dusk },
   head: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 28 },
   label: { ...type.label, flex: 1 },
   badge: { backgroundColor: colors.amberTint, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 3 },
   badgeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11, color: colors.amberInk },
-  edit: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.paper, justifyContent: "center" },
+  edit: { minHeight: 30, paddingVertical: 5, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.paper, justifyContent: "center" },
   editText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.ink },
   body: { ...type.body, lineHeight: 20.5, marginTop: 4 },
   empty: { color: colors.muted },

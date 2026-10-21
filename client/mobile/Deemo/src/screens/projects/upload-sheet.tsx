@@ -83,7 +83,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
           value={name}
           onChangeText={setName}
           placeholder="e.g. ReqTrack"
-          placeholderTextColor={colors.faint}
+          placeholderTextColor={colors.muted}
           maxLength={80}
           style={styles.input}
           accessibilityLabel="Project name"
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "rgba(42,36,32,0.18)",
+    borderColor: colors.borderStrong,
     backgroundColor: colors.sand,
   },
   fileChosen: { borderColor: colors.sage },

@@ -45,7 +45,7 @@ export function JoinSheet({
         autoCorrect={false}
         maxLength={6}
         placeholder="ABC234"
-        placeholderTextColor={colors.faint}
+        placeholderTextColor={colors.muted}
         editable={!busy}
         style={styles.input}
         returnKeyType="done"

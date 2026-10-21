@@ -32,7 +32,7 @@ export function FocusArea({ project }: { project: Project }) {
         maxLength={160}
         editable={!busy}
         placeholder="e.g. Database design and testing"
-        placeholderTextColor={colors.faint}
+        placeholderTextColor={colors.muted}
         style={styles.input}
       />
       {draft !== saved ? <Button label={busy ? "Saving…" : "Save focus area"} busy={busy} disabled={busy} onPress={save} /> : null}
