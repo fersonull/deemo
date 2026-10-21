@@ -5,11 +5,13 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
+import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { sessions } from "@/hooks/use-sessions";
 import { trackTouch } from "@/hooks/touch-point";
 import { colors } from "@/theme";
+import { onboarding, useOnboarded } from "@/utils/onboarded";
 import { NoticeDelivery } from "@/components/notice-delivery";
 
 // Hold the splash until Firebase says whether someone is still signed in (no flash of the welcome screen).
@@ -18,6 +20,7 @@ void SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { ready, signedIn, verified, accountLoaded, consentAt, course } = useSession();
   const inside = signedIn && verified; // email sign-ups wait on verify-email until they tap the link
+  const onboarded = useOnboarded(); // the welcome slides show once per phone
   // An account with no consent on record (made before consent was stored server-side) sees the consent screen first.
   const needsConsent = inside && accountLoaded && !consentAt;
   // Then the onboarding survey (their course), once; older accounts see it on their next open.
@@ -27,12 +30,16 @@ export default function RootLayout() {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
 
-  // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out.
+  // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out,
+  // including the last setup (its manuscript and Premium-only choices belong to that account).
   useEffect(() => {
-    if (inside) void projects.refresh(true);
-    else {
+    if (inside) {
+      onboarding.done();
+      void projects.refresh(true);
+    } else {
       projects.reset();
       sessions.reset();
+      practiceSetup.reset();
     }
   }, [inside]);
 
@@ -61,8 +68,10 @@ export default function RootLayout() {
       <Stack
         screenOptions={{ headerShown: false, animation: "fade_from_bottom", contentStyle: { backgroundColor: colors.paper } }}
       >
-        <Stack.Protected guard={!signedIn}>
+        <Stack.Protected guard={!signedIn && !onboarded}>
           <Stack.Screen name="welcome" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn || needsConsent}>

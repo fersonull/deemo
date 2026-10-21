@@ -245,6 +245,7 @@ export const session = {
       .signOut()
       .catch(() => {}); // not signed in with Google
     await signOut(getAuth());
+    store.set({ consentAt: null }); // the next person to sign in on this phone gives their own consent
   },
 
   // ponytail: demo upgrade, no payments (addendum Q1). The server records it, so its limits follow.
