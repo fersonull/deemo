@@ -3,7 +3,8 @@ import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
-import { DeemoNote } from "@/components/deemo-note";
+import { Button } from "@/components/button";
+import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { Skeleton } from "@/components/skeleton";
@@ -52,6 +53,7 @@ export function Projects() {
   // Free tier holds one manuscript; delete it to upload another (addendum Q1).
   const locked =
     !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
+  const empty = loaded && list.length === 0;
 
   useFocusEffect(
     useCallback(() => {
@@ -73,8 +75,26 @@ export function Projects() {
       subtitle="One manuscript per project."
       onRefresh={refreshEverything}
     >
+      {/* No manuscripts yet: one clear call to action, with joining a group as the other way in. */}
+      {empty ? (
+        <View style={styles.empty}>
+          <Deemo mood="reading" size="l" />
+          <Text style={styles.emptyTitle}>Add your manuscript</Text>
+          <Text style={styles.emptyBody}>
+            The panel reads it first, so every question comes from your own
+            chapters. Until then, practice uses a sample paper.
+          </Text>
+          <View style={styles.emptyCta}>
+            <Button
+              label="Upload a manuscript"
+              leading={<Icon name="upload_file" size={20} color={colors.paper} />}
+              onPress={() => setSheet("upload")}
+            />
+          </View>
+        </View>
+      ) : null}
       {/* Actions first, so a long list never pushes them out of reach. */}
-      <PressableScale
+      {empty ? null : <PressableScale
         accessibilityRole="button"
         accessibilityHint={
           locked ? "Premium: the free plan holds one manuscript" : undefined
@@ -90,7 +110,7 @@ export function Projects() {
         <Text style={styles.addText}>
           {locked ? "Upload another manuscript" : "Upload a manuscript"}
         </Text>
-      </PressableScale>
+      </PressableScale>}
       {locked ? (
         <Text style={styles.note}>
           The free plan holds one manuscript. Delete it or try Premium to add
@@ -172,10 +192,6 @@ export function Projects() {
               ))}
             </View>
           </Skeleton>
-        ) : loaded && list.length === 0 ? (
-          <DeemoNote mood="waving" size="m">
-            No manuscripts yet. Until you add one, practice uses a sample paper.
-          </DeemoNote>
         ) : null}
       </View>
 
@@ -210,6 +226,10 @@ export function Projects() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
+  empty: { alignItems: "center", marginTop: 28, paddingHorizontal: 8 },
+  emptyTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8, marginTop: 18, textAlign: "center" },
+  emptyBody: { ...type.body, color: colors.inkMuted, textAlign: "center", marginTop: 8 },
+  emptyCta: { alignSelf: "stretch", marginTop: 20 },
   shared: { borderWidth: 2, borderColor: colors.dusk },
   join: {
     marginTop: 10,
