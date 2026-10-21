@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 
@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/skeleton";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { PressableScale } from "@/components/pressable-scale";
 import { Offline } from "@/components/offline";
+import { OptionChips } from "@/components/option-chips";
+import { Sheet } from "@/components/sheet";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import {
@@ -22,6 +24,13 @@ import {
 } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
 import { colors, fonts, radius, type } from "@/theme";
+import {
+  PROJECT_SHOWS,
+  PROJECT_SORTS,
+  arrangeProjects,
+  type ProjectShow,
+  type ProjectSort,
+} from "@/utils/arrange-projects";
 import { riseIn } from "@/utils/motion";
 
 import { UploadSheet } from "./upload-sheet";
@@ -49,7 +58,14 @@ export function Projects() {
   const { projects: list, loaded, error } = useProjects();
   const { projectId } = usePracticeSetup();
   const { premium } = useSession();
-  const [sheet, setSheet] = useState<"upload" | "upsell" | "join" | null>(null);
+  const [sheet, setSheet] = useState<"upload" | "upsell" | "join" | "arrange" | null>(null);
+  const [sort, setSort] = useState<ProjectSort>("newest");
+  const [show, setShow] = useState<ProjectShow>("all");
+  const shown = useMemo(() => arrangeProjects(list, sort, show), [list, sort, show]);
+  const changed = sort !== "newest" || show !== "all";
+  const arrangeLabel = [show !== "all" && PROJECT_SHOWS.find((o) => o.value === show)!.label, PROJECT_SORTS.find((o) => o.value === sort)!.label]
+    .filter(Boolean)
+    .join(" · ");
   // Free tier holds one manuscript; delete it to upload another (addendum Q1).
   const locked =
     !premium && list.filter(countsTowardLimit).length >= FREE_PROJECTS;
@@ -130,8 +146,37 @@ export function Projects() {
         <Icon name="chevron_right" size={20} color={colors.muted} />
       </PressableScale>
 
-      <View style={styles.list}>
-        {list.map((p, i) => {
+      {/* Sort and filter once there's more than one to arrange. */}
+      {list.length > 1 ? (
+        <View style={styles.listHead}>
+          <Text style={[type.label, styles.flex]}>
+            {shown.length === list.length ? `${list.length} PROJECTS` : `${shown.length} OF ${list.length} PROJECTS`}
+          </Text>
+          <PressableScale
+            layered
+            accessibilityRole="button"
+            accessibilityLabel={`Sort and filter: ${arrangeLabel}`}
+            onPress={() => setSheet("arrange")}
+            style={[styles.arrange, changed && styles.arrangeOn]}
+          >
+            <Icon name="sort" size={18} color={changed ? colors.paper : colors.ink} />
+            <Text style={[styles.arrangeText, changed && styles.onInk]} numberOfLines={1}>
+              {arrangeLabel}
+            </Text>
+          </PressableScale>
+        </View>
+      ) : null}
+      {list.length > 0 && !shown.length ? (
+        <Text style={styles.none}>
+          {"Nothing here with this filter. "}
+          <Text style={styles.link} accessibilityRole="button" onPress={() => setShow("all")}>
+            Show all
+          </Text>
+        </Text>
+      ) : null}
+
+      <View style={[styles.list, list.length > 1 && styles.listTight]}>
+        {shown.map((p, i) => {
           const active = p.id === projectId;
           const { icon, meta } = describe(p);
           return (
@@ -195,6 +240,30 @@ export function Projects() {
         ) : null}
       </View>
 
+      <Sheet visible={sheet === "arrange"} onClose={() => setSheet(null)}>
+        <Text style={styles.sheetTitle}>Sort and filter</Text>
+        <Text style={[type.label, styles.group]}>SORT BY</Text>
+        <OptionChips options={PROJECT_SORTS} value={sort} onPick={setSort} label="Sort by" />
+        <Text style={[type.label, styles.group]}>SHOW</Text>
+        <OptionChips options={PROJECT_SHOWS} value={show} onPick={setShow} label="Show" />
+        <View style={styles.sheetActions}>
+          <View style={styles.flex}>
+            <Button
+              variant="secondary"
+              label="Reset"
+              disabled={!changed}
+              onPress={() => {
+                setSort("newest");
+                setShow("all");
+              }}
+            />
+          </View>
+          <View style={styles.flex}>
+            <Button label="Done" onPress={() => setSheet(null)} />
+          </View>
+        </View>
+      </Sheet>
+
       <JoinSheet
         visible={sheet === "join"}
         onClose={() => setSheet(null)}
@@ -239,6 +308,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   list: { gap: 8, marginTop: 18 },
+  listTight: { marginTop: 10 },
+  listHead: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 18, paddingLeft: 4 },
+  arrange: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 36,
+    maxWidth: "70%",
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    backgroundColor: colors.sand,
+  },
+  arrangeOn: { backgroundColor: colors.ink },
+  arrangeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink, flexShrink: 1 },
+  onInk: { color: colors.paper },
+  none: { ...type.body, fontSize: 13.5, color: colors.inkMuted, marginTop: 12, paddingHorizontal: 4 },
+  link: { color: colors.duskLink, fontWeight: "600" },
+  sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
+  group: { marginTop: 18, marginBottom: 8 },
+  sheetActions: { flexDirection: "row", gap: 8, marginTop: 22 },
   bones: { gap: 8, paddingTop: 2 },
   card: {
     flexDirection: "row",

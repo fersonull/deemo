@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/skeleton";
 import { StartButton } from "@/components/start-button";
 import { Score } from "@/components/score";
 import { Offline } from "@/components/offline";
+import { OptionChips } from "@/components/option-chips";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { practiceSetup } from "@/hooks/use-practice-setup";
 import { refreshEverything } from "@/hooks/refresh-everything";
@@ -181,7 +182,7 @@ export function History() {
           </PressableScale>
         </View>
       ) : null}
-      {!resultsPending && list.length && !shown.length ? (
+      {!resultsPending && list.length > 0 && !shown.length ? (
         <Text style={styles.none}>
           {"No sessions in this range. "}
           <Text style={styles.link} accessibilityRole="button" onPress={() => setRange("all")}>
@@ -210,9 +211,9 @@ export function History() {
       <Sheet visible={arranging} onClose={() => setArranging(false)}>
         <Text style={styles.sheetTitle}>Sort and filter</Text>
         <Text style={[type.label, styles.group]}>SORT BY</Text>
-        <Options options={SORTS} value={sort} onPick={setSort} label="Sort by" />
+        <OptionChips options={SORTS} value={sort} onPick={setSort} label="Sort by" />
         <Text style={[type.label, styles.group]}>DATE</Text>
-        <Options options={RANGES} value={range} onPick={setRange} label="Date range" />
+        <OptionChips options={RANGES} value={range} onPick={setRange} label="Date range" />
         <View style={styles.sheetActions}>
           <View style={styles.flex}>
             <Button
@@ -231,28 +232,6 @@ export function History() {
         </View>
       </Sheet>
     </Screen>
-  );
-}
-
-function Options<T extends string>({ options, value, onPick, label }: { options: { value: T; label: string }[]; value: T; onPick: (v: T) => void; label: string }) {
-  return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.options}>
-      {options.map((o) => {
-        const selected = o.value === value;
-        return (
-          <PressableScale
-            layered
-            key={o.value}
-            accessibilityRole="radio"
-            accessibilityState={{ checked: selected }}
-            onPress={() => onPick(o.value)}
-            style={[styles.chip, styles.optionChip, selected && styles.chipSelected]}
-          >
-            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{o.label}</Text>
-          </PressableScale>
-        );
-      })}
-    </View>
   );
 }
 
@@ -289,7 +268,5 @@ const styles = StyleSheet.create({
   link: { color: colors.duskLink, fontWeight: "600" },
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
   group: { marginTop: 18, marginBottom: 8 },
-  options: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  optionChip: { height: 44, borderRadius: 22, paddingHorizontal: 16 },
   sheetActions: { flexDirection: "row", gap: 8, marginTop: 22 },
 });
