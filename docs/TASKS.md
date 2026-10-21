@@ -4,6 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
+- [x] **App cleanup, part 2 (2026-10-21):** a not-found route, debug logs only in dev builds, the practice setup saved across restarts (with a Free fallback), and the handoff condensed.
 - [x] **Sign-out cleanup (2026-10-21):** the welcome slides show once per phone, consent and the practice setup no longer carry over to the next account, unused template images were removed, and `app.json` is light-only with deduplicated permissions (the `app.json` part needs a rebuild).
 - [ ] **Gemini paid tier.** The API key is on the free tier (`generate_content_free_tier_requests`, 20 requests/day per model). It runs out during normal testing, and free-tier inputs may be reviewed by humans, which the plan forbids for unpublished manuscripts and student transcripts (addendum Q9, CLAUDE.md scope guards). Enable billing on the key's Google Cloud project and set billing alerts. *Owner: you.* (Backup Flash models now keep analysis and scoring running when one model's quota runs out, but that doesn't fix the privacy issue.)
 

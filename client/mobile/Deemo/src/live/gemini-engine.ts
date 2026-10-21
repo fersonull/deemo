@@ -11,6 +11,9 @@ import { alreadySaid } from "./said";
 import { envelope, rms } from "./voice-envelope";
 import { panelVoice } from "./voice-level";
 
+// Timing logs (handover, reply time, nudges) only in development builds. Bun tests have no __DEV__.
+const DEV = typeof __DEV__ !== "undefined" && __DEV__;
+
 // Phone ⇄ Gemini Live directly (addendum B1–B6). The server only mints a token with the panel's
 // prompt and tools locked in. The student holds the floor until they tap done (manual activity:
 // activityStart → mic audio → activityEnd), and the mic is never sent while the panel talks.
@@ -409,7 +412,7 @@ export class GeminiEngine implements LiveEngine {
       if (this.switching) {
         // The next panelist's session is up: tell them what was covered, and they begin.
         this.switching = false;
-        console.log(`[live] handover to seat ${this.seat}: session ready in ${Date.now() - this.mark} ms`);
+        if (DEV) console.log(`[live] handover to seat ${this.seat}: session ready in ${Date.now() - this.mark} ms`);
         this.mark = Date.now();
         this.emit({ type: "reconnecting", value: false });
         this.sendTurn(this.note(this.seat - 1, this.seat));
@@ -449,7 +452,7 @@ export class GeminiEngine implements LiveEngine {
     if (c.modelTurn || c.outputTranscription) {
       this.armStall();
       if (this.mark) {
-        console.log(`[live] panel replied in ${Date.now() - this.mark} ms`);
+        if (DEV) console.log(`[live] panel replied in ${Date.now() - this.mark} ms`);
         this.mark = 0;
       }
     }
@@ -783,7 +786,7 @@ export class GeminiEngine implements LiveEngine {
     this.panelResponded();
     this.watchdog = setTimeout(() => {
       if (!this.paused) {
-        console.log(`[live] panel silent for ${ms} ms: nudged`);
+        if (DEV) console.log(`[live] panel silent for ${ms} ms: nudged`);
         this.sendTurn(nudge);
       }
       this.awaitPanel();

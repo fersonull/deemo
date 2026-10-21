@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/button";
@@ -29,7 +29,7 @@ const MODES: { value: Mode; desc: string }[] = [
 // panel covers its agenda and ends (the plan's safety cap stops a runaway session).
 export function Setup() {
   const setup = usePracticeSetup();
-  const { premium, course } = useSession();
+  const { premium, course, accountLoaded } = useSession();
   const [sheet, setSheet] = useState<"domain" | "upsell" | null>(null);
   const upsell = () => setSheet("upsell");
   const list = useProjects();
@@ -42,6 +42,14 @@ export function Setup() {
       practiceSetup.set({ weakFrom: null }); // setting up by hand is a normal round
     }, []),
   );
+
+  // A saved setup can hold Premium choices from before a downgrade: fall back to the Free ones, once the account's
+  // plan is known (so a Premium student isn't clamped while it loads).
+  useEffect(() => {
+    if (!accountLoaded || premium) return;
+    const { mode, panelists } = practiceSetup.get();
+    if (mode === "FINAL" || panelists > 1) practiceSetup.set({ mode: mode === "FINAL" ? "PRE_ORAL" : mode, panelists: 1 });
+  }, [accountLoaded, premium]);
 
   return (
     <KeyboardAvoidingView behavior="padding" style={styles.flex}>
