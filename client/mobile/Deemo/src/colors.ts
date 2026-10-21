@@ -8,7 +8,7 @@ export const colors = {
   banner: "#F1E6D6", // info / reconnecting banners
   ink: "#2A2420", // primary text, primary buttons
   inkSoft: "#3E3731", // long-form body text
-  inkDepth: "#191613", // smooth lower layer of ink buttons
+  inkDepth: "#0F0D0B", // smooth lower layer of ink buttons (dark enough to read under ink)
   sandDepth: "#C8BDAE", // smooth lower layer of secondary buttons
   inkMuted: "#5E554D", // secondary text
   muted: "#6B6157", // meta text, chevrons; ≥4.5:1 on paper, sand and the tints (was #8A7F74, 3.1–3.5:1)

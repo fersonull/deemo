@@ -23,8 +23,8 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
       },
       useEffect: fn => { effects.push(fn); },
     }));
-    mock.module("react/jsx-runtime", () => ({ jsx: element, jsxs: element }));
-    mock.module("react/jsx-dev-runtime", () => ({ jsxDEV: element }));
+    mock.module("react/jsx-runtime", () => ({ jsx: element, jsxs: element, Fragment: React.Fragment }));
+    mock.module("react/jsx-dev-runtime", () => ({ jsxDEV: element, Fragment: React.Fragment }));
     mock.module("react-native", () => ({
       Pressable: "Pressable", Text: "Text", Platform: platform,
       StyleSheet: { create: value => value, flatten, absoluteFill: {} },
@@ -35,7 +35,9 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
       useSharedValue: () => pressed,
       useAnimatedStyle: compute => ({ compute }),
       withTiming: (value, options) => { timings.push(options); return value; },
+      withSpring: value => value,
     }));
+    mock.module("expo-linear-gradient", () => ({ LinearGradient: "LinearGradient" }));
     mock.module("react-native-svg", () => ({
       default: "Svg", Defs: "Defs", LinearGradient: "Gradient", Rect: "Rect", Stop: "Stop",
     }));
@@ -59,7 +61,7 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     assert.equal(tree.props.collapsable, false);
     tree.props.onPressIn({});
     tree = render({ onPressOut: () => callbacks++ });
-    assert.deepEqual(offset(tree), [{ translateX: 1 }, { translateY: 3 }]);
+    assert.deepEqual(offset(tree), [{ translateY: 3 }], "the face sinks straight down onto its layer");
     assert.equal(surface(tree).boxShadow[0].offsetY, 1);
     tree.props.onPressOut({}); tree = render();
     assert.equal(callbacks, 2);
@@ -85,10 +87,27 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
     assert.deepEqual(offset(tree)[0], { translateY: -26 });
     platform.Version = 27;
     assert.equal(surface(render()).elevation, 3);
-    reduced = true; tree = render(); tree.props.onPressIn({}); tree.props.onPressOut({});
+    platform.Version = 35;
+    reduced = true; tree = render(); tree.props.onPressIn({});
     assert.equal(timings.at(-1).duration, 0);
-    assert.equal(timings.at(-2).duration, 0);
+    tree.props.onPressOut({});
+    assert.equal(pressed.value, 0, "reduced motion releases instantly, without the spring");
     reduced = false;
+    // Controls (a set height) are lit: top highlight, the lower layer, a soft ambient shadow and a light layer.
+    const big = { height: 58, borderRadius: 29, backgroundColor: colors.ink };
+    tree = render({ style: big });
+    const lit = surface(tree).boxShadow;
+    assert.equal(lit.length, 3);
+    assert.equal(lit[0].inset, true);
+    assert.equal(lit[1].offsetY, 5, "big actions sit higher");
+    assert.ok(lit[2].blurRadius > 0);
+    assert.equal(tree.props.children.props.children[0].type, "LinearGradient");
+    assert.equal(tree.props.children.props.children[1], label, "the label stays a direct native child");
+    assert.equal(surface(render({ style: { height: 34, backgroundColor: colors.sand } })).boxShadow[1].offsetY, 3, "chips sit lower");
+    // Cards (no set height) keep a plain lower layer: no ambient shadow, no light layer.
+    tree = render({ style: card });
+    assert.equal(surface(tree).boxShadow.length, 1);
+    assert.equal(tree.props.children, label);
     const flatTimings = timings.length;
     tree = render({ layered: undefined, style: card, onPressIn: () => callbacks++, onPressOut: () => callbacks++ });
     assert.equal(surface(tree).boxShadow, undefined, "ordinary cards/rows/links are flat by default");
@@ -138,7 +157,7 @@ test("shared depth preserves native labels, card layout and disabled/busy/press 
       assert.notEqual(enabled.props.children[2].key, busy.props.children[2].key, "loading recreates native text");
       assert.equal(disabled.props.children[2].props.style[1].color, colors.inkMuted);
       assert.equal(enabled.props.children[2].props.style[1].color, variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.paper);
-      assert.equal(render(enabled.props).props.children, enabled.props.children);
+      assert.equal(render(enabled.props).props.children.props.children[1], enabled.props.children);
     }
   `], { cwd: fileURLToPath(new URL("../..", import.meta.url)), stdout: "pipe", stderr: "pipe" });
   expect(result.exitCode, new TextDecoder().decode(result.stderr)).toBe(0);
