@@ -91,6 +91,6 @@ const styles = StyleSheet.create({
   header: { height: 52, justifyContent: "center", paddingHorizontal: 10 },
   back: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   scroll: { paddingHorizontal: 20 },
-  fixed: { flex: 1, paddingHorizontal: 22, paddingBottom: 24 },
+  fixed: { flex: 1, paddingHorizontal: 20, paddingBottom: 24 },
   subtitle: { ...type.body, color: colors.inkMuted, marginTop: 8 },
 });

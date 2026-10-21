@@ -45,8 +45,8 @@ export function FocusArea({ project }: { project: Project }) {
   );
 }
 const styles = StyleSheet.create({
-  card: { marginTop: 20 },
-  note: { ...type.meta, lineHeight: 18, marginTop: 6 },
+  card: { marginTop: 24 },
+  note: { ...type.meta, lineHeight: 18, marginTop: 8 },
   input: { ...type.body, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 14, marginVertical: 10 },
   error: { ...type.meta, color: colors.warnInk, marginTop: 8 },
 });

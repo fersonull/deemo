@@ -27,6 +27,6 @@ export function DeemoNote({ mood = "idle", size = "s", children, startle, style 
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
+  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 16 },
   text: { ...type.body, color: colors.inkSoft },
 });

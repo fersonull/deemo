@@ -78,16 +78,16 @@ export function GroupReadiness() {
 }
 
 const styles = StyleSheet.create({
-  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
+  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 24 },
   head: { flexDirection: "row", alignItems: "center", gap: 8 },
   flex: { flex: 1 },
   settings: { flexDirection: "row", alignItems: "center", minHeight: 32 },
   link: { ...type.bodyStrong, fontSize: 13, color: colors.duskLink },
   title: { ...type.meta, color: colors.inkMuted, marginTop: 2 },
-  members: { gap: 6, paddingTop: 12, paddingBottom: 2 },
+  members: { gap: 8, paddingTop: 12, paddingBottom: 2 },
   member: { width: 62, alignItems: "center" },
   ring: { borderRadius: 26, borderWidth: 2, borderColor: colors.paper },
-  name: { fontFamily: fonts.body, fontWeight: "500", fontSize: 12, color: colors.inkMuted, marginTop: 5, maxWidth: 62 },
+  name: { fontFamily: fonts.body, fontWeight: "500", fontSize: 12, color: colors.inkMuted, marginTop: 4, maxWidth: 62 },
   you: { fontWeight: "600", color: colors.ink },
   score: { fontFamily: fonts.body, fontWeight: "700", fontSize: 15, lineHeight: 19 },
   none: { fontFamily: fonts.body, fontWeight: "600", fontSize: 15, lineHeight: 19, color: colors.inkMuted },

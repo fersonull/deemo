@@ -73,8 +73,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 6,
     padding: 14,
-    marginTop: 18,
+    marginTop: 16,
   },
   error: { ...type.meta, color: colors.clay, marginTop: 8 },
-  cta: { marginTop: 16 },
+  cta: { marginTop: 24 },
 });

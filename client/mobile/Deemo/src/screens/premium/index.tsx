@@ -63,12 +63,12 @@ export function Premium() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   hero: { marginTop: 8 },
-  section: { marginTop: 24, marginBottom: 8, paddingHorizontal: 4 },
-  list: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 14 },
+  section: { marginTop: 24, marginBottom: 8 },
+  list: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 16 },
   item: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
   tile: { width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
   detail: { ...type.meta, lineHeight: 17, marginTop: 2 },
-  note: { ...type.meta, lineHeight: 17, marginTop: 12, paddingHorizontal: 4 },
-  cta: { marginTop: 16 },
+  note: { ...type.meta, lineHeight: 17, marginTop: 12 },
+  cta: { marginTop: 24 },
 });

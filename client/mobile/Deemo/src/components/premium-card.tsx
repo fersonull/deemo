@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   compact: { paddingTop: 6, paddingBottom: 6, paddingRight: 14 },
-  head: { flexDirection: "row", alignItems: "center", gap: 10, marginLeft: -6 },
+  head: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: -6 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontFamily: fonts.display, fontWeight: "800", fontSize: 24, letterSpacing: -0.6, color: colors.goldLight },
   demo: {
@@ -105,6 +105,6 @@ const styles = StyleSheet.create({
   sub: { fontFamily: fonts.body, fontSize: 13.5, color: colors.sand, opacity: 0.8, marginTop: 2 },
   rule: { height: 1, backgroundColor: colors.goldInk, opacity: 0.6, marginTop: 12, marginBottom: 12 },
   perks: { gap: 8 },
-  perk: { flexDirection: "row", alignItems: "center", gap: 10 },
+  perk: { flexDirection: "row", alignItems: "center", gap: 8 },
   perkText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14, color: colors.paper },
 });

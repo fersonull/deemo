@@ -111,7 +111,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
-  stats: { flexDirection: "row", gap: 8, marginTop: 18 },
+  stats: { flexDirection: "row", gap: 8, marginTop: 16 },
   stat: { ...lit, backgroundColor: colors.sand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 16 },
   statValue: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 18, color: colors.ink },
   statLabel: { fontSize: 11.5, marginTop: 2 },

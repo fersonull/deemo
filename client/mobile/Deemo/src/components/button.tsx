@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
   },
   premium: { borderWidth: 1, borderColor: colors.goldInk, overflow: "hidden" },
 });

@@ -92,7 +92,7 @@ function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () =>
 
 const styles = StyleSheet.create({
   error: { ...type.body, fontSize: 13, color: colors.warnInk, marginBottom: 10, textAlign: "center" },
-  items: { gap: 8, marginTop: 20 },
+  items: { gap: 8, marginTop: 24 },
   item: {
     ...lit,
     flexDirection: "row",
@@ -117,5 +117,5 @@ const styles = StyleSheet.create({
   },
   boxOn: { backgroundColor: colors.ink, borderColor: colors.ink },
   checkLabel: { ...type.body, flex: 1, lineHeight: 19.6 },
-  cta: { marginTop: 10 },
+  cta: { marginTop: 8 },
 });

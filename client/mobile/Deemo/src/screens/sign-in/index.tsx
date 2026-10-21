@@ -231,7 +231,7 @@ function Field({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  deemo: { marginTop: 14, minHeight: 68 }, // room for two lines, so short and long messages don't shift the form
+  deemo: { marginTop: 16, minHeight: 68 }, // room for two lines, so short and long messages don't shift the form
   google: { marginTop: 16 },
   g: {
     width: 22,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.ink,
   },
-  or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, marginBottom: 14 },
+  or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24, marginBottom: 16 },
   rule: { flex: 1, height: 1, backgroundColor: colors.border },
   field: {
     flexDirection: "row",
@@ -262,13 +262,13 @@ const styles = StyleSheet.create({
   eye: { width: 40, height: 40, alignItems: "center", justifyContent: "center", marginRight: -8 },
   fieldLabel: { ...type.meta, fontSize: 11, fontWeight: "500" },
   input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
-  hint: { ...type.meta, marginTop: -2, marginBottom: 10, paddingHorizontal: 4 },
+  hint: { ...type.meta, marginTop: 4, marginBottom: 8, paddingHorizontal: 4 },
   hintMet: { color: colors.sageInk },
-  fieldError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: -2, paddingHorizontal: 4 },
+  fieldError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 4, paddingHorizontal: 4 },
   link: { alignSelf: "flex-end", height: 40, justifyContent: "center", paddingHorizontal: 4 },
   linkText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.duskLink },
   dim: { opacity: 0.4 },
-  cta: { marginTop: 18 },
+  cta: { marginTop: 24 },
   switch: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
   switchText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
 });

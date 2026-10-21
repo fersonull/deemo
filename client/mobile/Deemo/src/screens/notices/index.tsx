@@ -85,7 +85,7 @@ export function Notices() {
 }
 
 const styles = StyleSheet.create({
-  status: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", marginTop: 14, marginBottom: 14, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.duskTint },
+  status: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "flex-start", marginTop: 16, marginBottom: 14, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.duskTint },
   statusDone: { backgroundColor: colors.sageTint },
   statusText: { ...type.bodyStrong, fontSize: 13, color: colors.duskInk },
   statusTextDone: { color: colors.sageInk },
@@ -105,10 +105,10 @@ const styles = StyleSheet.create({
   dateUnread: { color: colors.duskInk, fontWeight: "500" },
   preview: { ...type.meta, fontSize: 13, flex: 1, color: colors.inkMuted },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.dusk },
-  footer: { marginTop: 14 },
+  footer: { marginTop: 16 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 48, paddingHorizontal: 24 },
-  emptyTitle: { ...type.heading, fontSize: 20, marginTop: 18 },
-  emptyBody: { ...type.body, color: colors.inkMuted, textAlign: "center", marginTop: 6 },
+  emptyTitle: { ...type.heading, fontSize: 20, marginTop: 16 },
+  emptyBody: { ...type.body, color: colors.inkMuted, textAlign: "center", marginTop: 8 },
   error: { ...type.body, color: colors.warnInk },
   errorBox: { gap: 12, marginBottom: 16 },
 });

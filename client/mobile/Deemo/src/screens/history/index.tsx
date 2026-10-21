@@ -244,11 +244,11 @@ export function History() {
 }
 
 const styles = StyleSheet.create({
-  summary: { marginTop: 14 },
+  summary: { marginTop: 16 },
   flex: { flex: 1, minWidth: 0 },
-  list: { gap: 8, marginTop: 14 },
+  list: { gap: 8, marginTop: 8 },
   bones: { gap: 8 },
-  filters: { flexDirection: "row", gap: 6, marginTop: 16 },
+  filters: { flexDirection: "row", gap: 8, marginTop: 16 },
   chip: { minHeight: 34, paddingVertical: 6, borderRadius: 17, paddingHorizontal: 14, justifyContent: "center", backgroundColor: colors.sand },
   chipSelected: { backgroundColor: colors.ink },
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
@@ -258,11 +258,11 @@ const styles = StyleSheet.create({
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 26, letterSpacing: -0.6, color: colors.ink },
   pending: { color: colors.muted },
-  listHead: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 18, paddingLeft: 4 },
+  listHead: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 24 },
   arrange: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     minHeight: 36,
     paddingVertical: 6,
     maxWidth: "70%",
@@ -276,6 +276,6 @@ const styles = StyleSheet.create({
   none: { ...type.body, fontSize: 13.5, color: colors.inkMuted, marginTop: 12, paddingHorizontal: 4 },
   link: { color: colors.duskLink, fontWeight: "600" },
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
-  group: { marginTop: 18, marginBottom: 8 },
-  sheetActions: { flexDirection: "row", gap: 8, marginTop: 22 },
+  group: { marginTop: 16, marginBottom: 8 },
+  sheetActions: { flexDirection: "row", gap: 8, marginTop: 24 },
 });

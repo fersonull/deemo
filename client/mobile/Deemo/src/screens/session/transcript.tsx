@@ -68,12 +68,12 @@ export function Transcript({ lines, partial, seats }: Props) {
 const styles = StyleSheet.create({
   wrap: { flex: 1 },
   scroll: { flex: 1 },
-  content: { paddingTop: 22, paddingHorizontal: 22, paddingBottom: 24, gap: 9 }, // room to scroll clear of the fades
+  content: { paddingTop: 24, paddingHorizontal: 20, paddingBottom: 24, gap: 8 }, // room to scroll clear of the fades
   fade: { position: "absolute", left: 0, right: 0 },
   fadeTop: { top: 0, height: 24 },
   fadeBottom: { bottom: 0, height: 28 },
   line: { flexDirection: "row", gap: 8 },
-  face: { marginTop: 1 },
+  face: { marginTop: 2 },
   text: {
     flex: 1,
     fontFamily: fonts.body,

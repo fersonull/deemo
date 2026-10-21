@@ -45,7 +45,7 @@ export function DomainSheet({
 const styles = StyleSheet.create({
   title: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
   subtitle: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
-  domains: { gap: 6, marginTop: 14 },
+  domains: { gap: 8, marginTop: 16 },
   domain: {
     height: 52,
     borderRadius: radius.lg,

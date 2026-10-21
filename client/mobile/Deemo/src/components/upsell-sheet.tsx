@@ -60,13 +60,13 @@ export function UpsellSheet({ visible, onClose, onUpgrade }: { visible: boolean;
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: "row", alignItems: "center", gap: 14 },
+  head: { flexDirection: "row", alignItems: "center", gap: 16 },
   flex: { flex: 1, minWidth: 0 },
   title: { ...type.title, fontSize: 24, lineHeight: 26, letterSpacing: -0.8 },
   sub: { ...type.body, fontSize: 13.5, color: colors.inkMuted, marginTop: 4 },
-  perks: { gap: 10, marginTop: 16 },
+  perks: { gap: 8, marginTop: 16 },
   perk: { flexDirection: "row", alignItems: "center", gap: 12 },
-  upgrade: { marginTop: 20 },
+  upgrade: { marginTop: 24 },
   notNow: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
   notNowText: { fontWeight: "500", color: colors.inkMuted },
 });

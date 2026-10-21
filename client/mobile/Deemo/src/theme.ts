@@ -49,6 +49,16 @@ export const radius = {
 } as const;
 
 // Motion: a strong ease-out for things entering or responding (cubic-bezier(0.23, 1, 0.32, 1)). UI motion stays under 300 ms.
+// Spacing scale (4-based) and what each step is for. Equal relationships get equal space across screens.
+//   2 / 4  inside a line: icon to text, stacked meta lines
+//   8      between cards in a stack; a section label to its content; buttons in an action group
+//   12     compact card padding (vertical); related blocks inside a card
+//   16     card padding; screen title to the first block
+//   24     between sections; before a screen's main action
+//   32     around an empty state
+//   20     the screen gutter (left and right)
+export const space = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, gutter: 20 } as const;
+
 export const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
 
 // Flat content surfaces (cards, groups, stats, speech bubbles) catch the same light from above as the raised

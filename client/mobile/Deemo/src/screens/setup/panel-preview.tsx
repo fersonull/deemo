@@ -40,7 +40,7 @@ export function PanelPreview({ course, panelists }: { course: Course | null; pan
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 8 },
-  row: { flexDirection: "row", gap: 6 },
+  row: { flexDirection: "row", gap: 8 },
   card: {
     ...lit,
     flex: 1,
@@ -54,5 +54,5 @@ const styles = StyleSheet.create({
   },
   name: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink, marginTop: 4 },
   role: { ...type.meta, fontSize: 11.5 },
-  note: { ...type.meta, lineHeight: 17, marginTop: 6, paddingHorizontal: 4 },
+  note: { ...type.meta, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
 });

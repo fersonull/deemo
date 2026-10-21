@@ -279,15 +279,15 @@ const styles = StyleSheet.create({
   briefBones: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    marginTop: 18,
+    gap: 16,
+    marginTop: 16,
   },
   safe: { flex: 1, backgroundColor: colors.paper },
   scroll: { paddingHorizontal: 20, paddingTop: 14 },
   flex: { flex: 1, minWidth: 0 },
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   bones: { gap: 8 },
-  start: { marginTop: 10 },
+  start: { marginTop: 8 },
   sample: {
     height: 44,
     alignItems: "center",
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.duskLink,
   },
-  section: { marginTop: 24, marginBottom: 4 },
+  section: { marginTop: 24, marginBottom: 8 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, height: 58 },
   mode: {
     width: 38,

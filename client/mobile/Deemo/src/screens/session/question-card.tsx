@@ -96,17 +96,17 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
 }
 
 const styles = StyleSheet.create({
-  card: { ...lit, marginTop: 16, marginHorizontal: 14, backgroundColor: colors.sand, borderRadius: 26, paddingTop: 16, paddingHorizontal: 18, paddingBottom: 18 },
+  card: { ...lit, marginTop: 16, marginHorizontal: 20, backgroundColor: colors.sand, borderRadius: 26, padding: 16 },
   meta: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, flex: 1 },
-  chip: { minHeight: 26, paddingVertical: 3, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", gap: 5 },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, flex: 1 },
+  chip: { minHeight: 26, paddingVertical: 3, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", gap: 4 },
   followUp: { backgroundColor: colors.duskTint },
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.ink },
   counter: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 11, color: colors.muted },
-  asker: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 },
+  asker: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   askerText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.inkMuted },
   textScroll: { maxHeight: 150, flexGrow: 0 },
   text: { fontFamily: fonts.display, fontWeight: "700", letterSpacing: -0.3, color: colors.ink },
-  done: { alignSelf: "flex-start", marginTop: 14, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: colors.ink, justifyContent: "center" },
+  done: { alignSelf: "flex-start", marginTop: 16, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: colors.ink, justifyContent: "center" },
   doneText: { fontSize: 14, color: colors.paper },
 });

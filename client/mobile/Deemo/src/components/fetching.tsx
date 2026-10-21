@@ -25,5 +25,5 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, paddingTop: 6 },
   art: { height: 140, justifyContent: "center" },
   title: { ...type.title, marginTop: 12 },
-  sub: { ...type.body, color: colors.inkMuted, marginTop: 10 },
+  sub: { ...type.body, color: colors.inkMuted, marginTop: 8 },
 });

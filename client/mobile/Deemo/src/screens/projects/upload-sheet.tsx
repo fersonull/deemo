@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   field: { marginTop: 8, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 10, paddingHorizontal: 16 },
   fieldLabel: { fontFamily: fonts.body, fontWeight: "500", fontSize: 11, color: colors.muted },
   input: { fontFamily: fonts.body, fontWeight: "500", fontSize: 15, color: colors.ink, paddingVertical: 4, paddingHorizontal: 0 },
-  hint: { ...type.meta, lineHeight: 17, marginTop: 6, paddingHorizontal: 4 },
-  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, paddingHorizontal: 4 },
-  cta: { marginTop: 16 },
+  hint: { ...type.meta, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
+  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 8, paddingHorizontal: 4 },
+  cta: { marginTop: 24 },
 });

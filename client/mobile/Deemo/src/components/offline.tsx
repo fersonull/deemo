@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   art: { flex: 1, alignItems: "center", justifyContent: "center" },
   words: { paddingBottom: 24 }, // the tab bar is hidden here
   title: { ...type.hero },
-  body: { ...type.body, fontSize: 15, lineHeight: 22, color: colors.inkMuted, marginTop: 10 },
+  body: { ...type.body, fontSize: 15, lineHeight: 22, color: colors.inkMuted, marginTop: 8 },
   cta: { marginTop: 24 },
   detail: { ...type.meta, marginTop: 12, textAlign: "center" },
 });

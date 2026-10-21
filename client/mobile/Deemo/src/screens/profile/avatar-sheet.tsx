@@ -165,12 +165,12 @@ function PageButton({ icon, label, disabled, onPress }: PageButtonProps) {
 
 const styles = StyleSheet.create({
   title: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },
-  body: { ...type.body, color: colors.inkMuted, marginTop: 6 },
+  body: { ...type.body, color: colors.inkMuted, marginTop: 8 },
   preview: { alignItems: "center", marginTop: 16 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: GAP, width: 3 * TILE + 2 * GAP, alignSelf: "center", marginTop: 16 },
   tile: { padding: 3, borderRadius: 38, borderWidth: 2.5, borderColor: "transparent" },
   tileSelected: { borderColor: colors.dusk },
-  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 10, textAlign: "center" },
+  error: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 8, textAlign: "center" },
   pager: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 16 },
   pageButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.sand, alignItems: "center", justifyContent: "center" },
   dim: { opacity: 0.4 },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 6,
+    gap: 8,
   },
   randomizeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
   actions: { marginTop: 12 },

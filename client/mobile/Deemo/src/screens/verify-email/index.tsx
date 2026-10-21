@@ -140,8 +140,8 @@ export function VerifyEmail() {
 const styles = StyleSheet.create({
   subtitle: { ...type.body, color: colors.inkMuted, marginTop: 8 },
   email: { fontFamily: fonts.body, fontWeight: "600", color: colors.ink },
-  deemo: { marginTop: 18, minHeight: 68 },
-  steps: { gap: 8, marginTop: 18 },
+  deemo: { marginTop: 16, minHeight: 68 },
+  steps: { gap: 8, marginTop: 16 },
   step: {
     ...lit,
     flexDirection: "row",
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   num: { ...type.label, fontSize: 12, width: 14, textAlign: "center", color: colors.duskIcon },
   stepText: { ...type.body, flex: 1, fontSize: 13.5, lineHeight: 19.5 },
-  cta: { gap: 10, marginTop: 24 },
+  cta: { gap: 8, marginTop: 24 },
   switch: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
   switchText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
 });

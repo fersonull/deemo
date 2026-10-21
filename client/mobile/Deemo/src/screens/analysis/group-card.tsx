@@ -153,10 +153,10 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
   );
 }
 const styles = StyleSheet.create({
-  card: { ...lit, paddingVertical: 14, paddingHorizontal: 16, marginTop: 18, borderRadius: radius.xl, backgroundColor: colors.sand },
+  card: { ...lit, padding: 16, marginTop: 16, borderRadius: radius.xl, backgroundColor: colors.sand },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   flex: { flex: 1 },
-  note: { ...type.body, fontSize: 13, lineHeight: 19, color: colors.inkMuted, marginTop: 6 },
+  note: { ...type.body, fontSize: 13, lineHeight: 19, color: colors.inkMuted, marginTop: 8 },
   codeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 12 },
   codeChip: { height: 40, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: colors.paper, justifyContent: "center" },
   code: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 20, letterSpacing: 3, color: colors.duskInk },
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   more: { width: FACE + 4, height: FACE + 4, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },
   moreText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.inkMuted },
   share: { marginTop: 12 },
-  action: { marginTop: 14, minHeight: 44, justifyContent: "center" },
+  action: { marginTop: 16, minHeight: 44, justifyContent: "center" },
   leave: { alignSelf: "center", minHeight: 40, justifyContent: "center", marginTop: 4 },
   link: { ...type.button, fontSize: 13, textAlign: "center", color: colors.inkMuted },
   error: { ...type.meta, color: colors.warnInk, marginTop: 8 },

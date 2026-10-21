@@ -89,11 +89,11 @@ export function MicCheck() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  script: { ...type.heading, fontSize: 21, lineHeight: 26, letterSpacing: -0.2, marginTop: 14 },
-  tip: { marginTop: 14 },
+  script: { ...type.heading, fontSize: 21, lineHeight: 26, letterSpacing: -0.2, marginTop: 16 },
+  tip: { marginTop: 16 },
   meter: {
     height: 96,
-    marginTop: 20,
+    marginTop: 24,
     backgroundColor: colors.sand,
     borderRadius: 24,
     flexDirection: "row",
@@ -103,10 +103,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   bar: { width: 6, borderRadius: 3 },
-  error: { ...type.body, color: colors.warnInk, marginTop: 10 },
+  error: { ...type.body, color: colors.warnInk, marginTop: 8 },
   checks: { gap: 2, marginTop: 16 },
   check: { flexDirection: "row", alignItems: "center", gap: 12, height: 44 },
   meta: { fontSize: 12.5 },
-  denied: { ...lit, marginTop: 20, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 16, gap: 12 },
+  denied: { ...lit, marginTop: 24, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 16, gap: 12 },
   deniedText: { ...type.body },
 });

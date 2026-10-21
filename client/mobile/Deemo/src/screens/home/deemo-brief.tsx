@@ -74,8 +74,8 @@ export function DeemoBrief({ brief }: { brief: Brief }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
-  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 13, paddingHorizontal: 15 },
+  row: { flexDirection: "row", alignItems: "center", gap: 16, marginTop: 16 },
+  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 16 },
   // A small notch pointing back at Deemo, so the bubble reads as Deemo speaking.
   tail: {
     position: "absolute",
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
     transform: [{ rotate: "45deg" }],
   },
-  headline: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
+  headline: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
   score: { fontFamily: fonts.display, fontWeight: "800", fontSize: 36, lineHeight: 40, letterSpacing: -1.2 },
   band: { flex: 1, fontFamily: fonts.display, fontWeight: "700", fontSize: 16, lineHeight: 19 },
   text: { ...type.body, fontSize: 14, lineHeight: 20, color: colors.inkSoft },

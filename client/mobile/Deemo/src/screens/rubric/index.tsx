@@ -152,7 +152,7 @@ export function Rubric() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   sub: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
-  list: { gap: 8, marginTop: 18 },
+  list: { gap: 8, marginTop: 16 },
   row: {
     ...lit,
     flexDirection: "row",
@@ -179,8 +179,8 @@ const styles = StyleSheet.create({
   weight: { width: 48, textAlign: "center", fontFamily: fonts.mono, fontWeight: "500", fontSize: 15, color: colors.ink },
   unscored: { ...type.meta, fontSize: 11.5, lineHeight: 15, textAlign: "right", paddingRight: 6 },
   total: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, marginTop: 12, paddingHorizontal: 4 },
-  note: { ...type.meta, lineHeight: 17, marginTop: 6, paddingHorizontal: 4 },
-  cta: { marginTop: 16 },
+  note: { ...type.meta, lineHeight: 17, marginTop: 8, paddingHorizontal: 4 },
+  cta: { marginTop: 24 },
   reset: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
   resetText: { ...type.button, fontSize: 14, color: colors.ink },
 });

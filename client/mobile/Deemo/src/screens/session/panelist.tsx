@@ -33,10 +33,12 @@ export function Panelist({ persona, course, status, count, level = 0 }: Props) {
           </View>
         )}
       </View>
-      <Text style={styles.name} numberOfLines={1}>
-        {name} · {role}
-      </Text>
-      <Text style={[styles.status, status === "speaking" && styles.statusSpeaking]}>{STATUS[status]}</Text>
+      <View style={styles.labels}>
+        <Text style={styles.name} numberOfLines={1}>
+          {name} · {role}
+        </Text>
+        <Text style={[styles.status, status === "speaking" && styles.statusSpeaking]}>{STATUS[status]}</Text>
+      </View>
     </View>
   );
 }
@@ -53,14 +55,14 @@ function Pulse({ size }: { size: number }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { width: 84, alignItems: "center", gap: 7 },
+  wrap: { width: 84, alignItems: "center", gap: 8 },
   offline: { opacity: 0.45 },
   bubble: {
     position: "absolute",
     top: -10,
     right: -10,
     flexDirection: "row",
-    gap: 3,
+    gap: 4,
     backgroundColor: colors.paper,
     borderRadius: 10,
     paddingVertical: 5,
@@ -69,6 +71,7 @@ const styles = StyleSheet.create({
   },
   bubbleDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink },
   name: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.ink, textAlign: "center" },
-  status: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.muted, marginTop: -5, minHeight: 13 },
+  labels: { alignItems: "center", gap: 2 }, // name and status read as one label under the face
+  status: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10.5, color: colors.muted, minHeight: 13 },
   statusSpeaking: { color: colors.duskLink },
 });

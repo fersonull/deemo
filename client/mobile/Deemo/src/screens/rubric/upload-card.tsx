@@ -109,6 +109,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   error: { ...type.body, fontSize: 13, color: colors.clay, marginTop: 8, paddingHorizontal: 4 },
-  mapped: { backgroundColor: colors.duskTint, borderRadius: radius.lg, padding: 14, marginTop: 10, gap: 4 },
+  mapped: { backgroundColor: colors.duskTint, borderRadius: radius.lg, padding: 14, marginTop: 8, gap: 4 },
   line: { ...type.body, fontSize: 13.5, lineHeight: 19 },
 });

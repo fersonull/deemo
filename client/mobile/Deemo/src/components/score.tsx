@@ -34,5 +34,5 @@ export function Score({ value, style, caption, banded, align = "left" }: Props) 
 
 const styles = StyleSheet.create({
   right: { alignItems: "flex-end" },
-  caption: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10, color: colors.muted, marginTop: -1 },
+  caption: { fontFamily: fonts.body, fontWeight: "500", fontSize: 10, color: colors.muted },
 });

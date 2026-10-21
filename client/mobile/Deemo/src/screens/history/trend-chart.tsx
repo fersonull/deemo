@@ -226,7 +226,7 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
+  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 16 },
   cardCompact: { marginTop: 8, paddingBottom: 12 },
   readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 6 },
   readoutText: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   hit: { position: "absolute", top: 0, bottom: 0 },
   empty: { alignItems: "center", paddingTop: 22 },
-  pebbles: { flexDirection: "row", alignItems: "flex-end", gap: 10 },
+  pebbles: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   pebbleScore: { fontFamily: fonts.display, fontWeight: "800", fontSize: 28, letterSpacing: -0.8, color: colors.paper },
   emptyTitle: { ...type.heading, textAlign: "center", marginTop: 16 },
   emptyNote: {
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     maxWidth: 280,
   },
-  emptyAction: { alignSelf: "stretch", marginTop: 16 },
-  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
+  emptyAction: { alignSelf: "stretch", marginTop: 24 },
+  axis: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
   meta: { ...type.meta, fontFamily: fonts.body, fontSize: 11 },
 });

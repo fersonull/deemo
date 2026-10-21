@@ -45,7 +45,7 @@ export function Survey() {
 }
 
 const styles = StyleSheet.create({
-  picker: { marginTop: 22 },
+  picker: { marginTop: 24 },
   spacer: { flex: 1, minHeight: 24 },
   error: { ...type.body, fontSize: 13, color: colors.warnInk, marginBottom: 10, textAlign: "center" },
 });
