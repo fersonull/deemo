@@ -2,7 +2,7 @@ import { PressableScale } from "@/components/pressable-scale";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 
 type Props = {
   title: string;
@@ -97,6 +97,7 @@ export function SummaryCard({ title, body, list, unsure, readOnly, onSave }: Pro
 
 const styles = StyleSheet.create({
   card: {
+    ...lit,
     backgroundColor: colors.sand,
     borderRadius: radius.xl,
     paddingVertical: 14,

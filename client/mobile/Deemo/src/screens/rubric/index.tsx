@@ -8,7 +8,7 @@ import { Screen } from "@/components/screen";
 import { DEFAULT_WEIGHTS, RUBRIC } from "@/constants";
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects, type Rubric as PanelRubric } from "@/hooks/use-projects";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 
 import { UploadCard } from "./upload-card";
 
@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
   sub: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
   list: { gap: 8, marginTop: 18 },
   row: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,

@@ -18,7 +18,7 @@ import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
 import { MODE_LABELS } from "@/constants";
 import type { SessionSummary } from "@/hooks/use-sessions";
-import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, lit, radius, type } from "@/theme";
 import { bandOf, deltaTone } from "@/utils/bands";
 import { columnPath, columns, contentWidth, scoreY, type Box, type Column } from "@/utils/chart";
 
@@ -226,7 +226,7 @@ function Empty({ score, stage, action }: { score?: number; stage: string | null;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
-  card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
+  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16, marginTop: 18 },
   cardCompact: { marginTop: 8, paddingBottom: 12 },
   readout: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 6 },
   readoutText: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },

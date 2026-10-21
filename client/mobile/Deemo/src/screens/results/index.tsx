@@ -19,7 +19,7 @@ import { practiceSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session as account, useSession } from "@/hooks/use-session";
 import { sessions, type Session } from "@/hooks/use-sessions";
-import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, lit, radius, type } from "@/theme";
 import { bandOf } from "@/utils/bands";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   notReached: { ...type.meta, color: colors.inkMuted, marginTop: 10 },
   formula: { fontFamily: fonts.mono, fontWeight: "400", fontSize: 11.5, lineHeight: 17, color: colors.muted, marginTop: 8 },
   stats: { flexDirection: "row", gap: 8, marginTop: 16 },
-  stat: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
+  stat: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
   statValue: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 18, color: colors.ink },
   statLabel: { ...type.meta, fontSize: 11.5, marginTop: 2 },
   cards: { gap: 8 },
@@ -423,6 +423,7 @@ const styles = StyleSheet.create({
   actionText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
   sheetNote: { ...type.body, fontSize: 13.5, lineHeight: 20, color: colors.inkMuted, marginTop: 8 },
   shareRow: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,

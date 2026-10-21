@@ -7,7 +7,7 @@ import { Button } from "@/components/button";
 import { Screen } from "@/components/screen";
 import { Working, type Step } from "@/components/working";
 import { sessions, useSessions } from "@/hooks/use-sessions";
-import { colors, fonts, type } from "@/theme";
+import { colors, fonts, lit, type } from "@/theme";
 import { formatTime } from "@/utils/format-time";
 import { riseIn } from "@/utils/motion";
 
@@ -112,7 +112,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   stats: { flexDirection: "row", gap: 8, marginTop: 18 },
-  stat: { backgroundColor: colors.sand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 16 },
+  stat: { ...lit, backgroundColor: colors.sand, borderRadius: 18, paddingVertical: 12, paddingHorizontal: 16 },
   statValue: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 18, color: colors.ink },
   statLabel: { fontSize: 11.5, marginTop: 2 },
   retry: { marginTop: 16 },

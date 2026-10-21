@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 
 import { Deemo, type DeemoMood } from "@/components/deemo";
-import { colors, radius, type } from "@/theme";
+import { colors, lit, radius, type } from "@/theme";
 
 type Props = {
   mood?: DeemoMood;
@@ -27,6 +27,6 @@ export function DeemoNote({ mood = "idle", size = "s", children, startle, style 
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  bubble: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
+  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 12, paddingHorizontal: 14 },
   text: { ...type.body, color: colors.inkSoft },
 });

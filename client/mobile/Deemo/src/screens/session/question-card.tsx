@@ -6,7 +6,7 @@ import { Icon } from "@/components/icon";
 import { PanelFace } from "@/components/panel-face";
 import { PANEL, panelLabel, type Course } from "@/constants";
 import type { Phase, Question, QuestionType } from "@/live/types";
-import { colors, fonts, type } from "@/theme";
+import { colors, fonts, lit, type } from "@/theme";
 import { riseIn } from "@/utils/motion";
 
 // Question-Type Indicator (plan F9): label + icon, never color alone.
@@ -96,7 +96,7 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
 }
 
 const styles = StyleSheet.create({
-  card: { marginTop: 16, marginHorizontal: 14, backgroundColor: colors.sand, borderRadius: 26, paddingTop: 16, paddingHorizontal: 18, paddingBottom: 18 },
+  card: { ...lit, marginTop: 16, marginHorizontal: 14, backgroundColor: colors.sand, borderRadius: 26, paddingTop: 16, paddingHorizontal: 18, paddingBottom: 18 },
   meta: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 10 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 6, flex: 1 },
   chip: { minHeight: 26, paddingVertical: 3, borderRadius: 13, backgroundColor: colors.paper, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", gap: 5 },

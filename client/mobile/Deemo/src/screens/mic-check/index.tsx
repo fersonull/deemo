@@ -9,7 +9,7 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { useEarphones } from "@/hooks/use-earphones";
 import { useMicCheck } from "@/hooks/use-mic-check";
-import { colors, radius, type } from "@/theme";
+import { colors, lit, radius, type } from "@/theme";
 
 const VOICED_TARGET_MS = 2000; // about one spoken sentence
 
@@ -107,6 +107,6 @@ const styles = StyleSheet.create({
   checks: { gap: 2, marginTop: 16 },
   check: { flexDirection: "row", alignItems: "center", gap: 12, height: 44 },
   meta: { fontSize: 12.5 },
-  denied: { marginTop: 20, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 16, gap: 12 },
+  denied: { ...lit, marginTop: 20, backgroundColor: colors.sand, borderRadius: radius.lg, padding: 16, gap: 12 },
   deniedText: { ...type.body },
 });

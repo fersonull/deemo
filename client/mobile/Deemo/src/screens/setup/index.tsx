@@ -11,7 +11,7 @@ import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, isComputing, profileCo
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
-import { colors, radius, type } from "@/theme";
+import { colors, lit, radius, type } from "@/theme";
 import { PressableScale } from "@/components/pressable-scale";
 
 import { Segmented } from "./segmented";
@@ -221,6 +221,7 @@ export function Setup() {
 const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   manuscript: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -239,6 +240,7 @@ const styles = StyleSheet.create({
   stageNote: { flexDirection: "row", gap: 10, alignItems: "flex-start", marginTop: 10, padding: 12, borderRadius: radius.lg, backgroundColor: colors.amberTint },
   stageNoteText: { ...type.body, flex: 1, fontSize: 13, lineHeight: 18, color: colors.amberInk },
   mode: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 14,

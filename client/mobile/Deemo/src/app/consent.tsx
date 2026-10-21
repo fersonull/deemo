@@ -8,7 +8,7 @@ import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { session, useSession } from "@/hooks/use-session";
-import { colors, easeOut, radius, type } from "@/theme";
+import { colors, easeOut, lit, radius, type } from "@/theme";
 import { ApiError } from "@/utils/api";
 
 const ITEMS = [
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
   error: { ...type.body, fontSize: 13, color: colors.warnInk, marginBottom: 10, textAlign: "center" },
   items: { gap: 8, marginTop: 20 },
   item: {
+    ...lit,
     flexDirection: "row",
     gap: 12,
     alignItems: "flex-start",

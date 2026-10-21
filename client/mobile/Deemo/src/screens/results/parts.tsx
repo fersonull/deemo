@@ -14,7 +14,7 @@ import { Icon } from "@/components/icon";
 import { PanelFace } from "@/components/panel-face";
 import { PANEL } from "@/constants";
 import type { Report, Session, SessionTurn } from "@/hooks/use-sessions";
-import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, lit, radius, type } from "@/theme";
 import { turnLabel } from "@/utils/report-html";
 
 
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   section: { marginTop: 24, marginBottom: 8 },
   cards: { gap: 8 },
-  card: { backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
+  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, padding: 16 },
   body: { ...type.body, lineHeight: 20.5 },
   strong: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },

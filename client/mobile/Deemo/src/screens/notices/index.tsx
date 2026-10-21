@@ -10,7 +10,7 @@ import { Icon } from "@/components/icon";
 import { PressableScale } from "@/components/pressable-scale";
 import { Screen } from "@/components/screen";
 import { notices, useNotices } from "@/hooks/use-notices";
-import { colors, radius, type } from "@/theme";
+import { colors, lit, radius, type } from "@/theme";
 import { noticeWhen } from "@/utils/notice-when";
 
 export function Notices() {
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   statusTextDone: { color: colors.sageInk },
   list: { paddingBottom: 24 },
   listEmpty: { flexGrow: 1 },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 11, paddingHorizontal: 14, backgroundColor: colors.sand },
+  row: { ...lit, flexDirection: "row", alignItems: "center", gap: 12, minHeight: 64, paddingVertical: 11, paddingHorizontal: 14, backgroundColor: colors.sand },
   rowFirst: { borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl },
   rowLast: { borderBottomLeftRadius: radius.xl, borderBottomRightRadius: radius.xl },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },

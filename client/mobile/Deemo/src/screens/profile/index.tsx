@@ -14,7 +14,7 @@ import { PremiumCard } from "@/components/premium-card";
 import { UpsellSheet } from "@/components/upsell-sheet";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { session, useSession } from "@/hooks/use-session";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 import { api } from "@/utils/api";
 import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
@@ -527,6 +527,7 @@ const styles = StyleSheet.create({
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   planCard: { marginTop: 20 },
   inbox: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -563,6 +564,7 @@ const styles = StyleSheet.create({
     color: colors.paper,
   },
   plan: {
+    ...lit,
     backgroundColor: colors.sand,
     borderRadius: radius.xl,
     padding: 16,
@@ -592,6 +594,7 @@ const styles = StyleSheet.create({
   },
   section: { marginTop: 26, marginBottom: 8, paddingHorizontal: 4 },
   group: {
+    ...lit,
     backgroundColor: colors.sand,
     borderRadius: radius.xl,
     paddingHorizontal: 16,

@@ -7,7 +7,7 @@ import { CoursePicker } from "@/components/course-picker";
 import { Sheet } from "@/components/sheet";
 import { IT_FIELDS, isComputing, type Course, type Domain } from "@/constants";
 import { projects, type Project } from "@/hooks/use-projects";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 
 // The manuscript's field, detected during the analysis: the panel follows it (who sits, what the field expert asks;
 // plan F4). The student's own course is only the fallback, so a mismatch gets a note, never a block.
@@ -105,6 +105,7 @@ export function FieldCard({ project, readOnly, course }: { project: Project; rea
 
 const styles = StyleSheet.create({
   card: {
+    ...lit,
     backgroundColor: colors.sand,
     borderRadius: radius.xl,
     paddingVertical: 14,

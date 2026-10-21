@@ -6,7 +6,7 @@ import { Button } from "@/components/button";
 import { Sheet } from "@/components/sheet";
 import { Icon } from "@/components/icon";
 import { projects, useProjects, type Project } from "@/hooks/use-projects";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 
 const FACE = 32;
 const SHOWN = 4; // faces before "+n": the stack shares a row with the code chip and the share button
@@ -153,7 +153,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
   );
 }
 const styles = StyleSheet.create({
-  card: { paddingVertical: 14, paddingHorizontal: 16, marginTop: 18, borderRadius: radius.xl, backgroundColor: colors.sand },
+  card: { ...lit, paddingVertical: 14, paddingHorizontal: 16, marginTop: 18, borderRadius: radius.xl, backgroundColor: colors.sand },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   flex: { flex: 1 },
   note: { ...type.body, fontSize: 13, lineHeight: 19, color: colors.inkMuted, marginTop: 6 },

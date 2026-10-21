@@ -8,7 +8,7 @@ import type { DeemoMood } from "@/components/deemo";
 import { DeemoNote } from "@/components/deemo-note";
 import { Screen } from "@/components/screen";
 import { authMessage, session, useSession } from "@/hooks/use-session";
-import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, lit, radius, type } from "@/theme";
 
 const COOLDOWN = 60; // seconds between links (Firebase throttles faster resends anyway)
 const POLL_MS = 5000;
@@ -143,6 +143,7 @@ const styles = StyleSheet.create({
   deemo: { marginTop: 18, minHeight: 68 },
   steps: { gap: 8, marginTop: 18 },
   step: {
+    ...lit,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

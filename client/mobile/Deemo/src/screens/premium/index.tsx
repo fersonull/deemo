@@ -6,7 +6,7 @@ import { Icon } from "@/components/icon";
 import { PremiumCard } from "@/components/premium-card";
 import { Screen } from "@/components/screen";
 import { session, useSession } from "@/hooks/use-session";
-import { colors, radius, type } from "@/theme";
+import { colors, lit, radius, type } from "@/theme";
 
 // What Premium adds, each against the Free plan (server/src/modules/identity/domain/plan.ts).
 const BENEFITS = [
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   hero: { marginTop: 8 },
   section: { marginTop: 24, marginBottom: 8, paddingHorizontal: 4 },
-  list: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 14 },
+  list: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, paddingHorizontal: 14 },
   item: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
   tile: { width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.paper, alignItems: "center", justifyContent: "center" },

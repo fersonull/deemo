@@ -7,7 +7,7 @@ import { Icon } from "@/components/icon";
 import { Score } from "@/components/score";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { useProjects, type GroupReadiness as Group } from "@/hooks/use-projects";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 import { bandOf } from "@/utils/bands";
 
 type Member = Group["members"][number];
@@ -78,7 +78,7 @@ export function GroupReadiness() {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: colors.sand, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
+  card: { ...lit, backgroundColor: colors.sand, borderRadius: radius.xl, paddingVertical: 14, paddingHorizontal: 16, marginTop: 20 },
   head: { flexDirection: "row", alignItems: "center", gap: 8 },
   flex: { flex: 1 },
   settings: { flexDirection: "row", alignItems: "center", minHeight: 32 },

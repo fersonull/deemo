@@ -50,3 +50,13 @@ export const radius = {
 
 // Motion: a strong ease-out for things entering or responding (cubic-bezier(0.23, 1, 0.32, 1)). UI motion stays under 300 ms.
 export const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
+
+// Flat content surfaces (cards, groups, stats, speech bubbles) catch the same light from above as the raised
+// buttons: a 1 px top highlight and a soft glow fading down the face. Everything stays inside the card (no outer
+// shadow), so content never looks pressable.
+export const lit = {
+  boxShadow: [
+    { inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: "rgba(255,255,255,0.7)" },
+    { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: "rgba(255,255,255,0.32)" },
+  ],
+} as const;

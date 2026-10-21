@@ -6,7 +6,7 @@ import { Deemo } from "@/components/deemo";
 import { Icon } from "@/components/icon";
 import { PressableScale } from "@/components/pressable-scale";
 import { Score } from "@/components/score";
-import { colors, easeOut, fonts, radius, type } from "@/theme";
+import { colors, easeOut, fonts, lit, radius, type } from "@/theme";
 import { briefText, type Brief } from "@/utils/home-brief";
 
 // Deemo, the informer, at the top of Home. The bubble leads with the last score as a big headline (number and band in
@@ -75,7 +75,7 @@ export function DeemoBrief({ brief }: { brief: Brief }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 18 },
-  bubble: { flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 13, paddingHorizontal: 15 },
+  bubble: { ...lit, flex: 1, backgroundColor: colors.sand, borderRadius: radius.lg, paddingVertical: 13, paddingHorizontal: 15 },
   // A small notch pointing back at Deemo, so the bubble reads as Deemo speaking.
   tail: {
     position: "absolute",

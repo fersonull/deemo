@@ -3,7 +3,7 @@ import Animated, { LinearTransition, useReducedMotion } from "react-native-reani
 
 import { PanelFace } from "@/components/panel-face";
 import { lineup, panelistName, panelLabel, type Course } from "@/constants";
-import { colors, fonts, radius, type } from "@/theme";
+import { colors, fonts, lit, radius, type } from "@/theme";
 import { riseIn } from "@/utils/motion";
 
 // Who will sit for this many panelists and this course (constants.ts lineup, the same seats the session uses), in the
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
   wrap: { marginTop: 8 },
   row: { flexDirection: "row", gap: 6 },
   card: {
+    ...lit,
     flex: 1,
     minWidth: 0,
     alignItems: "center",
