@@ -1,116 +1,271 @@
-@import "./tokens.css";
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-*, *::before, *::after { box-sizing: border-box; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scrollbar-color: var(--sand-deep) var(--paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
 
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--body);
+  font: 400 1.125rem/1.6 var(--body);
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  font-optical-sizing: auto;
-  overflow-x: clip;
 }
-::selection { background: var(--dusk-tint); color: var(--dusk-ink); }
-h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
-ol, ul { padding: 0; list-style: none; }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
-a { color: inherit; text-decoration: none; }
-img, svg { display: block; max-width: 100%; }
-:focus-visible { outline: 3px solid var(--dusk); outline-offset: 3px; border-radius: 8px; }
 
-.icon {
+::selection {
+  background: var(--dusk-tint);
+  color: var(--dusk-ink);
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--dusk-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--dusk);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.skip:focus {
+  position: fixed;
+  top: var(--s2);
+  left: var(--s2);
+  z-index: 50;
+  width: auto;
+  height: auto;
+  clip: auto;
+  padding: var(--s1) var(--s2);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+}
+
+.wrap {
+  width: min(100% - 2 * var(--gutter), var(--wide));
+  margin-inline: auto;
+}
+
+/* Material Symbols Rounded, the app's icon set */
+.ms {
   font-family: "Material Symbols Rounded";
-  font-weight: normal;
+  font-weight: 400;
   font-style: normal;
+  font-size: 1.25em;
   line-height: 1;
   letter-spacing: normal;
+  text-transform: none;
   white-space: nowrap;
+  direction: ltr;
   font-feature-settings: "liga";
   -webkit-font-feature-settings: "liga";
-  display: inline-block;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  user-select: none;
 }
 
-/* ── layout primitives ── */
-.wrap { width: min(100% - 48px, 1160px); margin-inline: auto; }
-
-.kicker { font: 500 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dusk-ink); }
-h1, h2, h3 { font-family: var(--display); color: var(--ink); letter-spacing: -0.02em; }
-h2 { font-size: clamp(32px, 4.4vw, 52px); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; }
-h3 { font-size: clamp(19px, 2vw, 23px); font-weight: 700; line-height: 1.2; }
-.lede { font: 400 clamp(16px, 1.6vw, 19px)/1.55 var(--body); color: var(--ink-muted); text-wrap: pretty; }
-
-/* ── buttons ── */
+/* ── buttons: the app's pill, lit from above ── */
 .btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 10px;
-  height: 56px;
-  padding-inline: 28px;
-  border-radius: var(--r-pill);
-  font: 600 16px var(--body);
-  white-space: nowrap;
-  transition: transform 220ms var(--ease-out), background-color 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+  min-height: 52px;
+  padding: 0 26px;
+  border-radius: 999px;
+  border: 0;
+  font: 600 1rem/1 var(--body);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out);
 }
-.btn:active { transform: scale(0.97); }
-.btn--primary { background: var(--ink); color: var(--paper); }
-.btn--primary:hover { box-shadow: 0 12px 28px -14px rgba(42, 36, 32, 0.55); }
-.btn--ghost { background: var(--sand); color: var(--ink); }
-.btn--ghost:hover { background: var(--dusk-tint); color: var(--dusk-ink); }
-.btn--sm { height: 44px; padding-inline: 20px; font-size: 14px; }
-.btn[disabled] { opacity: 0.55; pointer-events: none; }
-
-/* ── nav: a floating ink pill, like the app's own tab bar, not a boring top bar ── */
-.nav {
-  position: fixed;
-  left: 50%;
-  top: 18px;
-  transform: translateX(-50%);
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 56px;
-  padding: 6px 6px 6px 18px;
-  border-radius: var(--r-pill);
-  background: color-mix(in oklab, var(--ink) 92%, transparent);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 16px 36px -18px rgba(42, 36, 32, 0.6);
-  max-width: calc(100% - 32px);
-  transition: transform 280ms var(--ease-out);
+.btn:active {
+  transform: scale(0.97);
 }
-/* Hidden while scrolling down (scroll.ts initSmartNav); keyboard focus always brings it back. */
-.nav--hidden:not(:focus-within) { transform: translate(-50%, calc(-100% - 72px)); } /* clears its shadow too */
-.nav__word { font: 800 17px var(--display); letter-spacing: -0.03em; color: var(--paper); margin-left: 8px; margin-right: 4px; }
-.nav__mark { width: 26px; height: 26px; flex: none; }
-.nav__links { display: flex; align-items: center; gap: 2px; margin-inline: 6px; }
-.nav__links a {
-  font: 500 13.5px var(--body);
-  color: rgba(247, 243, 236, 0.68);
-  padding: 8px 12px;
-  border-radius: var(--r-pill);
-  transition: color 180ms var(--ease-out), background-color 180ms var(--ease-out);
-  white-space: nowrap;
+.btn--ink {
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 12px 20px -10px rgba(255, 255, 255, 0.1);
 }
-.nav__links a:hover { color: var(--paper); background: rgba(247, 243, 236, 0.1); }
-.nav .btn--primary { background: var(--paper); color: var(--ink); height: 42px; padding-inline: 18px; font-size: 13.5px; }
-@media (max-width: 760px) { .nav__links { display: none; } }
-@media (max-width: 380px) { .nav__word { display: none; } }
-
-/* ── chips (course picker) ── */
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip {
-  height: 44px;
-  padding-inline: 18px;
-  border-radius: var(--r-pill);
+.btn--ink:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 12px 20px -10px rgba(255, 255, 255, 0.18), 0 10px 22px -12px rgba(42, 36, 32, 0.5);
+}
+.btn--sand {
   background: var(--sand);
-  font: 500 14px var(--body);
   color: var(--ink);
-  transition: background-color 200ms var(--ease-out), color 200ms var(--ease-out), transform 200ms var(--ease-out);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 14px 22px -12px rgba(255, 255, 255, 0.32);
 }
-.chip:hover { background: var(--dusk-tint); color: var(--dusk-ink); }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.btn--sand:hover {
+  background: var(--sand-deep);
+}
+.btn .ms {
+  font-size: 22px;
+}
 
-/* visually-hidden but reachable (skip link, redundant labels) */
-.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* ── the slip: ruled notepaper with a dusk margin, the page's one traveling material ── */
+.slip {
+  position: relative;
+  background: var(--slip)
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--rule, 26px) - 1px), var(--slip-rule) calc(var(--rule, 26px) - 1px) var(--rule, 26px))
+    0 var(--rule-top, 51px) / 100% calc(100% - var(--rule-top, 51px)) no-repeat; /* first rule under the first line of the question */
+  border-radius: 6px;
+  box-shadow: var(--slip-shadow);
+  padding: 14px 18px 16px 42px;
+  color: var(--ink);
+}
+.slip::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 28px;
+  width: 1px;
+  background: var(--slip-margin);
+}
+.slip__who {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+.slip__who b {
+  font-weight: 600;
+}
+.slip__role {
+  color: var(--muted);
+}
+.slip__stage {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--dusk-tint);
+  color: var(--dusk-ink);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.slip__q {
+  margin-top: 18px;
+  font: 650 1.2rem/26px var(--display);
+  letter-spacing: -0.015em;
+}
+.slip__src {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.slip--amber {
+  background-color: #fff7e8;
+  --slip-rule: #f2dcb6;
+  --slip-margin: rgba(235, 179, 83, 0.9);
+}
+.slip--amber .slip__stage {
+  background: var(--amber-tint);
+  color: var(--amber-ink);
+}
+
+/* ── Deemo and the panel faces ── */
+.owl svg,
+.face svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.deemo-eye {
+  transform-box: view-box;
+  transform-origin: 50% 204px;
+  animation: blink 5.6s infinite;
+}
+.pf-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 6.4s infinite;
+}
+.face:nth-child(2) .pf-eye {
+  animation-delay: -2.1s;
+}
+.face:nth-child(3) .pf-eye {
+  animation-delay: -4.3s;
+}
+.deemo-wave {
+  transform-box: view-box;
+  transform-origin: 324px 228px;
+  animation: wave 1.6s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98% { transform: scaleY(0.08); }
+}
+@keyframes wave {
+  0%, 60%, 100% { transform: rotate(0); }
+  15%, 45% { transform: rotate(-22deg); }
+  30% { transform: rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deemo-eye,
+  .pf-eye,
+  .deemo-wave {
+    animation: none;
+  }
+}

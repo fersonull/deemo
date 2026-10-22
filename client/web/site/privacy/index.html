@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy · DEEMO</title>
+  <meta name="description" content="What DEEMO does with your manuscript, your voice and your sessions." />
+  <meta name="theme-color" content="#F7F3EC" />
+  <link rel="icon" type="image/svg+xml" href="/deemo-mark.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&display=swap" rel="stylesheet" />
+  <script type="module" src="/src/privacy.ts"></script>
+</head>
+<body>
+  <a class="vh skip" href="#content">Skip to content</a>
+  <header class="nav">
+    <div class="nav__in wrap">
+      <a class="nav__brand" href="/" aria-label="DEEMO home">
+        <img src="/deemo-mark.svg" alt="" width="30" height="30" />
+        <span>deemo</span>
+      </a>
+      <a class="btn btn--ink nav__cta" href="https://github.com/fersonull/deemo/releases">Download</a>
+    </div>
+  </header>
+
+  <main id="content" class="doc wrap">
+    <h1>Privacy</h1>
+    <p class="doc__lead">What happens to your work, in plain words. The app shows the same points on its consent screen before your first session.</p>
+
+    <h2>What DEEMO handles</h2>
+    <ul>
+      <li><b>Your account.</b> Your name, email and sign-in come from Firebase Authentication (email and password, or Google).</li>
+      <li><b>Your manuscript.</b> The PDF or Word file you upload is read once to pull out its problem, objectives, method, scope and results. The file itself is then discarded; the summary is kept so the panel can ask about it, and you can edit it.</li>
+      <li><b>Your voice.</b> During a session your voice goes from your phone to the AI panel. No audio is recorded or stored. Only the text transcript is kept.</li>
+      <li><b>Your sessions.</b> Transcripts, scores, feedback and any contradictions the panel found are kept so you can review them and see your progress.</li>
+    </ul>
+
+    <h2>Who processes it</h2>
+    <p>Your manuscript and voice are processed by Google's AI (Gemini) to run the panel and to score your sessions. DEEMO uses Gemini's paid tier, because the free tier allows human review of what you send. Your data is stored on DEEMO's server in a PostgreSQL database.</p>
+
+    <h2>Who can see it</h2>
+    <p>Your sessions are private. If you join a research group, groupmates can read the shared manuscript, and they see your score only if you choose to share it. Transcripts and reports stay private either way.</p>
+
+    <h2>Deleting it</h2>
+    <p>You can delete everything any time from Profile, with Delete my data. It removes your sign-in account, manuscripts, sessions, reports and group memberships for good. Profile also has Download my data, which gives you your summaries, transcripts and reports as one file.</p>
+
+    <h2>Who can use DEEMO</h2>
+    <p>You need to be 18 or older. DEEMO is a capstone project by 4th-year BSIT students at Pinamalayan Maritime Foundation and Technological College, built for practice and research; it is not a paid service.</p>
+
+    <h2>What it doesn't do</h2>
+    <p>No plagiarism, grammar, citation or fact checks, and no emotion recognition. Delivery is scored only from what can be measured, such as how long you pause.</p>
+
+    <p class="doc__fine"><a href="/">Back to DEEMO</a></p>
+  </main>
+</body>
+</html>

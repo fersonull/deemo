@@ -46,7 +46,7 @@ A panel that has actually read *your* paper and talks back, profiled for your co
 ## Surfaces
 
 - **App** (`client/mobile/Deemo`): Operate.
-- **Marketing site** (`client/web/site`): Persuade, a scroll story with the 3D phone.
+- **Marketing site** (`client/web/site`): Persuade, one page of "question slips" (a three.js stack of panel note slips, then scroll scenes) plus a privacy page.
 - **Web admin** (`client/web/admin`): Operate, for user lookup and notices.
 - **Promo video** (`client/promo`): Persuade, a ~30 s film (Intro → Problem → Use cases → Call to action).
 - **Defense deck** (`client/web/presentation`): Persuade, presenter-driven. The group presents DEEMO to their capstone panel on a projector; each slide is a panel question, and one 3D phone travels between slides.

@@ -114,6 +114,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Housekeeping
 
+- [x] **New public site (2026-10-23, `feat/site-v3`):** question-slips landing page (three.js hero stack, scroll scenes, Plans, FAQ), `/privacy` route, auto-hiding nav. Phone check and Vercel setup pending before merging into `dev`.
+
 - [x] **Premium button lit (2026-10-22):** flat gold border removed; gold top light via `PressableScale` `glint`. Phone check pending; JS only.
 
 - [x] **Cut database operations (2026-10-22):** notice hub scan 2 s → 60 s, notice stream lifetime 60 s → 10 min, per-IP rate limit counted in memory. Roughly 90k+ ops/day with one phone open → a few thousand. Server tests pass.

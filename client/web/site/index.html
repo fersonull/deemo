@@ -3,181 +3,289 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DEEMO — practice your capstone defense with an AI panel</title>
-  <meta name="description" content="DEEMO reads your manuscript, builds the right panel for your field, and runs a voice mock defense that catches contradictions and scores you against your rubric." />
-  <meta property="og:title" content="DEEMO: an AI panel that has actually read your paper" />
-  <meta property="og:description" content="Practice your capstone defense out loud. Any course, any field: DEEMO builds the right panel for your manuscript." />
+  <title>DEEMO: a mock defense panel that has read your paper</title>
+  <meta name="description" content="DEEMO reads your manuscript, asks your defense questions out loud, follows up, catches answers that contradict your paper, and scores you against a rubric. For Android." />
+  <meta property="og:title" content="DEEMO: a mock defense panel that has read your paper" />
+  <meta property="og:description" content="Practice your Title, Pre-Oral or Final defense out loud, with a panel that asks about your own manuscript." />
   <meta property="og:type" content="website" />
-  <!-- og:image added once a real share-card asset exists (docs/HANDOFF.md) -->
   <meta name="theme-color" content="#F7F3EC" />
   <link rel="icon" type="image/svg+xml" href="/deemo-mark.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Sans:ital,wght@0,400..700;1,400..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:FILL@0..1" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0..1,0&display=block" rel="stylesheet" />
   <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
-  <a class="vh" href="#hero-title">Skip to content</a>
-  <canvas class="phone-canvas" aria-hidden="true"></canvas>
+  <a class="vh skip" href="#top">Skip to content</a>
 
-  <nav class="nav" aria-label="Primary">
-    <img class="nav__mark" src="/deemo-mark.svg" alt="" width="26" height="26" />
-    <span class="nav__word">deemo</span>
-    <div class="nav__links">
-      <a href="#ch-1">How it works</a>
-      <a href="#plans">Plans</a>
-      <a href="#faq">FAQ</a>
+  <header class="nav">
+    <div class="nav__in wrap">
+      <a class="nav__brand" href="#top" aria-label="DEEMO, back to top">
+        <img src="/deemo-mark.svg" alt="" width="30" height="30" />
+        <span>deemo</span>
+      </a>
+      <nav class="nav__links" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#plans">Plans</a>
+        <a href="#faq">Questions</a>
+      </nav>
+      <a class="btn btn--ink nav__cta" data-download href="https://github.com/fersonull/deemo/releases">Download</a>
     </div>
-    <a class="btn btn--primary" href="#download">Get the app</a>
-  </nav>
+  </header>
 
-  <nav class="rail" aria-label="Chapters">
-    <a href="#ch-1" data-rail="1">01</a>
-    <a href="#ch-2" data-rail="2">02</a>
-    <a href="#ch-3" data-rail="3">03</a>
-    <a href="#ch-4" data-rail="4">04</a>
-    <a href="#ch-5" data-rail="5">05</a>
-    <a href="#ch-6" data-rail="6">06</a>
-  </nav>
-
-  <main>
-    <header class="hero" id="hero">
-      <div class="hero__copy">
-        <p class="kicker">AI mock defense panel · Android</p>
-        <h1 id="hero-title">Practice your capstone defense with a panel that has <em>actually read</em> your paper.</h1>
-        <p class="lede">Upload your manuscript. DEEMO builds a panel for your field, asks the questions out loud, and
-          catches you the moment your spoken answer contradicts your own paper.</p>
-        <div class="hero__cta">
-          <a class="btn btn--primary" href="#download"><span class="icon" aria-hidden="true">download</span> Get the app</a>
-          <a class="btn btn--ghost" href="#ch-1">See how it works</a>
+  <main id="top">
+    <!-- ── the panel already has questions ── -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__in wrap">
+        <div class="hero__copy">
+          <h1 id="hero-title" class="hero__title">Your panel already has questions.</h1>
+          <p class="hero__lead">DEEMO reads your manuscript and asks them out loud, before the real panel does.</p>
+          <div class="hero__actions">
+            <a class="btn btn--ink" data-download href="https://github.com/fersonull/deemo/releases">
+              <span class="ms" aria-hidden="true">android</span>Download for Android
+            </a>
+            <a class="btn btn--sand" href="#how">See how it works</a>
+          </div>
         </div>
-        <div class="deemo deemo--hero" id="hero-deemo">
-          <div class="deemo__owl" aria-hidden="true"></div>
-          <p class="deemo__say">Hi! I'll be sitting on your panel when yours can't.</p>
-        </div>
-      </div>
-      <div class="phone-slot phone-slot--hero" data-screen="splash" data-pose="hero" aria-hidden="true"></div>
-    </header>
 
-    <article class="chapter" id="ch-1" data-chapter="1">
-      <div class="chapter__copy">
-        <p class="chapter__num">01</p>
-        <h2>Upload your manuscript.</h2>
-        <p class="lede">PDF or DOCX, up to 20 MB: a title proposal, Chapters 1–3, or the full paper. The file itself is
-          thrown away after reading; only its text is kept.</p>
-      </div>
-      <div class="phone-slot" data-screen="projects" data-pose="right" aria-hidden="true"></div>
-    </article>
-
-    <article class="chapter chapter--flip" id="ch-2" data-chapter="2">
-      <div class="chapter__copy">
-        <p class="chapter__num">02</p>
-        <h2>DEEMO reads it the way a panel would.</h2>
-        <p class="lede">Document Logic Analysis pulls out your problem, objectives, methodology, scope and limits, plus
-          the checkable facts a panel could catch you contradicting. It also works out your study's field, so the panel
-          in the next step is already yours. You can correct anything before you practice.</p>
-        <ul class="facts">
-          <li><span class="mono">KEY FACT</span> Thirty (30) respondents, purposive sampling. <span class="where">Ch. 3</span></li>
-          <li><span class="mono">KEY FACT</span> Evaluated with ISO/IEC 25010, 4-point Likert scale. <span class="where">Ch. 3</span></li>
-        </ul>
-      </div>
-      <div class="phone-slot" data-screen="analysis" data-pose="left" aria-hidden="true"></div>
-    </article>
-
-    <article class="chapter" id="ch-3" data-chapter="3">
-      <div class="chapter__copy">
-        <p class="chapter__num">03</p>
-        <h2>A panel built for your field.</h2>
-        <p class="lede">A Nursing thesis isn't defended to an engineer. Pick a course and watch the panel reassemble:
-          this runs the same seating logic the app does.</p>
-        <div class="demo" id="panel-demo-card">
-          <div class="chips" id="course-chips" role="radiogroup" aria-label="Your course"></div>
-          <ul class="panel-demo" id="panel-demo" aria-live="polite"></ul>
+        <div class="stack" data-stack>
+          <div class="stack__dom" aria-hidden="true">
+            <div class="stack__sheets"><article class="slip slip--big" data-dom-slip></article></div>
+            <article class="slip slip--back" data-dom-pile hidden></article>
+          </div>
+          <div class="stack__owl owl" data-owl="reading" aria-hidden="true"></div>
+          <div class="stack__controls">
+            <p class="stack__hint">Drag the top question off the stack</p>
+            <button class="stack__next" type="button" data-next>
+              <span class="ms" aria-hidden="true">redo</span>Next question
+            </button>
+          </div>
+          <p class="vh" aria-live="polite" data-announce></p>
         </div>
       </div>
-      <div class="phone-slot" data-screen="setup" data-pose="right" data-spin aria-hidden="true"></div>
-    </article>
+    </section>
 
-    <article class="chapter chapter--flip" id="ch-4" data-chapter="4">
-      <div class="chapter__copy">
-        <p class="chapter__num">04</p>
-        <h2>Asked out loud. Answered out loud.</h2>
-        <p class="lede">The panel speaks, you answer by voice, and each question is labelled so you learn the pattern.
-          Up to two follow-ups per topic, then it moves on, like a real panel. Your voice goes straight to Gemini;
-          our server never joins the call.</p>
-        <ul class="qtypes" aria-label="Question types">
-          <li><span class="icon" aria-hidden="true">memory</span> Technical</li>
-          <li><span class="icon" aria-hidden="true">science</span> Methodological</li>
-          <li><span class="icon" aria-hidden="true">lightbulb</span> Conceptual</li>
-          <li><span class="icon" aria-hidden="true">help</span> Clarificatory</li>
-        </ul>
+    <!-- ── it reads your paper first ── -->
+    <section class="reads" id="how" aria-labelledby="reads-title">
+      <div class="reads__in wrap" data-reads>
+        <div class="reads__copy">
+          <h2 id="reads-title">It reads your paper first.</h2>
+          <p>Upload your manuscript as a PDF or Word file. DEEMO pulls out the problem, objectives, method, scope and results, and shows you what it understood so you can fix anything that's off. Then the file is discarded.</p>
+          <p>Every question after that comes from what is actually in your paper.</p>
+        </div>
+
+        <article class="sheet" aria-label="Sample manuscript, ReqTrack">
+          <p class="sheet__tag">Sample paper</p>
+          <h3 class="sheet__title">ReqTrack: An Enrollment Requirements Tracking System for PMFTCI</h3>
+          <h4>Chapter 1. The Problem</h4>
+          <p>Students queue at the registrar to check paper requirement checklists, and staff update records by hand. This study lets students see missing requirements on their phone and <mark data-mark="0">lets the registrar update records in real time</mark>.</p>
+          <h4>Chapter 3. Methodology</h4>
+          <p>Agile (Scrum), descriptive-developmental design. <mark data-mark="1">30 respondents by purposive sampling</mark>; an ISO/IEC 25010 questionnaire on a 4-point Likert scale, analyzed by weighted mean.</p>
+          <h4>Chapter 4. Results</h4>
+          <p>Overall weighted mean 3.42 (Very Acceptable); <mark data-mark="2">the lowest characteristic is Security, at 3.10</mark>.</p>
+        </article>
+
+        <ol class="reads__slips" aria-label="Questions written from the highlighted lines">
+          <li class="slip" data-from="0">
+            <p class="slip__who"><span><b>Engr. Santos</b> <span class="slip__role">Technical</span></span><span class="slip__stage">Pre-Oral</span></p>
+            <p class="slip__q">How does a registrar update reach the student's phone in real time?</p>
+          </li>
+          <li class="slip" data-from="1">
+            <p class="slip__who"><span><b>Prof. Cruz</b> <span class="slip__role">Methodology</span></span><span class="slip__stage">Pre-Oral</span></p>
+            <p class="slip__q">Why only 30 respondents, and why purposive sampling?</p>
+          </li>
+          <li class="slip" data-from="2">
+            <p class="slip__who"><span><b>Prof. Cruz</b> <span class="slip__role">Methodology</span></span><span class="slip__stage">Final</span></p>
+            <p class="slip__q">Security scored lowest, at 3.10. What does that tell you?</p>
+          </li>
+        </ol>
       </div>
-      <div class="phone-slot" data-screen="session" data-pose="front" aria-hidden="true"></div>
-    </article>
+    </section>
 
-    <article class="chapter" id="ch-5" data-chapter="5">
-      <div class="chapter__copy">
-        <p class="chapter__num">05</p>
-        <h2>Contradict your paper, and it notices.</h2>
-        <p class="lede">The Live Verbal Consistency Checker compares what you say with what you wrote. Flags are amber,
-          never red: a nudge to correct yourself, not a failure. Try it:</p>
-        <div class="demo" id="consistency-demo"></div>
-      </div>
-      <div class="phone-slot" data-screen="flag" data-pose="right" aria-hidden="true"></div>
-    </article>
-
-    <article class="chapter chapter--flip" id="ch-6" data-chapter="6">
-      <div class="chapter__copy">
-        <p class="chapter__num">06</p>
-        <h2>Know how ready you are.</h2>
-        <p class="lede">A readiness score with its arithmetic shown, the rubric breakdown, every contradiction quoted
-          against your manuscript, response times, and a stronger answer for each question you missed. Run it again and
-          watch the trend.</p>
-        <p class="formula mono">rubric 72 − consistency 2 × coverage 4/4 = <strong>70</strong> <span>example</span></p>
-      </div>
-      <div class="phone-slot" data-screen="results" data-pose="hero" aria-hidden="true"></div>
-    </article>
-
-    <section class="band" id="scope">
+    <!-- ── the panel, profiled by course ── -->
+    <section class="panel" aria-labelledby="panel-title">
       <div class="wrap">
-        <h2>What DEEMO is, and what it isn't.</h2>
-        <div class="scope-cols" id="scope-cols"></div>
+        <div class="panel__head">
+          <h2 id="panel-title">Three panelists, each with a job.</h2>
+          <p>A chair who checks your problem and scope, a methodologist who checks your design and sampling, and a field expert who changes with your course. Pick a course to see who sits.</p>
+        </div>
+        <div class="chips" role="radiogroup" aria-label="Course" data-courses></div>
+        <ol class="seats" data-seats aria-live="polite"></ol>
+        <p class="panel__fine">The free plan practices with one panelist. Premium seats all three.</p>
       </div>
     </section>
 
-    <section class="plans-section" id="plans">
+    <!-- ── out loud ── -->
+    <section class="live" aria-labelledby="live-title">
+      <div class="live__in wrap" data-live>
+        <div class="live__copy">
+          <h2 id="live-title">Out loud, with follow-ups.</h2>
+          <p>The panel asks by voice and listens while you answer. Tap when you're done. If an answer is thin, the same panelist follows up, at most twice on a topic.</p>
+          <p>If what you say doesn't match your paper, they ask about it, calmly, the way a real panel would.</p>
+        </div>
+
+        <div class="live__stage" aria-label="A sample exchange">
+          <div class="live__status" aria-hidden="true">
+            <span class="wave" data-wave><i></i><i></i><i></i><i></i><i></i></span>
+            <span data-status>Prof. Cruz is asking</span>
+            <span class="live__time" data-time>8:41</span>
+          </div>
+          <div class="live__feed">
+            <article class="slip" data-beat="0">
+              <p class="slip__who"><span><b>Prof. Cruz</b> <span class="slip__role">Methodology</span></span><span class="slip__stage">Pre-Oral</span></p>
+              <p class="slip__q">Why only 30 respondents, and why purposive sampling?</p>
+            </article>
+            <p class="said" data-beat="1"><b>You</b> We chose the people who handle the checklist every term, so purposive sampling fit.</p>
+            <article class="slip slip--follow" data-beat="2">
+              <p class="slip__who"><span><b>Prof. Cruz</b> <span class="slip__role">Methodology</span></span><span class="slip__stage">Follow-up</span></p>
+              <p class="slip__q">How many did you end up surveying?</p>
+            </article>
+            <p class="said" data-beat="3"><b>You</b> We surveyed 45 registrar staff and students.</p>
+            <article class="slip slip--amber" data-beat="4">
+              <p class="slip__who"><span><b>Prof. Cruz</b> <span class="slip__role">Methodology</span></span><span class="slip__stage">Clarifying</span></p>
+              <p class="slip__q">You said 45 respondents. Chapter 3 says 30. Which is it?</p>
+              <p class="slip__src">Saved to your report as a contradiction.</p>
+            </article>
+          </div>
+          <p class="live__sample">A sample session on the ReqTrack paper.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── the report ── -->
+    <section class="report" aria-labelledby="report-title">
+      <div class="report__in wrap">
+        <div class="report__copy">
+          <h2 id="report-title">Then a score you can check.</h2>
+          <p>Readiness is arithmetic you can read: the rubric score, times how much of the agenda you covered, minus a penalty for each verified contradiction. The AI picks the rubric levels and explains each one. The numbers are done in code.</p>
+          <table class="rubric">
+            <caption>Scored on five criteria</caption>
+            <thead><tr><th scope="col">Criterion</th><th scope="col">Weight</th><th scope="col">Sample level</th></tr></thead>
+            <tbody data-rubric></tbody>
+          </table>
+        </div>
+
+        <article class="card-report" aria-label="Sample report">
+          <p class="card-report__meta">Pre-Oral, sample session</p>
+          <div class="card-report__score">
+            <span class="card-report__num" data-score>71</span>
+            <span class="card-report__band"><b>Nearly ready.</b><span>Readiness 70 to 84</span></span>
+          </div>
+          <p class="formula" data-formula>Rubric 76 × coverage 8/8 − consistency 5 = 71</p>
+          <h3>Top three things to fix</h3>
+          <ol class="fixes">
+            <li class="slip"><p class="slip__q">Give one number for your respondents, and say why it is enough.</p></li>
+            <li class="slip"><p class="slip__q">Explain how a registrar update reaches the student's phone.</p></li>
+            <li class="slip"><p class="slip__q">Name your weakest ISO/IEC 25010 result and what you'd change.</p></li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <!-- ── plans ── -->
+    <section class="plans" id="plans" aria-labelledby="plans-title">
       <div class="wrap">
-        <div class="section-head">
-          <p class="kicker">Free vs Premium</p>
-          <h2>Start free. Go unlimited when it counts.</h2>
+        <h2 id="plans-title">Free to start.</h2>
+        <p class="plans__lead">Everything you need to rehearse is free. Premium seats the whole panel and opens the Final Defense. It is a demo for now: you switch it on in the app, and there is no payment.</p>
+        <div class="plans__grid">
+          <article class="plan plan--free" aria-labelledby="plan-free">
+            <header class="plan__head">
+              <h3 id="plan-free">Free</h3>
+              <p>For your Title Defense and Pre-Oral practice.</p>
+            </header>
+            <dl class="plan__rows">
+              <div><dt>Practice</dt><dd><b>5</b> sessions a day</dd></div>
+              <div><dt>Panel</dt><dd><b>1</b> panelist, the best fit for your course</dd></div>
+              <div><dt>Stages</dt><dd>Title Defense (problem, objectives, feasibility) and Pre-Oral (methodology, design, progress)</dd></div>
+              <div><dt>Length</dt><dd>Up to <b>30</b> minutes</dd></div>
+              <div><dt>Manuscripts</dt><dd><b>1</b> at a time</dd></div>
+              <div><dt>Report</dt><dd>Readiness score, top fixes, contradictions and feedback</dd></div>
+            </dl>
+            <div class="plan__foot">
+              <a class="btn btn--ink" data-download href="https://github.com/fersonull/deemo/releases">
+                <span class="ms" aria-hidden="true">android</span>Download for Android
+              </a>
+            </div>
+          </article>
+
+          <article class="plan plan--premium" aria-labelledby="plan-premium">
+            <header class="plan__head">
+              <h3 id="plan-premium"><span class="ms ms--fill" aria-hidden="true">workspace_premium</span>Premium <span class="plan__demo">Demo</span></h3>
+              <p>Your panel, at full strength. Deemo suits up for it.</p>
+            </header>
+            <dl class="plan__rows">
+              <div><dt>Practice</dt><dd><b>Unlimited</b> sessions</dd></div>
+              <div><dt>Panel</dt><dd>Up to <b>3</b> panelists, each asking in turn in their own voice</dd></div>
+              <div><dt>Stages</dt><dd>All three, with Final Defense (results, testing, conclusions)</dd></div>
+              <div><dt>Length</dt><dd>Up to <b>60</b> minutes, room for every panelist</dd></div>
+              <div><dt>Manuscripts</dt><dd>More than one, for every project you're on</dd></div>
+              <div><dt>Report</dt><dd>Everything in Free, plus the rubric breakdown, delivery stats, stronger sample answers and a PDF for your adviser</dd></div>
+            </dl>
+            <p class="plan__foot plan__how">Open Profile in the app and tap Premium. No payment, no card.</p>
+          </article>
         </div>
-        <div class="plans" id="plans-grid"></div>
       </div>
     </section>
 
-    <section class="faq-section" id="faq">
-      <div class="wrap faq-grid">
-        <div class="section-head">
-          <p class="kicker">FAQ</p>
-          <h2>Questions worth asking before your real panel does.</h2>
+    <!-- ── questions ── -->
+    <section class="faq" id="faq" aria-labelledby="faq-title">
+      <div class="wrap faq__in">
+        <h2 id="faq-title">Questions you might have.</h2>
+        <div class="faq__list">
+          <details>
+            <summary>Does DEEMO keep recordings of my voice?</summary>
+            <p>No. Your voice goes from your phone to the AI during the session and is never stored. Only the text transcript is kept.</p>
+          </details>
+          <details>
+            <summary>What happens to my manuscript file?</summary>
+            <p>It is read once to pull out what the panel needs, then discarded. You see that summary and can correct it before you practice.</p>
+          </details>
+          <details>
+            <summary>Who processes my work?</summary>
+            <p>Google's Gemini models run the panel and the scoring. DEEMO uses Gemini's paid tier, because the free tier allows human review of what you send.</p>
+          </details>
+          <details>
+            <summary>Can my groupmates practice on the same paper?</summary>
+            <p>Yes. Share your project's code and they can join and practice on the same manuscript. Each of you chooses whether to share your score with the group.</p>
+          </details>
+          <details>
+            <summary>Does it check grammar, citations or plagiarism?</summary>
+            <p>No. DEEMO is a mock panel: it asks, follows up and scores your answers. It doesn't edit or fact-check your paper.</p>
+          </details>
+          <details>
+            <summary>What do I need?</summary>
+            <p>An Android phone, an internet connection, and to be 18 or older. Sessions are in English.</p>
+          </details>
+          <details>
+            <summary>Can I delete everything?</summary>
+            <p>Yes. Delete my data in Profile removes your account, manuscripts, sessions and reports.</p>
+          </details>
         </div>
-        <div id="faq-list"></div>
       </div>
     </section>
 
-    <footer class="footer" id="download">
-      <div class="wrap footer__inner">
-        <div class="deemo deemo--footer" id="footer-deemo"><div class="deemo__owl" aria-hidden="true"></div></div>
-        <h2>Ready to face the panel?</h2>
-        <p class="lede">Built for 4th-year BSIT capstone students at PMFTCI. Open to any course's manuscript.</p>
-        <div id="download-area"></div>
-        <ul class="footer-links">
-          <li><a href="https://fersonull.github.io/deemo/" target="_blank" rel="noopener">The defense deck</a></li>
-          <li><a href="https://github.com/fersonull/deemo" target="_blank" rel="noopener">GitHub</a></li>
-        </ul>
+    <!-- ── close ── -->
+    <section class="close" aria-labelledby="close-title">
+      <div class="wrap close__in">
+        <div class="close__owl owl" data-owl="cheering" aria-hidden="true"></div>
+        <h2 id="close-title">Walk in having heard the hard questions.</h2>
+        <a class="btn btn--ink" data-download href="https://github.com/fersonull/deemo/releases">
+          <span class="ms" aria-hidden="true">android</span>Download for Android
+        </a>
+        <p class="close__fine">Opens the releases page on GitHub. Download the APK on your phone and install it.</p>
       </div>
-    </footer>
+    </section>
   </main>
+
+  <footer class="foot">
+    <div class="wrap foot__in">
+      <p>DEEMO is a capstone project by 4th-year BSIT students at Pinamalayan Maritime Foundation and Technological College.</p>
+      <nav aria-label="Footer">
+        <a href="/privacy">Privacy</a>
+        <a href="https://github.com/fersonull/deemo">GitHub</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>

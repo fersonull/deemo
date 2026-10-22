@@ -1,14 +1,13 @@
-/* DEEMO's design tokens, ported from client/mobile/Deemo/src/colors.ts + theme.ts (also mirrored in
-   client/web/presentation/styles.css — keep all three in step if a value changes). Light only, like the app. */
+/* The app's palette and type (client/mobile/Deemo/src/colors.ts, theme.ts). Keep in step. The site is light only:
+   it is read in daylight as often as at night, and the app's own default is light. */
 :root {
   --paper: #f7f3ec;
   --sand: #ede5d8;
-  --banner: #f1e6d6;
+  --sand-deep: #e4d9c6;
   --ink: #2a2420;
   --ink-soft: #3e3731;
   --ink-muted: #5e554d;
-  --muted: #8a7f74;
-  --faint: #b0a698;
+  --muted: #6b6157;
   --border: rgba(42, 36, 32, 0.12);
 
   --dusk: #5a66c7;
@@ -21,30 +20,32 @@
   --amber: #ebb353;
   --amber-ink: #6c4302;
   --amber-tint: #f7e1c0;
-  --warn: #875814;
 
   --sage: #4a9266;
   --sage-ink: #2a7449;
   --sage-tint: #cbefd6;
-  --sage-soft: #bee2c9;
 
-  --gold: #d9a521;
-  --gold-light: #f6dc86;
-  --gold-ink: #8c6310;
-
-  --chair: #e4d9c6;
-
-  --r-sm: 12px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 22px;
-  --r-pill: 29px;
-  --blob: 58% 42% 52% 48% / 55% 50% 50% 45%;
+  /* the slip: notepaper a shade brighter than the page, ruled in dusk */
+  --slip: #fffdf8;
+  --slip-rule: #dfe4f7;
+  --slip-margin: rgba(90, 102, 199, 0.5);
+  --slip-shadow: 0 1px 1px rgba(42, 36, 32, 0.06), 0 14px 28px -14px rgba(42, 36, 32, 0.32);
 
   --display: "Bricolage Grotesque", system-ui, sans-serif;
   --body: "DM Sans", system-ui, sans-serif;
   --mono: "DM Mono", ui-monospace, monospace;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
-  color-scheme: light;
+  /* one rhythm: an 8 px base, sections breathe at the top more than the bottom */
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+  --s6: 64px;
+  --s7: 96px;
+  --s8: 144px;
+  --gutter: clamp(20px, 5vw, 72px);
+  --wide: 1240px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }

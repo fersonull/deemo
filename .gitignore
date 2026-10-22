@@ -3,3 +3,6 @@ node_modules/
 .env.*
 !.env.example
 .DS_Store
+
+# impeccable review captures (regenerated per review round)
+.impeccable/review/
