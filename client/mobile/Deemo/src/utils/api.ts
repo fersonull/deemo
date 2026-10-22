@@ -1,9 +1,10 @@
 import { getAuth, getIdToken } from "@react-native-firebase/auth";
 
 import { API_URL } from "@/constants";
+import { maintenance } from "@/utils/maintenance";
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(message: string, public status: number, public code?: string) {
     super(message);
   }
 }
@@ -49,7 +50,9 @@ async function call<T>(path: string, init: RequestInit, force: boolean): Promise
     ...init,
     headers: { ...(init.headers as Record<string, string>), ...(t && { authorization: `Bearer ${t}` }) },
   });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError((body as { error?: string }).error ?? `Request failed (${res.status})`, res.status);
+  const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+  // Maintenance (switched on in the web admin): the root layout swaps in the maintenance screen.
+  if (body.code === "MAINTENANCE") maintenance.enter(body.error ?? null);
+  if (!res.ok) throw new ApiError(body.error ?? `Request failed (${res.status})`, res.status, body.code);
   return body as T;
 }

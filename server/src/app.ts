@@ -2,6 +2,7 @@ import express from "express";
 
 import { errorHandler } from "./shared/errors";
 import { byIp, rateLimit } from "./shared/rate-limit";
+import { maintenance, requireOpen } from "./modules/admin/application/maintenance";
 import { adminRouter } from "./modules/admin/http/routes";
 import { protect } from "./modules/identity/http/gates";
 import { identityRouter } from "./modules/identity/http/routes";
@@ -39,15 +40,22 @@ app.get("/health", (_req, res) => {
 });
 
 app.use(rateLimit("ip", { who: byIp }));
+
+// Public, no sign-in: whether DEEMO is in maintenance (the app checks it on launch and while its maintenance screen shows).
+app.get("/status", async (_req, res) => {
+  const { on, message } = await maintenance();
+  res.json({ maintenance: { on, message } });
+});
 app.use(express.json({ limit: "1mb" })); // an hour-long transcript outgrows the 100 kB default
 
 // The web admin (client/web/admin): admin claim only, never a student account.
 app.use(adminRouter);
 
-// Everything below belongs to a signed-in student: a verified Firebase token, a synced account, not being deleted,
+// Everything below belongs to a signed-in student, and closes while maintenance is on (before the token check, so a
+// closed server costs no Firebase work): a verified Firebase token, a synced account, not being deleted,
 // and a per-student limit on writes. The module routers use full paths, so they mount at the root.
 const writes = rateLimit("writes");
-app.use(["/me", "/projects", "/sessions", "/live", "/rubric", "/groups", "/notices"], ...protect, (req, res, next) =>
+app.use(["/me", "/projects", "/sessions", "/live", "/rubric", "/groups", "/notices"], requireOpen(), ...protect, (req, res, next) =>
   req.method === "GET" ? next() : writes(req, res, next),
 );
 app.use(identityRouter, manuscriptsRouter, groupsRouter, practiceRouter, scoringRouter, noticesRouter);

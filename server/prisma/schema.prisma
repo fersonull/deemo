@@ -439,3 +439,15 @@ model NoticeRead {
   @@index([readAt])
   @@map("notice_reads")
 }
+
+// Maintenance mode, one row (id 1), switched from the web admin. While enabled, every student route answers 503
+// MAINTENANCE and the app shows its maintenance screen; the admin keeps working.
+model Maintenance {
+  id        Int      @id @default(1)
+  enabled   Boolean  @default(false)
+  message   String?  @db.VarChar(280)
+  updatedBy String?  @map("updated_by") @db.VarChar(320)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("maintenance")
+}

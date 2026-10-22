@@ -35,6 +35,8 @@ const LABELS: Record<
   admin_revoked: { label: "Admin access removed", destructive: true },
   notice_sent: { label: "Notice sent" },
   notice_deleted: { label: "Notice deleted", destructive: true },
+  maintenance_on: { label: "Maintenance turned on", destructive: true },
+  maintenance_off: { label: "Maintenance turned off" },
 }
 
 // Every change an admin made, newest first, 25 to a page (from the server).
@@ -114,6 +116,8 @@ export function AuditView() {
                             "notice_deleted",
                             "admin_granted",
                             "admin_revoked",
+                            "maintenance_on",
+                            "maintenance_off",
                           ].includes(a.action) ? (
                           <span className="truncate text-muted-foreground">
                             {a.targetEmail ?? a.targetId}

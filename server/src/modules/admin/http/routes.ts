@@ -7,6 +7,7 @@ import { bodyOf, validate } from "../../../shared/validate";
 import { grantAdmin, listAdmins, revokeAdmin } from "../application/admins";
 import { changePremium, changeSignIn, listActions, removeUser, rescoreSession, resetDaily } from "../application/actions";
 import { getSessionReport, listGroups, listProjects, listSessions } from "../application/catalog";
+import { maintenance, setMaintenance } from "../application/maintenance";
 import { overview } from "../application/overview";
 import { getUser, listUserSessions, listUsers } from "../application/users";
 import { requireAdmin } from "./gate";
@@ -126,6 +127,19 @@ const GroupsQuery = Page.extend({ q: search });
 adminRouter.get("/admin/groups", validate({ query: GroupsQuery }), async (_req, res) => {
   const { page, q } = res.locals.query as z.output<typeof GroupsQuery>;
   res.json(await listGroups(q, page));
+});
+
+adminRouter.get("/admin/maintenance", async (_req, res) => {
+  res.json(await maintenance());
+});
+
+const MaintenanceBody = z.object({
+  on: z.boolean(),
+  message: z.string().trim().max(280, "Keep the message under 280 characters.").optional().transform((m) => m || null),
+});
+adminRouter.patch("/admin/maintenance", validate({ body: MaintenanceBody }), async (req, res) => {
+  const { on, message } = bodyOf(req, MaintenanceBody);
+  res.json(await setMaintenance(claimsOf(req), on, message));
 });
 
 adminRouter.get("/admin/admins", async (_req, res) => {
