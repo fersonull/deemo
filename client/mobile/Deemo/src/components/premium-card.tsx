@@ -67,12 +67,14 @@ export function PremiumCard({ onPress }: { onPress?: () => void }) {
       accessibilityLabel="Premium plan, demo"
       accessibilityHint="Shows your Premium benefits"
       onPress={onPress}
+      lit
+      glint={colors.goldLight}
       style={[styles.card, styles.compact]}
     >
       {body}
     </PressableScale>
   ) : (
-    <View style={styles.card} accessible accessibilityLabel={`Premium plan, demo. ${PERKS.join(", ")}.`}>
+    <View style={[styles.card, styles.goldLight]} accessible accessibilityLabel={`Premium plan, demo. ${PERKS.join(", ")}.`}>
       {body}
     </View>
   );
@@ -83,12 +85,17 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: radius.xl,
     backgroundColor: colors.fill,
-    borderWidth: 1,
-    borderColor: colors.goldInk,
-    overflow: "hidden",
+    overflow: "hidden", // clips the sheen; no border: the gold light from above is the edge (as on the premium Button)
     paddingTop: 14,
     paddingBottom: 18,
     paddingHorizontal: 18,
+  },
+  // The lit treatment in gold, for the static card (the tappable one gets it from PressableScale's glint).
+  goldLight: {
+    boxShadow: [
+      { inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: `${colors.goldLight}8C` },
+      { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: `${colors.goldLight}29` },
+    ],
   },
   compact: { paddingTop: 6, paddingBottom: 6, paddingRight: 14 },
   head: { flexDirection: "row", alignItems: "center", gap: 8, marginLeft: -6 },
