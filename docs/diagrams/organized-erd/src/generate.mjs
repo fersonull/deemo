@@ -5,9 +5,9 @@ import { entities, rels } from "./data.mjs";
 
 // Sized for pasting into a document: a compact six-column layout (much narrower than the old 6600 px canvas) with
 // large bold type, so the figure stays readable when the whole page width holds it.
-const W = 560, HEAD = 100, ROW = 42, VGAP = 80;
-const T = { title: 40, note: 24, field: 30, type: 26, label: 28, header: 64, sub: 32, legend: 30 };
-const ink = "#111827", line = "#1f2a44", STROKE = 3.4;
+const W = 700, HEAD = 118, ROW = 50, VGAP = 80;
+const T = { title: 50, note: 28, field: 37, type: 32, label: 36, header: 76, sub: 38, legend: 36 };
+const ink = "#0b1220", soft = "#1e293b", line = "#0f1b33", STROKE = 4.2;
 const byId = Object.fromEntries(entities.map((e) => [e[0], e]));
 const text = (s, x, y, size, weight = 400, anchor = "start", fill = ink) => textBlock([s], x, y, { size, weight, anchor, fill });
 const height = (id) => HEAD + byId[id][3].length * ROW + 14;
@@ -16,8 +16,8 @@ const snapshot = readFileSync(new URL("./data.mjs", import.meta.url), "utf8").sp
 assert.equal(snapshot, original.slice(original.indexOf("const id ="), original.indexOf("const byId =")).trim(), "Keep organized ERD data in sync with the original");
 
 // ── layout: columns left to right; users → projects → sessions → reports share one row (MAIN) ──
-const MARGIN = 110, TOP = 230, MAIN = 760;
-const GAPS = [330, 320, 300, 300, 320]; // between columns; wide enough for the relationship labels
+const MARGIN = 110, TOP = 250, MAIN = 760;
+const GAPS = [400, 330, 310, 290, 300]; // between columns; wide enough for the relationship labels
 const colX = [MARGIN];
 GAPS.forEach((g, i) => colX.push(colX[i] + W + g));
 const columns = [
@@ -143,12 +143,12 @@ function entity(m) {
   const fill = ["admin", "rate"].includes(id) ? "#e9ecf1" : "#dbe4fb";
   let out = `<g data-entity="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="white" stroke="${line}" stroke-width="${STROKE}"/>`;
   out += `<path d="M${x},${y + HEAD} V${y + 10} Q${x},${y} ${x + 10},${y} H${x + w - 10} Q${x + w},${y} ${x + w},${y + 10} V${y + HEAD} Z" fill="${fill}" stroke="${line}" stroke-width="${STROKE}"/>`;
-  out += text(title, x + 20, y + 36, T.title, 800);
-  if (note) out += text(note, x + 20, y + 74, T.note, 600, "start", "#334155");
+  out += text(title, x + 22, y + 44, T.title, 800);
+  if (note) out += text(note, x + 22, y + 90, T.note, 700, "start", soft);
   rows.forEach(([field, type, key], i) => {
     const cy = y + HEAD + ROW * i + ROW / 2 + 4;
-    out += text(key ? `${field} (${key})` : field, x + 18, cy, T.field, key ? 800 : 600);
-    out += text(type, x + w - 18, cy, T.type, 600, "end", "#334155");
+    out += text(key ? `${field} (${key})` : field, x + 20, cy, T.field, 700, "start", key ? ink : soft);
+    out += text(type, x + w - 20, cy, T.type, 700, "end", soft);
   });
   return out + "</g>";
 }
@@ -161,10 +161,10 @@ function link(r) {
     // the segment into the target table when it has room, so labels sit next to what they describe
     const last = runs.at(-1);
     const [a, b] = last[0][1] === last[1][1] && Math.abs(last[1][0] - last[0][0]) >= 140 ? last : flat[0];
-    label = text(verb, (a[0] + b[0]) / 2, a[1] - 26, T.label, 800, "middle");
+    label = text(verb, (a[0] + b[0]) / 2, a[1] - 30, T.label, 800, "middle");
   } else {
     const [a, b] = runs[0]; // a vertical link between stacked tables: label beside it
-    label = text(verb, a[0] + 16, (a[1] + b[1]) / 2, T.label, 800);
+    label = text(verb, a[0] + 18, (a[1] + b[1]) / 2, T.label, 800);
   }
   const path = `<path d="${roundedPath(r.coords.map(([x, y]) => ({ x, y })))}" fill="none" stroke="${line}" stroke-width="${STROKE}"${logical ? ' stroke-dasharray="14 10"' : ""} marker-start="url(#${se})" marker-end="url(#${te})"/>`;
   return `<g data-relation="${r.from}:${r.to}">${path}${label}</g>`;
@@ -172,17 +172,17 @@ function link(r) {
 
 const width = R(n.rcrit) + MARGIN;
 const bottom = Math.max(...list.map(B), ...routes.flatMap((r) => r.coords.map(([, y]) => y)));
-const legendY = bottom + 110;
-const height_ = legendY + 120;
-const header = text("DEEMO  /  Entity relationship diagram", MARGIN, 80, T.header, 800) + text("22 tables · 24 relationships · users → projects → sessions → reports, left to right", MARGIN, 150, T.sub, 600, "start", "#334155");
+const legendY = bottom + 120;
+const height_ = legendY + 130;
+const header = text("DEEMO  /  Entity relationship diagram", MARGIN, 90, T.header, 800) + text("22 tables · 24 relationships · users → projects → sessions → reports, left to right", MARGIN, 168, T.sub, 700, "start", soft);
 let legend = "";
 ["one", "zeroOne", "many0", "many1"].forEach((id, i) => {
-  const x = MARGIN + i * 520;
+  const x = MARGIN + i * 620;
   legend += `<path d="M${x},${legendY} H${x + 130}" stroke="${line}" stroke-width="${STROKE}" marker-end="url(#${id})"/>` + text(["exactly one", "zero or one", "zero or many", "one or many"][i], x + 150, legendY, T.legend, 700);
 });
-legend += text("Solid line = foreign key · dashed = logical project reference (no FK) · PK primary key · FK foreign key · UQ unique · grey tables have no relationships", MARGIN, legendY + 64, T.legend - 2, 600, "start", "#334155");
+legend += text("Solid line = foreign key · dashed = logical project reference (no FK) · PK primary key · FK foreign key · UQ unique · grey tables have no relationships", MARGIN, legendY + 72, T.legend - 4, 700, "start", soft);
 const body = header + routes.map(link).join("") + list.map(entity).join("") + legend;
-const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height_}" viewBox="0 0 ${width} ${height_}" font-family="Arial, Helvetica, sans-serif"><title>DEEMO entity relationship diagram</title><defs>${defs}</defs><rect width="100%" height="100%" fill="white"/>${body}</svg>`;
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height_}" viewBox="0 0 ${width} ${height_}" font-family="Arial, Helvetica, sans-serif" text-rendering="geometricPrecision" shape-rendering="geometricPrecision"><title>DEEMO entity relationship diagram</title><defs>${defs}</defs><rect width="100%" height="100%" fill="white"/>${body}</svg>`;
 writeFileSync("DEEMO-ERD-organized.svg", svg);
 writeFileSync("routing-checks.json", JSON.stringify({ tables: list.length, relationships: routes.length, crossings: 0, sharedSegments: 0, routesThroughTables: 0, detachedEndpoints: 0, size: [width, height_], routes }, null, 2) + "\n");
 console.log(`ERD ${width}×${height_}: 22 tables, 24 relationships; no crossings, shared segments, lines through tables or detached ends.`);
