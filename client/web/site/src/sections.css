@@ -212,6 +212,7 @@
   font-size: 0.95rem;
   white-space: nowrap;
   cursor: pointer;
+  transition: transform 160ms var(--ease-out);
 }
 .stack__next:hover {
   background: var(--sand-deep);
@@ -395,10 +396,14 @@ section h2 + p,
   font-weight: 500;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), transform 160ms var(--ease-out);
 }
 .chip:hover {
   background: var(--sand-deep);
+}
+.chip:active,
+.stack__next:active {
+  transform: scale(0.97);
 }
 .chip[aria-checked="true"] {
   background: var(--ink);
@@ -893,6 +898,25 @@ section h2 + p,
 }
 .faq details[open] summary::after {
   rotate: 45deg;
+}
+.faq {
+  interpolate-size: allow-keywords;
+}
+.faq details::details-content {
+  block-size: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: block-size 220ms var(--ease-out), opacity 220ms var(--ease-out), content-visibility 220ms allow-discrete;
+}
+.faq details[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq details::details-content {
+    block-size: auto;
+    transition: opacity 120ms var(--ease-out), content-visibility 120ms allow-discrete;
+  }
 }
 .faq details p {
   max-width: 60ch;

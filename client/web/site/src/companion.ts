@@ -20,6 +20,7 @@ export function mountCompanion(reduced: boolean) {
   const el = document.querySelector<HTMLElement>(".companion")!;
   const heroSpot = document.querySelector<HTMLElement>(".stack__owl")!;
   const closeSpot = document.querySelector<HTMLElement>(".close__owl")!;
+  const bubble = el.querySelector<HTMLElement>(".companion__say")!;
   const say = createDeemo(el);
   say("reading"); // drawn before any section reports in
   const ease = gsap.parseEase("power2.inOut");
@@ -60,7 +61,10 @@ export function mountCompanion(reduced: boolean) {
       onToggle: (s) => {
         if (!s.isActive) return;
         const line = section.dataset.say ?? "";
-        say(section.dataset.mood as DeemoMood, line);
+        // The owl hops into its new mood; the line changes at once, so it never trails the section.
+        say(section.dataset.mood as DeemoMood);
+        bubble.textContent = line;
+        el.toggleAttribute("data-quiet", !line);
         hush?.kill();
         if (line) hush = gsap.delayedCall(5, () => el.toggleAttribute("data-quiet", true));
       },

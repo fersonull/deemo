@@ -14,6 +14,7 @@ import { liveScene } from "./scenes/live";
 import { autoHideNav } from "./nav";
 import { mountPanel } from "./scenes/panel";
 import { readsScene } from "./scenes/reads";
+import { reportScene } from "./scenes/report";
 import { backInner, slipInner } from "./scenes/slip-html";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -27,7 +28,6 @@ $("[data-rubric]").innerHTML = RUBRIC.map(
 ).join("");
 
 autoHideNav($(".nav"));
-mountCompanion(reduced);
 
 // ── hero: the question slips ──
 const stackHost = $("[data-stack]");
@@ -103,3 +103,11 @@ mm.add(
     liveScene($("[data-live]"), wide ? "scrub" : "play");
   },
 );
+
+// The report works its score out once, when it comes into view.
+if (!reduced) reportScene($(".card-report"));
+
+// Deemo comes last: its section triggers must be measured after the pinned scenes above add their scroll distance,
+// or it changes mood a section early.
+mountCompanion(reduced);
+ScrollTrigger.refresh();

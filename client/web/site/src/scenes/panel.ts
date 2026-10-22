@@ -8,8 +8,10 @@ import { panelFaceSVG } from "../panel-face";
 export function mountPanel(chips: HTMLElement, seats: HTMLElement, reduced: boolean) {
   let course: Course = "BSIT";
 
+  let shown: string[] = [];
   const renderSeats = (animate: boolean) => {
-    seats.innerHTML = panelFor(course, 3)
+    const panel = panelFor(course, 3);
+    seats.innerHTML = panel
       .map(
         (p) => `<li class="seat">
           <div class="face">${panelFaceSVG(p.persona)}</div>
@@ -19,8 +21,15 @@ export function mountPanel(chips: HTMLElement, seats: HTMLElement, reduced: bool
         </li>`,
       )
       .join("");
-    if (animate && !reduced)
+    if (animate && !reduced) {
       gsap.from(seats.querySelectorAll(".slip"), { y: 28, rotate: -2, autoAlpha: 0, duration: 0.6, stagger: 0.07, ease: "expo.out" });
+      // Only the seat whose panelist changed (the field expert) crossfades its name and role, with the re-deal.
+      seats.querySelectorAll(".seat").forEach((seat, i) => {
+        if (shown[i] !== `${panel[i]!.name}|${panel[i]!.role}`)
+          gsap.from(seat.querySelectorAll(".seat__name, .seat__role"), { autoAlpha: 0, y: 4, duration: 0.18, ease: "expo.out" });
+      });
+    }
+    shown = panel.map((p) => `${p.name}|${p.role}`);
   };
 
   chips.innerHTML = COURSES.map(
