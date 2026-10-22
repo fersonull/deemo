@@ -2,7 +2,8 @@ import { useEffect, useId } from "react";
 import Animated, { useAnimatedProps, useSharedValue, withSequence, withTiming, Easing } from "react-native-reanimated";
 import { Circle, ClipPath, Defs, G, Path, Rect } from "react-native-svg";
 
-import { colors } from "@/theme";
+// Character art keeps its own colors in both themes (the light palette), like an illustration.
+import { light as colors } from "@/theme";
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 const AnimatedPath = Animated.createAnimatedComponent(Path);

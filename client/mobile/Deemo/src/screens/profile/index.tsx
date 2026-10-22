@@ -6,6 +6,7 @@ import { Avatar } from "@/components/avatar";
 import { CoursePicker } from "@/components/course-picker";
 import { useNotices } from "@/hooks/use-notices";
 import { AvatarSheet } from "./avatar-sheet";
+import { ThemeSheet } from "./theme-sheet";
 import { Button } from "@/components/button";
 import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
@@ -18,6 +19,7 @@ import { colors, fonts, lit, radius, type } from "@/theme";
 import { api } from "@/utils/api";
 import { cleanName, MAX_NAME } from "@/utils/auth-form";
 import { shareFile } from "@/utils/share-file";
+import { theme } from "@/utils/theme-choice";
 import { PressableScale } from "@/components/pressable-scale";
 
 const FREE_PLAN =
@@ -41,7 +43,7 @@ export function Profile() {
     savingTyping,
   } = useSession();
   const [sheet, setSheet] = useState<
-    "upsell" | "delete" | "name" | "avatar" | "course" | "signOut" | null
+    "upsell" | "delete" | "name" | "avatar" | "course" | "signOut" | "theme" | null
   >(null);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
@@ -229,6 +231,18 @@ export function Profile() {
             {courseError}
           </Text>
         ) : null}
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityHint="Choose light or dark"
+          onPress={() => setSheet("theme")}
+          style={[styles.row, styles.divider]}
+        >
+          <View style={styles.flex}>
+            <Text style={styles.rowLabel}>Theme</Text>
+            <Text style={styles.meta}>{theme === "dark" ? "Dark" : "Light"}</Text>
+          </View>
+          <Icon name="chevron_right" size={20} color={colors.muted} />
+        </PressableScale>
         <View style={[styles.row, styles.divider]}>
           <View style={styles.flex}>
             <Text style={styles.rowLabel}>Allow typed answers</Text>
@@ -353,6 +367,8 @@ export function Profile() {
           setSheet(null);
         }}
       />
+
+      <ThemeSheet visible={sheet === "theme"} onClose={() => setSheet(null)} />
 
       <AvatarSheet
         visible={sheet === "avatar"}

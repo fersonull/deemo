@@ -1,4 +1,5 @@
-import { colors } from "@/colors";
+// A printed report is always on white paper: it uses the light palette whatever the app theme is.
+import { light as colors } from "@/colors";
 import { DIFFICULTY_LABELS, MODE_LABELS } from "@/constants";
 import type { Report, Session, SessionTurn } from "@/hooks/use-sessions";
 

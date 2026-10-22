@@ -1,7 +1,8 @@
 import { useId } from "react";
 import { Circle, ClipPath, Defs, G, Path, Rect } from "react-native-svg";
 
-import { colors } from "@/theme";
+// Character art keeps its own colors in both themes (the light palette), like an illustration.
+import { light as colors } from "@/theme";
 
 // The owl's body outline (same as index.tsx), for clipping the jacket to it.
 const BODY =

@@ -41,7 +41,7 @@ A panel that has actually read *your* paper and talks back, profiled for your co
   - Bricolage Grotesque display, DM Sans body, DM Mono for timers and data;
   - Material Symbols Rounded icons;
   - the organic blob shape and Deemo, the owl in a mortarboard.
-  - Tokens live in `client/mobile/Deemo/src/colors.ts` and `theme.ts`. Light only.
+  - Tokens live in `client/mobile/Deemo/src/colors.ts` and `theme.ts`. Light by default, with a warm dark theme chosen in Profile (same roles on night ink; amber still marks contradictions). Character art (Deemo, the panel faces) keeps its light colours in both.
 
 ## Surfaces
 

@@ -1,7 +1,8 @@
 // Color tokens from the claude.ai/design prototype, re-exported by theme.ts. Kept free of imports so plain
 // TypeScript (the PDF report, tests) can use them too.
 
-export const colors = {
+// The light theme (the design's own palette).
+export const light = {
   // warm paper neutrals
   paper: "#F7F3EC", // screen background
   sand: "#EDE5D8", // cards, inputs, chips
@@ -59,4 +60,73 @@ export const colors = {
   // clay: destructive actions (delete my data), and the lowest readiness band outside a session (never in one)
   clay: "#944123", // oklch(0.48 0.12 40)
   clayTint: "#F5DDD3", // oklch(0.92 0.04 40)
-} as const;
+
+  // the light that lit surfaces catch (theme.ts lit, components/pressable-scale)
+  highlight: "rgba(255,255,255,0.7)",
+  glow: "rgba(255,255,255,0.32)",
+};
+export type Palette = typeof light;
+
+// The dark theme: the same roles on warm night ink. Roles that sit on a fill keep their pairing (ink buttons become
+// light with dark text; tints become deep with light text). Amber still marks contradictions; never red in a session.
+// Text pairs are checked at 4.5:1 or better (muted 6.6:1 on paper, 4.9:1 on the dusk tint).
+export const dark: Palette = {
+  paper: "#1B1815",
+  sand: "#27231F",
+  banner: "#2E2822",
+  ink: "#F2ECE2",
+  inkSoft: "#E2DACE",
+  inkMuted: "#C2B8AB",
+  muted: "#A89D90",
+  faint: "#6F665D",
+  border: "rgba(242,236,226,0.12)",
+  borderStrong: "rgba(242,236,226,0.18)",
+  outline: "rgba(242,236,226,0.35)",
+  scrim: "rgba(0,0,0,0.55)",
+  handle: "rgba(242,236,226,0.25)",
+  paperVeil: "rgba(27,24,21,0.94)",
+  paperDim: "rgba(27,24,21,0.6)",
+
+  dusk: "#8590E3",
+  duskIcon: "#9AA3EC",
+  duskLink: "#A9B1F0",
+  duskInk: "#CDD3FF",
+  duskTint: "#2A2E52",
+  duskSoft: "#3A3F6E",
+
+  amber: "#EBB353",
+  amberInk: "#F2CB82",
+  amberTint: "#3B2D16",
+  warnInk: "#E8B866",
+
+  sage: "#6FB98A",
+  sageInk: "#9FDCB5",
+  sageTint: "#1E3528",
+  sageSoft: "#2B4A37",
+
+  gold: "#D9A521",
+  goldLight: "#F6DC86",
+  goldInk: "#C99A2E",
+
+  skinLight: "#EDC39B",
+  skinLightShade: "#D9A77C",
+  skinMid: "#C99168",
+  skinMidShade: "#AE7650",
+  skinDeep: "#A9714A",
+  skinDeepShade: "#8C5937",
+  hairGray: "#77706A",
+  hairBlack: "#2A2321",
+  hairBrown: "#3B2A22",
+  mouth: "#5A3329",
+
+  clay: "#E08B68",
+  clayTint: "#3F241A",
+
+  highlight: "rgba(255,255,255,0.07)",
+  glow: "rgba(255,255,255,0.03)",
+};
+
+// The palette in use. It's filled before any screen builds its styles (utils/theme-choice.ts runs first, from the
+// app's entry), so every StyleSheet reads the chosen theme; switching themes saves the choice and reloads the app.
+export const colors: Palette = { ...light };
+export const applyPalette = (p: Palette) => Object.assign(colors, p);

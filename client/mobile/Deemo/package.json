@@ -1,6 +1,6 @@
 {
   "name": "deemo",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",

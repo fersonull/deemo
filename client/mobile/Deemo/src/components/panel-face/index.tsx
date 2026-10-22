@@ -12,7 +12,8 @@ import Animated, {
 import Svg, { Circle, ClipPath, Defs, Ellipse, G, Path } from "react-native-svg";
 
 import { panelVoice } from "@/live/voice-level";
-import { colors } from "@/theme";
+// Character art keeps its own colors in both themes (the light palette), like an illustration.
+import { light as colors } from "@/theme";
 
 import { BEARD, browPath, EYE_Y, EYES, GLASSES, hairPaths, HEAD, mouthPath, MUSTACHE, NECK, SHOULDERS, topPaths } from "./parts";
 import { PERSONAS } from "./personas";

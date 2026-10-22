@@ -2,12 +2,18 @@ import { useState, type ComponentProps, type ReactNode } from "react";
 import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
 import Animated from "react-native-reanimated";
 
-import { colors, lit as litStyle } from "@/theme";
+import { colors, light } from "@/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Faces dark enough to take only a faint highlight.
-const DARK_FACES: (string | undefined)[] = [colors.ink, colors.clay, colors.dusk, colors.duskInk];
+// How light a face is (0 black … 1 white), from its #rrggbb color; anything else counts as light.
+function lightness(color: unknown) {
+  const m = typeof color === "string" ? /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color) : null;
+  if (!m) return 1;
+  const [r, g, b] = m.slice(1).map((h) => parseInt(h, 16) / 255);
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+const nightTheme = lightness(colors.paper) < 0.3;
 
 type Props = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
@@ -38,14 +44,17 @@ function Pressed({ style, lit = false, busy, accessibilityState, onPressIn, onPr
   const inactive = unavailable && !working;
   if (blocked && down) setDown(false);
   const flat = StyleSheet.flatten(style) ?? {};
-  const dark = DARK_FACES.includes(flat.backgroundColor as string);
+  const dark = lightness(flat.backgroundColor) < 0.45;
   // Lit like the content cards: a top highlight and a soft glow down the face, all inside the control. Held down,
   // the light goes out, so it reads as pressed in without moving.
   const surface: ViewStyle = lit && !inactive && !(down && !blocked)
     ? { boxShadow: dark
-        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: "rgba(255,255,255,0.16)" },
-          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: "rgba(255,255,255,0.08)" }]
-        : [...litStyle.boxShadow] }
+        // Dark faces take a faint light: the dark theme's own on its cards, a little more on ink in the light theme.
+        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: nightTheme ? colors.highlight : "rgba(255,255,255,0.16)" },
+          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: nightTheme ? colors.glow : "rgba(255,255,255,0.08)" }]
+        // Light faces catch the light theme's full highlight, in either theme.
+        : [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: light.highlight },
+          { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: light.glow }] }
     : {};
   surface.outlineWidth = focused && !blocked ? 2 : 0;
   surface.outlineOffset = 3;

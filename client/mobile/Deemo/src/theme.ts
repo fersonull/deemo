@@ -4,15 +4,15 @@
 
 import { Easing } from "react-native-reanimated";
 
-import { colors } from "./colors";
+import { colors, dark, light } from "./colors";
 
-export { colors };
+export { colors, dark, light };
 
 // Panelist avatar fills (Chair, Technical, Methodology)
 export const panelist = {
   chair: "#E4D9C6",
-  technical: colors.duskSoft,
-  methodology: colors.sageSoft,
+  technical: light.duskSoft,
+  methodology: light.sageSoft,
 } as const;
 
 // Embedded at build time by the expo-font plugin (app.json) as Android font families,
@@ -66,7 +66,7 @@ export const easeOut = Easing.bezier(0.23, 1, 0.32, 1);
 // shadow), so content never looks pressable.
 export const lit = {
   boxShadow: [
-    { inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: "rgba(255,255,255,0.7)" },
-    { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: "rgba(255,255,255,0.32)" },
+    { inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: colors.highlight },
+    { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: colors.glow },
   ],
 } as const;

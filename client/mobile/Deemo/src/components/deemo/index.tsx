@@ -19,7 +19,8 @@ import Svg, { Circle, Ellipse, G, Path, Rect } from "react-native-svg";
 
 import { touchPoint } from "@/hooks/touch-point";
 import { useSession } from "@/hooks/use-session";
-import { colors, easeOut } from "@/theme";
+// Character art keeps its own colors in both themes (the light palette), like an illustration.
+import { easeOut, light as colors } from "@/theme";
 
 import { PremiumBadge } from "./badge";
 import { Suit } from "./suit";

@@ -12,6 +12,7 @@ import { sessions } from "@/hooks/use-sessions";
 import { trackTouch } from "@/hooks/touch-point";
 import { colors } from "@/theme";
 import { onboarding, useOnboarded } from "@/utils/onboarded";
+import { theme } from "@/utils/theme-choice";
 import { NoticeDelivery } from "@/components/notice-delivery";
 
 // Hold the splash until Firebase says whether someone is still signed in (no flash of the welcome screen).
@@ -64,7 +65,7 @@ export default function RootLayout() {
       onTouchEnd={(e) => trackTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, false)}
       onTouchCancel={(e) => trackTouch(e.nativeEvent.pageX, e.nativeEvent.pageY, false)}
     >
-      <StatusBar style="dark" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
       <Stack
         screenOptions={{ headerShown: false, animation: "fade_from_bottom", contentStyle: { backgroundColor: colors.paper } }}
       >

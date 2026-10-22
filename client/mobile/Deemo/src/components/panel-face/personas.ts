@@ -1,4 +1,5 @@
-import { colors, panelist } from "@/theme";
+// Character art keeps its own colors in both themes (the light palette), like an illustration.
+import { light as colors, panelist } from "@/theme";
 
 // The three panelists as flat busts (style: round flat avatars, no outlines). Parts are data; one renderer draws all.
 export type Persona = {
