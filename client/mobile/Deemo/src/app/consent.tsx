@@ -81,7 +81,7 @@ function Check({ checked, onToggle, label }: { checked: boolean; onToggle: () =>
         {/* The tick pops in from 0.6 (never from nothing), 160 ms */}
         {checked && (
           <Animated.View entering={ZoomIn.duration(160).easing(easeOut).withInitialValues({ transform: [{ scale: 0.6 }] })}>
-            <Icon name="check" size={18} color={colors.paper} />
+            <Icon name="check" size={18} color={colors.onFill} />
           </Animated.View>
         )}
       </View>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  boxOn: { backgroundColor: colors.ink, borderColor: colors.ink },
+  boxOn: { backgroundColor: colors.fill, borderColor: colors.fill },
   checkLabel: { ...type.body, flex: 1, lineHeight: 19.6 },
   cta: { marginTop: 8 },
 });

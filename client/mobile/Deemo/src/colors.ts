@@ -19,6 +19,10 @@ export const light = {
   handle: "rgba(42,36,32,0.2)", // sheet grab handle
   paperVeil: "rgba(247,243,236,0.94)", // paused overlay
   paperDim: "rgba(247,243,236,0.55)", // inactive tab labels on ink
+  // the solid surface for main buttons, selected chips, the tab bar and the Premium card, and what sits on it
+  fill: "#2A2420",
+  onFill: "#F7F3EC",
+  onFillDim: "rgba(247,243,236,0.55)",
 
   // primary: "dusk" indigo
   dusk: "#5A66C7", // oklch(0.55 0.15 275)
@@ -67,15 +71,15 @@ export const light = {
 };
 export type Palette = typeof light;
 
-// The dark theme: the same roles on warm night ink. Roles that sit on a fill keep their pairing (ink buttons become
-// light with dark text; tints become deep with light text). Amber still marks contradictions; never red in a session.
+// The dark theme: the same roles on warm night ink. Solid surfaces (`fill`) lift to warm charcoal rather than
+// flipping to white; tints become deep with light text. Amber still marks contradictions; never red in a session.
 // Text pairs are checked at 4.5:1 or better (muted 6.6:1 on paper, 4.9:1 on the dusk tint).
 export const dark: Palette = {
   paper: "#1B1815",
   sand: "#27231F",
   banner: "#2E2822",
-  ink: "#F2ECE2",
-  inkSoft: "#E2DACE",
+  ink: "#E8E0D4", // softened: bright enough to read (13:1 on paper) without glaring
+  inkSoft: "#D6CCBF",
   inkMuted: "#C2B8AB",
   muted: "#A89D90",
   faint: "#6F665D",
@@ -86,6 +90,10 @@ export const dark: Palette = {
   handle: "rgba(242,236,226,0.25)",
   paperVeil: "rgba(27,24,21,0.94)",
   paperDim: "rgba(27,24,21,0.6)",
+  // Main buttons and the tab bar lift to warm charcoal instead of turning white: dark mode, not an inversion.
+  fill: "#3A332D",
+  onFill: "#F2ECE2",
+  onFillDim: "rgba(242,236,226,0.55)",
 
   dusk: "#8590E3",
   duskIcon: "#9AA3EC",

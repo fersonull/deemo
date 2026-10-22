@@ -39,7 +39,7 @@ export function OptionChips<T extends string>({
 const styles = StyleSheet.create({
   options: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { minHeight: 44, paddingVertical: 10, borderRadius: 22, paddingHorizontal: 16, justifyContent: "center", backgroundColor: colors.sand },
-  chipSelected: { backgroundColor: colors.ink },
+  chipSelected: { backgroundColor: colors.fill },
   chipText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink },
-  chipTextSelected: { color: colors.paper },
+  chipTextSelected: { color: colors.onFill },
 });

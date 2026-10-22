@@ -129,9 +129,9 @@ const styles = StyleSheet.create({
   itLabel: { marginTop: 16, marginBottom: 8 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { minHeight: 44, borderRadius: 22, paddingHorizontal: 16, justifyContent: "center", backgroundColor: colors.sand },
-  chipSelected: { backgroundColor: colors.ink },
+  chipSelected: { backgroundColor: colors.fill },
   chipText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14, color: colors.ink },
-  chipTextSelected: { color: colors.paper },
+  chipTextSelected: { color: colors.onFill },
   error: { ...type.meta, color: colors.warnInk, marginTop: 8 },
   save: { marginTop: 16 },
 });

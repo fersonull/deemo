@@ -61,7 +61,7 @@ export function Setup() {
           {MODES.map((m) => {
             const locked = m.value === "FINAL" && !premium;
             const selected = setup.mode === m.value;
-            const fg = selected ? colors.paper : colors.ink;
+            const fg = selected ? colors.onFill : colors.ink;
             return (
               <PressableScale
                 key={m.value}
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.xl,
     backgroundColor: colors.sand,
   },
-  inkCard: { backgroundColor: colors.ink },
+  inkCard: { backgroundColor: colors.fill },
   desc: { ...type.body, fontSize: 12.5, lineHeight: 17.5, opacity: 0.75, marginTop: 2 },
   section: { marginTop: 24, marginBottom: 8 },
   cta: { marginTop: 24 },

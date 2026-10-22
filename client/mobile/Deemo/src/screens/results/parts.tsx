@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   meta: { ...type.meta, lineHeight: 17, marginTop: 2 },
   mono: { fontFamily: fonts.mono, fontWeight: "500", fontSize: 12.5, color: colors.inkMuted },
   fix: { flexDirection: "row", gap: 12 },
-  fixN: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.ink, color: colors.paper, textAlign: "center", lineHeight: 26, fontFamily: fonts.body, fontWeight: "700", fontSize: 13 },
+  fixN: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.fill, color: colors.onFill, textAlign: "center", lineHeight: 26, fontFamily: fonts.body, fontWeight: "700", fontSize: 13 },
   cHead: { flexDirection: "row", alignItems: "center", gap: 8 },
   severity: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.amberTint, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
   severityText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11.5, color: colors.amberInk },

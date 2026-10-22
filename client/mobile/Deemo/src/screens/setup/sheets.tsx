@@ -33,7 +33,7 @@ export function DomainSheet({
               style={[styles.domain, selected && styles.domainSelected]}
             >
               <Text style={[styles.domainText, selected && styles.onInk]}>{d}</Text>
-              {selected && <Icon name="check" size={20} color={colors.paper} />}
+              {selected && <Icon name="check" size={20} color={colors.onFill} />}
             </PressableScale>
           );
         })}
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  domainSelected: { backgroundColor: colors.ink },
+  domainSelected: { backgroundColor: colors.fill },
   domainText: { ...type.bodyStrong },
-  onInk: { color: colors.paper },
+  onInk: { color: colors.onFill },
 });

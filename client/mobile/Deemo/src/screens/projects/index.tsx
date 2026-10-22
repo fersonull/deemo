@@ -103,7 +103,7 @@ export function Projects() {
           <View style={styles.emptyCta}>
             <Button
               label="Upload a manuscript"
-              leading={<Icon name="upload_file" size={20} color={colors.paper} />}
+              leading={<Icon name="upload_file" size={20} color={colors.onFill} />}
               onPress={() => setSheet("upload")}
             />
           </View>
@@ -160,7 +160,7 @@ export function Projects() {
             hitSlop={6}
             style={[styles.arrange, changed && styles.arrangeOn]}
           >
-            <Icon name="sort" size={18} color={changed ? colors.paper : colors.ink} />
+            <Icon name="sort" size={18} color={changed ? colors.onFill : colors.ink} />
             <Text style={[styles.arrangeText, changed && styles.onInk]} numberOfLines={1}>
               {arrangeLabel}
             </Text>
@@ -322,9 +322,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: colors.sand,
   },
-  arrangeOn: { backgroundColor: colors.ink },
+  arrangeOn: { backgroundColor: colors.fill },
   arrangeText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.ink, flexShrink: 1 },
-  onInk: { color: colors.paper },
+  onInk: { color: colors.onFill },
   none: { ...type.body, fontSize: 13.5, color: colors.inkMuted, marginTop: 12, paddingHorizontal: 4 },
   link: { color: colors.duskLink, fontWeight: "600" },
   sheetTitle: { ...type.title, fontSize: 26, lineHeight: 28, letterSpacing: -0.8 },

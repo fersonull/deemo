@@ -592,14 +592,14 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     paddingHorizontal: 14,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     justifyContent: "center",
   },
   upgradeText: {
     fontFamily: fonts.body,
     fontWeight: "600",
     fontSize: 13,
-    color: colors.paper,
+    color: colors.onFill,
   },
   planDesc: {
     ...type.body,

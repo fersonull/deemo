@@ -206,7 +206,7 @@ export function Session() {
               accessibilityLabel="Typed answer"
             />
             <PressableScale lit accessibilityRole="button" accessibilityLabel="Send answer" onPress={send} style={styles.sendBtn}>
-              <Icon name="arrow_upward" size={20} color={colors.paper} />
+              <Icon name="arrow_upward" size={20} color={colors.onFill} />
             </PressableScale>
           </View>
         )}
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   panel: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end", paddingTop: 24, paddingHorizontal: 20 },
   typeRow: { flexDirection: "row", gap: 8, marginHorizontal: 20, marginBottom: 8 },
   input: { ...type.body, flex: 1, height: 48, borderRadius: 24, backgroundColor: colors.sand, paddingHorizontal: 16 },
-  sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.ink, alignItems: "center", justifyContent: "center" },
+  sendBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.fill, alignItems: "center", justifyContent: "center" },
   bottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 4, paddingHorizontal: 20, paddingBottom: 16 },
   roundSpacer: { width: 56, height: 56 },
   round: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.sand, alignItems: "center", justifyContent: "center" },

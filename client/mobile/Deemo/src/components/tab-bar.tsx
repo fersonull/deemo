@@ -43,7 +43,7 @@ export function TabBar({ state, descriptors, navigation }: Props) {
 
   const tab = (route: (typeof state.routes)[number], index: number) => {
     const focused = state.index === index;
-    const color = focused ? colors.paper : colors.paperDim;
+    const color = focused ? colors.onFill : colors.onFillDim;
     const label = descriptors[route.key].options.title ?? route.name;
     return (
       <PressableScale
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     right: 12,
     height: BAR,
     borderRadius: 35,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",

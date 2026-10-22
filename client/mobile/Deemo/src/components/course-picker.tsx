@@ -29,7 +29,7 @@ export function CoursePicker({ value, onPick }: { value: Course | null; onPick: 
 const styles = StyleSheet.create({
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { minHeight: 44, borderRadius: 22, paddingHorizontal: 16, justifyContent: "center", backgroundColor: colors.sand },
-  chipSelected: { backgroundColor: colors.ink },
+  chipSelected: { backgroundColor: colors.fill },
   chipText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14, color: colors.ink },
-  chipTextSelected: { color: colors.paper },
+  chipTextSelected: { color: colors.onFill },
 });

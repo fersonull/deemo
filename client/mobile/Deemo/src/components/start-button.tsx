@@ -13,7 +13,7 @@ export function StartButton({ label, icon = "mic", onPress, style }: Props) {
     <PressableScale lit accessibilityRole="button" onPress={onPress} style={[styles.start, style]}>
       <Text style={[type.button, styles.label]}>{label}</Text>
       <Blob width={44} height={44}>
-        <Icon name={icon} size={22} color={colors.paper} filled />
+        <Icon name={icon} size={22} color={colors.onFill} filled />
       </Blob>
     </PressableScale>
   );
@@ -23,12 +23,12 @@ const styles = StyleSheet.create({
   start: {
     height: 60,
     borderRadius: 30,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingLeft: 22,
     paddingRight: 8,
   },
-  label: { flex: 1, color: colors.paper },
+  label: { flex: 1, color: colors.onFill },
 });

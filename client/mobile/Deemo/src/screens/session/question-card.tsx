@@ -107,6 +107,6 @@ const styles = StyleSheet.create({
   askerText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 12, color: colors.inkMuted },
   textScroll: { maxHeight: 150, flexGrow: 0 },
   text: { fontFamily: fonts.display, fontWeight: "700", letterSpacing: -0.3, color: colors.ink },
-  done: { alignSelf: "flex-start", marginTop: 16, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: colors.ink, justifyContent: "center" },
-  doneText: { fontSize: 14, color: colors.paper },
+  done: { alignSelf: "flex-start", marginTop: 16, height: 44, paddingHorizontal: 20, borderRadius: 22, backgroundColor: colors.fill, justifyContent: "center" },
+  doneText: { fontSize: 14, color: colors.onFill },
 });

@@ -76,12 +76,12 @@ function Preview({ palette: p }: { palette: Palette }) {
         </View>
         <View style={[styles.score, { backgroundColor: p.dusk }]} />
       </View>
-      <View style={[styles.button, { backgroundColor: p.ink }]}>
-        <View style={[styles.line, { width: "40%", backgroundColor: p.paper }]} />
+      <View style={[styles.button, { backgroundColor: p.fill }]}>
+        <View style={[styles.line, { width: "40%", backgroundColor: p.onFill }]} />
       </View>
-      <View style={[styles.tabs, { backgroundColor: p.ink }]}>
+      <View style={[styles.tabs, { backgroundColor: p.fill }]}>
         {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={[styles.dot, { backgroundColor: i === 0 ? p.paper : p.paperDim }]} />
+          <View key={i} style={[styles.dot, { backgroundColor: i === 0 ? p.onFill : p.onFillDim }]} />
         ))}
       </View>
     </View>

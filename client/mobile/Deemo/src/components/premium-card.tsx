@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   card: {
     borderRadius: radius.xl,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     borderWidth: 1,
     borderColor: colors.goldInk,
     overflow: "hidden",
@@ -106,5 +106,5 @@ const styles = StyleSheet.create({
   rule: { height: 1, backgroundColor: colors.goldInk, opacity: 0.6, marginTop: 12, marginBottom: 12 },
   perks: { gap: 8 },
   perk: { flexDirection: "row", alignItems: "center", gap: 8 },
-  perkText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14, color: colors.paper },
+  perkText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 14, color: colors.onFill },
 });

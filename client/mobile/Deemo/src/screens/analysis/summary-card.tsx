@@ -130,6 +130,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", justifyContent: "flex-end", gap: 8, marginTop: 8 },
   cancel: { height: 38, paddingHorizontal: 14, borderRadius: 19, justifyContent: "center" },
   cancelText: { fontFamily: fonts.body, fontWeight: "500", fontSize: 13, color: colors.ink },
-  save: { height: 38, paddingHorizontal: 18, borderRadius: 19, backgroundColor: colors.ink, justifyContent: "center" },
-  saveText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.paper },
+  save: { height: 38, paddingHorizontal: 18, borderRadius: 19, backgroundColor: colors.fill, justifyContent: "center" },
+  saveText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.onFill },
 });

@@ -17,9 +17,9 @@ type Props = {
 
 export function Button({ label, onPress, variant = "primary", disabled, busy, lit = true, leading }: Props) {
   const sheen = `sheen${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  const bg = variant === "secondary" ? colors.sand : colors.ink;
+  const bg = variant === "secondary" ? colors.sand : colors.fill;
   const inactive = disabled && !busy;
-  const fg = inactive ? colors.inkMuted : variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.paper;
+  const fg = inactive ? colors.inkMuted : variant === "secondary" ? colors.ink : variant === "premium" ? colors.goldLight : colors.onFill;
   return (
     <PressableScale
       lit={lit}
