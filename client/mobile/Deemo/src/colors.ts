@@ -23,6 +23,7 @@ export const light = {
   fill: "#2A2420",
   onFill: "#F7F3EC",
   onFillDim: "rgba(247,243,236,0.55)",
+  onFillSoft: "#D9D0C4", // secondary text on fill (10:1)
 
   // primary: "dusk" indigo
   dusk: "#5A66C7", // oklch(0.55 0.15 275)
@@ -94,6 +95,7 @@ export const dark: Palette = {
   fill: "#3A332D",
   onFill: "#F2ECE2",
   onFillDim: "rgba(242,236,226,0.55)",
+  onFillSoft: "#CFC5B8", // secondary text on fill (7.3:1)
 
   dusk: "#8590E3",
   duskIcon: "#9AA3EC",

@@ -270,7 +270,7 @@ export function Profile() {
                 );
             }}
             trackColor={{ false: colors.faint, true: colors.dusk }}
-            thumbColor={colors.paper}
+            thumbColor={colors.onFill}
           />
         </View>
         {typingError ? (

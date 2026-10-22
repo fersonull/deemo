@@ -347,7 +347,7 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
             disabled={sharing || !group || savingMembers.includes(group.id)}
             onValueChange={toggleShare}
             trackColor={{ false: colors.border, true: colors.dusk }}
-            thumbColor={colors.paper}
+            thumbColor={colors.onFill}
           />
         </View>
         {shareError ? <Text accessibilityLiveRegion="polite" style={styles.sheetNote}>{shareError}</Text> : null}

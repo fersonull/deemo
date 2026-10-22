@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   demoText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 11, color: colors.gold },
-  sub: { fontFamily: fonts.body, fontSize: 13.5, color: colors.sand, opacity: 0.8, marginTop: 2 },
+  sub: { fontFamily: fonts.body, fontSize: 13.5, color: colors.onFillSoft, marginTop: 2 },
   rule: { height: 1, backgroundColor: colors.goldInk, opacity: 0.6, marginTop: 12, marginBottom: 12 },
   perks: { gap: 8 },
   perk: { flexDirection: "row", alignItems: "center", gap: 8 },

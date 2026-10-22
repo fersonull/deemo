@@ -95,7 +95,7 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
               disabled={busy || savingMembers.includes(project.id)}
               onValueChange={(shareScore) => void run(() => projects.updateMember(project, { shareScore }))}
               trackColor={{ false: colors.border, true: colors.dusk }}
-              thumbColor={colors.paper}
+              thumbColor={colors.onFill}
             />
           </View>
           <PressableScale
