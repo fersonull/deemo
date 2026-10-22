@@ -2,6 +2,9 @@ import { prisma } from "../../../shared/prisma";
 import { visibleTo } from "../domain/notice";
 import { NoticeHub } from "./change-hub";
 
+// Sends, reads and deletes on this server notify its phones at once (application/notices.ts), so the scan only catches
+// writes from other instances or outside the app. Render's free plan runs one instance: a slow scan is plenty, and the
+// free database plan counts operations (a 2 s scan was two queries every 2 s, all day, whenever a phone was open).
 export const noticeHub = new NoticeHub(async () => {
   // Recent rows catch commits that arrive out of ID order. Reconnecting always reloads the full inbox page.
   const [notices, reads] = await Promise.all([
@@ -12,7 +15,7 @@ export const noticeHub = new NoticeHub(async () => {
     ...notices.map((n) => ({ key: `notice:${n.id}`, targetId: n.targetId })),
     ...reads.map((r) => ({ key: `read:${r.noticeId}:${r.userId}`, targetId: r.userId })),
   ];
-});
+}, 60_000);
 
 export async function inbox(uid: string, before?: string) {
   const where = visibleTo(uid);

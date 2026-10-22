@@ -38,7 +38,7 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.use(rateLimit("ip", { who: byIp }));
+app.use(rateLimit("ip", { who: byIp, memory: true }));
 app.use(express.json({ limit: "1mb" })); // an hour-long transcript outgrows the 100 kB default
 
 // The web admin (client/web/admin): admin claim only, never a student account.

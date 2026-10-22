@@ -2,8 +2,10 @@ import type { Request, RequestHandler } from "express";
 
 import { prisma } from "./prisma";
 
-// Fixed-window rate limits, counted in Postgres so every server instance shares them. Over the limit: 429 with
-// Retry-After. If the database can't be reached the request goes through (the routes themselves will fail anyway).
+// Fixed-window rate limits. Over the limit: 429 with Retry-After. Per-student and per-feature limits are counted in
+// Postgres so every server instance shares them; if the database can't be reached the request goes through (the routes
+// themselves will fail anyway). The per-IP limit runs on every request, so it counts in memory instead: a database
+// write per request was most of the free plan's operations, and a per-instance IP limit still stops a flood.
 
 export const LIMITS = {
   ip: { limit: 300, windowMs: 60_000 }, // every request, per client IP
@@ -36,16 +38,37 @@ async function hit(key: string, start: Date) {
   return Number(rows[0]?.count ?? 0);
 }
 
+// In-memory counts for one window; the map starts over when the window moves on.
+export function memoryCounter(windowMs: number) {
+  let start = 0;
+  const counts = new Map<string, number>();
+  return (key: string, now: number) => {
+    const w = windowStart(now, windowMs);
+    if (w !== start) {
+      start = w;
+      counts.clear();
+    }
+    const n = (counts.get(key) ?? 0) + 1;
+    counts.set(key, n);
+    return n;
+  };
+}
+
 export function rateLimit(
   name: keyof typeof LIMITS,
-  { who = byUser, message = "Too many requests. Wait a moment and try again." }: { who?: Who; message?: string } = {},
+  {
+    who = byUser,
+    message = "Too many requests. Wait a moment and try again.",
+    memory = false,
+  }: { who?: Who; message?: string; memory?: boolean } = {},
 ): RequestHandler {
   const { limit, windowMs } = LIMITS[name];
+  const local = memory ? memoryCounter(windowMs) : null;
   return async (req, res, next) => {
     const now = Date.now();
     let count: number;
     try {
-      count = await hit(`${name}:${who(req)}`, new Date(windowStart(now, windowMs)));
+      count = local ? local(`${name}:${who(req)}`, now) : await hit(`${name}:${who(req)}`, new Date(windowStart(now, windowMs)));
     } catch (err) {
       console.warn("rate limit unavailable:", (err as Error).message);
       return next();

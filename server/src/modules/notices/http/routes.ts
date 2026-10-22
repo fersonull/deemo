@@ -10,6 +10,8 @@ import { AudienceInput, DeleteNoticesInput, InboxQuery, NoticeId, NoticeInput } 
 import { PushTokenInput } from "../domain/push";
 import { inbox, noticeHub } from "../infrastructure/notice-repo";
 
+export const STREAM_LIFETIME_MS = 10 * 60_000;
+
 export const noticesRouter = Router();
 noticesRouter.get("/notices", validate({ query: InboxQuery }), async (req, res) => {
   res.json(await inbox(accountOf(req).id, (res.locals.query as z.infer<typeof InboxQuery>).before));
@@ -37,8 +39,9 @@ noticesRouter.get("/notices/stream", (req, res) => {
   };
   const unsubscribe = noticeHub.subscribe(accountOf(req).id, refresh);
   const heartbeat = setInterval(() => { if (!res.writableEnded && !res.write(": keepalive\n\n")) res.end(); }, 15_000);
-  // Re-authenticate every minute, including revoked/disabled Firebase accounts.
-  const lifetime = setTimeout(() => res.end(), 60_000);
+  // Re-authenticate every 10 minutes, including revoked/disabled Firebase accounts. Each reconnect costs the sign-in
+  // gates plus an inbox reload (about six database operations), so it isn't done every minute.
+  const lifetime = setTimeout(() => res.end(), STREAM_LIFETIME_MS);
   res.on("close", () => { unsubscribe(); clearInterval(heartbeat); clearTimeout(lifetime); });
   refresh(); // includes notices sent while closed, or between a REST read and subscribing
 });
