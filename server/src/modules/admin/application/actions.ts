@@ -19,7 +19,9 @@ export type AdminActionKind =
   | "admin_granted"
   | "admin_revoked"
   | "notice_sent"
-  | "notice_deleted";
+  | "notice_deleted"
+  | "maintenance_on"
+  | "maintenance_off";
 
 export const AUDIT_PAGE_SIZE = 25;
 

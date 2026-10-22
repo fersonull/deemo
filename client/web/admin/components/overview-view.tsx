@@ -3,6 +3,7 @@
 import Link from "next/link"
 
 import { DayBars } from "@/components/day-bars"
+import { MaintenanceCard } from "@/components/maintenance-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -10,7 +11,7 @@ import { useAdminData } from "@/hooks/use-admin-data"
 import type { Overview } from "@/lib/api"
 import { displayName, formatDayTime, MODE_LABELS } from "@/lib/format"
 
-// The first page: headline counts, sign-ups and sessions per day, and what needs attention.
+// The first page: maintenance mode, headline counts, sign-ups and sessions per day, and what needs attention.
 export function OverviewView() {
   const { data, error, reload } = useAdminData<Overview>("/admin/overview")
 
@@ -76,6 +77,7 @@ export function OverviewView() {
 
   return (
     <div className="flex flex-col gap-6">
+      <MaintenanceCard />
       <dl className="grid grid-cols-2 divide-x divide-y border sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         {stats.map((s) => (
           <Link

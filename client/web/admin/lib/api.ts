@@ -26,6 +26,12 @@ export async function adminApi<T>(
   return body as T
 }
 
+export type Maintenance = {
+  on: boolean
+  message: string | null
+  updatedAt: string | null
+}
+
 export type Paged = { total: number; page: number; pageSize: number }
 
 export type UserRow = {
@@ -96,6 +102,8 @@ export type AdminAction = {
     | "admin_revoked"
     | "notice_sent"
     | "notice_deleted"
+    | "maintenance_on"
+    | "maintenance_off"
   targetId: string
   targetEmail: string | null
   createdAt: string

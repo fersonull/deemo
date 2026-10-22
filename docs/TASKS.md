@@ -116,6 +116,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 - [x] **Cut database operations (2026-10-22):** notice hub scan 2 s → 60 s, notice stream lifetime 60 s → 10 min, per-IP rate limit counted in memory. Roughly 90k+ ops/day with one phone open → a few thousand. Server tests pass.
 
+- [x] **Maintenance mode (2026-10-22, merged into `dev`):** web admin switch on Overview (optional message, confirm to turn on, audit-logged); server closes every student route with 503 `MAINTENANCE` and answers a public `GET /status`; the app shows a full-screen maintenance screen (Deemo reading, the message, an auto-check countdown) and lifts it when maintenance ends. A live session already running is not interrupted. Needs `bun run db:deploy` (new `maintenance` table) before `dev` deploys; phone check pending; JS only.
+
 - [x] **No shared press animation on flat controls (2026-10-21, `codex/button-depth`):** removed scale-down/release and reduced-motion dimming from non-layered controls such as Profile Course. Original caller transforms/opacity and custom callbacks remain; layered 3D buttons keep their press animation. 106 tests, TypeScript, lint and diff checks pass; code-only verification, JS only.
 
 - [x] **Sign out and History depth opt-ins (2026-10-21, `codex/button-depth`):** enabled the layered style for Sign out, History stage chips, sort/filter trigger and sheet options, History session cards and the chart report arrow. Other flat exclusions remain unchanged. Styling only; phone check pending.

@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -14,6 +14,8 @@ import { colors } from "@/theme";
 import { onboarding, useOnboarded } from "@/utils/onboarded";
 import { theme } from "@/utils/theme-choice";
 import { NoticeDelivery } from "@/components/notice-delivery";
+import { Maintenance } from "@/components/maintenance";
+import { maintenance, useMaintenance } from "@/utils/maintenance";
 
 // Hold the splash until Firebase says whether someone is still signed in (no flash of the welcome screen).
 void SplashScreen.preventAutoHideAsync();
@@ -26,10 +28,23 @@ export default function RootLayout() {
   const needsConsent = inside && accountLoaded && !consentAt;
   // Then the onboarding survey (their course), once; older accounts see it on their next open.
   const needsCourse = inside && accountLoaded && !needsConsent && !course;
+  // Maintenance covers everything, except a live session already under way: it talks to Gemini directly, finishes,
+  // and is kept on the phone (session backup) until it can be scored.
+  const path = usePathname();
+  const closed = useMaintenance().on && path !== "/session";
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
+
+  // Is DEEMO in maintenance? Asked on launch and whenever the app comes back to the foreground, signed in or not.
+  useEffect(() => {
+    void maintenance.check();
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state === "active") void maintenance.check();
+    });
+    return () => sub.remove();
+  }, []);
 
   // Know the active manuscript from the start, so every path into a session uses it; forget it all on sign-out,
   // including the last setup (its manuscript and Premium-only choices belong to that account).
@@ -98,7 +113,8 @@ export default function RootLayout() {
           <Stack.Screen name="scoring" options={{ gestureEnabled: false }} />
         </Stack.Protected>
       </Stack>
-      <NoticeDelivery enabled={inside && accountLoaded && !needsConsent && !needsCourse} />
+      <NoticeDelivery enabled={inside && accountLoaded && !needsConsent && !needsCourse && !closed} />
+      {closed ? <Maintenance /> : null}
     </GestureHandlerRootView>
   );
 }
