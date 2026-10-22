@@ -38,11 +38,12 @@ export function textBlock(lines, cx, cy, { size = 13, weight = 400, fill = "#111
 }
 
 // Edge label sizing for ELK: a list of lines.
-export function labelOf(text, max = 22) {
+export function labelOf(text, max = 22, size = 12) {
   if (!text) return [];
   const lines = wrap(text, max);
-  const width = Math.max(...lines.map((l) => textWidth(l, 12))) * 1.08 + 10;
-  return [{ text, lines, width, height: lines.length * 16 + 4 }];
+  const k = size / 12;
+  const width = Math.max(...lines.map((l) => textWidth(l, size))) * 1.08 + 10 * k;
+  return [{ text, lines, width, height: lines.length * 16 * k + 4 * k }];
 }
 
 const elk = new ELK();
