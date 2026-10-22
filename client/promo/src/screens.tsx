@@ -135,7 +135,7 @@ export const HomeScreen: React.FC = () => (
 
 // Upload: the analysis screen (screens/analysis). Deemo checks the paper with a progress bar, then "Here's what we
 // understood" rises in: the field, the title and the summary the panel will ask from. `f` is frames into the scene.
-export const UPLOAD_READ = 96; // frames of "Checking your research" before the result
+export const UPLOAD_READ = 150; // frames of "Checking your research" before the result
 
 const Card: React.FC<{ kicker: string; action?: string; at: number; f: number; children: React.ReactNode }> = ({ kicker, action, at, f, children }) => {
   const p = ios(f, at, 190);
@@ -210,7 +210,7 @@ export const UploadScreen: React.FC<{ f: number }> = ({ f }) => {
 // Live session, laid out like the app's session screen (screens/session): stage pill and End, the panel row, the
 // question card, the transcript, and pause · mic blob · keyboard. As in the app, nothing on screen marks a
 // contradiction: the panelist challenges it out loud with a clarificatory question. `f` is frames into the scene.
-export const LIVE = { ask: 30, answer: 90, flag: 190 };
+export const LIVE = { ask: 30, answer: 110, flag: 300 }; // in step with the Defend line
 
 const SEATS = [
   { persona: 0, name: "Dr. Reyes", role: "Chair" },

@@ -1,6 +1,6 @@
 # DEEMO promo video
 
-A ~27 s, 1920×1080, 60 fps promo made with [Remotion](https://www.remotion.dev), cut after the team's `DeemoPromo-30` reference: a two-line hook, "Meet DEEMO", three numbered steps (1 Upload, 2 Defend, 3 Improve) and the call to action. The voiceover, sound effects and music come from ElevenLabs. It uses the app's design system: `colors.ts` tokens, Bricolage, DM Sans and DM Mono, the lit surfaces (light from above, inside the shape) and the blob shape. Text is word-by-word kinetic type with iOS-style spring motion. All art is drawn in code: the Deemo owl and the panel faces are ports of the app's components.
+A ~34 s, 1920×1080, 60 fps promo made with [Remotion](https://www.remotion.dev), cut after the team's `DeemoPromo-30` reference: a two-line hook, "Meet DEEMO", three numbered steps (1 Upload, 2 Defend, 3 Improve) and the call to action. The voiceover, sound effects and music come from ElevenLabs. It uses the app's design system: `colors.ts` tokens, Bricolage, DM Sans and DM Mono, the lit surfaces (light from above, inside the shape) and the blob shape. Text is word-by-word kinetic type with iOS-style spring motion. All art is drawn in code: the Deemo owl and the panel faces are ports of the app's components.
 
 ```bash
 bun install

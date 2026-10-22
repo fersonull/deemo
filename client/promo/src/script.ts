@@ -4,11 +4,11 @@ import audio from "./audio.json";
 
 export const LINES = {
   hook: "You know your paper. But can you defend it out loud?",
-  meet: "Meet DEEMO, your mock defense panel.",
-  upload: "Upload your manuscript. DEEMO reads every page.",
-  defend: "It asks, follows up, and catches contradictions.",
-  improve: "Then shows you exactly what to fix.",
-  cta: "DEEMO. Practice the defense, before the defense.",
+  meet: "Meet DEEMO, your mock defense panel. Rehearse your title, pre-oral, and final defense, anytime.",
+  upload: "Upload your manuscript. DEEMO reads every page, so each question comes from your own paper and course.",
+  defend: "Then answer a live panel, out loud. Three panelists ask, follow up, and catch your contradictions.",
+  improve: "After, you get a readiness score, and exactly what to fix before the real defense.",
+  cta: "DEEMO, on Android. Practice the defense, before the defense.",
 } as const;
 export type Line = keyof typeof LINES;
 
@@ -42,7 +42,7 @@ export const VO_LEAD = 8; // frames into a scene before its line starts
 export const OVERLAP = 30; // frames each scene overlaps the next (bridges live in the overlap)
 
 // A scene never runs shorter than this (seconds): room for its choreography even with a short line.
-const MIN: Record<Line, number> = { hook: 3.8, meet: 3.4, upload: 4.6, defend: 5.6, improve: 5, cta: 4.2 };
+const MIN: Record<Line, number> = { hook: 3.2, meet: 3, upload: 4.2, defend: 4.8, improve: 4, cta: 4.4 };
 const FALLBACK: Record<Line, number> = { hook: 3.1, meet: 2.2, upload: 3.6, defend: 3.1, improve: 2, cta: 3.2 };
 
 const voice = audio.voice as Partial<Record<Line, number>>;

@@ -1,11 +1,11 @@
 {
   "voice": {
     "hook": 3.111,
-    "meet": 2.276,
-    "upload": 3.576,
-    "defend": 3.111,
-    "improve": 2.043,
-    "cta": 3.158
+    "meet": 6.455,
+    "upload": 6.13,
+    "defend": 7.012,
+    "improve": 4.412,
+    "cta": 3.901
   },
   "sfx": [
     "hit",
@@ -44,11 +44,11 @@
     "sfx-swell": -17.9,
     "sfx-tick": -27.8,
     "sfx-whoosh": -15.7,
-    "vo-cta": -24.3,
-    "vo-defend": -23.4,
+    "vo-cta": -24.6,
+    "vo-defend": -22.9,
     "vo-hook": -21.5,
-    "vo-improve": -22.7,
-    "vo-meet": -23.3,
-    "vo-upload": -23.1
+    "vo-improve": -23.8,
+    "vo-meet": -24.1,
+    "vo-upload": -23.2
   }
 }
