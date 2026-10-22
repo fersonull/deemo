@@ -13,7 +13,7 @@ Audience: students of any course preparing a research defense (18+), usually alo
 
 THESIS: A real defense panel holds note slips of questions; DEEMO writes them from your manuscript, deals them to the right panelists, reads them aloud and scores the answers. The slips are the page's only traveling material. Refuses the SaaS landing (hero mockup + feature cards + logo strip) and any flashcard look.
 
-OWN-WORLD: The app's paper world: #F7F3EC paper ground, ink #2A2420, dusk #5A66C7 as the slips' ruled margin and the drenched live-panel beat (duskInk #343996 ground), sand #EDE5D8 for the report, amber #EBB353 only on the contradiction slip. Slips: off-white ruled notepaper, dusk margin rule, asker and stage written on them. Bricolage Grotesque display, DM Sans body, DM Mono only for timers, weights and the formula. Deemo and the panel faces as the only characters.
+OWN-WORLD: The app's paper world: #F7F3EC paper ground, ink #2A2420, dusk #5A66C7 as the slips' ruled margin and the drenched live-panel beat (duskInk #343996 ground), sand #EDE5D8 for the report, amber #EBB353 only on the contradiction slip. Gold (#D9A521 / #F6DC86 / #8C6310) is a separate token, reserved for Premium (PRODUCT.md: "Gold is only the Premium badge"), so it appears only on the Premium plan card, mirroring the app's Premium card. Slips: off-white ruled notepaper, dusk margin rule, asker and stage written on them. Bricolage Grotesque display, DM Sans body, DM Mono only for timers, weights and the formula. Deemo and the panel faces as the only characters.
 
 STORY: The visitor sees the panel already has questions about a real paper, flicks through them, follows a slip from manuscript to panelist to spoken question to contradiction to score, sees the honest limits, and downloads.
 
