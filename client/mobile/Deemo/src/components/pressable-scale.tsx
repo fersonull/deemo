@@ -49,9 +49,9 @@ function Pressed({ style, lit = false, busy, accessibilityState, onPressIn, onPr
   // the light goes out, so it reads as pressed in without moving.
   const surface: ViewStyle = lit && !inactive && !(down && !blocked)
     ? { boxShadow: dark
-        // Dark faces take a faint light: the dark theme's own on its cards, a little more on ink in the light theme.
-        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: nightTheme ? colors.highlight : "rgba(255,255,255,0.16)" },
-          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: nightTheme ? colors.glow : "rgba(255,255,255,0.08)" }]
+        // Dark faces take a soft light (a touch stronger on light paper, where ink needs more to read as lit).
+        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: nightTheme ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.22)" },
+          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: nightTheme ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.1)" }]
         // Light faces catch the light theme's full highlight, in either theme.
         : [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: light.highlight },
           { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: light.glow }] }

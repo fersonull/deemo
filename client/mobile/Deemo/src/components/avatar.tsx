@@ -10,7 +10,8 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Circle, ClipPath, Defs, G, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 
-import { colors, fonts } from "@/theme";
+// Faces and the medal are art: they keep the light palette in both themes.
+import { fonts, light as colors } from "@/theme";
 import { avatarUrl } from "@/utils/avatar";
 import { initials } from "@/utils/initials";
 

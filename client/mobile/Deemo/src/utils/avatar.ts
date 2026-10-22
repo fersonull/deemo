@@ -1,4 +1,5 @@
-import { colors } from "@/colors";
+// The faces keep their real look in both themes: always the light palette (a dark one would draw them in night ink).
+import { light as colors } from "@/colors";
 
 // Avatars from DiceBear's HTTP API (dicebear.com, 10.x): the "notionists" style, hand-drawn like the app, inked in dusk
 // on paper over the dusk tints. CC0, so no attribution. The seed is the student's pick, saved on their account

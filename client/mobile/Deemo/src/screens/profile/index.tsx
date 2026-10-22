@@ -160,11 +160,15 @@ export function Profile() {
           <View style={styles.planHead}>
             <Text style={[styles.planName, styles.flex]}>Free plan</Text>
             <PressableScale
+              lit
               accessibilityRole="button"
+              accessibilityLabel="Try Premium"
+              hitSlop={7}
               onPress={() => setSheet("upsell")}
               style={styles.upgrade}
             >
-              <Text style={styles.upgradeText}>Upgrade</Text>
+              <Icon name="workspace_premium" size={16} color={colors.gold} filled />
+              <Text style={styles.upgradeText}>Try Premium</Text>
             </PressableScale>
           </View>
           <Text style={styles.planDesc}>{FREE_PLAN}</Text>
@@ -593,13 +597,19 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     paddingHorizontal: 14,
     backgroundColor: colors.fill,
+    // the Premium card's look in small: gold on the solid surface, with a gold rim
+    borderWidth: 1,
+    borderColor: colors.goldInk,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     justifyContent: "center",
   },
   upgradeText: {
     fontFamily: fonts.body,
     fontWeight: "600",
     fontSize: 13,
-    color: colors.onFill,
+    color: colors.goldLight,
   },
   planDesc: {
     ...type.body,

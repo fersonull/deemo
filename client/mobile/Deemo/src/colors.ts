@@ -130,8 +130,8 @@ export const dark: Palette = {
   clay: "#E08B68",
   clayTint: "#3F241A",
 
-  highlight: "rgba(255,255,255,0.07)",
-  glow: "rgba(255,255,255,0.03)",
+  highlight: "rgba(255,255,255,0.1)",
+  glow: "rgba(255,255,255,0.05)",
 };
 
 // The palette in use. It's filled before any screen builds its styles (utils/theme-choice.ts runs first, from the
