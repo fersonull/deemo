@@ -4,7 +4,8 @@ import { bodyOf, validate } from "../../../shared/validate";
 import { listProjects } from "../../groups/application/access";
 import { listSessions } from "../../scoring/application/sessions";
 import { deleteAccount, updateAccount } from "../application/accounts";
-import { toMe } from "../domain/account";
+import { dailyUsage } from "../../admin/domain/daily";
+import { toMe, type Account } from "../domain/account";
 import { accountOf } from "./gates";
 import { visibleTo } from "../../notices/domain/notice";
 import { prisma } from "../../../shared/prisma";
@@ -12,14 +13,18 @@ import { MeUpdate } from "./schemas";
 
 export const identityRouter = Router();
 
+// The account plus today's practice count against the plan's daily cap (dailyCap null = unlimited), so the app can
+// show a Free student how many sessions they have left.
+const meWithUsage = (a: Account) => ({ ...toMe(a), ...dailyUsage(a) });
+
 identityRouter.get("/me", (req, res) => {
-  res.json(toMe(accountOf(req)));
+  res.json(meWithUsage(accountOf(req)));
 });
 
 // Consent (with the version agreed to), the simulated upgrade, settings, the avatar and the name (also written to
 // Firebase, so both sides stay in sync).
 identityRouter.patch("/me", validate({ body: MeUpdate }), async (req, res) => {
-  res.json(toMe(await updateAccount(accountOf(req), bodyOf(req, MeUpdate))));
+  res.json(meWithUsage(await updateAccount(accountOf(req), bodyOf(req, MeUpdate))));
 });
 
 // Download my data (plan §17 user rights): everything kept about the student, as one JSON file. Projects include the

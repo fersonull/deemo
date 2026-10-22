@@ -4,6 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
+- [x] **Free sessions left (2026-10-22):** `/me` returns today's usage; Home and Setup show sessions left; at zero, Setup blocks starting and offers Premium.
 - [x] **Dark theme (2026-10-22, `feat/dark-theme`):** light and dark palettes, chosen in Profile with mini previews; applied at launch, switching reloads the app; character art and the PDF stay light. Needs a phone check before merging.
 - [x] **Interrupted sessions become reports (2026-10-22):** the session is saved on the phone after each answer and until the server confirms it; Home offers a report or discard after a crash, a dead phone or a failed upload. Full resume is still open.
 - [x] **Spacing system (2026-10-22):** `space` scale in `theme.ts`; margins and gaps normalised; consistent section, card, gutter and action spacing; negative margins removed.

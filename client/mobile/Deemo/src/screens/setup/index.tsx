@@ -11,6 +11,7 @@ import { DEFAULT_WEIGHTS, DIFFICULTY_LABELS, MODE_LABELS, isComputing, profileCo
 import { practiceSetup, usePracticeSetup } from "@/hooks/use-practice-setup";
 import { projects, useProjects } from "@/hooks/use-projects";
 import { session, useSession } from "@/hooks/use-session";
+import { SessionsLeft, useCanStart } from "@/components/sessions-left";
 import { colors, lit, radius, type } from "@/theme";
 import { PressableScale } from "@/components/pressable-scale";
 
@@ -32,6 +33,7 @@ export function Setup() {
   const { premium, course, accountLoaded } = useSession();
   const [sheet, setSheet] = useState<"domain" | "upsell" | null>(null);
   const upsell = () => setSheet("upsell");
+  const canStart = useCanStart();
   const list = useProjects();
   const manuscript = list.projects.find((p) => p.id === setup.projectId);
   const field = profileCourse(manuscript, course); // the manuscript's field, else the student's course
@@ -39,6 +41,7 @@ export function Setup() {
   useFocusEffect(
     useCallback(() => {
       void projects.refresh();
+      void session.refresh(); // a current sessions-left count before starting
       practiceSetup.set({ weakFrom: null }); // setting up by hand is a normal round
     }, []),
   );
@@ -188,12 +191,14 @@ export function Setup() {
         {manuscript?.group ? <FocusArea key={manuscript.id} project={manuscript} /> : null}
         <View style={styles.cta}>
           <Button
-            label="Continue to mic check"
+            label={canStart ? "Continue to mic check" : "No sessions left today"}
+            disabled={!canStart}
             onPress={() => {
               if (!isComputing(field)) practiceSetup.set({ domain: "General" }); // no IT field outside computing courses
               router.push("/mic-check");
             }}
           />
+          <SessionsLeft onUpgrade={upsell} style={styles.left} />
         </View>
 
         <DomainSheet
@@ -253,4 +258,5 @@ const styles = StyleSheet.create({
   desc: { ...type.body, fontSize: 12.5, lineHeight: 17.5, opacity: 0.75, marginTop: 2 },
   section: { marginTop: 24, marginBottom: 8 },
   cta: { marginTop: 24 },
+  left: { marginTop: 8 },
 });

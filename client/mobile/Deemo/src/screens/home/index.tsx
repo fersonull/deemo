@@ -22,7 +22,8 @@ import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
 import { refreshEverything } from "@/hooks/refresh-everything";
 import { projects, useProjects } from "@/hooks/use-projects";
-import { useSession } from "@/hooks/use-session";
+import { session, useSession } from "@/hooks/use-session";
+import { SessionsLeft } from "@/components/sessions-left";
 import { sessions, useSessions } from "@/hooks/use-sessions";
 import { colors, fonts, type } from "@/theme";
 import { homeBrief } from "@/utils/home-brief";
@@ -85,7 +86,8 @@ export function Home() {
 
   useFocusEffect(
     useCallback(() => {
-      // The account (/me) is re-read when the app comes back to the foreground (app/_layout.tsx), not on every visit.
+      // The account (/me) is re-read here too, so the Free sessions-left count is current after a practice.
+      void session.refresh();
       void sessions.refresh();
       void projects.refresh();
     }, []),
@@ -147,6 +149,7 @@ export function Home() {
             onPress={() => router.push(practiced ? "/practice" : "/projects")}
             style={styles.start}
           />
+          <SessionsLeft style={styles.left} />
           {!practiced ? (
             <PressableScale
               accessibilityRole="button"
@@ -290,6 +293,7 @@ const styles = StyleSheet.create({
   head: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
   bones: { gap: 8 },
   start: { marginTop: 8 },
+  left: { marginTop: 8 },
   sample: {
     height: 44,
     alignItems: "center",

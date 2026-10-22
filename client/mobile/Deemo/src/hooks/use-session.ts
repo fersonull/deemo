@@ -43,12 +43,14 @@ const store = createStore({
   consentAt: null as string | null, // accepted on this device before sign-in; then recorded on the account
   accountLoaded: false, // the server's account record has arrived (false offline): only then can missing consent be told apart
   premium: false, // simulated freemium (addendum Q1)
+  usedToday: 0, // practice sessions started today (Philippine day), from the server's count
+  dailyCap: null as number | null, // the plan's daily limit; null = unlimited (Premium) or not known yet
 });
 
 // The consent text's version, recorded on the account. 2026-10.3: Google's AI only (the OpenAI backup was removed).
 export const CONSENT_VERSION = "2026-10.3";
 
-type Me = { name: string | null; premium: boolean; allowTyping: boolean; course: Course | null; avatar: string; consentAt?: string };
+type Me = { name: string | null; premium: boolean; allowTyping: boolean; course: Course | null; avatar: string; consentAt?: string; usedToday?: number; dailyCap?: number | null };
 
 const fromMe = (me: Me) => ({
   accountLoaded: true,
@@ -58,6 +60,8 @@ const fromMe = (me: Me) => ({
   course: me.course,
   avatar: me.avatar,
   consentAt: me.consentAt ?? store.get().consentAt,
+  usedToday: me.usedToday ?? 0,
+  dailyCap: me.dailyCap ?? null, // an older server sends neither: the count just doesn't show
 });
 
 const patchMe = (body: object) =>
@@ -113,7 +117,7 @@ onAuthStateChanged(getAuth(), async (user) => {
     verified: !!user?.emailVerified,
     email: user?.email ?? null,
     name: user?.displayName ?? null,
-    ...((changed || !user) && { premium: false, allowTyping: true, course: null, savingCourse: false, savingTyping: false, verifySentAt: 0, avatar: null, accountLoaded: false }),
+    ...((changed || !user) && { premium: false, usedToday: 0, dailyCap: null, allowTyping: true, course: null, savingCourse: false, savingTyping: false, verifySentAt: 0, avatar: null, accountLoaded: false }),
   });
   if (user?.emailVerified) await loadAccount();
 });
