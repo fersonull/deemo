@@ -16,6 +16,7 @@ import { StartButton } from "@/components/start-button";
 import { tabBarSpace } from "@/components/tab-bar";
 import { Score } from "@/components/score";
 import { Offline } from "@/components/offline";
+import { InterruptedSession } from "@/components/interrupted-session";
 import { MODE_LABELS, type Mode } from "@/constants";
 import { usePracticeSetup } from "@/hooks/use-practice-setup";
 import { usePullRefresh } from "@/hooks/use-pull-refresh";
@@ -271,6 +272,7 @@ export function Home() {
           ) : null}
         </View>
       </ScrollView>
+      <InterruptedSession />
     </SafeAreaView>
   );
 }

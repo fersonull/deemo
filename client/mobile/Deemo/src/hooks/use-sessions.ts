@@ -3,6 +3,7 @@ import { practiceSetup } from "@/hooks/use-practice-setup";
 import type { LiveState } from "@/live/types";
 import { api } from "@/utils/api";
 import { freshFor } from "@/utils/fresh";
+import { sessionBackup } from "@/utils/session-backup";
 import { createStore } from "@/utils/store";
 
 // Mirrors server/src/modules/scoring/domain/session.ts. Reports are scored on the server; the app submits and reads them.
@@ -70,7 +71,7 @@ type Submit =
   | { state: "idle" }
   | { state: "saving" }
   | { state: "saved"; id: string }
-  | { state: "failed"; error: string; payload: object };
+  | { state: "failed"; error: string; payload: SessionPayload };
 
 const store = createStore({ list: [] as SessionSummary[], loaded: false, error: false, submit: { state: "idle" } as Submit });
 
@@ -114,6 +115,8 @@ function fromLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: nu
   };
 }
 
+export type SessionPayload = ReturnType<typeof fromLive>;
+
 // Opening a screen reuses a list loaded in the last minute, unless a session is still being scored.
 const fresh = freshFor(60_000);
 
@@ -123,11 +126,14 @@ export const sessions = {
     store.set({ list: [], loaded: false, error: false, submit: { state: "idle" } });
   },
 
-  // Fire and forget from the session screen; the scoring screen follows store.submit.
-  async submit(payload: object) {
+  // Fire and forget from the session screen; the scoring screen follows store.submit. The payload stays on the phone
+  // until the server has it, so a crash or a failed upload can still become a report later (Home offers it).
+  async submit(payload: SessionPayload) {
     store.set({ submit: { state: "saving" } });
+    sessionBackup.save(payload);
     try {
       const saved = await api<Session>("/sessions", post(payload));
+      sessionBackup.clear();
       fresh.invalidate(); // a new session for History and Home
       store.set({ submit: { state: "saved", id: saved.id } });
     } catch (e) {
@@ -137,6 +143,12 @@ export const sessions = {
 
   submitLive(s: LiveState, endedBy: "panel" | "student" | "time", seats: number[]) {
     void this.submit(fromLive(s, endedBy, seats));
+  },
+
+  // Mid-session snapshot (after each answer, and when the app leaves the foreground). If the session never reaches
+  // the end, it's recovered as one the student ended early.
+  backupLive(s: LiveState, seats: number[]) {
+    sessionBackup.save(fromLive(s, "student", seats));
   },
 
   retrySubmit() {

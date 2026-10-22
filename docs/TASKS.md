@@ -4,6 +4,7 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 
 ## Blocker
 
+- [x] **Interrupted sessions become reports (2026-10-22):** the session is saved on the phone after each answer and until the server confirms it; Home offers a report or discard after a crash, a dead phone or a failed upload. Full resume is still open.
 - [x] **Spacing system (2026-10-22):** `space` scale in `theme.ts`; margins and gaps normalised; consistent section, card, gutter and action spacing; negative margins removed.
 - [x] **Layered style removed (2026-10-22):** controls use the same inside-only light as cards (`lit`); no lower layers or outer shadows; pressing turns the light off.
 - [x] **Lit flat surfaces (2026-10-22):** a shared `lit` style (inset top highlight and glow, no outer shadow) on flat content cards across the app.

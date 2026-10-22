@@ -21,6 +21,7 @@ import {
 
 import type { Course } from "@/constants";
 import { forgetPushToken } from "@/hooks/use-push-notices";
+import { sessionBackup } from "@/utils/session-backup";
 import { api } from "@/utils/api";
 import { cleanName } from "@/utils/auth-form";
 import { optimisticValue } from "@/utils/optimistic-value";
@@ -164,6 +165,7 @@ export const session = {
   async deleteEverything() {
     await api<unknown>("/me", { method: "DELETE" });
     store.set({ consentAt: null });
+    sessionBackup.clear(); // an interrupted session belongs to the deleted account
     await this.signOut().catch(() => {}); // the account is already gone server-side
   },
 

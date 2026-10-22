@@ -1,8 +1,8 @@
 import { PressableScale } from "@/components/pressable-scale";
 import { useKeepAwake } from "expo-keep-awake";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { BackHandler, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { AppState, BackHandler, KeyboardAvoidingView, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn, FadeOut, LinearTransition } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -65,6 +65,23 @@ export function Session() {
     sessions.submitLive(s, endedBy, seats); // scored on the server; the scoring screen waits for it
     router.replace({ pathname: "/scoring", params: { ms: String(s.sessionMs), answered: String(answered) } });
   };
+
+  // Keep what's been answered on the phone after every answer and whenever the app leaves the foreground, so a
+  // killed app or a dead battery still ends in a report: Home offers it on the next launch (utils/session-backup.ts).
+  const latest = useRef(s);
+  useEffect(() => {
+    latest.current = s;
+  });
+  useEffect(() => {
+    if (answered > 0) sessions.backupLive(s, seats);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot once per completed answer
+  }, [answered]);
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (state) => {
+      if (state !== "active" && latest.current.turns.length > 0) sessions.backupLive(latest.current, seats);
+    });
+    return () => sub.remove();
+  }, [seats]);
 
   useEffect(() => {
     if (s.phase === "ended") leave(s.endedBy);
