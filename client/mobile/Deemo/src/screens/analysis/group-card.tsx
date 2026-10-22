@@ -86,11 +86,11 @@ export function GroupCard({ project, onLeft }: { project: Project; onLeft: () =>
           </Text>
           <View style={[styles.row, styles.share]}>
             <View style={styles.flex}>
-              <Text style={type.bodyStrong}>Share my latest score</Text>
+              <Text style={type.bodyStrong}>Share my average score</Text>
               <Text style={styles.note}>Transcripts and reports stay private.</Text>
             </View>
             <Switch
-              accessibilityLabel="Share my latest score with group"
+              accessibilityLabel="Share my average score with group"
               value={group.shareScore}
               disabled={busy || savingMembers.includes(project.id)}
               onValueChange={(shareScore) => void run(() => projects.updateMember(project, { shareScore }))}

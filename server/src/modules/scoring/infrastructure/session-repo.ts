@@ -194,12 +194,19 @@ export const sessionRepo = {
   },
 };
 
-// A group member's latest scored session on that group's project (Home's Group readiness card).
-export async function latestSharedScore(uid: string, code: string) {
-  const s = await prisma.session.findFirst({
-    where: { userId: uid, groupCode: code, status: "ready", report: { scored: true } },
-    orderBy: { createdAt: "desc" },
-    select: { createdAt: true, mode: true, report: { select: { score: true } } },
-  });
-  return s?.report ? { score: s.report.score, mode: s.mode as string, createdAt: s.createdAt.toISOString() } : null;
+// A group member's average readiness over all their scored sessions on that group's project, how many sessions it
+// covers, and when they last practiced it (Home's Group readiness card). One good or bad round doesn't swing it.
+export async function averageSharedScore(uid: string, code: string) {
+  const where = { scored: true, session: { userId: uid, groupCode: code, status: "ready" as const } };
+  const [agg, last] = await Promise.all([
+    prisma.report.aggregate({ where, _avg: { score: true }, _count: true }),
+    prisma.session.findFirst({
+      where: { userId: uid, groupCode: code, status: "ready", report: { scored: true } },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    }),
+  ]);
+  const avg = agg._avg?.score;
+  if (!agg._count || avg == null || !last) return null;
+  return { score: Math.round(avg), sessions: agg._count, createdAt: last.createdAt.toISOString() };
 }

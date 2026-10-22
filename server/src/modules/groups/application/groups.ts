@@ -3,7 +3,7 @@ import { isDuplicate, prisma, withSerializable } from "../../../shared/prisma";
 import { defaultAvatar, type Account } from "../../identity/domain/account";
 import { MANUSCRIPT_LIMIT_MESSAGE, planOf } from "../../identity/domain/plan";
 import { projectRepo } from "../../manuscripts/infrastructure/project-repo";
-import { latestSharedScore } from "../../scoring/infrastructure/session-repo";
+import { averageSharedScore } from "../../scoring/infrastructure/session-repo";
 import { CODE, MAX_MEMBERS, ONE_GROUP_MESSAGE, PROJECT_ID, newCode, sharedId } from "../domain/group";
 import { groupRepo } from "../infrastructure/group-repo";
 import { accessibleProject } from "./access";
@@ -71,7 +71,7 @@ export async function leaveGroup(uid: string, code: string) {
   });
 }
 
-// Home's Group readiness card: each member's face, name and plan, and their latest shared score.
+// Home's Group readiness card: each member's face, name and plan, and their average shared score.
 export async function groupReadiness(uid: string) {
   const memberships = await groupRepo.membershipsOf(uid);
   return Promise.all(
@@ -93,8 +93,8 @@ export async function groupReadiness(uid: string) {
             sharing: m.shareScore,
           };
           if (!m.shareScore) return base;
-          const latest = await latestSharedScore(m.userId, group.code);
-          return { ...base, ...(latest && { score: latest.score, mode: latest.mode, createdAt: latest.createdAt }) };
+          const avg = await averageSharedScore(m.userId, group.code);
+          return { ...base, ...(avg && { score: avg.score, sessions: avg.sessions, createdAt: avg.createdAt }) };
         }),
       );
       return {

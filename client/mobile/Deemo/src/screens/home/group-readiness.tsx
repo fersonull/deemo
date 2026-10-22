@@ -5,7 +5,6 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Avatar } from "@/components/avatar";
 import { Icon } from "@/components/icon";
 import { Score } from "@/components/score";
-import { MODE_LABELS, type Mode } from "@/constants";
 import { useProjects, type GroupReadiness as Group } from "@/hooks/use-projects";
 import { colors, fonts, lit, radius, type } from "@/theme";
 import { bandOf } from "@/utils/bands";
@@ -14,15 +13,16 @@ type Member = Group["members"][number];
 
 const firstName = (m: Member) => (m.isYou ? "You" : m.name.trim().split(/\s+/)[0] || "Member");
 
-// What a screen reader hears for one member: who, then their latest score, or why there isn't one.
+// What a screen reader hears for one member: who, then their average score, or why there isn't one.
 function describe(m: Member) {
   const who = `${m.name}${m.isYou ? " (you)" : ""}${m.premium ? ", Premium" : ""}`;
   if (m.score === undefined) return `${who}, ${m.sharing ? "no score yet" : "keeps scores private"}`;
   const when = new Date(m.createdAt!).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return `${who}, ${m.score} percent readiness, ${bandOf(m.score).name}, ${MODE_LABELS[m.mode as Mode] ?? m.mode}, ${when}`;
+  const over = m.sessions ? ` over ${m.sessions} ${m.sessions === 1 ? "session" : "sessions"}` : "";
+  return `${who}, average ${m.score} percent readiness${over}, ${bandOf(m.score).name}, last practiced ${when}`;
 }
 
-// Group readiness on Home, compact: one face per member with their latest scored practice under it. More members
+// Group readiness on Home, compact: one face per member with the average of their scored practice under it. More members
 // than fit scroll sideways. The card sits on warm sand like the rest of Home; the dusk tints belong to the faces, so
 // they carry the color, and a "Nearly ready" (dusk) score still reads as a band. Secondary text is inkMuted, since
 // muted falls under 4.5:1 on sand.
@@ -70,7 +70,7 @@ export function GroupReadiness() {
             ))}
           </ScrollView>
 
-          <Text style={styles.note}>Latest scored practice each; settings may differ.</Text>
+          <Text style={styles.note}>{"Average of each member's scored practice; settings may differ."}</Text>
         </View>
       ))}
     </>

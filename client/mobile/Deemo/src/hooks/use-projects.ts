@@ -55,7 +55,7 @@ export type GroupReadiness = {
   code: string;
   projectId: string;
   title: string;
-  members: { name: string; avatar: string; premium: boolean; isYou: boolean; sharing: boolean; score?: number; mode?: string; createdAt?: string }[];
+  members: { name: string; avatar: string; premium: boolean; isYou: boolean; sharing: boolean; score?: number; sessions?: number; createdAt?: string }[]; // score: average over their scored sessions on the project
 };
 const store = createStore({ projects: [] as Project[], groups: [] as GroupReadiness[], loaded: false, error: false, savingMembers: [] as string[] });
 let generation = 0;
@@ -191,7 +191,7 @@ export const projects = {
             members: g.members.map((m) => !m.isYou ? m : {
               ...m, sharing: group.shareScore,
               score: group.shareScore ? previousMember?.score : undefined,
-              mode: group.shareScore ? previousMember?.mode : undefined,
+              sessions: group.shareScore ? previousMember?.sessions : undefined,
               createdAt: group.shareScore ? previousMember?.createdAt : undefined,
             }),
           }),

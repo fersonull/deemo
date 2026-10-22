@@ -340,9 +340,9 @@ export function Results({ id, fromSession }: { id: string; fromSession: boolean 
         <Text style={type.title}>Share with group</Text>
         <Text style={styles.sheetNote}>Your group sees only your score, not your transcript or feedback.</Text>
         <View style={styles.shareRow}>
-          <Text style={styles.shareText}>Show my latest score on the Group readiness card</Text>
+          <Text style={styles.shareText}>Show my average score on the Group readiness card</Text>
           <Switch
-            accessibilityLabel="Show my latest score on the Group readiness card"
+            accessibilityLabel="Show my average score on the Group readiness card"
             value={!!group?.group?.shareScore}
             disabled={sharing || !group || savingMembers.includes(group.id)}
             onValueChange={toggleShare}
