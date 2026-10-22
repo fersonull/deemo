@@ -206,3 +206,26 @@ test("a contradiction challenge replaces the card even at the follow-up limit, a
   expect(s.question?.challenge).toBe(true);
   expect(s.followUps.t1).toBe(FOLLOW_UP_LIMIT); // unchanged
 });
+
+test("a question spoken without ask_question replaces the card's old question, and follows the speech", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }, { type: "panelDone" }]);
+  s = run([{ type: "youText", text: "Because it is free." }, { type: "youDone" }], s); // thinking
+  s = liveReducer(s, { type: "panelText", text: "Okay." });
+  expect(s.question?.text).toBe("Why Firebase?"); // a reaction alone leaves the card
+  s = liveReducer(s, { type: "panelText", text: "How will you secure the student records?" }); // no tool call
+  expect(s.question?.text).toBe("Okay. How will you secure the student records?");
+  // a tool call that follows still puts the proper question on the card
+  const next: AskQuestion = { ...main, topicId: "security", text: "How will you secure the student records?" };
+  s = liveReducer(s, { type: "ask", question: next });
+  expect(s.question?.text).toBe("How will you secure the student records?");
+  expect(s.question?.topicId).toBe("security");
+});
+
+test("at the follow-up limit, a spoken question still replaces the stale card", () => {
+  let s = run([{ type: "connected" }, { type: "ask", question: main }], { ...initialLiveState, followUpLimit: 1 });
+  s = liveReducer(s, { type: "ask", question: follow });
+  s = { ...liveReducer(s, { type: "panelDone" }), phase: "thinking" };
+  s = liveReducer(s, { type: "panelText", text: "Then which database do you use?" });
+  expect(s.question?.text).toBe("Then which database do you use?");
+  expect(s.question?.followUp).toBe(1); // still not past the limit
+});

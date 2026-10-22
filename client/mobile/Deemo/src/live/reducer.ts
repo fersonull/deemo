@@ -31,6 +31,14 @@ export function canAsk(state: LiveState, q: AskQuestion): boolean {
   );
 }
 
+// The card shows what the panel actually asked when it asks without ask_question (or after a refused call): the
+// spoken line once it holds a question, so the old question never stays on screen under a new one. A reaction alone
+// ("Thank you.") leaves the card as it is. A tool call that follows replaces it with the proper question (unasked).
+function heard(q: NonNullable<LiveState["question"]>, partial: LiveState["partial"]) {
+  const text = partial && partial.who !== "you" ? partial.text.trim() : "";
+  return text.includes("?") ? { ...q, text } : q;
+}
+
 function finish(s: LiveState): Line[] {
   return s.partial && s.partial.text.trim() ? [...s.lines, { ...s.partial, text: s.partial.text.trim() }] : s.lines;
 }
@@ -81,7 +89,11 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
     case "panelText": {
       // Whoever holds the floor: the asker, or the panelist who just took over or is closing.
       const who = s.takeover || s.phase === "ending" ? s.seat : (s.question?.panelist ?? s.seat);
-      if (s.phase !== "thinking") return { ...s, ...append(s, who, e.text) };
+      if (s.phase !== "thinking") {
+        const next = { ...s, ...append(s, who, e.text) };
+        // Still a question heard without its tool call: the card keeps up with what's being said.
+        return s.unasked && s.question ? { ...next, question: heard(s.question, next.partial) } : next;
+      }
       // A new panelist introducing themselves before their first ask_question: theirs, not a follow-up.
       if (s.takeover) return { ...s, ...append(s, who, e.text), phase: "speaking" };
       // The panel spoke without ask_question (a rephrase or challenge, seen after reconnects).
@@ -91,14 +103,15 @@ export function liveReducer(s: LiveState, e: LiveEvent): LiveState {
       // At the limit already, it can't be a follow-up (a handover line, a closing remark): keep the question as it is.
       // It's still marked unasked, so a tool call that follows can relabel it.
       const prev = s.followUps[q.topicId] ?? 0;
+      const spoken = append(s, who, e.text);
       if (prev >= s.followUpLimit)
-        return { ...s, ...append(s, who, e.text), phase: "speaking", unasked: { question: s.question, followUps: s.followUps } };
+        return { ...s, ...spoken, phase: "speaking", question: heard(q, spoken.partial), unasked: { question: s.question, followUps: s.followUps } };
       const followUp = prev + 1;
       return {
         ...s,
-        ...append(s, who, e.text),
+        ...spoken,
         phase: "speaking",
-        question: { ...q, isFollowUp: true, followUp },
+        question: heard({ ...q, isFollowUp: true, followUp }, spoken.partial),
         followUps: { ...s.followUps, [q.topicId]: followUp },
         unasked: { question: s.question, followUps: s.followUps },
       };
