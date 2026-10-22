@@ -9,7 +9,7 @@ services:
     region: singapore
     rootDir: server
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /health
+    healthCheckPath: /api/health
     autoDeploy: true
     branch: dev
     envVars:
