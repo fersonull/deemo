@@ -41,7 +41,7 @@ export function textBlock(lines, cx, cy, { size = 13, weight = 400, fill = "#111
 export function labelOf(text, max = 22) {
   if (!text) return [];
   const lines = wrap(text, max);
-  const width = Math.max(...lines.map((l) => textWidth(l, 12))) + 10;
+  const width = Math.max(...lines.map((l) => textWidth(l, 12))) * 1.08 + 10;
   return [{ text, lines, width, height: lines.length * 16 + 4 }];
 }
 
@@ -142,13 +142,13 @@ export function placeLabelsOnLines(graph) {
 }
 
 // Edge labels: white chip behind the text so lines never run through it.
-export function drawLabels(edge, { size = 12, fill = "#1f2937" } = {}) {
+export function drawLabels(edge, { size = 12, fill = "#1f2937", weight = 400 } = {}) {
   return (edge.labels ?? [])
     .map((l) => {
       const lines = l.lines ?? [l.text];
       return (
         `<rect x="${l.x - 2}" y="${l.y}" width="${l.width + 4}" height="${l.height}" fill="#ffffff"/>` +
-        textBlock(lines, l.x + l.width / 2, l.y + l.height / 2, { size, fill, lh: 1.3 })
+        textBlock(lines, l.x + l.width / 2, l.y + l.height / 2, { size, fill, lh: 1.3, weight })
       );
     })
     .join("");

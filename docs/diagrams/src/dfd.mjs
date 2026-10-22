@@ -116,7 +116,7 @@ g.children
 placeLabelsOnLines(g);
 
 const info = Object.fromEntries([...processes.map(([id, n, name]) => [id, { n, name }]), ...entities.map(([id, name]) => [id, { name }]), ...stores.map(([id, n, name]) => [id, { n, name }])]);
-const stroke = "#1f2937";
+const stroke = "#0b1220";
 
 function drawNode(n) {
   const { x, y, width: w, height: h } = n;
@@ -125,25 +125,25 @@ function drawNode(n) {
   if (k === "process") {
     const fill = procColors[Number(d.n[0]) - 1];
     return (
-      `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${fill}" stroke="${stroke}" stroke-width="1.3"/>` +
-      `<line x1="${x}" y1="${y + P.head}" x2="${x + w}" y2="${y + P.head}" stroke="${stroke}" stroke-width="1.3"/>` +
-      textBlock([d.n], x + w / 2, y + P.head / 2, { size: 14, weight: 600 }) +
-      textBlock(wrap(d.name, 20), x + w / 2, y + P.head + (h - P.head) / 2, { size: 15, weight: 500 })
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${fill}" stroke="${stroke}" stroke-width="2"/>` +
+      `<line x1="${x}" y1="${y + P.head}" x2="${x + w}" y2="${y + P.head}" stroke="${stroke}" stroke-width="2"/>` +
+      textBlock([d.n], x + w / 2, y + P.head / 2, { size: 14, weight: 800 }) +
+      textBlock(wrap(d.name, 20), x + w / 2, y + P.head + (h - P.head) / 2, { size: 15, weight: 700 })
     );
   }
   if (k === "entity") {
     return (
-      `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#D1D5DB" stroke="#4B5563" stroke-width="1.3"/>` +
-      textBlock(wrap(d.name, 18), x + w / 2, y + h / 2, { size: 15, weight: 500 })
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#D1D5DB" stroke="#4B5563" stroke-width="2"/>` +
+      textBlock(wrap(d.name, 18), x + w / 2, y + h / 2, { size: 15, weight: 700 })
     );
   }
   // Data store: open on the right, with the ID in its own cell.
   return (
     `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#E5E7EB"/>` +
-    `<path d="M${x + w},${y} H${x} V${y + h} H${x + w}" fill="none" stroke="#4B5563" stroke-width="1.3"/>` +
-    `<line x1="${x + S.id}" y1="${y}" x2="${x + S.id}" y2="${y + h}" stroke="#4B5563" stroke-width="1.3"/>` +
-    textBlock([d.n], x + S.id / 2, y + h / 2, { size: 14, weight: 600 }) +
-    textBlock([d.name], x + S.id + (w - S.id) / 2, y + h / 2, { size: 15, weight: 500 })
+    `<path d="M${x + w},${y} H${x} V${y + h} H${x + w}" fill="none" stroke="#4B5563" stroke-width="2"/>` +
+    `<line x1="${x + S.id}" y1="${y}" x2="${x + S.id}" y2="${y + h}" stroke="#4B5563" stroke-width="2"/>` +
+    textBlock([d.n], x + S.id / 2, y + h / 2, { size: 14, weight: 800 }) +
+    textBlock([d.name], x + S.id + (w - S.id) / 2, y + h / 2, { size: 15, weight: 700 })
   );
 }
 
@@ -153,10 +153,10 @@ const defs = `
 
 const body =
   g.edges
-    .map((e) => `<path d="${roundedPath(edgePoints(e), 10)}" fill="none" stroke="${stroke}" stroke-width="1.3" ${e.bi || !e.back ? 'marker-end="url(#arrow)"' : ""}${e.bi || e.back ? ' marker-start="url(#arrow)"' : ""}/>`)
+    .map((e) => `<path d="${roundedPath(edgePoints(e), 10)}" fill="none" stroke="${stroke}" stroke-width="2" ${e.bi || !e.back ? 'marker-end="url(#arrow)"' : ""}${e.bi || e.back ? ' marker-start="url(#arrow)"' : ""}/>`)
     .join("") +
   g.children.map(drawNode).join("") +
-  g.edges.map((e) => drawLabels(e)).join("");
+  g.edges.map((e) => drawLabels(e, { weight: 600, fill: "#0b1220" })).join("");
 
 const W = Math.ceil(g.width), H = Math.ceil(g.height);
 writeFileSync("dfd.html", htmlFor(svgDoc(W, H, defs, body), W, H));
