@@ -118,7 +118,7 @@ export async function mountStack(
     narrow ? { x: depth * 0.06, y: 0.75 - depth * 0.06, z: -depth * 0.16 } : { x: 0.75 + depth * 0.09, y: 0.4 - depth * 0.08, z: -depth * 0.16 };
   // In front of the stack: the follow-up on the back is the payoff.
   const pileSlot = (n: number) =>
-    narrow ? { x: -0.5 - n * 0.04, y: -1.5 + n * 0.03, z: 0.35 + n * 0.012 } : { x: -2.0 - n * 0.04, y: -1.35 + n * 0.03, z: 0.35 + n * 0.012 };
+    narrow ? { x: -0.5 - n * 0.04, y: -1.5 + n * 0.03, z: 0.35 + n * 0.012 } : { x: -1.7 - n * 0.04, y: -1.3 + n * 0.03, z: 0.35 + n * 0.012 };
 
   const place = (instant: boolean) => {
     stack.forEach((c, depth) => {
@@ -256,7 +256,10 @@ export async function mountStack(
     camera.aspect = width / height;
     const wasNarrow = narrow;
     narrow = width / height < 1.1;
-    camera.position.z = narrow ? 13.6 : 11.5;
+    // Pull back until the whole layout fits: the stack with its back sheets, and the answered pile beside it
+    // (world units, with a margin). A fixed distance cut the pile off on wide, short hosts.
+    const [needW, needH] = narrow ? [6.2, 5.8] : [8.0, 5.4];
+    camera.position.z = Math.max(needH, needW / camera.aspect) / (2 * Math.tan((camera.fov * Math.PI) / 360));
     camera.updateProjectionMatrix();
     if (narrow !== wasNarrow) {
       place(true);

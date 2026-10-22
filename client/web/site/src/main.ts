@@ -9,7 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 
 import { HERO_SLIPS, RELEASES_URL, RUBRIC, type Slip } from "./content";
-import { deemoSVG, type DeemoMood } from "./deemo";
+import { mountCompanion } from "./companion";
 import { liveScene } from "./scenes/live";
 import { autoHideNav } from "./nav";
 import { mountPanel } from "./scenes/panel";
@@ -21,13 +21,13 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = <T extends HTMLElement = HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
 
 // ── characters and constants ──
-document.querySelectorAll<HTMLElement>("[data-owl]").forEach((el) => (el.innerHTML = deemoSVG(el.dataset.owl as DeemoMood)));
 document.querySelectorAll<HTMLAnchorElement>("[data-download]").forEach((a) => (a.href = RELEASES_URL));
 $("[data-rubric]").innerHTML = RUBRIC.map(
   (r) => `<tr><th scope="row">${r.name}</th><td>${r.weight}</td><td>${r.level} of 5</td></tr>`,
 ).join("");
 
 autoHideNav($(".nav"));
+mountCompanion(reduced);
 
 // ── hero: the question slips ──
 const stackHost = $("[data-stack]");

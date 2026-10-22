@@ -36,7 +36,7 @@
 
   <main id="top">
     <!-- ── the panel already has questions ── -->
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero" aria-labelledby="hero-title" data-mood="reading">
       <div class="hero__in wrap">
         <div class="hero__copy">
           <h1 id="hero-title" class="hero__title">Your panel already has questions.</h1>
@@ -54,7 +54,7 @@
             <div class="stack__sheets"><article class="slip slip--big" data-dom-slip></article></div>
             <article class="slip slip--back" data-dom-pile hidden></article>
           </div>
-          <div class="stack__owl owl" data-owl="reading" aria-hidden="true"></div>
+          <div class="stack__owl" aria-hidden="true"></div>
           <div class="stack__controls">
             <p class="stack__hint">Drag the top question off the stack</p>
             <button class="stack__next" type="button" data-next>
@@ -67,7 +67,7 @@
     </section>
 
     <!-- ── it reads your paper first ── -->
-    <section class="reads" id="how" aria-labelledby="reads-title">
+    <section class="reads" id="how" aria-labelledby="reads-title" data-mood="reading" data-say="I read your whole paper before the first question.">
       <div class="reads__in wrap" data-reads>
         <div class="reads__copy">
           <h2 id="reads-title">It reads your paper first.</h2>
@@ -104,7 +104,7 @@
     </section>
 
     <!-- ── the panel, profiled by course ── -->
-    <section class="panel" aria-labelledby="panel-title">
+    <section class="panel" aria-labelledby="panel-title" data-mood="waving" data-say="Pick your course. The field expert changes with it.">
       <div class="wrap">
         <div class="panel__head">
           <h2 id="panel-title">Three panelists, each with a job.</h2>
@@ -117,7 +117,7 @@
     </section>
 
     <!-- ── out loud ── -->
-    <section class="live" aria-labelledby="live-title">
+    <section class="live" aria-labelledby="live-title" data-mood="encouraging" data-say="Take your time. Tap when you're done.">
       <div class="live__in wrap" data-live>
         <div class="live__copy">
           <h2 id="live-title">Out loud, with follow-ups.</h2>
@@ -154,7 +154,7 @@
     </section>
 
     <!-- ── the report ── -->
-    <section class="report" aria-labelledby="report-title">
+    <section class="report" aria-labelledby="report-title" data-mood="idle" data-say="Every point here is arithmetic you can check.">
       <div class="report__in wrap">
         <div class="report__copy">
           <h2 id="report-title">Then a score you can check.</h2>
@@ -184,7 +184,7 @@
     </section>
 
     <!-- ── plans ── -->
-    <section class="plans" id="plans" aria-labelledby="plans-title">
+    <section class="plans" id="plans" aria-labelledby="plans-title" data-mood="idle" data-say="Title and Pre-Oral practice are free.">
       <div class="wrap">
         <h2 id="plans-title">Free to start.</h2>
         <p class="plans__lead">Everything you need to rehearse is free. Premium seats the whole panel and opens the Final Defense. It is a demo for now: you switch it on in the app, and there is no payment.</p>
@@ -229,7 +229,7 @@
     </section>
 
     <!-- ── questions ── -->
-    <section class="faq" id="faq" aria-labelledby="faq-title">
+    <section class="faq" id="faq" aria-labelledby="faq-title" data-mood="reading">
       <div class="wrap faq__in">
         <h2 id="faq-title">Questions you might have.</h2>
         <div class="faq__list">
@@ -266,9 +266,9 @@
     </section>
 
     <!-- ── close ── -->
-    <section class="close" aria-labelledby="close-title">
+    <section class="close" aria-labelledby="close-title" data-mood="cheering">
       <div class="wrap close__in">
-        <div class="close__owl owl" data-owl="cheering" aria-hidden="true"></div>
+        <div class="close__owl" aria-hidden="true"></div>
         <h2 id="close-title">Walk in having heard the hard questions.</h2>
         <a class="btn btn--ink" data-download href="https://github.com/fersonull/deemo/releases">
           <span class="ms" aria-hidden="true">android</span>Download for Android
@@ -277,6 +277,11 @@
       </div>
     </section>
   </main>
+
+  <div class="companion" data-quiet aria-hidden="true">
+    <p class="deemo__say companion__say"></p>
+    <div class="deemo__owl companion__owl"></div>
+  </div>
 
   <footer class="foot">
     <div class="wrap foot__in">

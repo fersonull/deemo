@@ -11,6 +11,7 @@ bun run build    # typecheck + production build to dist/ (the landing page and /
 Vite + TypeScript, no framework. GSAP (ScrollTrigger, SplitText) for motion, three.js for the hero's slip stack.
 
 - `index.html`: all page content, readable without JavaScript. `privacy/index.html`: the privacy page, served at `/privacy` (a dev-server rewrite in `vite.config.ts`, `cleanUrls` in `vercel.json`).
+- `src/companion.ts`: Deemo as one companion for the whole page. It perches on the hero stack (`.stack__owl` is only a spot), glides to a corner dock as the hero leaves, changes mood and says a short line per section (each section's `data-mood` / `data-say`), and flies to the close (`.close__owl` spot). Flights follow scroll position, so they reverse.
 - `src/nav.ts`: the nav on both pages hides while scrolling down and returns on scroll up (ScrollTrigger direction; `:focus-within` keeps it visible for keyboard users).
 - `src/content.ts`: the download URL (GitHub Releases), the hero slips, the sample rubric levels and score, each with its source in the app or server.
 - `src/hero/`: the three.js slip stack (`stack.ts`; drag or flick the top slip, or press Next question) and the canvas that draws each slip face (`slip-face.ts`). It loads lazily after first paint; without WebGL the flat DOM slip stays and Next question cycles it.

@@ -954,3 +954,53 @@ section h2 + p,
   display: flex;
   gap: var(--s3);
 }
+
+/* ── Deemo, the companion: one owl, fixed, flown between the hero perch (.stack__owl), the corner dock and the
+   close (.close__owl) by src/companion.ts. Its own size is the docked size; the perches scale it up. ── */
+.companion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 15; /* under the nav */
+  width: 84px;
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.companion__owl {
+  aspect-ratio: 344 / 364;
+}
+.companion__say {
+  position: absolute;
+  right: calc(100% + 10px);
+  bottom: 58%;
+  width: max-content;
+  max-width: 230px;
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 1px rgba(42, 36, 32, 0.08), 0 14px 26px -14px rgba(42, 36, 32, 0.4);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  opacity: 0;
+  translate: 0 6px;
+  transition: opacity 220ms var(--ease-out), translate 220ms var(--ease-out);
+}
+.companion[data-docked]:not([data-quiet]) .companion__say {
+  opacity: 1;
+  translate: 0 0;
+}
+@media (max-width: 600px) {
+  .companion {
+    width: 60px;
+  }
+  .companion__say {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .companion__say {
+    transition: none;
+  }
+}
