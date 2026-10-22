@@ -18,6 +18,7 @@ const nightTheme = lightness(colors.paper) < 0.3;
 type Props = Omit<PressableProps, "style" | "children"> & {
   style?: StyleProp<ViewStyle>;
   lit?: boolean; // Main actions and selectable chips opt in; navigation and links stay plain.
+  glint?: string; // #rrggbb: the color of the light on a dark face (Premium's gold); white by default
   busy?: boolean;
   entering?: ComponentProps<typeof AnimatedPressable>["entering"]; // e.g. a list's stagger
   children?: ReactNode;
@@ -34,7 +35,7 @@ export function PressableScale({ entering, ...props }: Props) {
   );
 }
 
-function Pressed({ style, lit = false, busy, accessibilityState, onPressIn, onPressOut,
+function Pressed({ style, lit = false, glint, busy, accessibilityState, onPressIn, onPressOut,
   onFocus, onBlur, disabled, children, ...rest }: Omit<Props, "entering">) {
   const [down, setDown] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -50,8 +51,8 @@ function Pressed({ style, lit = false, busy, accessibilityState, onPressIn, onPr
   const surface: ViewStyle = lit && !inactive && !(down && !blocked)
     ? { boxShadow: dark
         // Dark faces take a soft light (a touch stronger on light paper, where ink needs more to read as lit).
-        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: nightTheme ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.22)" },
-          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: nightTheme ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.1)" }]
+        ? [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: glint ? `${glint}8C` : nightTheme ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.22)" },
+          { inset: true, offsetX: 0, offsetY: 12, blurRadius: 20, spreadDistance: -10, color: glint ? `${glint}29` : nightTheme ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.1)" }]
         // Light faces catch the light theme's full highlight, in either theme.
         : [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 0, color: light.highlight },
           { inset: true, offsetX: 0, offsetY: 14, blurRadius: 22, spreadDistance: -12, color: light.glow }] }

@@ -23,6 +23,7 @@ export function Button({ label, onPress, variant = "primary", disabled, busy, li
   return (
     <PressableScale
       lit={lit}
+      glint={variant === "premium" && !inactive ? colors.goldLight : undefined}
       accessibilityRole="button"
       busy={busy}
       disabled={disabled}
@@ -57,5 +58,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  premium: { borderWidth: 1, borderColor: colors.goldInk, overflow: "hidden" },
+  premium: { overflow: "hidden" }, // clips the sheen; the gold light comes from PressableScale's glint, not a border
 });
