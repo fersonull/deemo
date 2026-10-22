@@ -258,7 +258,7 @@ export const session = {
   async upgrade() {
     try {
       const me = await patchMe({ premium: true });
-      store.set({ premium: me.premium });
+      store.set(fromMe(me)); // the plan and its daily limit together, so a blocked Setup unblocks at once
     } catch {
       // Server unreachable: stay on the free tier; the locked choices still explain why.
     }

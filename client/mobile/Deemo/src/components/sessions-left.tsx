@@ -1,25 +1,45 @@
-import { StyleSheet, Text, type StyleProp, type TextStyle } from "react-native";
+import { router } from "expo-router";
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 
+import { Button } from "@/components/button";
+import { Icon } from "@/components/icon";
 import { useSession } from "@/hooks/use-session";
-import { colors, type } from "@/theme";
+import { colors, space, type } from "@/theme";
 
-// How many of the Free plan's daily practice sessions are left (nothing for Premium, or before the count is known).
-// At zero it says when more come, with an optional way to Premium.
-export function SessionsLeft({ onUpgrade, style }: { onUpgrade?: () => void; style?: StyleProp<TextStyle> }) {
+// How many of the Free plan's daily practice sessions are left, with a way to Premium (nothing for Premium, or before
+// the count is known). While some are left it's a quiet line with a "Go unlimited" link; at zero the line says when
+// more come and a Premium button takes its place as the main way forward. Upgrading opens `onUpgrade` (a screen's
+// own upsell sheet) or the Premium screen.
+export function SessionsLeft({ onUpgrade, style }: { onUpgrade?: () => void; style?: StyleProp<ViewStyle> }) {
   const { usedToday, dailyCap } = useSession();
   if (dailyCap === null) return null;
   const left = Math.max(0, dailyCap - usedToday);
-  return (
-    <Text style={[styles.text, style]} accessibilityLiveRegion="polite">
-      {left > 0
-        ? `${left} of ${dailyCap} free ${dailyCap === 1 ? "session" : "sessions"} left today`
-        : `You've used today's ${dailyCap} free sessions. More tomorrow.`}
-      {left === 0 && onUpgrade ? (
-        <Text style={styles.link} accessibilityRole="button" onPress={onUpgrade}>
-          {" Try Premium"}
+  const upgrade = onUpgrade ?? (() => router.push("/premium"));
+
+  if (left > 0)
+    return (
+      <View style={style}>
+        <Text style={styles.text} accessibilityLiveRegion="polite">
+          {`${left} of ${dailyCap} free ${dailyCap === 1 ? "session" : "sessions"} left today · `}
+          <Text style={styles.link} accessibilityRole="button" onPress={upgrade}>
+            Go unlimited
+          </Text>
         </Text>
-      ) : null}
-    </Text>
+      </View>
+    );
+
+  return (
+    <View style={[styles.out, style]}>
+      <Text style={styles.text} accessibilityLiveRegion="polite">
+        {`You've used today's ${dailyCap} free sessions. More tomorrow, or practice as much as you like with Premium.`}
+      </Text>
+      <Button
+        variant="premium"
+        label="Get unlimited practice"
+        leading={<Icon name="workspace_premium" size={22} color={colors.gold} filled />}
+        onPress={upgrade}
+      />
+    </View>
   );
 }
 
@@ -32,4 +52,5 @@ export const useCanStart = () => {
 const styles = StyleSheet.create({
   text: { ...type.meta, color: colors.muted, textAlign: "center" },
   link: { color: colors.duskLink, fontWeight: "600" },
+  out: { gap: space.md },
 });
