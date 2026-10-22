@@ -1,24 +1,23 @@
-# Continuous landscape DEEMO ERD
+# DEEMO ERD (document-ready)
 
 [Preview](index.html) · [Vector SVG](DEEMO-ERD-organized.svg) · [High-resolution PNG](DEEMO-ERD-organized.png)
 
-One continuous table-to-table diagram, with no reference chips, repeated tables or split views. It preserves all 22 tables, every field and all 24 relationships from `../src/erd.mjs`. The related tables form one connected network of 20 tables. `admin_actions` and `rate_limit_counters` remain unconnected because the database defines no foreign-key relationships for them; the diagram does not invent any.
+All 22 tables, every field and all 24 relationships from `../src/erd.mjs`, laid out to stay readable when pasted into a document at page width.
 
-The layout maximizes a wide landscape canvas. Its main row reads **users → projects → sessions → reports from left to right**, with related tables above and below and separate orthogonal routes. Connectors never cross, overlap each other, or pass through a table. Crow's-foot cardinalities and the dashed logical project/session reference are retained.
+- **Compact layout:** six columns (notices, users, projects, sessions, the report and its parts), 5150 × 2848 instead of the earlier 6600 × 3200. The main chain users → projects → sessions → reports shares one row.
+- **Large, bold type:** 40 px table names, 30 px bold fields (keys extra bold), 26 px types, 28 px bold relationship labels, 3.4 px lines and larger crow's feet.
+- **Clean connectors:** straight lines wherever two tables line up, otherwise one lane with two bends; labels sit on the segment into the table they describe. The generator checks that every line is attached, none runs through a table, and none cross or share a segment.
+- `admin_actions` and `rate_limit_counters` (grey) have no foreign keys, so they stay unconnected. The dashed line is the logical project reference on sessions (no FK).
 
-Text was enlarged within the same canvas: 30 px table names, 26 px bold relationship labels, 24 px field names, 21 px data types and 20 px notes. Dark outlines and local Arial fonts keep it clear. The SVG is 6600 × 3200 (2.06:1 landscape); the PNG is rendered directly at 13200 × 6400 rather than enlarged from an existing image. Use SVG for sharp zooming. Physical text size still depends on how far the entire figure is reduced in a document.
+Use the SVG when the document accepts it (sharp at any size); otherwise the PNG (10300 × 5696).
 
-## Checks and regeneration
+## Regenerate
 
-`routing-checks.json` records the 22-table/24-relationship coverage, connected component, attached endpoints and zero line crossings/shared segments/routes through tables. `text-checks.json` records browser checks for clipped or overlapping labels, labels escaping table boxes and a 20 px minimum font. The generator also verifies that its data snapshot matches the original ERD source and that the main path is aligned from left to right. Original figures and sources remain untouched. This is a layout revision, not a new schema audit or an online-paper edit.
+From this folder:
 
-Run from this folder:
-
-```powershell
+```bash
 node src/generate.mjs
-# Set NODE_PATH to the existing workspace runtime's node_modules containing Playwright.
-# Set CHROME_PATH if Chrome is not installed under ProgramFiles.
-node src/export.mjs
+"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --hide-scrollbars --force-device-scale-factor=2 --window-size=5150,2848 --screenshot="DEEMO-ERD-organized.png" "file:///C:/Deemo.ai/docs/diagrams/organized-erd/DEEMO-ERD-organized.svg"
 ```
 
-The generator reuses the existing SVG helper and ELK installation from `../src/` (install that existing package with `bun install` if missing). Node is used because the installed ELK 0.9.3 bundled worker does not load correctly through Bun's CommonJS interop. The PNG export uses the workspace's existing Playwright and installed Chrome. No dependencies or native builds were added.
+`generate.mjs` reuses `../src/lib.mjs`; its data snapshot (`src/data.mjs`) must match `../src/erd.mjs` (checked). Positions and routes are derived from table sizes, so re-check the routes after a schema change. `src/export.mjs` (Playwright text checks) still works if Playwright is available.
