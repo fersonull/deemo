@@ -1,29 +1,24 @@
 // The whole film: one backdrop, the scenes (each overlapping the next by OVERLAP frames, where the bridges
-// happen), the persistent 3D phone that carries Setup → Live, and the sound. Timing hangs off S in script.ts.
-import { Audio } from "@remotion/media";
+// happen), the persistent 3D phone that carries Meet → Improve from side to side, and the sound. Timing hangs off
+// S in script.ts.
 import type React from "react";
-import { AbsoluteFill, Sequence, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
 import { Backdrop } from "./components/backdrop";
 import { Phone, type Pose } from "./components/phone";
 import { ease, ios, kf, lerp, speedBlur, t } from "./motion";
-import { Analysis } from "./scenes/analysis";
 import { Cta } from "./scenes/cta";
-import { Intro } from "./scenes/intro";
-import { Live } from "./scenes/live";
-import { Panel, rollAt, ROLLS } from "./scenes/panel";
-import { Problem } from "./scenes/problem";
-import { Setup } from "./scenes/setup";
-import { CONTROL_AT, CONTROLS, LIVE, LiveScreen, ScoreScreen, SetupFlights, SetupScreen } from "./screens";
-import { hasMusic, LEN, ORDER, S, TOTAL, type Line } from "./script";
-import { Sfx, Voice } from "./ui";
+import { Hook, HOOK_Q } from "./scenes/hook";
+import { makeStep, phoneX } from "./scenes/step";
+import { HomeScreen, LIVE, LiveScreen, ScoreScreen, UPLOAD_READ, UploadScreen } from "./screens";
+import { LEN, ORDER, S, type Line } from "./script";
+import { Music, Sfx, Voice } from "./ui";
 
 const SCENES: Record<Line, React.FC<{ len: number }>> = {
-  intro: Intro,
-  problem: Problem,
-  analysis: Analysis,
-  setup: Setup,
-  panel: Panel,
-  live: Live,
+  hook: Hook,
+  meet: makeStep("meet"),
+  upload: makeStep("upload"),
+  defend: makeStep("defend"),
+  improve: makeStep("improve"),
   cta: Cta,
 };
 
@@ -35,36 +30,41 @@ const Shell: React.FC<{ len: number; first: boolean; last: boolean; children: Re
   return <AbsoluteFill style={{ opacity: enter * (1 - exit), filter: `blur(${(1 - enter) * 10 + exit * 12}px)` }}>{children}</AbsoluteFill>;
 };
 
-// The phone's path through the film, by global frame: swings in from the right for Setup, spins off right for the
-// panel scene, rises from below for Live, sinks away into the CTA.
+const PHONE_SCENES: Line[] = ["meet", "upload", "defend", "improve"];
+const MOVE_AT = (l: Line) => S[l] - 16; // the phone starts crossing a little before each step's words arrive
+
+// The phone's path by global frame: swings in from the right for Meet, then crosses to the side opposite each
+// step's words (tilting toward the centre), and sinks away into the CTA.
 function pose(g: number): Pose {
-  if (g < S.live - 40) {
-    const e = ios(g, S.setup - 26, 110);
-    const q = t(g, S.panel - 8, S.panel + 34, ease);
-    return {
-      x: lerp(e, 1400, 440) + q * 1200,
-      y: 20,
-      z: 0,
-      rx: 5,
-      ry: lerp(e, -75, -20) - q * 55,
-      rz: lerp(e, 12, 0) - q * 8,
-      s: 1,
-      o: g > S.setup - 30 && g < S.panel + 40 ? 1 : 0,
-    };
+  const e = ios(g, S.meet - 14, 120);
+  let x = lerp(e, 1500, phoneX("meet"));
+  let swing = 0;
+  for (let i = 1; i < PHONE_SCENES.length; i++) {
+    const l = PHONE_SCENES[i]!;
+    const q = ios(g, MOVE_AT(l), 110);
+    const d = phoneX(l) - phoneX(PHONE_SCENES[i - 1]!);
+    x += q * d;
+    swing += Math.sin(Math.min(1, q) * Math.PI) * Math.sign(d);
   }
-  const e = ios(g, S.live + 2, 100); // after the panel cards have gone
   const c = t(g, S.cta - 26, S.cta + 30, ease);
   return {
-    x: -330,
-    y: lerp(e, 1150, 20) + c * 1300,
+    x,
+    y: lerp(e, 140, 40) + c * 1300,
     z: 0,
-    rx: lerp(e, 38, 6) + c * 30,
-    ry: lerp(e, 34, 16),
-    rz: lerp(e, -6, 0),
-    s: 0.98 * (1 - c * 0.2),
-    o: g < S.cta + 40 ? 1 : 0,
+    rx: 4 + c * 30,
+    ry: -(x / 430) * 16 - (1 - e) * 30 + swing * 8,
+    rz: (1 - e) * 10 - swing * 3,
+    s: 1.1 * (1 - c * 0.2),
+    o: g > S.meet - 20 && g < S.cta + 40 ? 1 : 0,
   };
 }
+
+const screen = (l: Line, g: number) => {
+  if (l === "meet") return <HomeScreen />;
+  if (l === "upload") return <UploadScreen f={g - S.upload - 10} />;
+  if (l === "defend") return <LiveScreen f={g - S.defend} />;
+  return <ScoreScreen f={g - S.improve} />;
+};
 
 const PhoneLayer: React.FC = () => {
   const g = useCurrentFrame();
@@ -73,25 +73,17 @@ const PhoneLayer: React.FC = () => {
   const blur = speedBlur((fr) => {
     const q = pose(fr);
     return [q.x, q.y];
-  }, g, 0.035, 8);
-  const live = g >= S.live - 40;
-  const lf = g - S.live;
-  const score = t(lf, LIVE.score, LIVE.score + 20);
+  }, g, 0.03, 8);
+  // The screen changes mid-crossing, while the phone is moving fastest: the old one fades over the new.
+  const i = Math.max(0, PHONE_SCENES.findLastIndex((l) => g >= MOVE_AT(l)));
+  const cur = PHONE_SCENES[i]!;
+  const prev = i > 0 ? PHONE_SCENES[i - 1]! : null;
+  const fade = prev ? 1 - t(g, MOVE_AT(cur) + 4, MOVE_AT(cur) + 18) : 0;
   return (
     <AbsoluteFill style={{ filter: `blur(${blur}px)` }}>
-      <Phone pose={p} overlay={live ? null : <SetupFlights f={g - S.setup} />}>
-        {live ? (
-          <>
-            <LiveScreen f={lf} />
-            {score > 0 ? (
-              <div style={{ position: "absolute", inset: 0, opacity: score, transform: `scale(${1.06 - 0.06 * score})` }}>
-                <ScoreScreen f={lf - LIVE.score} />
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <SetupScreen />
-        )}
+      <Phone pose={p}>
+        {screen(cur, g)}
+        {prev && fade > 0 ? <div style={{ position: "absolute", inset: 0, opacity: fade }}>{screen(prev, g)}</div> : null}
       </Phone>
     </AbsoluteFill>
   );
@@ -103,7 +95,7 @@ function cameraScale(g: number) {
   let s = 1;
   for (const l of ORDER.slice(1)) {
     const b = S[l];
-    s *= kf(g, [b, b + 15, b + 55], [1, 1.07, 1], ease);
+    s *= kf(g, [b, b + 15, b + 55], [1, 1.05, 1], ease);
   }
   return s;
 }
@@ -111,15 +103,10 @@ function cameraScale(g: number) {
 const Camera: React.FC<{ depth?: number; over?: number; children: React.ReactNode }> = ({ depth = 1, over = 1, children }) => {
   const g = useCurrentFrame();
   const s = cameraScale(g);
-  return (
-    <AbsoluteFill style={{ transform: `scale(${(1 + (s - 1) * depth) * over})` }}>
-      {children}
-    </AbsoluteFill>
-  );
+  return <AbsoluteFill style={{ transform: `scale(${(1 + (s - 1) * depth) * over})` }}>{children}</AbsoluteFill>;
 };
 
 export const Promo: React.FC = () => {
-  const f = useCurrentFrame();
   const order = Object.keys(SCENES) as Line[];
   return (
     <AbsoluteFill style={{ background: "#F7F3EC" }}>
@@ -127,51 +114,42 @@ export const Promo: React.FC = () => {
         <Backdrop />
       </Camera>
       <Camera>
-      {order.map((l, i) => {
-        const Scene = SCENES[l];
-        return (
-          <Sequence key={l} name={l} from={S[l]} durationInFrames={LEN[l]}>
-            <Shell len={LEN[l]} first={i === 0} last={i === order.length - 1}>
-              <Scene len={LEN[l]} />
-            </Shell>
-          </Sequence>
-        );
-      })}
-      <PhoneLayer />
+        {order.map((l, i) => {
+          const Scene = SCENES[l];
+          return (
+            <Sequence key={l} name={l} from={S[l]} durationInFrames={LEN[l]}>
+              <Shell len={LEN[l]} first={i === 0} last={i === order.length - 1}>
+                <Scene len={LEN[l]} />
+              </Shell>
+            </Sequence>
+          );
+        })}
+        <PhoneLayer />
       </Camera>
 
       {/* ── sound ── */}
-      {hasMusic ? <Audio name="Music" src={staticFile("audio/music.mp3")} loop volume={kf(f, [0, 20, TOTAL - 70, TOTAL - 1], [0, 0.2, 0.2, 0])} /> : null}
+      <Music />
       {order.map((l) => (
         <Voice key={l} line={l} />
       ))}
-      <Sfx id="pop" at={S.intro + 6} volume={0.4} />
-      {[10, 15, 20].map((d) => (
-        <Sfx key={d} id="glass" at={S.intro + d} volume={0.3} />
+      <Sfx id="pop" at={S.hook + 6} />
+      <Sfx id="glass" at={S.hook + HOOK_Q} volume={0.8} />
+      <Sfx id="whoosh" at={S.meet - 20} />
+      <Sfx id="sparkle" at={S.meet + 10} volume={0.7} />
+      {PHONE_SCENES.slice(1).map((l) => (
+        <Sfx key={l} id="whoosh" at={MOVE_AT(l) - 4} volume={0.8} />
       ))}
-      <Sfx id="whoosh" at={S.problem - 34} volume={0.45} />
-      <Sfx id="hit" at={S.problem + 8} volume={0.3} />
-      <Sfx id="whoosh" at={S.analysis - 50} volume={0.35} />
-      <Sfx id="paper" at={S.analysis + 4} volume={0.4} />
-      <Sfx id="scan" at={S.analysis + 14} volume={0.3} />
-      <Sfx id="glass" at={S.analysis + 80} volume={0.35} />
-      <Sfx id="glass" at={S.analysis + 140} volume={0.35} />
-      <Sfx id="whoosh" at={S.setup - 40} volume={0.45} />
-      {CONTROLS.map((_, i) => (
-        <Sfx key={i} id="click" at={S.setup + CONTROL_AT(i) + 22} volume={0.35} />
-      ))}
-      <Sfx id="whoosh" at={S.panel - 10} volume={0.4} />
-      {Array.from({ length: ROLLS }, (_, i) => (
-        <Sfx key={i} id="roll" at={S.panel + rollAt(LEN.panel, i)} volume={0.3} />
-      ))}
-      <Sfx id="whoosh" at={S.live - 30} volume={0.4} />
-      <Sfx id="chime" at={S.live + LIVE.ask} volume={0.35} />
-      <Sfx id="nudge" at={S.live + LIVE.flag} volume={0.5} />
-      <Sfx id="riser" at={S.live + LIVE.score - 30} volume={0.3} />
-      <Sfx id="ding" at={S.live + LIVE.score + 62} volume={0.4} />
-      <Sfx id="swell" at={S.cta - 24} volume={0.45} />
-      <Sfx id="sparkle" at={S.cta + 40} volume={0.35} />
-      <Sfx id="sting" at={S.cta + 30} volume={0.5} />
+      <Sfx id="paper" at={S.upload + 6} volume={0.9} />
+      <Sfx id="scan" at={S.upload + 16} volume={0.6} />
+      <Sfx id="chime" at={S.upload + 10 + UPLOAD_READ} volume={0.8} />
+      <Sfx id="chime" at={S.defend + LIVE.ask} volume={0.9} />
+      <Sfx id="click" at={S.defend + LIVE.answer} volume={0.8} />
+      <Sfx id="nudge" at={S.defend + LIVE.flag} />
+      <Sfx id="riser" at={S.improve - 20} volume={0.7} />
+      <Sfx id="ding" at={S.improve + 60} />
+      <Sfx id="swell" at={S.cta - 24} />
+      <Sfx id="sting" at={S.cta + 30} volume={1.2} />
+      <Sfx id="sparkle" at={S.cta + 40} volume={0.8} />
     </AbsoluteFill>
   );
 };

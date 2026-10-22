@@ -7,7 +7,7 @@ import { loadFont as loadDMSans } from "@remotion/google-fonts/DMSans";
 import type React from "react";
 import { staticFile, useCurrentFrame } from "remotion";
 import { ios, t } from "./motion";
-import { hasSfx, hasVoice, S, VO_LEAD, type Line, type Sfx as SfxId } from "./script";
+import { hasMusic, hasSfx, hasVoice, levels, S, TOTAL, VO_LEAD, voiceWindows, type Line, type Sfx as SfxId } from "./script";
 
 // client/mobile/Deemo/src/colors.ts — keep in step.
 export const C = {
@@ -41,22 +41,24 @@ export const F = {
   mono: loadDMMono("normal", { weights: ["500"], subsets: ["latin"] }).fontFamily,
 };
 
-// The app's raised surfaces: a face on a solid lower layer (like its buttons) plus a soft warm shadow.
+// The app's lit surfaces (client/mobile/Deemo theme.ts `lit` and components/pressable-scale): light from above,
+// all inside the shape (a 1 px top highlight and a soft glow down the face), no lower layer. Dark faces take a
+// fainter light. In the film these cards float over the backdrop, so they also get a soft drop shadow.
+export const lit = (dark = false) =>
+  dark
+    ? "inset 0 1px 0 rgba(255,255,255,0.22), inset 0 12px 20px -10px rgba(255,255,255,0.1)"
+    : "inset 0 1px 0 rgba(255,255,255,0.7), inset 0 14px 22px -12px rgba(255,255,255,0.32)";
+const FLOAT = "0 22px 44px -22px rgba(42,36,32,0.34)";
 const KINDS = {
-  paper: { bg: "#FFFCF7", depth: C.sandDepth, ink: C.ink },
-  sand: { bg: C.sand, depth: C.sandDepth, ink: C.ink },
-  dusk: { bg: C.dusk, depth: C.duskInk, ink: C.paper },
-  ink: { bg: C.ink, depth: C.inkDepth, ink: C.paper },
-  amber: { bg: C.amberTint, depth: C.amber, ink: C.amberInk },
+  paper: { bg: "#FFFCF7", ink: C.ink, dark: false },
+  sand: { bg: C.sand, ink: C.ink, dark: false },
+  dusk: { bg: C.dusk, ink: C.paper, dark: true },
+  ink: { bg: C.ink, ink: C.paper, dark: true },
+  amber: { bg: C.amberTint, ink: C.amberInk, dark: false },
 };
-export function surface(kind: keyof typeof KINDS = "paper", radius = 24, lip = 6): React.CSSProperties {
+export function surface(kind: keyof typeof KINDS = "paper", radius = 24): React.CSSProperties {
   const k = KINDS[kind];
-  return {
-    borderRadius: radius,
-    background: k.bg,
-    color: k.ink,
-    boxShadow: `0 ${lip}px 0 ${k.depth}, 0 ${lip + 20}px 44px -18px rgba(42,36,32,0.38)`,
-  };
+  return { borderRadius: radius, background: k.bg, color: k.ink, boxShadow: `${lit(k.dark)}, ${FLOAT}` };
 }
 
 // The app's organic shape (components/blob.tsx: CSS "58% 42% 52% 48% / 55% 50% 50% 45%").
@@ -100,6 +102,13 @@ export const Words: React.FC<{
 
 // Material-style glyphs drawn inline.
 const ICONS = {
+  home: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
+  folder: "M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z",
+  chart: "M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z",
+  person: "M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z",
+  group:
+    "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z",
+  back: "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
   check: "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z",
   warning: "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z",
   mic: "M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z",
@@ -120,9 +129,52 @@ export const Icon: React.FC<{ name: keyof typeof ICONS; size: number; color: str
   </svg>
 );
 
-// A scene's voiceover at its start (+VO_LEAD). Silent until `bun run audio` has made the file.
-export const Voice: React.FC<{ line: Line }> = ({ line }) =>
-  hasVoice(line) ? <Audio name={`VO ${line}`} from={S[line] + VO_LEAD} src={staticFile(`audio/vo-${line}.mp3`)} /> : null;
+// The mix. Every sound is set from its measured loudness, not a guessed volume: the voice at -23 dB, effects about
+// 10 dB under it, the music bed further down, and both effects and music duck while a line is spoken, so the
+// voiceover always reads first. Remotion can't amplify (volume tops out at 1), so a quiet file stays as loud as it is.
+const VOICE_DB = -23;
+const SFX_DB = VOICE_DB - 10;
+const MUSIC_DB = VOICE_DB - 8;
+const gainFor = (key: string, target: number) => {
+  const level = levels[key];
+  return level === undefined ? 0.4 : Math.min(1, 10 ** ((target - level) / 20));
+};
+const WINDOWS = voiceWindows();
+const RAMP = 8; // frames to dip in and out
+// 1 while a line is being spoken, 0 between lines, eased at the edges.
+export const speaking = (frame: number) =>
+  Math.max(0, ...WINDOWS.map(([a, b]) => Math.min(1, (frame - a + RAMP) / RAMP, (b + RAMP - frame) / RAMP)));
 
-export const Sfx: React.FC<{ id: SfxId; at: number; volume?: number }> = ({ id, at, volume = 0.5 }) =>
-  hasSfx(id) ? <Audio name={`SFX ${id}`} from={Math.max(0, Math.round(at))} volume={volume} src={staticFile(`audio/sfx-${id}.mp3`)} /> : null;
+// A scene's voiceover at its start (+VO_LEAD), evened out to the same level. Silent until `bun run audio` made it.
+export const Voice: React.FC<{ line: Line }> = ({ line }) =>
+  hasVoice(line) ? (
+    <Audio name={`VO ${line}`} from={S[line] + VO_LEAD} volume={gainFor(`vo-${line}`, VOICE_DB)} src={staticFile(`audio/vo-${line}.mp3`)} />
+  ) : null;
+
+// An effect at frame `at`. `volume` is a small accent on top of the mix level (1 = the usual effect level), and the
+// effect drops to 45% for as long as it overlaps a spoken line.
+export const Sfx: React.FC<{ id: SfxId; at: number; volume?: number }> = ({ id, at, volume = 1 }) => {
+  const from = Math.max(0, Math.round(at));
+  const base = gainFor(`sfx-${id}`, SFX_DB) * volume;
+  return hasSfx(id) ? (
+    <Audio
+      name={`SFX ${id}`}
+      from={from}
+      volume={(f) => Math.min(1, base * (1 - 0.55 * speaking(from + f)))}
+      src={staticFile(`audio/sfx-${id}.mp3`)}
+    />
+  ) : null;
+};
+
+// The looping music bed: faded in and out, and halved under the voice.
+export const Music: React.FC = () => {
+  const base = gainFor("music", MUSIC_DB);
+  return hasMusic ? (
+    <Audio
+      name="Music"
+      src={staticFile("audio/music.mp3")}
+      loop
+      volume={(f) => base * Math.min(1, f / 20, (TOTAL - 1 - f) / 70) * (1 - 0.5 * speaking(f))}
+    />
+  ) : null;
+};

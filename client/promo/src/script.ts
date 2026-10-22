@@ -3,12 +3,11 @@
 import audio from "./audio.json";
 
 export const LINES = {
-  intro: "Your defense is coming.",
-  problem: "You know your paper. But can you defend it out loud?",
-  analysis: "Upload your manuscript. DEEMO reads every page.",
-  setup: "Pick your stage, your panel, and how hard they push.",
-  panel: "Built for your course.",
-  live: "It asks, follows up, and catches contradictions.",
+  hook: "You know your paper. But can you defend it out loud?",
+  meet: "Meet DEEMO, your mock defense panel.",
+  upload: "Upload your manuscript. DEEMO reads every page.",
+  defend: "It asks, follows up, and catches contradictions.",
+  improve: "Then shows you exactly what to fix.",
   cta: "DEEMO. Practice the defense, before the defense.",
 } as const;
 export type Line = keyof typeof LINES;
@@ -43,13 +42,20 @@ export const VO_LEAD = 8; // frames into a scene before its line starts
 export const OVERLAP = 30; // frames each scene overlaps the next (bridges live in the overlap)
 
 // A scene never runs shorter than this (seconds): room for its choreography even with a short line.
-const MIN: Record<Line, number> = { intro: 2.8, problem: 4, analysis: 4, setup: 3.4, panel: 3.2, live: 5.2, cta: 4 };
-const FALLBACK: Record<Line, number> = { intro: 1.4, problem: 3, analysis: 3.6, setup: 2.9, panel: 1.4, live: 3.2, cta: 3.2 };
+const MIN: Record<Line, number> = { hook: 3.8, meet: 3.4, upload: 4.6, defend: 5.6, improve: 5, cta: 4.2 };
+const FALLBACK: Record<Line, number> = { hook: 3.1, meet: 2.2, upload: 3.6, defend: 3.1, improve: 2, cta: 3.2 };
 
 const voice = audio.voice as Partial<Record<Line, number>>;
 export const hasVoice = (line: Line) => voice[line] !== undefined;
 export const hasSfx = (id: Sfx) => (audio.sfx as string[]).includes(id);
 export const hasMusic = audio.music;
+
+// Measured loudness of each file in dB (scripts/measure-audio.ts), keyed like "sfx-hit" or "vo-intro".
+export const levels = ((audio as { levels?: Record<string, number> }).levels ?? {}) as Record<string, number>;
+
+// When each line is spoken, in frames (start, end): the mix ducks effects and music under the voice.
+export const voiceWindows = (): [number, number][] =>
+  ORDER.filter(hasVoice).map((l) => [S[l] + VO_LEAD, S[l] + VO_LEAD + Math.ceil(voice[l]! * FPS)]);
 
 export const ORDER = Object.keys(LINES) as Line[];
 // Scene lengths in frames, including the overlap into the next.

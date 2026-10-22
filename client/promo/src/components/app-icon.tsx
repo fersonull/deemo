@@ -20,7 +20,7 @@ export const AppIcon: React.FC<{ size: number; style?: React.CSSProperties }> = 
       height: size,
       borderRadius: size * 0.23,
       overflow: "hidden",
-      boxShadow: `0 ${size * 0.04}px 0 #343996, 0 ${size * 0.14}px ${size * 0.22}px -${size * 0.06}px rgba(25,22,19,0.5)`,
+      boxShadow: `0 ${size * 0.14}px ${size * 0.22}px -${size * 0.06}px rgba(25,22,19,0.5)`,
       ...style,
     }}
   >

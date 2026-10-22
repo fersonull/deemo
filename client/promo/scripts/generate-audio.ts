@@ -5,6 +5,7 @@
 // Needs ELEVENLABS_API_KEY in .env (Bun loads it). VOICE_ID overrides the default voice.
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { LINES, SFX, MUSIC } from "../src/script";
+import { measureAudio } from "./measure-audio";
 
 const KEY = process.env.ELEVENLABS_API_KEY;
 if (!KEY) throw new Error("Set ELEVENLABS_API_KEY in client/promo/.env");
@@ -78,3 +79,4 @@ try {
 
 writeFileSync("src/audio.json", JSON.stringify(manifest, null, 2) + "\n");
 console.log("wrote src/audio.json");
+measureAudio(); // record each file's loudness, so the mix sits every sound under the voiceover

@@ -29,7 +29,7 @@ export const Cta: React.FC<{ len: number }> = () => {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          ...surface("paper", 999, 6),
+          ...surface("paper", 999),
           padding: "18px 34px",
           fontFamily: F.body,
           fontWeight: 700,

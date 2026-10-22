@@ -9,3 +9,6 @@ out
 # Installed by `bunx remotion skills add` (absolute symlinks; reinstall from skills-lock.json)
 .agents
 .claude/skills
+# Inspiration clips for reference only, never committed
+reference
+src/old-vid

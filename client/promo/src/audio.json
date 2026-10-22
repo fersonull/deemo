@@ -1,11 +1,10 @@
 {
   "voice": {
-    "intro": 1.347,
-    "problem": 3.111,
-    "analysis": 3.576,
-    "setup": 2.926,
-    "panel": 1.115,
-    "live": 3.111,
+    "hook": 3.111,
+    "meet": 2.276,
+    "upload": 3.576,
+    "defend": 3.111,
+    "improve": 2.043,
     "cta": 3.158
   },
   "sfx": [
@@ -26,5 +25,30 @@
     "roll",
     "swell"
   ],
-  "music": true
+  "music": true,
+  "levels": {
+    "music": -14,
+    "sfx-chime": -12.8,
+    "sfx-click": -25,
+    "sfx-ding": -23.2,
+    "sfx-glass": -27.7,
+    "sfx-hit": -11.5,
+    "sfx-nudge": -27.3,
+    "sfx-paper": -20.1,
+    "sfx-pop": -15.9,
+    "sfx-riser": -14.1,
+    "sfx-roll": -26.9,
+    "sfx-scan": -19.7,
+    "sfx-sparkle": -28.7,
+    "sfx-sting": -15.4,
+    "sfx-swell": -17.9,
+    "sfx-tick": -27.8,
+    "sfx-whoosh": -15.7,
+    "vo-cta": -24.3,
+    "vo-defend": -23.4,
+    "vo-hook": -21.5,
+    "vo-improve": -22.7,
+    "vo-meet": -23.3,
+    "vo-upload": -23.1
+  }
 }
