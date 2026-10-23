@@ -331,6 +331,7 @@ button { font: inherit; color: inherit; }
 /* promo video: centered, clear of Deemo's corner and the slide counter */
 .slide--video { align-items: center; justify-content: center; padding: 70px 150px 150px; }
 .promo { width: 1440px; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; border-radius: 32px; background: var(--ink); box-shadow: 0 30px 80px -30px rgba(42, 36, 32, 0.4); cursor: pointer; }
+.slide--video.is-expanded { z-index: 3; } /* above Deemo while the video fills the stage */
 .portrait .slide--video { padding: 124px 44px 190px; }
 
 .slide--disclaimer { align-items: center; text-align: center; padding: 60px 150px 170px; gap: 18px; }

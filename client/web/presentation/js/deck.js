@@ -83,6 +83,26 @@ addEventListener("wheel", (e) => {
   setStep(w, Math.min(Math.max(w.step + Math.sign(e.deltaY), 0), w.buttons.length - 1));
 }, { passive: true });
 
+// Promo slide: scroll down grows the video to fill the stage (over Deemo), scroll up shrinks it back. GSAP owns the
+// video's transform (the slide reveal animates it too), so the growth is a GSAP scale + move, not a CSS class.
+const promo = document.querySelector(".promo");
+const promoSlide = promo?.closest(".slide");
+function expandPromo(on) {
+  if (!promo) return;
+  promoSlide.classList.toggle("is-expanded", on);
+  const sw = parseFloat(stage.style.width);
+  const sh = parseFloat(stage.style.height);
+  const scale = on ? Math.min(sw / promo.offsetWidth, sh / promo.offsetHeight) : 1;
+  const y = on ? sh / 2 - (promo.offsetTop + promo.offsetHeight / 2) : 0;
+  gsap.to(promo, { scale, y, borderRadius: on ? 0 : 32, duration: reduced.matches ? 0 : 0.7, ease: "expo.out" });
+}
+let promoWheelAt = 0;
+addEventListener("wheel", (e) => {
+  if (slides[index] !== promoSlide || !e.deltaY || e.timeStamp - promoWheelAt < 400) return;
+  promoWheelAt = e.timeStamp;
+  expandPromo(e.deltaY > 0);
+}, { passive: true });
+
 const reveal = (s) => s.querySelectorAll(".r");
 
 function go(next) {
@@ -91,7 +111,12 @@ function go(next) {
   const out = slides[index];
   const inn = slides[next];
   const dir = Math.sign(next - index);
-  out.querySelector("video")?.pause(); // the promo stops when its slide is left
+  if (out === promoSlide) {
+    promo.pause(); // the promo stops when its slide is left, and is back to its size for next time
+    promoSlide.classList.remove("is-expanded");
+    gsap.killTweensOf(promo);
+    gsap.set(promo, { scale: 1, borderRadius: 32 });
+  }
   index = next;
   inn.classList.add("is-active");
   phone?.goTo(slotOf(index));
