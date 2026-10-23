@@ -12,7 +12,7 @@ export function Reading({ since }: { since: string }) {
   return (
     <Working
       title={"Your panel is\nreading."}
-      subtitle="This usually takes 30 to 60 seconds."
+      subtitle="This usually takes 30 to 60 seconds. A long manuscript can take a few minutes."
       since={Date.parse(since)}
       expectedMs={50_000}
       steps={STEPS}

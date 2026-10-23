@@ -18,7 +18,7 @@ export class Busy extends Error {}
 // A model answered, but not with the shape we asked for.
 export class BadReply extends Error {}
 
-export type Part = { text?: string; inlineData?: { mimeType: string; data: string } };
+export type Part = { text?: string; inlineData?: { mimeType: string; data: string }; fileData?: { mimeType: string; fileUri: string } };
 export type FlashRequest = {
   contents: { role: string; parts: Part[] }[];
   generationConfig: { responseJsonSchema?: object; thinkingConfig?: { thinkingLevel?: string } } & Record<string, unknown>;
@@ -97,3 +97,52 @@ export async function generateObject<S extends ZodType>(
   if (!parsed.success) throw new BadReply(`${model}: ${parsed.error.issues[0]?.message ?? "unexpected shape"}`);
   return { value: parsed.data, model };
 }
+
+// A big file (a manuscript PDF, up to 50 MB) goes up once through the Files API, so a fallback model points at the same
+// copy instead of re-sending ~67 MB of base64, and a slow upload doesn't count against a model's timeout. Delete it as
+// soon as the reading is done: raw manuscripts aren't kept (Google would drop it after 48 h anyway).
+const API = "https://generativelanguage.googleapis.com";
+const key = () => ({ "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" });
+
+export async function uploadFile(bytes: Uint8Array, mimeType: string): Promise<{ name: string; uri: string }> {
+  const start = await fetch(`${API}/upload/v1beta/files`, {
+    method: "POST",
+    headers: {
+      ...key(),
+      "x-goog-upload-protocol": "resumable",
+      "x-goog-upload-command": "start",
+      "x-goog-upload-header-content-length": String(bytes.length),
+      "x-goog-upload-header-content-type": mimeType,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ file: { display_name: "manuscript" } }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  const url = start.headers.get("x-goog-upload-url");
+  if (!start.ok || !url) throw new Error(`file upload start ${start.status}: ${(await start.text()).slice(0, 200)}`);
+  const done = await fetch(url, {
+    method: "POST",
+    headers: { "x-goog-upload-offset": "0", "x-goog-upload-command": "upload, finalize" },
+    body: bytes,
+    signal: AbortSignal.timeout(10 * 60_000),
+  });
+  if (!done.ok) throw new Error(`file upload ${done.status}: ${(await done.text()).slice(0, 200)}`);
+  let file = ((await done.json()) as { file: GeminiFile }).file;
+  // A PDF is processed before it can be used; usually seconds.
+  for (let i = 0; file.state === "PROCESSING" && i < 60; i++) {
+    await Bun.sleep(2_000);
+    file = (await (await fetch(`${API}/v1beta/${file.name}`, { headers: key() })).json()) as GeminiFile;
+  }
+  if (file.state !== "ACTIVE") {
+    void deleteFile(file.name);
+    throw new Error(`file ${file.state}`);
+  }
+  return { name: file.name, uri: file.uri };
+}
+type GeminiFile = { name: string; uri: string; state?: "PROCESSING" | "ACTIVE" | "FAILED" };
+
+export const deleteFile = (name: string) =>
+  fetch(`${API}/v1beta/${name}`, { method: "DELETE", headers: key() }).then(
+    (r) => void (r.ok || console.warn("file delete", name, r.status)),
+    (e: Error) => console.warn("file delete", name, e.message),
+  );

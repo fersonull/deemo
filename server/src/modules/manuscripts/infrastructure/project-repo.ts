@@ -1,6 +1,6 @@
 import { Prisma, prisma, type Tx } from "../../../shared/prisma";
 import { courseOf } from "../../identity/domain/course";
-import { STALE_ERROR, STALE_MS, type Analysis, type Project } from "../domain/manuscript";
+import { ANALYSIS_STALE_MS, STALE_ERROR, type Analysis, type Project } from "../domain/manuscript";
 import type { Rubric } from "../domain/rubric";
 
 const include = {
@@ -31,7 +31,7 @@ function toRubric(r: NonNullable<Row["rubric"]>): Rubric {
 
 // A row as the app knows it. An analysis that stopped updating (the server restarted mid-job) reads as failed.
 export function toProject(row: Row): Project {
-  const stale = row.status === "analyzing" && Date.now() - row.updatedAt.getTime() > STALE_MS;
+  const stale = row.status === "analyzing" && Date.now() - row.updatedAt.getTime() > ANALYSIS_STALE_MS;
   return {
     id: row.id,
     name: row.name,

@@ -45,8 +45,10 @@ export type Project = {
   rubric?: Rubric; // the panel's own rubric, replacing the default (plan F3)
 };
 
-// Background jobs that stopped updating (the server restarted mid-job) read as failed after five minutes.
+// Background jobs that stopped updating (the server restarted mid-job) read as failed after five minutes; an analysis
+// after 20, since a 50 MB manuscript can take minutes to upload to Gemini and read (4-minute tries, with fallbacks).
 export const STALE_MS = 5 * 60_000;
+export const ANALYSIS_STALE_MS = 20 * 60_000;
 export const STALE_ERROR = "This took too long. Try again.";
 
 // A message the student sees as-is (the upload isn't usable), unlike an internal failure.

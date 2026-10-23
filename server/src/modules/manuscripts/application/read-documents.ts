@@ -1,4 +1,4 @@
-import { generateObject, type Part } from "../../../shared/ai/gemini";
+import { deleteFile, generateObject, uploadFile, type Part } from "../../../shared/ai/gemini";
 import {
   ANALYSIS_PROMPT,
   ANALYSIS_SCHEMA,
@@ -19,20 +19,25 @@ import { docxContent, docxText } from "../infrastructure/docx";
 // Returns the analysis and the IT field it detected (the project's domain; "General" outside computing).
 export async function analyzeManuscript(bytes: Uint8Array, type: DocType): Promise<{ analysis: Analysis; domain: Domain }> {
   let doc: Part[];
-  if (type === PDF) doc = [{ inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } }];
-  else {
+  let file: { name: string; uri: string } | undefined;
+  if (type === PDF) {
+    file = await uploadFile(bytes, PDF);
+    doc = [{ fileData: { mimeType: PDF, fileUri: file.uri } }];
+  } else {
     const { text, images } = await docxContent(bytes, "This isn't a readable Word document. Save it as .docx or PDF and try again.");
     // ponytail: a fixed floor; a real manuscript is tens of thousands of characters.
     if (text.trim().length < 500) throw new Rejected("We couldn't find enough text in this file. If it's scanned, upload it as a PDF.");
     doc = [{ text }, ...images.flatMap((inlineData, i) => [{ text: `[Figure ${i + 1}]` }, { inlineData }])];
   }
+  // A long manuscript (hundreds of pages) can take Flash a few minutes to read.
   const { value, model } = await generateObject(
     {
       contents: [{ role: "user", parts: [...doc, { text: ANALYSIS_PROMPT }] }],
       generationConfig: { responseMimeType: "application/json", responseJsonSchema: ANALYSIS_SCHEMA, temperature: 0.2 },
     },
     AnalysisReply,
-  );
+    { timeoutMs: 240_000 },
+  ).finally(() => file && deleteFile(file.name));
   const { isManuscript, notManuscriptReason, itField, ...analysis } = value;
   if (!isManuscript) throw new Rejected(notManuscriptReason || "This doesn't look like a research manuscript.");
   return { analysis: { ...analysis, model }, domain: analysis.field === "BSIT" || analysis.field === "BSCS" ? itField : "General" };

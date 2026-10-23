@@ -14,12 +14,12 @@ export async function docxText(bytes: Uint8Array, unreadable: string): Promise<s
 
 // Gemini can't see a DOCX, so its figures (ERDs, DFDs, architecture, charts) go along as images, each marked
 // "[Figure n]" where it sits in the text so the analysis knows its chapter. Icons and logos are skipped, and the
-// images are capped so the request stays well under Gemini's 100 MB.
+// images are capped so the request stays small.
 // ponytail: EMF/WMF (Visio exports) are skipped; convert them if students' diagrams keep going missing.
 const READABLE = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MIN_IMAGE = 8 * 1024;
 const MAX_IMAGES = 30;
-const MAX_IMAGE_BYTES = 40 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // inline, and re-sent if a fallback model takes over
 export type DocxImage = { mimeType: string; data: string };
 
 export async function docxContent(bytes: Uint8Array, unreadable: string): Promise<{ text: string; images: DocxImage[] }> {
