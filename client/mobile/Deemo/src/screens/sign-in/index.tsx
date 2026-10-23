@@ -10,7 +10,12 @@ import { Icon } from "@/components/icon";
 import { Screen } from "@/components/screen";
 import { authMessage, session } from "@/hooks/use-session";
 import { colors, easeOut, fonts, radius, type } from "@/theme";
-import { canCreate, confirmProblem, MAX_NAME, MIN_PASSWORD } from "@/utils/auth-form";
+import {
+  canCreate,
+  confirmProblem,
+  MAX_NAME,
+  MIN_PASSWORD,
+} from "@/utils/auth-form";
 import { riseIn } from "@/utils/motion";
 
 // Sign in (plan S-04): Google, or school email + password; creating an account asks for a name and the password twice.
@@ -32,7 +37,9 @@ export function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
 
   const mismatch = creating ? confirmProblem(password, confirm) : null;
-  const ready = creating ? canCreate(name, email, password, confirm) : !!email.trim() && !!password;
+  const ready = creating
+    ? canCreate(name, email, password, confirm)
+    : !!email.trim() && !!password;
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -50,13 +57,19 @@ export function SignIn() {
 
   const submit = () => {
     if (!ready || busy) return;
-    void run(() => (creating ? session.createAccount(name, email, password) : session.signInWithEmail(email, password)));
+    void run(() =>
+      creating
+        ? session.createAccount(name, email, password)
+        : session.signInWithEmail(email, password),
+    );
   };
 
   const reset = () =>
     run(async () => {
       await session.resetPassword(email);
-      setNote(`I sent a reset link to ${email.trim()}. Check your inbox, then come back here.`);
+      setNote(
+        `I sent a reset link to ${email.trim()}. Check your inbox, then come back here.`,
+      );
     });
 
   const switchMode = () => {
@@ -69,14 +82,23 @@ export function SignIn() {
 
   // What Deemo says, and how it looks saying it.
   const [say, mood]: [string, DeemoMood] = busy
-    ? [creating ? "Setting up your account…" : "Checking your details…", "reading"]
+    ? [
+        creating ? "Setting up your account…" : "Checking your details…",
+        "reading",
+      ]
     : error
       ? [error, "idle"] // after a startled shake (below), Deemo settles back to its usual face
       : note
         ? [note, "cheering"]
         : creating
-          ? ["Hi, I'm Deemo. Make an account and your scores and history stay with you.", greeted ? "idle" : "waving"]
-          : ["Welcome back. Sign in and pick up where you left off.", greeted ? "idle" : "waving"];
+          ? [
+              "Hi, I'm Deemo. Make an account and your scores and history stay with you.",
+              greeted ? "idle" : "waving",
+            ]
+          : [
+              "Welcome back. Sign in and pick up where you left off.",
+              greeted ? "idle" : "waving",
+            ];
 
   const eye = (
     <PressableScale
@@ -86,16 +108,26 @@ export function SignIn() {
       onPress={() => setShowPassword(!showPassword)}
       style={styles.eye}
     >
-      <Icon name={showPassword ? "visibility_off" : "visibility"} size={20} color={colors.inkMuted} />
+      <Icon
+        name={showPassword ? "visibility_off" : "visibility"}
+        size={20}
+        color={colors.inkMuted}
+      />
     </PressableScale>
   );
 
   return (
     <>
-      <Screen scroll title={creating ? "Make your\naccount." : "Keep your\nsessions safe."}>
+      <Screen
+        scroll
+        title={creating ? "Make your\naccount." : "Keep your\nsessions safe."}
+      >
         {/* Deemo's bubble: the words fade in when they change; screen readers hear each new message */}
         <View style={styles.deemo} accessibilityLiveRegion="polite">
-          <Animated.View key={say} entering={FadeIn.duration(200).easing(easeOut)}>
+          <Animated.View
+            key={say}
+            entering={FadeIn.duration(200).easing(easeOut)}
+          >
             <DeemoNote mood={mood} size="m" startle={!!error && !busy}>
               {say}
             </DeemoNote>
@@ -134,8 +166,8 @@ export function SignIn() {
           </Animated.View>
         ) : null}
         <Field
-          label="School email"
-          placeholder="juan.delacruz@school.edu.ph"
+          label="Email address"
+          placeholder="juan.delacruz@example.com"
           value={email}
           onChangeText={setEmail}
           autoComplete="email"
@@ -159,8 +191,14 @@ export function SignIn() {
         />
         {creating ? (
           <Animated.View entering={riseIn(0, reduced)}>
-            <Text style={[styles.hint, password.length >= MIN_PASSWORD && styles.hintMet]}>
-              {password.length >= MIN_PASSWORD ? "✓ " : ""}At least {MIN_PASSWORD} characters
+            <Text
+              style={[
+                styles.hint,
+                password.length >= MIN_PASSWORD && styles.hintMet,
+              ]}
+            >
+              {password.length >= MIN_PASSWORD ? "✓ " : ""}At least{" "}
+              {MIN_PASSWORD} characters
             </Text>
             <Field
               label="Confirm password"
@@ -180,21 +218,44 @@ export function SignIn() {
             ) : null}
           </Animated.View>
         ) : (
-          <PressableScale accessibilityRole="button" disabled={busy || !email.trim()} onPress={reset} style={styles.link}>
-            <Text style={[styles.linkText, !email.trim() && styles.dim]}>Forgot password?</Text>
+          <PressableScale
+            accessibilityRole="button"
+            disabled={busy || !email.trim()}
+            onPress={reset}
+            style={styles.link}
+          >
+            <Text style={[styles.linkText, !email.trim() && styles.dim]}>
+              Forgot password?
+            </Text>
           </PressableScale>
         )}
 
         <View style={styles.cta}>
           <Button
-            label={busy ? (creating ? "Creating your account…" : "Signing in…") : creating ? "Create account" : "Sign in"}
+            label={
+              busy
+                ? creating
+                  ? "Creating your account…"
+                  : "Signing in…"
+                : creating
+                  ? "Create account"
+                  : "Sign in"
+            }
             onPress={submit}
             busy={busy}
             disabled={!ready}
           />
         </View>
-        <PressableScale accessibilityRole="button" onPress={switchMode} style={styles.switch}>
-          <Text style={styles.switchText}>{creating ? "Have an account? Sign in" : "New here? Create an account"}</Text>
+        <PressableScale
+          accessibilityRole="button"
+          onPress={switchMode}
+          style={styles.switch}
+        >
+          <Text style={styles.switchText}>
+            {creating
+              ? "Have an account? Sign in"
+              : "New here? Create an account"}
+          </Text>
         </PressableScale>
       </Screen>
     </>
@@ -207,10 +268,20 @@ function Field({
   trailing,
   invalid,
   ...input
-}: { label: string; trailing?: React.ReactNode; invalid?: boolean } & React.ComponentProps<typeof TextInput>) {
+}: {
+  label: string;
+  trailing?: React.ReactNode;
+  invalid?: boolean;
+} & React.ComponentProps<typeof TextInput>) {
   const [focused, setFocused] = useState(false);
   return (
-    <View style={[styles.field, focused && styles.fieldFocused, invalid && styles.fieldInvalid]}>
+    <View
+      style={[
+        styles.field,
+        focused && styles.fieldFocused,
+        invalid && styles.fieldInvalid,
+      ]}
+    >
       <View style={styles.flex}>
         <Text style={styles.fieldLabel}>{label}</Text>
         <TextInput
@@ -244,7 +315,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.ink,
   },
-  or: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 24, marginBottom: 16 },
+  or: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 24,
+    marginBottom: 16,
+  },
   rule: { flex: 1, height: 1, backgroundColor: colors.border },
   field: {
     flexDirection: "row",
@@ -259,16 +336,53 @@ const styles = StyleSheet.create({
   },
   fieldFocused: { borderColor: colors.dusk },
   fieldInvalid: { borderColor: colors.amber },
-  eye: { width: 40, height: 40, alignItems: "center", justifyContent: "center", marginRight: -8 },
+  eye: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: -8,
+  },
   fieldLabel: { ...type.meta, fontSize: 11, fontWeight: "500" },
-  input: { ...type.bodyStrong, fontSize: 15, paddingVertical: 4, paddingHorizontal: 0 },
+  input: {
+    ...type.bodyStrong,
+    fontSize: 15,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+  },
   hint: { ...type.meta, marginTop: 4, marginBottom: 8, paddingHorizontal: 4 },
   hintMet: { color: colors.sageInk },
-  fieldError: { ...type.body, fontSize: 13, color: colors.warnInk, marginTop: 4, paddingHorizontal: 4 },
-  link: { alignSelf: "flex-end", height: 40, justifyContent: "center", paddingHorizontal: 4 },
-  linkText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 13, color: colors.duskLink },
+  fieldError: {
+    ...type.body,
+    fontSize: 13,
+    color: colors.warnInk,
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  link: {
+    alignSelf: "flex-end",
+    height: 40,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  linkText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 13,
+    color: colors.duskLink,
+  },
   dim: { opacity: 0.4 },
   cta: { marginTop: 24 },
-  switch: { height: 48, alignItems: "center", justifyContent: "center", marginTop: 4 },
-  switchText: { fontFamily: fonts.body, fontWeight: "600", fontSize: 14, color: colors.ink },
+  switch: {
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  switchText: {
+    fontFamily: fonts.body,
+    fontWeight: "600",
+    fontSize: 14,
+    color: colors.ink,
+  },
 });
