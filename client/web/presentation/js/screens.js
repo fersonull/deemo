@@ -1,7 +1,8 @@
 // App screens drawn with Canvas 2D in the prototype's own 360×760 coordinates
 // (docs/design/DEEMO Prototype.dc.html), rendered at the phone's on-screen size (setScale) and used as its
 // screen texture. Matching the display size and skipping mipmaps keeps the text sharp.
-// ponytail: approximations of the prototype, not the shipped app; swap for real screenshots if wanted.
+// Screens with a real app screenshot (assets/screens, cropped to the screen) show that instead; the drawn ones remain
+// for the splash and as a fallback if an image fails to load.
 
 export const W = 360;
 export const H = 760;
@@ -521,8 +522,28 @@ function loadImage(src) {
   });
 }
 
+// Screen id → screenshot of the shipped app (2026-10-23).
+const SHOTS = {
+  home: "home", projects: "projects", analysis: "analysis", setup: "setup", mic: "mic-check", session: "session",
+  flag: "session", results: "results", history: "history", consent: "sign-up", privacy: "profile",
+};
+
+// Fills the screen with the screenshot, cropping the overflow evenly (cover fit).
+function drawShot(ctx, img) {
+  const k = Math.max(W / img.width, H / img.height);
+  const w = img.width * k;
+  const h = img.height * k;
+  ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+}
+
 export async function createScreens(THREE) {
-  const [, mark] = await Promise.all([fontsReady(), loadImage("assets/deemo-mark.svg")]);
+  const ids = Object.keys(SHOTS);
+  const [, mark, ...imgs] = await Promise.all([
+    fontsReady(),
+    loadImage("assets/deemo-mark.svg"),
+    ...ids.map((id) => loadImage(`assets/screens/${SHOTS[id]}.jpg`)),
+  ]);
+  const shots = new Map(ids.map((id, i) => [id, imgs[i]]).filter(([, img]) => img));
   const cache = new Map();
   let scale = 2;
 
@@ -540,7 +561,8 @@ export async function createScreens(THREE) {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.generateMipmaps = false;
     texture.minFilter = THREE.LinearFilter;
-    DRAW[id](ctx, 0, mark);
+    if (shots.has(id)) drawShot(ctx, shots.get(id));
+    else (DRAW[id] ?? DRAW.splash)(ctx, 0, mark);
     e = { canvas, ctx, texture, scale };
     cache.set(id, e);
     return e;
@@ -556,7 +578,7 @@ export async function createScreens(THREE) {
     },
     // Redraws an animated screen; call only for the screen that is showing.
     tick(id, t) {
-      if (!ANIMATED.has(id)) return;
+      if (!ANIMATED.has(id) || shots.has(id)) return;
       const e = build(id);
       DRAW[id](e.ctx, t, mark);
       e.texture.needsUpdate = true;
