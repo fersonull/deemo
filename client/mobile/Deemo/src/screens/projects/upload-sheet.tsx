@@ -27,9 +27,17 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [picking, setPicking] = useState(false);
 
+  // Android's file picker is its own screen; opened over the sheet's Modal, it left the Modal dismissed natively while
+  // React still thought it open (the sheet vanished, then only flickered when reopened). So the sheet slides away
+  // first (its close takes 200 ms) and comes back with the chosen file.
   const pick = async () => {
-    const r = await DocumentPicker.getDocumentAsync({ type: [PDF, DOCX], copyToCacheDirectory: true });
+    setPicking(true);
+    await new Promise((done) => setTimeout(done, 250));
+    const r = await DocumentPicker.getDocumentAsync({ type: [PDF, DOCX], copyToCacheDirectory: true }).finally(() =>
+      setPicking(false),
+    );
     if (r.canceled) return;
     const f = r.assets[0];
     setError(tooBigFor(f) ? `That file is over ${maxMb(f)} MB.` : "");
@@ -57,7 +65,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
   const tooBig = tooBigFor(file);
 
   return (
-    <Sheet visible={visible} onClose={busy ? () => {} : onClose}>
+    <Sheet visible={visible && !picking} onClose={busy ? () => {} : onClose}>
       <Text style={styles.title}>Add your manuscript</Text>
 
       <PressableScale
