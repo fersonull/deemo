@@ -328,6 +328,11 @@ button { font: inherit; color: inherit; }
 .scope .is-not li::before { background: transparent; box-shadow: inset 0 0 0 2px var(--faint); }
 
 /* ── practice disclaimer: icon, wordmark, scope, then the live-session phone ── */
+/* promo video: centered, clear of Deemo's corner and the slide counter */
+.slide--video { align-items: center; justify-content: center; padding: 70px 150px 150px; }
+.promo { width: 1440px; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; border-radius: 32px; background: var(--ink); box-shadow: 0 30px 80px -30px rgba(42, 36, 32, 0.4); cursor: pointer; }
+.portrait .slide--video { padding: 124px 44px 190px; }
+
 .slide--disclaimer { align-items: center; text-align: center; padding: 60px 150px 170px; gap: 18px; }
 .disclaimer-mark { width: 100px; height: 100px; border-radius: 28px; }
 .disclaimer-title { font: 800 96px/1 var(--display); letter-spacing: -0.035em; }

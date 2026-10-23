@@ -91,6 +91,7 @@ function go(next) {
   const out = slides[index];
   const inn = slides[next];
   const dir = Math.sign(next - index);
+  out.querySelector("video")?.pause(); // the promo stops when its slide is left
   index = next;
   inn.classList.add("is-active");
   phone?.goTo(slotOf(index));
@@ -137,12 +138,12 @@ addEventListener("keydown", (e) => {
 document.getElementById("prevBtn").addEventListener("click", () => go(index - 1));
 document.getElementById("nextBtn").addEventListener("click", () => go(index + 1));
 
-// Mouse: right click = next, left click = previous (buttons and links keep their own clicks).
+// Mouse: right click = next, left click = previous (buttons, links and the promo video keep their own clicks).
 // Touch taps are ignored here; touch moves by swipe.
 let pointer = "mouse";
 addEventListener("pointerdown", (e) => { pointer = e.pointerType; });
 addEventListener("click", (e) => {
-  if (e.button === 0 && pointer === "mouse" && !e.target.closest("button, a")) go(index - 1);
+  if (e.button === 0 && pointer === "mouse" && !e.target.closest("button, a, video")) go(index - 1);
 });
 addEventListener("contextmenu", (e) => {
   e.preventDefault();

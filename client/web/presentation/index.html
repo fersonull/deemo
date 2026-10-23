@@ -35,6 +35,12 @@
     <div class="phone-slot slot--title" data-screen="splash" data-pose="hero"></div>
   </section>
 
+  <!-- promo video (client/promo, rendered): left click on it plays or pauses, its controls scrub and set volume;
+       right click still goes to the next slide. No phone slot, so the phone leaves the frame. -->
+  <section class="slide slide--video" data-deemo="cheering" data-say="Here's DEEMO in action." aria-label="DEEMO promo video">
+    <video class="promo r" src="assets/deemo-promo.mp4" controls playsinline preload="auto"></video>
+  </section>
+
   <!-- 2 · system overview -->
   <section class="slide" data-section="system-overview" data-deemo="cheering" data-say="I read your paper first, then I ask out loud.">
     <h2 class="q r">System Overview</h2>
@@ -185,7 +191,7 @@
 
 <nav class="hud" aria-label="Slide navigation">
   <button class="hud__btn" id="prevBtn" type="button" aria-label="Previous slide"><span class="icon">arrow_back</span></button>
-  <span class="hud__count" id="count" aria-live="polite">01 / 11</span>
+  <span class="hud__count" id="count" aria-live="polite">01 / 12</span>
   <button class="hud__btn" id="nextBtn" type="button" aria-label="Next slide"><span class="icon">arrow_forward</span></button>
 </nav>
 <div class="progress" aria-hidden="true"><span id="progress"></span></div>
