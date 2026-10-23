@@ -9,7 +9,7 @@ import { bodyOf, validate } from "../../../shared/validate";
 import { accountOf, requireConsent } from "../../identity/http/gates";
 import { accessibleProject, listProjects } from "../../groups/application/access";
 import { COURSES } from "../../identity/domain/course";
-import { DOMAINS, FIELDS, MAX_BYTES, Rejected, sniff, sniffDocOrImage } from "../domain/manuscript";
+import { DOMAINS, FIELDS, MAX_BYTES, MAX_UPLOAD, Rejected, sniff, sniffDocOrImage } from "../domain/manuscript";
 import { RubricInput } from "../domain/rubric";
 import { editAnalysis, removeProject, saveRubric, uploadManuscript } from "../application/projects";
 import { readRubric } from "../application/read-documents";
@@ -53,15 +53,16 @@ manuscriptsRouter.post(
   "/projects",
   requireConsent,
   rateLimit("upload", { message: "That's a lot of uploads. Wait a while and try again." }),
-  express.raw({ type: "multipart/form-data", limit: MAX_BYTES + 1_000_000 }),
+  express.raw({ type: "multipart/form-data", limit: MAX_UPLOAD + 1_000_000 }),
   async (req, res) => {
     const form = await readForm(req);
     const file = form?.get("file");
     if (!(file instanceof File)) throw new AppError(400, "Choose a PDF or DOCX.");
-    if (file.size > MAX_BYTES) throw new AppError(413, "The file is over 20 MB.");
+    if (file.size > MAX_UPLOAD) throw new AppError(413, "PDFs can be up to 50 MB; Word files up to 100 MB.");
     const bytes = new Uint8Array(await file.arrayBuffer());
     const type = sniff(bytes);
     if (!type) throw new AppError(415, "Only PDF or DOCX files.");
+    if (file.size > MAX_BYTES[type]) throw new AppError(413, "PDFs can be up to 50 MB; Word files up to 100 MB.");
     const fields = UploadFields.parse({
       domain: String(form?.get("domain") ?? ""),
       fileName: String(form?.get("fileName") || file.name), // the app's cached copy may be renamed

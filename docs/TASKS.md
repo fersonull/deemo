@@ -162,7 +162,8 @@ What's built and what's left, traced to `DEEMO_Mobile_App_Plan.md` (F = feature,
 | S-01 Splash, S-02 Onboarding, S-03 Consent (F19) | Consent with age confirmation, recorded on the account with its version |
 | S-04 Sign in (F17) | Firebase Auth: email/password, account creation, password reset, Google sign-in (Credential Manager); stays signed in |
 | S-05 Home | Greeting, last readiness score, Start practice, recent sessions |
-| S-06 Upload, S-07 Analysis summary (F1, F2) | PDF/DOCX up to 20 MB, file type checked by content, non-manuscripts rejected; editable summary and key facts; raw file never stored |
+| S-06 Upload, S-07 Analysis summary (F1, F2) | PDF up to 50 MB (Gemini's cap), DOCX up to 100 MB, file type checked by content; figures and diagrams read too (a DOCX sends its images marked in place); non-manuscripts rejected; editable summary and key facts; raw file never stored |
+| Scenario questions | Each panelist phrases at least one main question as a "what if" fitted to the stage (feasibility / design / results); `SCENARIO` question type with its own chip (2026-10-23) |
 | S-08 Rubric (F3, default only) | Five default criteria, adjustable weights |
 | S-09 Setup (F4, F5, F5a) | Domain, stage, panelists, follow-ups, difficulty, Coach/Panel feedback, manuscript, scoring (no length: agenda sessions) |
 | S-10 Live session (F6–F13, F13a) | Gemini Live voice panel through an ephemeral token; adaptive questions from the manuscript; follow-up limit enforced in code; question-type chips; live transcript; contradiction flags; answer timing; pause/resume; reconnect; up to 3 personas, one voice; typed-answer fallback; noise gate and platform noise suppression |

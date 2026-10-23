@@ -12,6 +12,9 @@ test("one panelist: the whole panel prompt, presentation first, ends with end_se
   expect(p).not.toContain("pass_to_next");
   expect(p).toContain("no question limit");
   expect(p).not.toMatch(/about \d+ main questions/);
+  expect(p).toContain("concrete scenario");
+  expect(p).toContain("whether the design holds up"); // Pre-Oral's scenarios
+  expect((panelTools()[0]!.parameters.properties.questionType as { enum: string[] }).enum).toContain("SCENARIO");
 });
 
 test("the agenda: each seat's prompt lists only its own items, and its tool limits topicId to them", () => {

@@ -48,6 +48,13 @@ export const SCRIPT: Item[] = [
     answer: "Thirty is correct. Fifty was the number of test accounts, but only thirty respondents completed the evaluation.",
   },
   {
+    topicId: "security",
+    panelist: 1,
+    type: "SCENARIO",
+    question: "Say a student's account password leaks. What stops someone from seeing or changing that student's requirement records?",
+    answer: "Firebase Authentication guards sign-in, and our Firestore rules only let a student read their own records; only registrar accounts can write.",
+  },
+  {
     topicId: "evaluation",
     panelist: 2,
     type: "METHODOLOGICAL",

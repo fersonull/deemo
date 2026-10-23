@@ -122,7 +122,7 @@ Features are grouped into modules. Priority: **P0** = required for defense/MVP, 
 
 | ID | Feature | Source | Priority | Details |
 |---|---|---|---|---|
-| F1 | Manuscript upload (PDF/DOCX) | 📘 | P0 | Pick from device storage; size limit (e.g. ≤ 20 MB 💡); show parse progress |
+| F1 | Manuscript upload (PDF/DOCX) | 📘 | P0 | Pick from device storage; size limit (PDF ≤ 50 MB, Gemini's cap; DOCX ≤ 100 MB); show parse progress |
 | F2 | **Document Logic Analysis** | 📘 | P0 | Extract title, problem, objectives/SOP, methodology, scope, limitations, key features, tech stack, findings (if present). Show an editable **summary** for user confirmation 💡 |
 | F3 | **Defense Evaluation Rubric** — optional upload; fallback to **built-in default rubric** | 📘 | P0 | Upload PDF/DOCX/image of rubric → AI converts to structured criteria with weights; user reviews. Default rubric: clarity, reasoning, confidence, organization, consistency with manuscript (from CH1 *Performance Evaluation* definition) + technical mastery 💡 |
 

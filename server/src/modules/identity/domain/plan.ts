@@ -10,7 +10,7 @@ export const PLAN = {
 
 export const planOf = (premium: boolean) => (premium ? PLAN.premium : PLAN.free);
 
-export const MANUSCRIPT_LIMIT_MESSAGE = "The free plan holds one manuscript, including joined projects. Delete or leave it first.";
+export const MANUSCRIPT_LIMIT_MESSAGE = "The free plan holds one manuscript, including joined projects. Delete or leave one to add another.";
 
 // Whether a practice setup fits the plan; the reason the student sees when it doesn't.
 export function setupProblem(premium: boolean, setup: { mode: string; panelists: number }) {

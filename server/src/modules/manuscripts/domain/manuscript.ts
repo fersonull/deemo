@@ -53,9 +53,12 @@ export const STALE_ERROR = "This took too long. Try again.";
 export class Rejected extends Error {}
 
 // Uploads
-export const MAX_BYTES = 20 * 1024 * 1024; // Gemini's inline request limit
 export const PDF = "application/pdf";
 export const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+// Gemini takes PDFs up to 50 MB (sent inline: 50 MB is ~67 MB as base64, under its 100 MB request limit). A DOCX goes as
+// its text plus capped images (infrastructure/docx.ts), so it can be bigger; the app checks the same limits.
+export const MAX_BYTES = { [PDF]: 50 * 1024 * 1024, [DOCX]: 100 * 1024 * 1024 } as const;
+export const MAX_UPLOAD = MAX_BYTES[DOCX];
 export const JPEG = "image/jpeg";
 export const PNG = "image/png";
 export type DocType = typeof PDF | typeof DOCX;
@@ -131,5 +134,6 @@ First decide isManuscript: true for a capstone, thesis or research manuscript at
 - results: the main findings and evaluation results with their numbers; "" if the manuscript has no results yet.
 - field: the academic program this study belongs to, judged from its content (what was built or studied, its methods and setting), not from the school or the student. The closest of: ${COURSES.join(", ")}. Use Other if none fits; list field in unsure if it's unclear.
 - itField: for a computing study (BSIT or BSCS field), the closest of: ${DOMAINS.filter((d) => d !== "General").join(", ")}. Otherwise General.
-- facts: 10 to 25 short, checkable facts a panel could catch a student contradicting: counts, sample sizes, tools and technologies, scales, scores, dates, names. Copy numbers exactly, and end each with where it appears, e.g. "Thirty (30) respondents: 20 students, 7 staff, 3 IT experts (Ch. 3)".
+- Read the figures, tables and diagrams too (architecture, ERD, DFD, flowcharts, use-case diagrams, charts, result tables; in a Word file they come as images marked "[Figure n]" where they sit in the text): use what they show in the fields above and in facts.
+- facts: 10 to 25 short, checkable facts a panel could catch a student contradicting: counts, sample sizes, tools and technologies, scales, scores, dates, names, and what the key diagrams show (e.g. "ERD: 6 entities incl. Student and Requirement (Ch. 3)"). Copy numbers exactly, and end each with where it appears, e.g. "Thirty (30) respondents: 20 students, 7 staff, 3 IT experts (Ch. 3)".
 Use the manuscript's own numbers and names. Never invent or assume anything. If a field isn't stated clearly, give your best short reading of what is there (or "" if nothing) and list the field in unsure.`;

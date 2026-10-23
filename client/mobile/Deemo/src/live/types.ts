@@ -2,7 +2,7 @@
 // transcription chunks, turn completion, and the ask_question / flag_inconsistency /
 // end_session tool calls. The mock engine and the real Live engine both emit these.
 
-export type QuestionType = "TECHNICAL" | "METHODOLOGICAL" | "CONCEPTUAL" | "CLARIFICATORY";
+export type QuestionType = "TECHNICAL" | "METHODOLOGICAL" | "CONCEPTUAL" | "CLARIFICATORY" | "SCENARIO";
 
 export type Phase = "connecting" | "presentation" | "speaking" | "listening" | "thinking" | "ending" | "ended";
 

@@ -15,6 +15,7 @@ const TYPES: Record<QuestionType, { label: string; icon: string }> = {
   METHODOLOGICAL: { label: "Methodological", icon: "science" },
   CONCEPTUAL: { label: "Conceptual", icon: "lightbulb" },
   CLARIFICATORY: { label: "Clarificatory", icon: "help" },
+  SCENARIO: { label: "Scenario", icon: "psychology_alt" }, // a "what if" grounded in the study
 };
 
 type Props = {
@@ -59,8 +60,8 @@ export function QuestionCard({ phase, question, closing, takeover, seats, course
           <View style={styles.meta}>
             <View style={styles.chips}>
               <View style={styles.chip}>
-                <Icon name={TYPES[question.type].icon} size={14} />
-                <Text style={styles.chipText}>{TYPES[question.type].label}</Text>
+                <Icon name={(TYPES[question.type] ?? TYPES.CONCEPTUAL).icon} size={14} />
+                <Text style={styles.chipText}>{(TYPES[question.type] ?? TYPES.CONCEPTUAL).label}</Text>
               </View>
               {question.isFollowUp && !question.challenge && (
                 <View style={[styles.chip, styles.followUp]}>

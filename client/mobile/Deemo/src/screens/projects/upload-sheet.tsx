@@ -11,7 +11,10 @@ import { PressableScale } from "@/components/pressable-scale";
 
 const PDF = "application/pdf";
 const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-const MAX_MB = 20; // server/src/modules/manuscripts/domain/manuscript.ts MAX_BYTES
+// server/src/modules/manuscripts/domain/manuscript.ts MAX_BYTES: Gemini takes PDFs up to 50 MB.
+const isDocx = (f: PickedFile) => f.mimeType === DOCX || /\.docx$/i.test(f.name);
+const maxMb = (f: PickedFile) => (isDocx(f) ? 100 : 50);
+const tooBigFor = (f: PickedFile | null) => !!f?.size && f.size > maxMb(f) * 1024 * 1024;
 
 const mb = (bytes?: number) => (bytes ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : "");
 const nameFrom = (f: PickedFile | null) => (f ? f.name.replace(/\.(pdf|docx)$/i, "").replace(/[_-]+/g, " ") : "");
@@ -29,7 +32,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     const r = await DocumentPicker.getDocumentAsync({ type: [PDF, DOCX], copyToCacheDirectory: true });
     if (r.canceled) return;
     const f = r.assets[0];
-    setError(f.size && f.size > MAX_MB * 1024 * 1024 ? `That file is over ${MAX_MB} MB.` : "");
+    setError(tooBigFor(f) ? `That file is over ${maxMb(f)} MB.` : "");
     // Follow the new file unless the student typed their own name.
     if (!name.trim() || name === nameFrom(file)) setName(nameFrom(f));
     setFile(f);
@@ -51,7 +54,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
     }
   };
 
-  const tooBig = !!file?.size && file.size > MAX_MB * 1024 * 1024;
+  const tooBig = tooBigFor(file);
 
   return (
     <Sheet visible={visible} onClose={busy ? () => {} : onClose}>
@@ -72,7 +75,7 @@ export function UploadSheet({ visible, onClose, onUploaded }: Props) {
             {file ? file.name : "Choose a PDF or DOCX"}
           </Text>
           <Text style={type.meta}>
-            {busy ? "Uploading…" : file ? mb(file.size) : `Up to ${MAX_MB} MB. Text-based PDFs work best.`}
+            {busy ? "Uploading…" : file ? mb(file.size) : "PDF up to 50 MB, Word up to 100 MB."}
           </Text>
         </View>
       </PressableScale>

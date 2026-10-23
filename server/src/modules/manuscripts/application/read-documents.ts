@@ -1,4 +1,4 @@
-import { generateObject } from "../../../shared/ai/gemini";
+import { generateObject, type Part } from "../../../shared/ai/gemini";
 import {
   ANALYSIS_PROMPT,
   ANALYSIS_SCHEMA,
@@ -12,22 +12,23 @@ import {
   type DocType,
 } from "../domain/manuscript";
 import { RUBRIC_PROMPT, RUBRIC_SCHEMA, RubricReply, rubricFromReply, type Rubric } from "../domain/rubric";
-import { docxText } from "../infrastructure/docx";
+import { docxContent, docxText } from "../infrastructure/docx";
 
-// Document Logic Analysis (plan F2): a PDF goes to Gemini as-is (it reads scanned pages too), a DOCX as its text.
+// Document Logic Analysis (plan F2): a PDF goes to Gemini as-is (it reads scanned pages and figures too), a DOCX as its
+// text plus its figures as images.
 // Returns the analysis and the IT field it detected (the project's domain; "General" outside computing).
 export async function analyzeManuscript(bytes: Uint8Array, type: DocType): Promise<{ analysis: Analysis; domain: Domain }> {
-  let doc;
-  if (type === PDF) doc = { inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } };
+  let doc: Part[];
+  if (type === PDF) doc = [{ inlineData: { mimeType: PDF, data: Buffer.from(bytes).toString("base64") } }];
   else {
-    const text = await docxText(bytes, "This isn't a readable Word document. Save it as .docx or PDF and try again.");
+    const { text, images } = await docxContent(bytes, "This isn't a readable Word document. Save it as .docx or PDF and try again.");
     // ponytail: a fixed floor; a real manuscript is tens of thousands of characters.
     if (text.trim().length < 500) throw new Rejected("We couldn't find enough text in this file. If it's scanned, upload it as a PDF.");
-    doc = { text };
+    doc = [{ text }, ...images.flatMap((inlineData, i) => [{ text: `[Figure ${i + 1}]` }, { inlineData }])];
   }
   const { value, model } = await generateObject(
     {
-      contents: [{ role: "user", parts: [doc, { text: ANALYSIS_PROMPT }] }],
+      contents: [{ role: "user", parts: [...doc, { text: ANALYSIS_PROMPT }] }],
       generationConfig: { responseMimeType: "application/json", responseJsonSchema: ANALYSIS_SCHEMA, temperature: 0.2 },
     },
     AnalysisReply,

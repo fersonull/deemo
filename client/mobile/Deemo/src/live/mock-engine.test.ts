@@ -32,7 +32,8 @@ test("the scripted defense runs start to finish through the reducer", () => {
   }
 
   expect(s.phase).toBe("ended");
-  expect(s.turns.map((t) => t.question.number)).toEqual([1, 2, 2, 3]);
+  expect(s.turns.map((t) => t.question.number)).toEqual([1, 2, 2, 3, 4]);
+  expect(s.turns[3].question.type).toBe("SCENARIO");
   expect(s.turns[2].question.followUp).toBe(1);
   expect(s.turns.every((t) => t.latencyMs !== null)).toBe(true);
   expect(s.flags).toHaveLength(1);

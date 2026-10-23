@@ -18,7 +18,7 @@ export class Busy extends Error {}
 // A model answered, but not with the shape we asked for.
 export class BadReply extends Error {}
 
-type Part = { text?: string; inlineData?: { mimeType: string; data: string } };
+export type Part = { text?: string; inlineData?: { mimeType: string; data: string } };
 export type FlashRequest = {
   contents: { role: string; parts: Part[] }[];
   generationConfig: { responseJsonSchema?: object; thinkingConfig?: { thinkingLevel?: string } } & Record<string, unknown>;
